@@ -82,3 +82,23 @@ export type ActionEffect =
 export type ActionResult =
   | { ok: true; state: GameState; effect: ActionEffect }
   | { ok: false; reason: BlockedReason };
+
+export type PendingInteraction = Readonly<{
+  kind: 'combat';
+  enemyId: string;
+  preview: WinnableCombatPreview;
+}>;
+
+export type SessionState = Readonly<{
+  game: GameState;
+  pending: PendingInteraction | null;
+}>;
+
+export type InputCommand =
+  | Readonly<{ kind: 'move'; direction: Direction }>
+  | Readonly<{ kind: 'fight' }>
+  | Readonly<{ kind: 'cancel' }>;
+
+export type SessionTransition =
+  | Readonly<{ ok: true; session: SessionState; effect: ActionEffect | null }>
+  | Readonly<{ ok: false; session: SessionState; reason: BlockedReason }>;
