@@ -44,6 +44,12 @@ export function attemptMove(
         state: { ...state, tile: target },
         effect: { kind: 'moved' },
       };
+    if (entity.kind === 'reward' && state.openedRewardIds.includes(entity.id))
+      return {
+        ok: true,
+        state: { ...state, tile: target },
+        effect: { kind: 'moved' },
+      };
     return interactWithEntity(state, entity, state.tile);
   }
 
