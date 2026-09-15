@@ -51,15 +51,20 @@ export class InteractionOverlay {
 
   render(view: OverlayView): void {
     const { state, mapName, pending, effect, blocked } = view;
+    const blockedHtml = blocked
+      ? `<div data-testid="blocked-reason" data-reason="${blocked}">${REASON_TEXT[blocked]}</div>`
+      : '';
     let transient = '';
-    if (blocked) {
-      transient = `<div data-testid="blocked-reason" data-reason="${blocked}">${REASON_TEXT[blocked]}</div>`;
-    } else if (pending) {
-      transient = `<section data-testid="combat-prompt">
+    if (pending) {
+      // prompt must stay reachable (Fight/Cancel clickable) even while blocked,
+      // or a failed input while pending soft-locks the interaction
+      transient = `${blockedHtml}<section data-testid="combat-prompt">
         <span data-testid="combat-hp-loss">HP loss: ${pending.preview.hpLoss}</span>
         <button type="button" data-action="fight">Fight</button>
         <button type="button" data-action="cancel">Cancel</button>
       </section>`;
+    } else if (blocked) {
+      transient = blockedHtml;
     } else if (effect) {
       const text = effectText(effect);
       if (text) transient = `<div data-testid="effect">${text}</div>`;
