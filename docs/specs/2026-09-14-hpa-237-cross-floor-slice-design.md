@@ -11,7 +11,7 @@ Prove the defining Tower Maze MVP loop before expanding content:
 5. Re-enter Floor 1 behind the original barrier.
 6. Collect the permanent upgrade.
 7. Immediately see a nearby deterministic combat preview become cheaper.
-8. Open a persistent one-way shortcut/latch.
+8. Open a persistent one-way latch/shortcut.
 9. Return to the village, heal, reload, and resume with progression intact.
 
 This is a real vertical slice, not a disposable prototype. The village, Floor 1 section, and Floor 2 section should become the foundation extended by later MVP tickets.
@@ -28,6 +28,10 @@ This is a real vertical slice, not a disposable prototype. The village, Floor 1 
 - Placeholder visuals are expected, but stable asset IDs and alignment conventions must be established for the later image-asset task.
 - No generic quest engine, event scripting framework, ECS, RPG framework, map editor, backend, or cloud save.
 
+### Shortcut semantics
+
+The Floor 1 latch is one-way only in how it is opened: the player can activate it only from the rear/back-route side. Once opened, that passage remains permanently open and is traversable in both directions. This gives the player a durable shortcut home without creating special one-way movement rules after activation.
+
 ## Technology and project tooling
 
 Start Eridanus as a small Bun-managed browser game with:
@@ -41,6 +45,8 @@ Start Eridanus as a small Bun-managed browser game with:
 - Vitest for unit tests;
 - Playwright for the critical browser happy path;
 - GitHub Actions for CI.
+
+Pin Bun to one explicit version in `package.json` via `packageManager`, and use that same version in GitHub Actions. Do not maintain separate local and CI version declarations that can drift.
 
 Do not introduce a UI framework unless a concrete requirement makes it materially simpler than Phaser/DOM primitives.
 
@@ -66,15 +72,18 @@ Use Husky for a pre-commit hook that runs lint-staged only. lint-staged should r
 Use one GitHub Actions workflow with exactly three independent jobs:
 
 1. **Build & lint**
+   - install the pinned Bun version;
    - install dependencies with the lockfile frozen;
    - TypeScript typecheck;
    - ESLint;
    - Prettier check;
    - production Vite build.
 2. **Unit test**
+   - install the pinned Bun version;
    - install dependencies with the lockfile frozen;
    - run Vitest in CI mode.
 3. **Playwright test**
+   - install the pinned Bun version;
    - install dependencies with the lockfile frozen;
    - install the required Playwright browser/dependencies;
    - launch the app through Playwright `webServer` or equivalent;
@@ -119,6 +128,8 @@ Entity variants required by this ticket:
 - recovery point;
 - portal/stairs.
 
+Authored stair/portal pairs used as bidirectional floor connections must be reciprocal: if one connection points from Floor 1 entry A to Floor 2 entry B, the paired return connection must resolve back to the intended Floor 1 destination. Validate this as content data rather than relying on manual map inspection.
+
 Do not add inheritance, generic triggers, scripting DSLs, or ECS components.
 
 ### Phaser presentation
@@ -129,12 +140,13 @@ One reusable `WorldScene` should:
 - follow the player with a scrolling camera;
 - translate movement input into domain actions;
 - update entity visuals from authoritative state;
-- show concise clue/interaction text;
-- present Fight / Cancel with exact predicted HP loss;
-- show brief on-map combat/reward feedback;
 - swap map content when the domain state changes map/location.
 
-Avoid independent progression flags on Phaser objects. Presentation should derive from state.
+Use a tiny framework-free DOM overlay when it makes interaction UI clearer and more testable. It may own the concise clue/interaction text, Fight / Cancel controls, and exact predicted HP-loss display. Keep it presentation-only: it reads current presentation state and dispatches actions but does not own progression rules.
+
+This DOM surface is also the preferred Playwright seam. Use stable semantic roles/text or small `data-testid` hooks on real user-facing controls instead of exposing test-only internal game state or relying on pixel/screenshot assertions.
+
+Avoid independent progression flags on Phaser objects or DOM elements. Presentation should derive from state.
 
 ## Deterministic combat contract
 
@@ -188,7 +200,7 @@ For this MVP, a missing or unusable save can start a fresh game. No save migrati
 - Permanent-upgrade treasure visible but inaccessible from the front route.
 - Clue indicating an alternate lower/around route.
 - One nearby enemy whose preview will visibly improve after the upgrade.
-- Closed shortcut/latch connecting the back route to the entrance side.
+- Closed latch that cannot be opened from this side.
 
 ### Floor 2 — connector route
 
@@ -199,8 +211,8 @@ For this MVP, a missing or unusable save can start a fresh game. No save migrati
 
 - Collect the permanent upgrade exactly once.
 - Re-check the nearby enemy preview and make the reduced HP cost obvious.
-- Open the persistent shortcut/latch.
-- Return toward the entrance/village through the newly opened route.
+- Open the latch from the rear side.
+- The opened passage is then traversable both ways and provides a useful return path toward the entrance/village.
 
 ## Asset contract for HPA-22
 
@@ -223,16 +235,17 @@ Prioritize pure-rule tests for:
 - combat formulas and rejection cases;
 - preview and resolution agreement;
 - reward cannot apply twice;
-- shortcut remains open after reload;
+- shortcut can only be activated from the rear side, then remains open and traversable in both directions after reload;
 - village recovery heals without resetting progression;
 - save/load round-trip for all durable state used by this slice;
-- authored portal destinations resolve correctly.
+- authored portal destinations resolve correctly;
+- paired bidirectional floor connections are reciprocal.
 
 ### Playwright
 
-Ship at least one critical E2E path that proves the actual browser build can complete the defining slice. It should cover the core progression from village through the cross-floor route and verify at least one reload/persistence boundary.
+Ship one critical E2E path that proves the actual browser build can complete the defining slice. It should cover the core progression from village through the cross-floor route and verify at least one reload/persistence boundary.
 
-Do not duplicate every unit-level edge case in Playwright.
+Use the real user-facing DOM interaction surface for stable assertions where practical. Do not expose a test-only game API and do not duplicate every unit-level edge case in Playwright.
 
 ## Non-goals
 
@@ -250,4 +263,4 @@ Do not duplicate every unit-level edge case in Playwright.
 
 ## Acceptance focus
 
-The slice succeeds when a fresh player can complete the full cross-floor loop, understand the alternate route without an exact quest arrow, see the permanent upgrade materially change combat preview, open a useful persistent shortcut, return to the village, reload, and resume with committed progression intact—and when the three CI jobs independently verify build/lint, unit tests, and Playwright E2E.
+The slice succeeds when a fresh player can complete the full cross-floor loop, understand the alternate route without an exact quest arrow, see the permanent upgrade materially change combat preview, open the rear-only latch and then use the resulting two-way shortcut, return to the village, reload, and resume with committed progression intact—and when the three CI jobs independently verify build/lint, unit tests, and Playwright E2E.
