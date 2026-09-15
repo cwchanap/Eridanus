@@ -46,3 +46,39 @@ export type GameState = Readonly<{
   defeatedEnemyIds: readonly string[];
   openedShortcutIds: readonly string[];
 }>;
+
+export type WinnableCombatPreview = {
+  winnable: true;
+  hitsNeeded: number;
+  hpLoss: number;
+};
+
+export type CombatPreview =
+  | WinnableCombatPreview
+  | {
+      winnable: false;
+      reason: 'combat-unwinnable' | 'combat-lethal';
+    };
+
+export type BlockedReason =
+  | 'wall'
+  | 'out-of-bounds'
+  | 'interaction-pending'
+  | 'latch-closed-front'
+  | 'combat-unwinnable'
+  | 'combat-lethal'
+  | 'reward-already-taken';
+
+export type ActionEffect =
+  | { kind: 'moved' }
+  | { kind: 'traveled'; mapId: MapId }
+  | { kind: 'clue'; text: string }
+  | { kind: 'reward'; stat: Stat; amount: number }
+  | { kind: 'healed'; hp: number }
+  | { kind: 'latchOpened'; id: string }
+  | { kind: 'combatPrompt'; enemyId: string; preview: WinnableCombatPreview }
+  | { kind: 'enemyDefeated'; enemyId: string; hpLost: number };
+
+export type ActionResult =
+  | { ok: true; state: GameState; effect: ActionEffect }
+  | { ok: false; reason: BlockedReason };
