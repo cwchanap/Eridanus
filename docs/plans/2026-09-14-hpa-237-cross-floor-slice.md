@@ -37,6 +37,8 @@ bun run test:unit
 bun run test:e2e
 ```
 
+Pin Bun to one explicit version in `package.json` using `packageManager`, and configure GitHub Actions to install the same version. Treat that single pinned version as the source of truth for local/CI reproducibility.
+
 Use a simple browser entrypoint that mounts Phaser. Do not add Svelte/React or another UI framework unless implementation proves Phaser/DOM primitives insufficient.
 
 ### Pre-commit behavior
@@ -53,6 +55,7 @@ Add one `.github/workflows/ci.yml` with exactly three independent jobs.
 
 Run:
 
+- install the pinned Bun version;
 - frozen dependency install;
 - TypeScript typecheck;
 - ESLint;
@@ -65,6 +68,7 @@ This is the static/build quality gate.
 
 Run:
 
+- install the pinned Bun version;
 - frozen dependency install;
 - Vitest in CI mode.
 
@@ -74,6 +78,7 @@ Keep game-rule, persistence, and content-validation tests here.
 
 Run:
 
+- install the pinned Bun version;
 - frozen dependency install;
 - install the required Playwright Chromium browser/dependencies;
 - start the application using Playwright `webServer` or the simplest equivalent;
@@ -86,10 +91,12 @@ Validation for Task 1:
 - fresh `bun install --frozen-lockfile` succeeds after lockfile creation;
 - typecheck succeeds;
 - lint and format checks succeed;
-- unit test command executes;
-- Playwright command executes against a minimal smoke page/test;
+- unit-test command is wired and runnable;
+- Playwright is configured and `test:e2e` is wired for the real journey added in Task 8;
 - production build succeeds;
 - Husky/lint-staged hook is installed through the normal package lifecycle.
+
+Do not add a disposable Playwright smoke test during bootstrap. Task 8 owns the first meaningful browser test.
 
 ## Task 2 — Define authoritative state and authored content
 
@@ -108,6 +115,7 @@ Tests:
 - unique authored IDs;
 - valid map references;
 - portal destinations resolve;
+- paired bidirectional floor connections are reciprocal;
 - default state points to valid content.
 
 Avoid generic repository/domain layers or content frameworks.
@@ -128,9 +136,10 @@ Tests:
 
 - allowed and blocked movement;
 - discovery commits once;
-- portal destination correctness.
+- portal destination correctness;
+- reciprocal stairs/portal definitions return to the intended authored destination.
 
-## Task 4 — Implement deterministic combat
+## Task 4 — Implement deterministic combat and interaction UI
 
 Create one pure `previewCombat` calculation used by both UI preview and resolution.
 
@@ -144,6 +153,10 @@ Cover:
 - Fight / Cancel prompt pauses movement interaction;
 - defeat and HP loss commit exactly once.
 
+Use a tiny framework-free DOM overlay for user-facing interaction text and the Fight / Cancel prompt when that is simpler and more testable than rendering controls inside the Phaser canvas. The overlay must remain presentation-only and dispatch game actions rather than own progression state.
+
+Prefer semantic buttons/text and small stable `data-testid` hooks only where needed by Playwright. Do not expose a test-only internal game API.
+
 Keep presentation minimal: no battle scene, initiative, skills, status effects, or animation state machine.
 
 Tests must explicitly prove preview/resolution agreement and formula edge cases.
@@ -154,19 +167,25 @@ Add only the authored interactions needed for the loop:
 
 - inspect clue/landmark;
 - collect one permanent stat upgrade;
-- open one shortcut/latch;
+- open one rear-only shortcut/latch;
 - heal at village recovery.
 
-Rules:
+Shortcut rule:
+
+- the latch may only be activated from its rear/back-route side;
+- once activated, the passage remains permanently open and traversable in both directions.
+
+Other rules:
 
 - reward applies exactly once;
-- shortcut remains open once activated;
 - recovery heals current HP to max without resetting any dungeon state.
 
 Tests:
 
 - duplicate reward is a no-op;
-- shortcut state controls traversal;
+- latch cannot be activated from the front side;
+- once opened, the shortcut allows traversal in both directions;
+- shortcut remains open after reload;
 - recovery preserves discoveries/rewards/enemies/shortcuts.
 
 ## Task 6 — Add autosave and reload
@@ -205,8 +224,8 @@ Build the map layout around the required sequence:
 6. Player returns to Floor 1 behind the barrier.
 7. Player collects the permanent upgrade.
 8. Nearby enemy preview now costs visibly less HP than before.
-9. Player opens the one-way shortcut.
-10. Shortcut provides a useful return path to the entrance/village.
+9. Player opens the latch from the rear side.
+10. The now-open passage works in both directions and provides a useful return path to the entrance/village.
 11. Village recovery heals and autosaves.
 12. Reload resumes correctly.
 
@@ -214,7 +233,7 @@ Tune enemy/reward values specifically so the upgrade changes the combat preview 
 
 ## Task 8 — Add the critical Playwright journey
 
-Implement one small browser-level happy path proving that the runtime wiring, input, authored content, and persistence work together.
+Implement one small browser-level happy path proving that the runtime wiring, input, authored content, user-facing interaction UI, and persistence work together.
 
 The E2E should cover the critical progression rather than every branch:
 
@@ -223,11 +242,12 @@ The E2E should cover the critical progression rather than every branch:
 - reach the alternate Floor 2 route;
 - return behind the Floor 1 barrier;
 - collect the permanent reward;
-- verify the relevant combat preview changes;
-- open the shortcut;
+- verify the relevant combat preview changes through the real DOM interaction surface;
+- open the rear-only latch;
+- verify the opened passage can be used as the shortcut;
 - cross at least one reload boundary and verify committed progression remains.
 
-Prefer stable gameplay/test seams over pixel/screenshot assertions. Do not mirror unit tests in E2E.
+Prefer semantic DOM assertions and stable user-facing controls over pixel/screenshot assertions. Do not mirror unit tests in E2E and do not add test-only game-state accessors.
 
 ## Task 9 — Lock minimal asset seams
 
@@ -247,6 +267,7 @@ The PR is ready for implementation review only when all three CI jobs pass indep
 
 ### Build & lint job
 
+- pinned Bun version matches `packageManager`;
 - frozen install;
 - typecheck;
 - ESLint;
@@ -255,7 +276,7 @@ The PR is ready for implementation review only when all three CI jobs pass indep
 
 ### Unit test job
 
-- Vitest passes for domain rules, persistence, and content validation.
+- Vitest passes for domain rules, persistence, content validation, reciprocal floor connections, and shortcut semantics.
 
 ### Playwright test job
 
@@ -269,7 +290,8 @@ Manual gate from a fresh save:
 - return to rear Floor 1;
 - collect upgrade;
 - verify improved combat preview;
-- open shortcut;
+- open latch from the rear;
+- use the opened two-way shortcut;
 - return to village;
 - heal;
 - reload and verify progression.
@@ -300,6 +322,8 @@ src/
   phaser/
     createGame.ts
     WorldScene.ts
+  ui/
+    InteractionOverlay.ts
 tests/
   e2e/
     cross-floor.spec.ts
@@ -310,7 +334,7 @@ vite.config.ts
 vitest.config.ts
 ```
 
-Treat this as guidance, not a requirement. Merge or remove modules if implementation stays clearer with fewer files.
+Treat this as guidance, not a requirement. The DOM interaction overlay can remain a single small module or be colocated with bootstrap code if that is clearer. Merge or remove modules if implementation stays simpler with fewer files.
 
 ## Scope guardrails
 
@@ -327,6 +351,7 @@ Do not add:
 - procedural generation;
 - backend/accounts/cloud save;
 - CI matrices or reusable-workflow abstractions;
+- test-only internal game APIs;
 - abstractions justified only by hypothetical future games.
 
 Prefer the simplest direct structure that cleanly supports the next Tower Maze content tickets.
