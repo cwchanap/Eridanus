@@ -8,7 +8,7 @@
 
 **Tech Stack:** Bun 1.4.2, TypeScript, Vite, Phaser, ESLint, Prettier, Husky, lint-staged, Vitest, Playwright, GitHub Actions.
 
-**Spec:** `docs/specs/2026-09-14-hpa-237-cross-floor-slice-design.md`
+**Spec:** `docs/superpowers/specs/2026-09-15-hpa-237-cross-floor-slice-design.md`
 
 ## Global Constraints
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { attemptMove } from './movement';
-import type { GameState } from './types';
+import type { Direction, GameState } from './types';
 
 const base: GameState = {
   mapId: 'floor1',
@@ -54,5 +54,50 @@ describe('attemptMove', () => {
       mapId: 'floor1',
       tile: { x: 2, y: 9 },
     });
+  });
+
+  it('blocks walking into a wall', () => {
+    const besideWall = { ...base, tile: { x: 1, y: 1 } };
+    expect(attemptMove(besideWall, 'north')).toEqual({
+      ok: false,
+      reason: 'wall',
+    });
+  });
+
+  it('blocks movement out of map bounds', () => {
+    // All authored layouts have wall borders, so reaching the bounds check
+    // requires standing on a border tile; construct that state directly.
+    const onBorder = {
+      ...base,
+      mapId: 'village' as const,
+      tile: { x: 0, y: 1 },
+    };
+    expect(attemptMove(onBorder, 'west')).toEqual({
+      ok: false,
+      reason: 'out-of-bounds',
+    });
+  });
+
+  it('bumps undefeated enemy into a prompt without durable mutation', () => {
+    const beforeGatekeeper = { ...base, tile: { x: 12, y: 5 } };
+    const result = attemptMove(beforeGatekeeper, 'west');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect.kind).toBe('combatPrompt');
+    expect(result.state).toBe(beforeGatekeeper);
+  });
+
+  it('leaves the passed-in state untouched on blocked results', () => {
+    const cases: ReadonlyArray<readonly [GameState, Direction]> = [
+      [base, 'east'],
+      [{ ...base, tile: { x: 1, y: 1 } }, 'north'],
+      [{ ...base, mapId: 'village', tile: { x: 0, y: 1 } }, 'west'],
+    ];
+    for (const [state, direction] of cases) {
+      const snapshot = structuredClone(state);
+      const result = attemptMove(state, direction);
+      expect(result.ok).toBe(false);
+      expect(state).toEqual(snapshot);
+    }
   });
 });
