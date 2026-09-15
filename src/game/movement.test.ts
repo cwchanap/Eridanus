@@ -34,6 +34,19 @@ describe('attemptMove', () => {
     expect(result.ok && result.state.tile).toEqual({ x: 7, y: 5 });
   });
 
+  it('walks onto collected reward tile', () => {
+    const collected = {
+      ...base,
+      tile: { x: 8, y: 5 },
+      openedRewardIds: ['floor1-power-core'],
+    };
+    const result = attemptMove(collected, 'east');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.tile).toEqual({ x: 9, y: 5 });
+    expect(result.effect).toEqual({ kind: 'moved' });
+  });
+
   it('steps on portal and travels', () => {
     const state = { ...base, mapId: 'village' as const, tile: { x: 8, y: 2 } };
     const result = attemptMove(state, 'east');
