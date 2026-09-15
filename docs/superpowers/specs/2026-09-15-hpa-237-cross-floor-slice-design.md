@@ -307,12 +307,12 @@ The player remains on the previous tile when bumping into:
 Effects:
 
 - **Clue:** show authored clue text; no durable progression is required.
-- **Reward:** apply its permanent stat increase once and record the reward ID.
+- **Reward:** apply its permanent stat increase once, record the reward ID, and stop blocking its tile; later movement may enter that tile.
 - **Enemy:** open a deterministic combat prompt without immediately resolving the fight.
 - **Latch:** apply the rear/front opening rule below.
 - **Recovery:** restore current HP to max HP without resetting any dungeon progress.
 
-A successful bump interaction does not move the player onto the entity tile.
+A successful bump interaction does not move the player onto the entity tile as part of that same action.
 
 ### Step-on portal
 
@@ -437,10 +437,12 @@ Invalid includes:
 - JSON parse failure;
 - invalid object shape/types;
 - current map not present in `MAPS`;
-- current tile out of bounds or blocked;
+- current tile out of bounds or not walkable under the snapshot's own durable flags;
 - opened reward ID that does not resolve to a reward entity;
 - defeated enemy ID that does not resolve to an enemy entity;
 - opened shortcut ID that does not resolve to a latch entity.
+
+For load validation, dynamic walkability is evaluated from the snapshot itself: uncollected rewards, undefeated enemies, and closed latches still block their tiles; collected rewards, defeated enemies, and opened latches do not.
 
 An explicit reset may delete the bad snapshot and create a fresh game.
 
@@ -534,7 +536,7 @@ Unit/content tests cover the contracts that should not depend on browser renderi
 - reciprocal intended portal pairs;
 - wall/out-of-bounds movement;
 - fixed bump vs step-on interaction semantics;
-- reward applies exactly once;
+- reward applies exactly once and its tile becomes traversable after collection;
 - recovery preserves dungeon progress;
 - latch front/rear/open behavior;
 - typed blocked results never mutate state;
@@ -549,7 +551,8 @@ Unit/content tests cover the contracts that should not depend on browser renderi
 - ordinary movement position survives round-trip;
 - missing save starts fresh;
 - malformed/shape-invalid/content-invalid saves fail loudly;
-- stale/removed entity IDs invalidate saves.
+- stale/removed entity IDs invalidate saves;
+- saved current-tile walkability is checked against collected/defeated/opened flags.
 
 ### Playwright
 
