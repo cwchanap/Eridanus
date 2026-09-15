@@ -20,3 +20,15 @@ body {
 [data-testid='interaction'] {
   flex-basis: 100%;
 }
+[data-testid='blocked-reason'] {
+  color: #f88;
+}
+[data-testid='combat-prompt'],
+[data-testid='invalid-save'] {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+[data-testid='interaction'] button {
+  cursor: pointer;
+}
