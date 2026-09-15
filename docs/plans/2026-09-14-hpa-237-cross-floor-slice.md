@@ -6,26 +6,90 @@ Implement the first playable Tower Maze slice in one PR and leave Eridanus with 
 
 ## Delivery rule
 
-One ticket = one PR. Do not split scaffolding, gameplay foundation, combat, persistence, and authored vertical-slice content into separate PRs.
+One ticket = one PR. Do not split project scaffolding, developer tooling, CI, gameplay foundation, combat, persistence, and authored vertical-slice content into separate PRs.
 
-## Task 1 — Bootstrap the web game
+## Task 1 — Bootstrap the web game and developer tooling
 
-Set up:
+Set up the greenfield project with Bun as the package manager.
+
+Runtime/tooling:
 
 - Vite + TypeScript;
-- Phaser runtime;
+- Phaser;
+- ESLint with a small TypeScript-focused flat config;
+- Prettier;
+- Husky;
+- lint-staged;
 - Vitest;
-- simple browser entrypoint that mounts the Phaser game;
-- lint/format/typecheck/build scripts kept intentionally small.
+- Playwright;
+- GitHub Actions.
 
-Do not add Svelte/React or another UI framework unless implementation proves Phaser/DOM primitives insufficient.
+Expected scripts should include the equivalents of:
 
-Validation:
+```text
+bun run dev
+bun run build
+bun run typecheck
+bun run lint
+bun run format
+bun run format:check
+bun run test:unit
+bun run test:e2e
+```
 
-- install succeeds;
+Use a simple browser entrypoint that mounts Phaser. Do not add Svelte/React or another UI framework unless implementation proves Phaser/DOM primitives insufficient.
+
+### Pre-commit behavior
+
+Configure Husky with one lightweight pre-commit hook that invokes lint-staged.
+
+lint-staged should run ESLint and Prettier against staged supported source/config files. Keep the hook fast: do not run the complete unit or Playwright suites on every commit.
+
+### CI workflow
+
+Add one `.github/workflows/ci.yml` with exactly three independent jobs.
+
+#### Job 1 — Build & lint
+
+Run:
+
+- frozen dependency install;
+- TypeScript typecheck;
+- ESLint;
+- Prettier check;
+- production Vite build.
+
+This is the static/build quality gate.
+
+#### Job 2 — Unit test
+
+Run:
+
+- frozen dependency install;
+- Vitest in CI mode.
+
+Keep game-rule, persistence, and content-validation tests here.
+
+#### Job 3 — Playwright test
+
+Run:
+
+- frozen dependency install;
+- install the required Playwright Chromium browser/dependencies;
+- start the application using Playwright `webServer` or the simplest equivalent;
+- execute the browser E2E suite.
+
+Do not add job matrices, cross-job artifacts, reusable workflows, or multiple workflow files unless implementation demonstrates a real need.
+
+Validation for Task 1:
+
+- fresh `bun install --frozen-lockfile` succeeds after lockfile creation;
 - typecheck succeeds;
-- unit tests run;
-- production build succeeds.
+- lint and format checks succeed;
+- unit test command executes;
+- Playwright command executes against a minimal smoke page/test;
+- production build succeeds;
+- Husky/lint-staged hook is installed through the normal package lifecycle.
 
 ## Task 2 — Define authoritative state and authored content
 
@@ -148,7 +212,24 @@ Build the map layout around the required sequence:
 
 Tune enemy/reward values specifically so the upgrade changes the combat preview in an obvious, easy-to-read way.
 
-## Task 8 — Lock minimal asset seams
+## Task 8 — Add the critical Playwright journey
+
+Implement one small browser-level happy path proving that the runtime wiring, input, authored content, and persistence work together.
+
+The E2E should cover the critical progression rather than every branch:
+
+- launch from a fresh save;
+- leave the village and enter Floor 1;
+- reach the alternate Floor 2 route;
+- return behind the Floor 1 barrier;
+- collect the permanent reward;
+- verify the relevant combat preview changes;
+- open the shortcut;
+- cross at least one reload boundary and verify committed progression remains.
+
+Prefer stable gameplay/test seams over pixel/screenshot assertions. Do not mirror unit tests in E2E.
+
+## Task 9 — Lock minimal asset seams
 
 Make placeholder rendering already obey the contracts needed by HPA-22:
 
@@ -160,14 +241,25 @@ Make placeholder rendering already obey the contracts needed by HPA-22:
 
 Do not generate final art in this ticket.
 
-## Task 9 — Validation
+## Task 10 — Final validation
 
-Automated gate:
+The PR is ready for implementation review only when all three CI jobs pass independently.
 
-- typecheck passes;
-- unit tests pass;
-- production build passes;
-- lint/format pass if retained.
+### Build & lint job
+
+- frozen install;
+- typecheck;
+- ESLint;
+- Prettier check;
+- production build.
+
+### Unit test job
+
+- Vitest passes for domain rules, persistence, and content validation.
+
+### Playwright test job
+
+- critical browser journey passes in Chromium.
 
 Manual gate from a fresh save:
 
@@ -187,6 +279,11 @@ Repeat reload checks immediately after reward, combat, and shortcut activation t
 ## Likely compact structure
 
 ```text
+.github/
+  workflows/
+    ci.yml
+.husky/
+  pre-commit
 src/
   main.ts
   game/
@@ -203,6 +300,14 @@ src/
   phaser/
     createGame.ts
     WorldScene.ts
+tests/
+  e2e/
+    cross-floor.spec.ts
+eslint.config.js
+prettier.config.js
+playwright.config.ts
+vite.config.ts
+vitest.config.ts
 ```
 
 Treat this as guidance, not a requirement. Merge or remove modules if implementation stays clearer with fewer files.
@@ -221,6 +326,7 @@ Do not add:
 - inventory/equipment/shop/crafting;
 - procedural generation;
 - backend/accounts/cloud save;
+- CI matrices or reusable-workflow abstractions;
 - abstractions justified only by hypothetical future games.
 
 Prefer the simplest direct structure that cleanly supports the next Tower Maze content tickets.
