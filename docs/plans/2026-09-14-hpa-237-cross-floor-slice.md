@@ -82,7 +82,7 @@ Run:
 
 Do not add job matrices, cross-job artifacts, reusable workflows, multiple workflow files, or CI orchestration that does not improve this small project.
 
-Create `tests/e2e/cross-floor.spec.ts` immediately with its first real assertion that the actual app shell/browser path renders successfully (for example the Phaser canvas and persistent status chrome). This same file grows into the final journey later; do not create a disposable smoke test.
+Create `tests/e2e/cross-floor.spec.ts` immediately with its first real assertion that the actual app shell/browser path renders successfully. Prefer asserting both the Phaser canvas/game root and the initial persistent HP/ATK/DEF chrome once the initial state is mounted. This same file grows into the final journey later; do not create a disposable smoke test.
 
 Validation for Task 1:
 
@@ -90,7 +90,7 @@ Validation for Task 1:
 - typecheck succeeds;
 - lint and format checks succeed;
 - unit test command executes;
-- Playwright Chromium/webServer/CI job executes at least the first real app assertion;
+- Playwright Chromium/webServer/CI job executes the first real app assertion;
 - production build succeeds;
 - Husky/lint-staged installs through the normal package lifecycle.
 
@@ -188,9 +188,10 @@ type PendingInteraction =
   | { kind: 'combat'; enemyId: string; preview: CombatPreview };
 ```
 
-A small pure input gate/dispatcher should enforce:
+A small pure input/session layer should enforce:
 
-- enemy bump produces `combatPrompt` effect + pending combat;
+- enemy bump returns `combatPrompt` effect;
+- the session/input layer derives pending combat from that returned effect rather than hidden mutation in the domain action;
 - while pending combat exists, movement input is blocked/ignored in pure TypeScript;
 - Cancel clears pending without mutating `GameState`;
 - Fight resolves the pending enemy through the same combat preview contract.
@@ -327,7 +328,7 @@ Cover:
 - verify movement input is gated while Fight / Cancel is open;
 - open latch from rear;
 - verify shortcut is usable both ways;
-- make at least one ordinary move, reload, and assert the exact current position/progression remains;
+- make at least one ordinary move, reload, and assert exact current position/progression through visible player behavior/location;
 - verify committed reward/enemy/latch state through user-facing behavior/UI.
 
 Prefer role/text/data attributes on the real DOM overlay where useful. Do not use screenshots as the primary assertion and do not expose a test-only internal game API.
