@@ -87,14 +87,14 @@ export class WorldScene extends Phaser.Scene {
     const player = this.add
       .text(
         (state.tile.x + 0.5) * TILE_SIZE,
-        (state.tile.y + 0.5) * TILE_SIZE,
+        (state.tile.y + 1) * TILE_SIZE,
         '@',
         {
           fontSize: '16px',
           color: '#ffffff',
         },
       )
-      .setOrigin(0.5);
+      .setOrigin(0.5, 1);
 
     this.cameras.main.startFollow(player, true);
     this.cameras.main.setBounds(

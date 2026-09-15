@@ -90,8 +90,19 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 12');
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 20/30');
 
+  // Right ×3: walk over the collected reward onto the defeated gatekeeper
+  // tile — persistence of the kill means no combat prompt reopens
+  await press(page, 'ArrowRight', 3);
+  await expect(page.getByTestId('combat-prompt')).toHaveCount(0);
+  // Left ×3: back to (8,5)
+  await press(page, 'ArrowLeft', 3);
+
   // Left ×2: cross open latch to front
   await press(page, 'ArrowLeft', 2);
+  // Reload after ordinary movement: exact position (6,5) restored
+  await page.reload();
+  await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 12');
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 20/30');
   // Left ×4, Down ×4: F1 portal → village (9,2)
   await press(page, 'ArrowLeft', 4);
   await press(page, 'ArrowDown', 4);

@@ -67,6 +67,34 @@ describe('saveGame/loadGame', () => {
     });
   });
 
+  it('rejects fractional tile coordinates', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        tile: { x: 5.5, y: 5 },
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-shape',
+    });
+  });
+
+  it("rejects inherited-key map ids like 'toString'", () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        mapId: 'toString',
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
   it('rejects removed entity ids', () => {
     storage.setItem(
       'eridanus.save',
@@ -115,6 +143,104 @@ describe('saveGame/loadGame', () => {
       openedShortcutIds: [],
     };
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('round-trips every durable field', () => {
+    const state = {
+      mapId: 'floor1' as const,
+      tile: { x: 10, y: 5 },
+      player: { hp: 20, maxHp: 30, attack: 12, defense: 2 },
+      openedRewardIds: ['floor1-power-core'],
+      defeatedEnemyIds: ['floor1-gatekeeper'],
+      openedShortcutIds: ['floor1-rear-latch'],
+    };
+    saveGame(storage, state);
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('rejects a save standing on an undefeated enemy tile', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        mapId: 'floor1',
+        tile: { x: 11, y: 5 },
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('accepts a save standing on a defeated enemy tile', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        mapId: 'floor1',
+        tile: { x: 11, y: 5 },
+        defeatedEnemyIds: ['floor1-gatekeeper'],
+      }),
+    );
+    expect(loadGame(storage).kind).toBe('loaded');
+  });
+
+  it('rejects a save standing on a closed latch tile', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        mapId: 'floor1',
+        tile: { x: 7, y: 5 },
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('accepts a save standing on an opened latch tile', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        mapId: 'floor1',
+        tile: { x: 7, y: 5 },
+        openedShortcutIds: ['floor1-rear-latch'],
+      }),
+    );
+    expect(loadGame(storage).kind).toBe('loaded');
+  });
+
+  it('rejects a save standing on a clue tile', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        mapId: 'floor1',
+        tile: { x: 5, y: 4 },
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('rejects a save standing on a recovery tile', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        tile: { x: 2, y: 2 },
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
   });
 });
 

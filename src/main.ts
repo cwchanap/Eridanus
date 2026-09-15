@@ -19,6 +19,7 @@ if (!gameRoot || !uiRoot) throw new Error('Missing app roots');
 let session: SessionState = { game: createInitialGameState(), pending: null };
 let effect: ActionEffect | null = null;
 let blocked: BlockedReason | null = null;
+let created: CreatedGame | null = null;
 
 const overlay = new InteractionOverlay(
   uiRoot,
@@ -37,6 +38,7 @@ function renderOverlay(): void {
 }
 
 function handleInput(input: InputCommand): void {
+  if (!created) return;
   const previousGame = session.game;
   const transition = dispatchInput(session, input);
   if (transition.ok) {
@@ -58,20 +60,22 @@ function startRuntime(
   session = { game: initialGame, pending: null };
   effect = null;
   blocked = null;
+  if (!created) {
+    // Scene create() performs the first refresh once Phaser boots.
+    created = createGame(gameRoot!, {
+      getSession: () => session,
+      onInput: handleInput,
+    });
+  } else {
+    created.scene.refresh();
+  }
   renderOverlay();
 }
 
-const created: CreatedGame = createGame(gameRoot, {
-  getSession: () => session,
-  onInput: handleInput,
-});
-
 const load = loadGame(window.localStorage);
 if (load.kind === 'invalid') {
-  overlay.renderInvalidSave(() => {
-    startRuntime(resetGame(window.localStorage));
-    created.scene.refresh();
-  });
+  // No scene exists yet, so keyboard input stays dead until the explicit reset.
+  overlay.renderInvalidSave(() => startRuntime(resetGame(window.localStorage)));
 } else {
   startRuntime(load.state);
 }

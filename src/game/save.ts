@@ -25,10 +25,7 @@ function hasValidShape(state: unknown): state is GameState {
   const tile = record['tile'];
   if (typeof tile !== 'object' || tile === null) return false;
   const tileRecord = tile as Record<string, unknown>;
-  if (
-    typeof tileRecord['x'] !== 'number' ||
-    typeof tileRecord['y'] !== 'number'
-  )
+  if (!Number.isInteger(tileRecord['x']) || !Number.isInteger(tileRecord['y']))
     return false;
   const player = record['player'];
   if (typeof player !== 'object' || player === null) return false;
@@ -62,7 +59,7 @@ function isTileOccupiedByBlockingEntity(state: GameState, tile: Tile): boolean {
 }
 
 function hasValidContent(state: GameState): boolean {
-  if (!(state.mapId in MAPS)) return false;
+  if (!Object.hasOwn(MAPS, state.mapId)) return false;
   if (!isLayoutFloor(state.mapId, state.tile)) return false;
   if (
     !state.openedRewardIds.every((id) => findEntityById(id)?.kind === 'reward')
