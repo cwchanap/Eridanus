@@ -21,8 +21,9 @@ This is a real vertical slice, not a disposable prototype. The village, Floor 1 
 - Exploration is the primary loop; combat is a fast deterministic blocker/resource check.
 - Four-direction tile movement on a fixed grid.
 - One reusable Phaser world scene displays all authored maps.
-- One authoritative plain-TypeScript `GameState` owns progression.
-- Phaser handles rendering/input and dispatches domain actions; it does not own durable game rules.
+- One authoritative plain-TypeScript `GameState` owns durable progression.
+- One small transient `PendingInteraction` value owns modal interaction state such as an open combat prompt. It is never persisted and never owned by Phaser.
+- Phaser handles rendering/input and dispatches into pure TypeScript rules; it does not own progression or interaction-mode rules.
 - A tiny framework-free DOM overlay owns persistent player stats plus interaction/combat copy and buttons.
 - Maps and interactables use one closed authored schema keyed by stable IDs.
 - Use one LocalStorage autosave snapshot.
@@ -41,7 +42,7 @@ Start Eridanus as a small Bun-managed browser game with:
 - Prettier for formatting;
 - Husky + lint-staged for lightweight pre-commit checks;
 - Vitest for unit tests;
-- Playwright for the critical browser happy path;
+- Playwright for the critical browser journey;
 - GitHub Actions for CI.
 
 Pin Bun through the `packageManager` field in `package.json`, and use the same Bun version in CI.
@@ -83,54 +84,87 @@ Use one GitHub Actions workflow with exactly three independent jobs:
 3. **Playwright test**
    - install pinned Bun;
    - install dependencies with the lockfile frozen;
-   - install the required Playwright browser/dependencies;
+   - install the required Chromium browser/dependencies;
    - launch the app through Playwright `webServer` or equivalent;
-   - run the browser happy-path suite.
+   - run the browser suite.
 
 Keep the jobs separate so failures are immediately attributable. Avoid reusable-workflow abstractions, job matrices, cross-job artifacts, or CI orchestration that does not improve this small project.
 
 ## Architecture
 
-### Pure game domain
-
 Keep core rules independent of Phaser.
 
 Suggested responsibilities:
 
-- `state.ts` — `GameState`, player stats, location, durable flags.
-- `content.ts` — closed authored map/entity types plus lookup/validation helpers.
+- `state.ts` — `GameState`, player stats, current location, durable flags, initial village start tile.
+- `content.ts` — closed authored map/entity types, `MAPS`, lookup and validation helpers.
 - `movement.ts` — collision, movement, step-on portal resolution.
 - `combat.ts` — deterministic preview and resolution.
-- `actions.ts` — bump interactions for reward, clue, latch, recovery, and enemy encounters.
-- `save.ts` — LocalStorage snapshot serialization/deserialization and load-result handling.
+- `actions.ts` — bump interactions, transient pending interaction, and small pure input gating.
+- `save.ts` — LocalStorage serialization, content-aware validation, and load-result handling.
 
 Exact file boundaries may change during implementation. Avoid creating abstractions before they are needed.
 
-### Action result contract
+## Closed action boundary
 
-Movement and interactions can either commit a new state or be blocked. Use one small result shape instead of ad-hoc booleans/exceptions per action.
+Every domain decision returns typed data. Do not make the scene rediscover what happened from mutable presentation state.
 
 ```ts
+type BlockedReason =
+  | 'wall'
+  | 'out-of-bounds'
+  | 'interaction-pending'
+  | 'latch-closed-front'
+  | 'combat-unwinnable'
+  | 'combat-lethal'
+  | 'reward-already-taken';
+
+type ActionEffect =
+  | { kind: 'moved' }
+  | { kind: 'traveled'; mapId: MapId }
+  | { kind: 'clue'; text: string }
+  | { kind: 'reward'; stat: Stat; amount: number }
+  | { kind: 'healed'; hp: number }
+  | { kind: 'latchOpened'; id: string }
+  | { kind: 'combatPrompt'; enemyId: string; preview: CombatPreview }
+  | { kind: 'enemyDefeated'; enemyId: string; hpLost: number };
+
 type ActionResult =
-  | { ok: true; state: GameState }
-  | { ok: false; reason: string };
+  | { ok: true; state: GameState; effect: ActionEffect }
+  | { ok: false; reason: BlockedReason };
 ```
 
-Pure domain actions should follow the equivalent of:
+The exact union members may be renamed while implementing, but keep both branches closed and exhaustively handled.
 
-```ts
-(state, input) => ActionResult
-```
-
-Blocked actions do not mutate state. The DOM overlay shows the returned reason when it matters to the player, including blocked or unwinnable combat.
+UI copy belongs in the UI layer, for example one `Record<BlockedReason, string>`. Playwright may assert a stable reason identifier/data attribute instead of brittle prose.
 
 Do not expand this into a generic reducer/event framework.
 
+## Transient interaction mode
+
+Combat prompting is a two-phase interaction and must not become a mutable `WorldScene` flag.
+
+```ts
+type PendingInteraction =
+  | null
+  | {
+      kind: 'combat';
+      enemyId: string;
+      preview: CombatPreview;
+    };
+```
+
+- Bumping an enemy returns `effect: { kind: 'combatPrompt', ... }` and sets the transient pending value outside `GameState`.
+- While combat is pending, movement input is rejected/ignored by a pure TypeScript input gate that can be unit tested.
+- Fight calls combat resolution against current `GameState` and the pending enemy.
+- Cancel clears the pending value without a domain mutation.
+- Pending interaction state is never persisted.
+
+The implementation may express this with a small `dispatchInput(state, pending, input)` function or equivalent. Keep it specific to the current input needs rather than building a generic state machine.
+
 ## Closed authored content schema
 
-Lock one schema before writing the maps so later floors extend the same model rather than inventing new shapes.
-
-The exact property names may vary, but the implementation should preserve this shape:
+Use compact text rows for maze geometry and a typed entity list for authored objects.
 
 ```ts
 type MapId = 'village' | 'floor1' | 'floor2';
@@ -140,10 +174,12 @@ type Tile = {
   y: number;
 };
 
+type Direction = 'north' | 'south' | 'east' | 'west';
+
 type BaseEntity = {
   id: string;
   tile: Tile;
-  assetId: string;
+  assetId?: string;
 };
 
 type ClueEntity = BaseEntity & {
@@ -168,8 +204,7 @@ type EnemyEntity = BaseEntity & {
 
 type LatchEntity = BaseEntity & {
   kind: 'latch';
-  frontTile: Tile;
-  rearTile: Tile;
+  rearSide: Direction;
 };
 
 type RecoveryEntity = BaseEntity & {
@@ -195,15 +230,28 @@ type Entity =
 type MapDefinition = {
   id: MapId;
   name: string;
-  width: number;
-  height: number;
-  blockedTiles: readonly Tile[];
-  spawnPoints: Readonly<Record<string, Tile>>;
+  layout: readonly string[];
   entities: readonly Entity[];
+};
+
+const MAPS: Record<MapId, MapDefinition> = {
+  // village, floor1, floor2
 };
 ```
 
-`MapId` is intentionally closed for the currently authored maps and grows when a later floor file is added. Entity instance IDs may remain strings; content tests enforce uniqueness.
+Geometry rules:
+
+- `#` = blocked wall.
+- `.` = walkable floor.
+- Width is derived from row length; height is derived from row count.
+- Rows must be non-empty and rectangular.
+- Entity tiles and portal target tiles must be in bounds and land on walkable floor.
+- Map IDs are intentionally closed and adding a new `MapId` must fail typechecking until `MAPS` provides it.
+- Entity instance IDs remain strings; content tests enforce uniqueness.
+- `assetId` is optional. The asset resolver defaults to the entity kind and authors override only when an entity needs a distinct sprite.
+- The initial player start tile belongs to the default `GameState`, not an open-ended spawn-point registry.
+
+This keeps walls easy to author/review and collision O(1) by row/column lookup.
 
 Do not add inheritance, generic trigger objects, scripting DSLs, or ECS components.
 
@@ -221,12 +269,13 @@ The player remains on the previous tile while bumping into these adjacent entiti
 - latch;
 - recovery point.
 
-Successful interactions may update state and presentation, but the player does not occupy the entity tile as part of that bump.
+Successful interactions return an `ActionEffect`; the player does not occupy the entity tile as part of the bump.
 
 For combat specifically:
 
-- Cancel leaves the player on the previous tile with unchanged state.
-- A blocked/unwinnable fight leaves the player on the previous tile and returns a visible reason.
+- Enemy bump opens the transient combat prompt; it does not resolve combat immediately.
+- Cancel leaves the player on the previous tile with unchanged `GameState`.
+- A blocked/unwinnable fight leaves the player on the previous tile and returns a typed reason.
 - A successful fight commits HP loss + enemy defeat exactly once; after defeat the tile becomes traversable.
 
 ### Step-on portal
@@ -237,11 +286,11 @@ Bidirectional authored stairs/portal pairs must be reciprocal in content tests: 
 
 ### Latch semantics
 
-A latch is one authored tile with explicit `frontTile` and `rearTile` neighbors.
+A latch is one authored tile with a `rearSide` direction. The front side is the opposite direction, so invalid diagonal/non-adjacent front/rear pairs are unrepresentable.
 
 - Closed latch is non-walkable.
-- Bumping it from `rearTile` opens it and records its ID in `openedShortcutIds`.
-- Bumping it from `frontTile` while closed returns a blocked reason and does not mutate state.
+- Bumping it from the authored rear side opens it and records its ID in `openedShortcutIds`.
+- Bumping it from the front side while closed returns `latch-closed-front` and does not mutate state.
 - Once `openedShortcutIds.has(latch.id)`, the latch tile behaves as ordinary traversable floor from either direction.
 
 Do not model one-way movement after the latch is open.
@@ -251,16 +300,17 @@ Do not model one-way movement after the latch is open.
 One reusable `WorldScene` should:
 
 - render the current authored map;
-- follow the player with a scrolling camera;
-- translate movement input into domain actions;
-- update entity visuals from authoritative state;
+- follow the player with Phaser camera follow;
+- translate keyboard input into pure TypeScript input/domain actions;
+- update presentation from authoritative `GameState` + transient `PendingInteraction`;
 - use a single tile-size constant from day one;
-- use stable asset IDs rather than hard-coded paths in map content;
-- render player/enemies with a one-tile logical footprint and bottom-center visual anchoring;
+- resolve stable asset IDs to placeholder visuals;
+- use one-tile logical player/enemy footprints;
+- anchor character/entity visuals bottom-center;
 - use tile coordinates for collision/interaction rather than sprite bounds;
-- swap map content when the domain state changes map/location.
+- swap rendered map when domain state changes location.
 
-Avoid independent progression flags on Phaser objects. Presentation should derive from state.
+Avoid independent progression or modal-state flags on Phaser objects. Presentation should derive from typed state/results.
 
 ## DOM interaction overlay
 
@@ -280,11 +330,26 @@ Transient interaction content can use the same layer for:
 - Fight / Cancel controls;
 - blocked-action reasons.
 
-This makes the resource loop understandable to players and gives Playwright stable user-facing assertions without exposing internal game state.
+The overlay handles `ActionEffect` and `BlockedReason` exhaustively. Blocked reasons expose a stable identifier/data attribute so UI copy can change without breaking Playwright.
 
 ## Deterministic combat contract
 
-Base formulas:
+Compute unwinnable combat before division.
+
+```ts
+type CombatPreview =
+  | {
+      winnable: true;
+      hitsNeeded: number;
+      hpLoss: number;
+    }
+  | {
+      winnable: false;
+      reason: 'combat-unwinnable' | 'combat-lethal';
+    };
+```
+
+For a winnable fight:
 
 ```text
 playerDamage = player.attack - enemy.defense
@@ -296,16 +361,15 @@ totalHpLoss = (hitsNeeded - 1) * enemyDamage
 Rules:
 
 - Player attacks first.
-- If `playerDamage <= 0`, the fight is blocked.
-- If predicted HP loss would be lethal, the fight is blocked.
+- If `playerDamage <= 0`, return `combat-unwinnable` before calculating `hitsNeeded`.
+- A fight is lethal when `totalHpLoss >= player.hp`; the player must finish above zero HP.
 - A defeated enemy does not retaliate after the final player hit.
-- The exact same pure calculation must power both preview and resolution.
+- The exact same pure preview result powers both the prompt and resolution.
 - Enemy defeat and HP loss commit exactly once before cosmetic feedback.
-- A blocked result explains why through the DOM overlay.
 
 ## Persistence
 
-Persist one snapshot after completed durable actions.
+Persist one snapshot of durable `GameState` only. `PendingInteraction` is not saved.
 
 Minimum state:
 
@@ -315,13 +379,23 @@ Minimum state:
 - defeated enemy IDs;
 - opened shortcut IDs.
 
+Autosave after every successful state-changing action, including ordinary movement. The snapshot is small and this makes “restore current tile” unambiguous. Actions/effects that do not change `GameState` (for example opening or cancelling a combat prompt) do not need a write.
+
 Village recovery restores current HP to max HP but does not reset dungeon progression.
 
 Load behavior is explicit:
 
 - Missing save key → start a fresh game.
 - Valid save → resume it.
-- JSON parse failure or invalid snapshot shape → refuse to load silently and show a recovery/reset choice to the player.
+- JSON parse failure, invalid snapshot shape, or content-invalid references → refuse to load silently and show a recovery/reset choice to the player.
+
+Content-aware validation checks at least:
+
+- current `MapId` exists in `MAPS`;
+- current tile is in bounds and walkable;
+- every opened reward ID resolves to a reward entity;
+- every defeated enemy ID resolves to an enemy entity;
+- every opened shortcut ID resolves to a latch entity.
 
 The reset action may discard the bad snapshot and create a fresh game. No version field, save migrator, or backwards-compatibility layer is required.
 
@@ -329,7 +403,7 @@ The reset action may discard the bad snapshot and create a fresh game. No versio
 
 ### Village
 
-- Player spawn.
+- Player start tile lives in initial `GameState`.
 - One concise NPC/sign lead toward the tower.
 - Recovery point that heals and autosaves.
 - Entrance to Floor 1.
@@ -354,31 +428,57 @@ The reset action may discard the bad snapshot and create a fresh game. No versio
 - Open the persistent shortcut/latch from the rear side.
 - Return toward the entrance/village through the newly opened two-way passage.
 
+## Asset replacement seam
+
+A later Tower Maze asset task (HPA-22) will replace placeholder visuals with generated reusable art. HPA-237 only needs to lock the runtime seam so that replacement does not require map/rule changes:
+
+- one tile-size constant;
+- stable asset IDs resolved centrally;
+- one-tile logical footprints;
+- bottom-center anchors;
+- tile-coordinate collision/interaction.
+
+Do not build a general asset pipeline in this ticket.
+
 ## Testing
 
 ### Vitest
 
 Prioritize pure-rule and authored-content tests for:
 
-- combat formulas and rejection cases;
+- rectangular map layouts and valid walkable entity tiles;
+- unique map/entity IDs;
+- `MAPS` covers every `MapId`;
+- portal targets resolve and intended bidirectional portal pairs are reciprocal;
+- combat preview variants and formula edge cases;
+- equality-at-zero lethality (`hpLoss >= hp` blocks);
 - preview and resolution agreement;
-- ActionResult blocked paths do not mutate state;
+- typed blocked paths do not mutate state;
+- enemy bump produces a combat-prompt effect without changing durable state;
+- movement is blocked/ignored while combat is pending;
 - reward cannot apply twice;
 - latch only opens from the rear while closed;
 - opened latch is traversable from both sides;
 - village recovery heals without resetting progression;
 - save/load round-trip for all durable state used by this slice;
+- ordinary movement position survives a round-trip;
 - missing save starts fresh;
-- malformed/invalid save produces a load failure instead of silently wiping progress;
-- authored map/entity IDs are unique;
-- authored references point to valid maps/tiles;
-- intended bidirectional portal pairs are reciprocal.
+- malformed/shape-invalid/content-invalid saves produce a load failure instead of silently wiping progress;
+- a save referencing a removed/nonexistent entity ID fails validation.
 
 ### Playwright
 
-Ship one critical E2E path that proves the actual browser build can complete the defining slice. It should cover the core progression from village through the cross-floor route and verify at least one reload/persistence boundary.
+Use one real `tests/e2e/cross-floor.spec.ts` from the start. Its first assertion should prove the actual browser/webServer path is working (for example the game shell/canvas and persistent status chrome render). Grow that same test into the critical journey; do not create a disposable smoke test.
 
-Drive the game through real keyboard/player interactions and assert persistent chrome / interaction UI. Do not expose a test-only internal game API and do not duplicate every unit-level edge case in Playwright.
+The final journey should cover village → Floor 1 → Floor 2 → rear Floor 1 → reward → improved combat preview → latch → reload/persistence.
+
+Drive the game through real keyboard/player interactions and assert real DOM UI. Do not expose a test-only internal game API and do not duplicate every unit-level edge case in Playwright.
+
+## Risks
+
+- **Combat modal desync:** if pending combat state leaks into `WorldScene`, movement gating becomes hard to test. Keep pending interaction typed and pure outside Phaser.
+- **Authored-content drift:** malformed ASCII layouts, portal targets, or entity IDs can break later floors. Keep validation centralized and cheap.
+- **Save/content drift:** map tuning can invalidate previously valid-looking snapshots. Validate saves against current authored content and fail loudly.
 
 ## Non-goals
 
@@ -397,4 +497,4 @@ Drive the game through real keyboard/player interactions and assert persistent c
 
 ## Acceptance focus
 
-The slice succeeds when a fresh player can complete the full cross-floor loop, understand the alternate route without an exact quest arrow, see HP/ATK/DEF throughout play, see the permanent upgrade materially change combat preview, open the rear-side latch into a permanent two-way shortcut, return to the village, reload, and resume with committed progression intact—and when malformed save data is surfaced rather than silently erased and the three CI jobs independently verify build/lint, unit tests, and Playwright E2E.
+The slice succeeds when a fresh player can complete the full cross-floor loop, understand the alternate route without an exact quest arrow, see HP/ATK/DEF throughout play, see the permanent upgrade materially change combat preview, open the rear-side latch into a permanent two-way shortcut, return to the village, reload at the exact current tile, and resume with committed progression intact. Malformed/content-invalid save data must be surfaced rather than silently erased, and the three CI jobs must independently verify build/lint, unit tests, and Playwright E2E.
