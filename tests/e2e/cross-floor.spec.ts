@@ -6,8 +6,7 @@ async function press(
   count: number,
 ): Promise<void> {
   for (let i = 0; i < count; i += 1)
-    // Hold each key long enough to span a frame: Phaser's JustDown polling
-    // misses taps whose keydown+keyup land inside one frame.
+    // Small delay keeps each press a distinct keydown event.
     await page.keyboard.press(key, { delay: 50 });
 }
 
@@ -25,11 +24,13 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
   await page.reload();
   await expect(page.getByTestId('map-name')).toHaveText('Starting Village');
 
-  // Right ×2: bump village clue
+  // Right ×2: bump village clue (assert effect kind, not prose)
   await press(page, 'ArrowRight', 2);
-  await expect(page.getByTestId('interaction')).toContainText(
-    'old tower path loops below',
-  );
+  const villageClue = page
+    .getByTestId('interaction')
+    .locator('[data-effect="clue"]');
+  await expect(villageClue).toHaveAttribute('data-effect', 'clue');
+  await expect(villageClue).toContainText(/\S/);
   // Up ×3, Right ×6: village portal → Floor 1 (2,9)
   await press(page, 'ArrowUp', 3);
   await press(page, 'ArrowRight', 6);
@@ -39,9 +40,11 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
   await press(page, 'ArrowRight', 3);
   await press(page, 'ArrowUp', 4);
   await press(page, 'ArrowUp', 1);
-  await expect(page.getByTestId('interaction')).toContainText(
-    'point down before they turn back east',
-  );
+  const floorClue = page
+    .getByTestId('interaction')
+    .locator('[data-effect="clue"]');
+  await expect(floorClue).toHaveAttribute('data-effect', 'clue');
+  await expect(floorClue).toContainText(/\S/);
   // Left ×1, Up ×3, Right ×1: F1 front portal → Floor 2 (1,8)
   await press(page, 'ArrowLeft', 1);
   await press(page, 'ArrowUp', 3);

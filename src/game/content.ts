@@ -7,6 +7,7 @@ export const MAPS: Record<MapId, MapDefinition> = { village, floor1, floor2 };
 
 export function isInBounds(mapId: MapId, tile: Tile): boolean {
   const map = MAPS[mapId];
+  if (map.layout.length === 0) return false;
   return (
     tile.y >= 0 &&
     tile.y < map.layout.length &&
@@ -31,11 +32,23 @@ export function findEntityById(id: string): Entity | undefined {
     .find((entity) => entity.id === id);
 }
 
-export function validateContent(): readonly string[] {
+export function validateContent(
+  maps: Record<MapId, MapDefinition> = MAPS,
+): readonly string[] {
   const errors: string[] = [];
   const ids = new Set<string>();
+  const floorOn = (map: MapDefinition, tile: Tile): boolean => {
+    if (map.layout.length === 0) return false;
+    return (
+      tile.y >= 0 &&
+      tile.y < map.layout.length &&
+      tile.x >= 0 &&
+      tile.x < map.layout[0]!.length &&
+      map.layout[tile.y]![tile.x] === '.'
+    );
+  };
 
-  for (const map of Object.values(MAPS)) {
+  for (const map of Object.values(maps)) {
     const width = map.layout[0]?.length ?? 0;
     if (width === 0 || map.layout.some((row) => row.length !== width))
       errors.push(`${map.id}: layout must be rectangular`);
@@ -43,15 +56,19 @@ export function validateContent(): readonly string[] {
     for (const entity of map.entities) {
       if (ids.has(entity.id)) errors.push(`duplicate entity id: ${entity.id}`);
       ids.add(entity.id);
-      if (!isLayoutFloor(map.id, entity.tile))
+      if (!floorOn(map, entity.tile))
         errors.push(`${entity.id}: entity tile must be floor`);
 
       if (entity.kind === 'portal') {
-        if (!isLayoutFloor(entity.target.mapId, entity.target.tile)) {
+        if (!floorOn(maps[entity.target.mapId], entity.target.tile)) {
           errors.push(`${entity.id}: portal target must be floor`);
           continue;
         }
-        const back = getEntityAt(entity.target.mapId, entity.target.tile);
+        const back = maps[entity.target.mapId].entities.find(
+          (candidate) =>
+            candidate.tile.x === entity.target.tile.x &&
+            candidate.tile.y === entity.target.tile.y,
+        );
         if (
           back?.kind !== 'portal' ||
           back.target.mapId !== map.id ||

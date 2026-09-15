@@ -17,9 +17,6 @@ const DIRECTIONS = [
 
 export class WorldScene extends Phaser.Scene {
   private readonly deps: WorldSceneDeps;
-  private keys: Partial<
-    Record<(typeof DIRECTIONS)[number]['direction'], Phaser.Input.Keyboard.Key>
-  > = {};
 
   constructor(deps: WorldSceneDeps) {
     super('world');
@@ -31,19 +28,13 @@ export class WorldScene extends Phaser.Scene {
     const keyboard = this.input.keyboard;
     if (keyboard) {
       for (const { key, direction } of DIRECTIONS) {
-        this.keys[direction] = keyboard.addKey(key);
+        // Event listeners never miss sub-frame taps, unlike JustDown polling.
+        keyboard.on(`keydown-${key}`, () =>
+          this.deps.onInput({ kind: 'move', direction }),
+        );
       }
     }
     this.refresh();
-  }
-
-  update(): void {
-    for (const { direction } of DIRECTIONS) {
-      const key = this.keys[direction];
-      if (key && Phaser.Input.Keyboard.JustDown(key)) {
-        this.deps.onInput({ kind: 'move', direction });
-      }
-    }
   }
 
   refresh(): void {

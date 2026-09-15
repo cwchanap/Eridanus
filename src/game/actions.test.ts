@@ -5,9 +5,13 @@ import { createInitialGameState } from './state';
 
 const reward = findEntityById('floor1-power-core');
 const recovery = findEntityById('village-recovery');
+const latch = findEntityById('floor1-rear-latch');
+const enemy = findEntityById('floor1-gatekeeper');
 if (!reward || reward.kind !== 'reward') throw new Error('reward missing');
 if (!recovery || recovery.kind !== 'recovery')
   throw new Error('recovery missing');
+if (!latch || latch.kind !== 'latch') throw new Error('latch missing');
+if (!enemy || enemy.kind !== 'enemy') throw new Error('enemy missing');
 
 describe('actions', () => {
   it('applies reward once', () => {
@@ -39,6 +43,38 @@ describe('actions', () => {
       openedRewardIds: ['floor1-power-core'],
       defeatedEnemyIds: ['floor1-gatekeeper'],
       openedShortcutIds: ['floor1-rear-latch'],
+    });
+  });
+
+  it('bumping an opened latch changes nothing', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor1' as const,
+      tile: { x: 6, y: 5 },
+      openedShortcutIds: ['floor1-rear-latch'],
+    };
+    expect(interactWithEntity(state, latch, state.tile)).toEqual({
+      ok: true,
+      state,
+      effect: { kind: 'latchOpened', id: 'floor1-rear-latch' },
+    });
+  });
+
+  it('bumping a defeated enemy changes nothing', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor1' as const,
+      tile: { x: 10, y: 5 },
+      defeatedEnemyIds: ['floor1-gatekeeper'],
+    };
+    expect(interactWithEntity(state, enemy, state.tile)).toEqual({
+      ok: true,
+      state,
+      effect: {
+        kind: 'enemyDefeated',
+        enemyId: 'floor1-gatekeeper',
+        hpLost: 0,
+      },
     });
   });
 });
