@@ -65,7 +65,8 @@ src/
     save.test.ts
   phaser/
     assets.ts                      # TILE_SIZE + placeholder asset resolver
-    createGame.ts                  # Phaser.Game construction
+    assets.test.ts
+    createGame.ts                  # Phaser.Game + scene construction
     WorldScene.ts                  # one reusable rendered world scene
   ui/
     InteractionOverlay.ts          # HUD/transient copy/buttons/reset UI
@@ -180,9 +181,9 @@ Do not add a generic event bus or state-machine framework around these types.
 
 **Interfaces:**
 - Produces: `createInitialGameState(): GameState`
-- Produces: `InteractionOverlay.renderHud(state: GameState, mapName?: string): void`
+- Produces: `InteractionOverlay.renderHud(state: GameState, mapName: string): void`
 - Produces: `createGame(parent: HTMLElement): Phaser.Game`
-- Later tasks extend the shared types in `src/game/types.ts` without renaming the interfaces above.
+- Later tasks extend the shared types in `src/game/types.ts` without renaming the core domain interfaces.
 
 - [ ] **Step 1: Initialize Bun package metadata and install dependencies**
 
@@ -243,17 +244,15 @@ describe('createInitialGameState', () => {
 
 - [ ] **Step 3: Run the unit test and verify it fails**
 
-Run:
-
 ```bash
-bun run test:unit -- src/game/state.test.ts
+bunx vitest run src/game/state.test.ts
 ```
 
 Expected: FAIL because `./state` / `createInitialGameState` does not exist yet.
 
 - [ ] **Step 4: Add the shared core types and minimal initial state**
 
-Create `src/game/types.ts` with the shared interfaces from this plan header, initially including `MapId`, `Direction`, `Stat`, `Tile`, `PlayerStats`, and `GameState`. Add the remaining action/session unions in later tasks when their dependent types exist.
+Create `src/game/types.ts` with `MapId`, `Direction`, `Stat`, `Tile`, `PlayerStats`, and `GameState` exactly as declared in the plan header. Add action/session unions in later tasks when their dependent types exist.
 
 Create `src/game/state.ts`:
 
@@ -366,7 +365,7 @@ import type { GameState } from '../game/types';
 export class InteractionOverlay {
   constructor(private readonly root: HTMLElement) {}
 
-  renderHud(state: GameState, mapName = 'Village'): void {
+  renderHud(state: GameState, mapName: string): void {
     this.root.innerHTML = `
       <section data-testid="hud" aria-label="Player status">
         <span data-testid="map-name">${mapName}</span>
@@ -428,7 +427,7 @@ const uiRoot = document.querySelector<HTMLElement>('#ui');
 if (!gameRoot || !uiRoot) throw new Error('Missing app roots');
 
 const state = createInitialGameState();
-new InteractionOverlay(uiRoot).renderHud(state);
+new InteractionOverlay(uiRoot).renderHud(state, 'Starting Village');
 createGame(gameRoot);
 ```
 
@@ -452,7 +451,7 @@ Create `index.html`:
 </html>
 ```
 
-Create `src/styles.css` with only layout needed now:
+Create `src/styles.css`:
 
 ```css
 html,
@@ -482,7 +481,7 @@ body {
 }
 ```
 
-- [ ] **Step 7: Add the first real Playwright assertion before wiring CI**
+- [ ] **Step 7: Add the first real Playwright assertion**
 
 Create `playwright.config.ts`:
 
@@ -579,8 +578,6 @@ jobs:
 
 - [ ] **Step 9: Run the complete Task 1 gate**
 
-Run:
-
 ```bash
 bun install --frozen-lockfile
 bun run typecheck
@@ -593,7 +590,7 @@ bun run build
 
 Expected: all commands PASS.
 
-Update `README.md` to list exactly those local commands and state that HPA-237 is the first Tower Maze vertical slice.
+Update `README.md` with the same local commands and state that HPA-237 is the first Tower Maze vertical slice.
 
 - [ ] **Step 10: Commit Task 1**
 
@@ -613,18 +610,19 @@ git commit -m "chore: bootstrap Eridanus web game"
 - Create: `src/game/content/village.ts`
 - Create: `src/game/content/floor1.ts`
 - Create: `src/game/content/floor2.ts`
-- Modify: `src/game/state.ts`
 - Modify: `src/ui/InteractionOverlay.ts`
+- Modify: `src/main.ts`
 
 **Interfaces:**
 - Produces: `Entity`, `MapDefinition`, `MAPS: Record<MapId, MapDefinition>`
 - Produces: `getEntityAt(mapId: MapId, tile: Tile): Entity | undefined`
 - Produces: `findEntityById(id: string): Entity | undefined`
+- Produces: `isInBounds(mapId: MapId, tile: Tile): boolean`
 - Produces: `isLayoutFloor(mapId: MapId, tile: Tile): boolean`
 - Produces: `validateContent(): readonly string[]`
 - Later movement/save tasks consume these exact helpers.
 
-- [ ] **Step 1: Write failing content-schema tests**
+- [ ] **Step 1: Write the failing content-schema tests**
 
 Create `src/game/content.test.ts`:
 
@@ -652,14 +650,14 @@ describe('authored content', () => {
 - [ ] **Step 2: Run the content test and verify it fails**
 
 ```bash
-bun run test:unit -- src/game/content.test.ts
+bunx vitest run src/game/content.test.ts
 ```
 
 Expected: FAIL because `./content` does not exist.
 
 - [ ] **Step 3: Add the closed content/entity types**
 
-Append these types to `src/game/types.ts`:
+Append to `src/game/types.ts`:
 
 ```ts
 export type BaseEntity = Readonly<{
@@ -668,31 +666,14 @@ export type BaseEntity = Readonly<{
   assetId?: string;
 }>;
 
-export type ClueEntity = BaseEntity & Readonly<{
-  kind: 'clue';
-  text: string;
-}>;
-
-export type RewardEntity = BaseEntity & Readonly<{
-  kind: 'reward';
-  stat: Stat;
-  amount: number;
-}>;
-
+export type ClueEntity = BaseEntity & Readonly<{ kind: 'clue'; text: string }>;
+export type RewardEntity = BaseEntity & Readonly<{ kind: 'reward'; stat: Stat; amount: number }>;
 export type EnemyEntity = BaseEntity & Readonly<{
   kind: 'enemy';
   stats: Readonly<{ hp: number; attack: number; defense: number }>;
 }>;
-
-export type LatchEntity = BaseEntity & Readonly<{
-  kind: 'latch';
-  rearSide: Direction;
-}>;
-
-export type RecoveryEntity = BaseEntity & Readonly<{
-  kind: 'recovery';
-}>;
-
+export type LatchEntity = BaseEntity & Readonly<{ kind: 'latch'; rearSide: Direction }>;
+export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
 export type PortalEntity = BaseEntity & Readonly<{
   kind: 'portal';
   target: Readonly<{ mapId: MapId; tile: Tile }>;
@@ -737,11 +718,7 @@ export const village: MapDefinition = {
     '############',
   ],
   entities: [
-    {
-      kind: 'recovery',
-      id: 'village-recovery',
-      tile: { x: 2, y: 2 },
-    },
+    { kind: 'recovery', id: 'village-recovery', tile: { x: 2, y: 2 } },
     {
       kind: 'clue',
       id: 'village-tower-lead',
@@ -807,19 +784,8 @@ export const floor1: MapDefinition = {
       tile: { x: 5, y: 4 },
       text: 'Scratches on the stone point down before they turn back east.',
     },
-    {
-      kind: 'latch',
-      id: 'floor1-rear-latch',
-      tile: { x: 7, y: 5 },
-      rearSide: 'east',
-    },
-    {
-      kind: 'reward',
-      id: 'floor1-power-core',
-      tile: { x: 9, y: 5 },
-      stat: 'attack',
-      amount: 2,
-    },
+    { kind: 'latch', id: 'floor1-rear-latch', tile: { x: 7, y: 5 }, rearSide: 'east' },
+    { kind: 'reward', id: 'floor1-power-core', tile: { x: 9, y: 5 }, stat: 'attack', amount: 2 },
     {
       kind: 'enemy',
       id: 'floor1-gatekeeper',
@@ -830,7 +796,7 @@ export const floor1: MapDefinition = {
 };
 ```
 
-This enemy deliberately costs 15 HP before the +2 ATK reward and 10 HP after it:
+The chosen numbers make the reward visibly matter:
 
 ```text
 ATK 10: damage 6 → ceil(20/6)=4 hits → 3 retaliations × 5 = 15 HP
@@ -886,11 +852,7 @@ import { floor2 } from './content/floor2';
 import { village } from './content/village';
 import type { Entity, MapDefinition, MapId, Tile } from './types';
 
-export const MAPS: Record<MapId, MapDefinition> = {
-  village,
-  floor1,
-  floor2,
-};
+export const MAPS: Record<MapId, MapDefinition> = { village, floor1, floor2 };
 
 export function isInBounds(mapId: MapId, tile: Tile): boolean {
   const map = MAPS[mapId];
@@ -946,9 +908,9 @@ export function validateContent(): readonly string[] {
 }
 ```
 
-- [ ] **Step 8: Make the HUD use authored map names**
+- [ ] **Step 8: Make HUD map names come from authored content**
 
-Modify `InteractionOverlay.renderHud` to receive `mapName: string` without a default. Modify `src/main.ts` to call:
+Modify `src/main.ts`:
 
 ```ts
 import { MAPS } from './game/content';
@@ -959,7 +921,7 @@ overlay.renderHud(state, MAPS[state.mapId].name);
 - [ ] **Step 9: Run content + full unit tests**
 
 ```bash
-bun run test:unit -- src/game/content.test.ts
+bunx vitest run src/game/content.test.ts
 bun run test:unit
 bun run typecheck
 ```
@@ -1030,11 +992,19 @@ describe('combat', () => {
   });
 
   it('resolution uses the same preview and commits defeat once', () => {
-    const state = { ...createInitialGameState(), mapId: 'floor1' as const, player: { hp: 30, maxHp: 30, attack: 12, defense: 2 } };
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor1' as const,
+      player: { hp: 30, maxHp: 30, attack: 12, defense: 2 },
+    };
     const result = resolveCombat(state, enemy);
     expect(result).toEqual({
       ok: true,
-      state: { ...state, player: { ...state.player, hp: 20 }, defeatedEnemyIds: ['floor1-gatekeeper'] },
+      state: {
+        ...state,
+        player: { ...state.player, hp: 20 },
+        defeatedEnemyIds: ['floor1-gatekeeper'],
+      },
       effect: { kind: 'enemyDefeated', enemyId: 'floor1-gatekeeper', hpLost: 10 },
     });
   });
@@ -1044,7 +1014,7 @@ describe('combat', () => {
 - [ ] **Step 2: Run the tests and verify they fail**
 
 ```bash
-bun run test:unit -- src/game/combat.test.ts
+bunx vitest run src/game/combat.test.ts
 ```
 
 Expected: FAIL because `combat.ts`, `CombatPreview`, and `ActionResult` are not defined yet.
@@ -1130,7 +1100,7 @@ export function resolveCombat(state: GameState, enemy: EnemyEntity): ActionResul
 - [ ] **Step 5: Run combat tests and the unit suite**
 
 ```bash
-bun run test:unit -- src/game/combat.test.ts
+bunx vitest run src/game/combat.test.ts
 bun run test:unit
 bun run typecheck
 ```
@@ -1166,7 +1136,7 @@ git commit -m "feat: add deterministic combat rules"
 
 - [ ] **Step 1: Write failing movement/action tests**
 
-Create `src/game/movement.test.ts` with these cases:
+Create `src/game/movement.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1201,6 +1171,12 @@ describe('attemptMove', () => {
     const result = attemptMove(open, 'east');
     expect(result.ok && result.state.tile).toEqual({ x: 7, y: 5 });
   });
+
+  it('steps onto a portal and arrives on its reciprocal portal tile', () => {
+    const atVillagePortalEdge = { ...base, mapId: 'village' as const, tile: { x: 8, y: 2 } };
+    const result = attemptMove(atVillagePortalEdge, 'east');
+    expect(result.ok && result.state).toMatchObject({ mapId: 'floor1', tile: { x: 2, y: 9 } });
+  });
 });
 ```
 
@@ -1213,9 +1189,11 @@ import { interactWithEntity } from './actions';
 import { createInitialGameState } from './state';
 
 const reward = findEntityById('floor1-power-core');
+const recovery = findEntityById('village-recovery');
 if (!reward || reward.kind !== 'reward') throw new Error('reward missing');
+if (!recovery || recovery.kind !== 'recovery') throw new Error('recovery missing');
 
-describe('reward action', () => {
+describe('authored actions', () => {
   it('applies the permanent attack reward exactly once', () => {
     const state = { ...createInitialGameState(), mapId: 'floor1' as const, tile: { x: 9, y: 4 } };
     const first = interactWithEntity(state, reward, state.tile);
@@ -1224,6 +1202,23 @@ describe('reward action', () => {
     expect(interactWithEntity(first.state, reward, first.state.tile)).toEqual({
       ok: false,
       reason: 'reward-already-taken',
+    });
+  });
+
+  it('heals without resetting permanent dungeon progress', () => {
+    const state = {
+      ...createInitialGameState(),
+      player: { hp: 8, maxHp: 30, attack: 12, defense: 2 },
+      openedRewardIds: ['floor1-power-core'],
+      defeatedEnemyIds: ['floor1-gatekeeper'],
+      openedShortcutIds: ['floor1-rear-latch'],
+    };
+    const result = interactWithEntity(state, recovery, { x: 3, y: 2 });
+    expect(result.ok && result.state).toMatchObject({
+      player: { hp: 30, maxHp: 30, attack: 12, defense: 2 },
+      openedRewardIds: ['floor1-power-core'],
+      defeatedEnemyIds: ['floor1-gatekeeper'],
+      openedShortcutIds: ['floor1-rear-latch'],
     });
   });
 });
@@ -1270,13 +1265,22 @@ describe('dispatchInput', () => {
       effect: null,
     });
   });
+
+  it('fight resolves the pending enemy and clears the prompt', () => {
+    const result = dispatchInput(pending, { kind: 'fight' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.session.pending).toBeNull();
+    expect(result.session.game.player.hp).toBe(20);
+    expect(result.session.game.defeatedEnemyIds).toEqual(['floor1-gatekeeper']);
+  });
 });
 ```
 
-- [ ] **Step 3: Run the focused tests and verify they fail**
+- [ ] **Step 3: Run focused tests and verify they fail**
 
 ```bash
-bun run test:unit -- src/game/movement.test.ts src/game/actions.test.ts src/game/session.test.ts
+bunx vitest run src/game/movement.test.ts src/game/actions.test.ts src/game/session.test.ts
 ```
 
 Expected: FAIL because the modules/session types do not exist.
@@ -1304,18 +1308,11 @@ export type SessionTransition =
 
 - [ ] **Step 5: Implement closed entity actions**
 
-Create `src/game/actions.ts` with an exhaustive switch:
+Create `src/game/actions.ts`:
 
 ```ts
 import { previewCombat } from './combat';
 import type { ActionResult, Direction, Entity, GameState, Tile } from './types';
-
-const OPPOSITE: Record<Direction, Direction> = {
-  north: 'south',
-  south: 'north',
-  east: 'west',
-  west: 'east',
-};
 
 function directionFromTo(from: Tile, to: Tile): Direction | null {
   if (to.x === from.x && to.y === from.y - 1) return 'north';
@@ -1370,7 +1367,7 @@ export function interactWithEntity(state: GameState, entity: Entity, fromTile: T
 }
 ```
 
-Note: `directionFromTo(entity.tile, fromTile)` returns the side the player occupies relative to the latch. For `rearSide: 'east'`, the player must be at `x + 1`.
+`directionFromTo(entity.tile, fromTile)` returns the side occupied by the player relative to the latch. For `rearSide: 'east'`, the player must stand at `x + 1`.
 
 - [ ] **Step 6: Implement movement and step-on portals**
 
@@ -1416,7 +1413,7 @@ export function attemptMove(state: GameState, direction: Direction): ActionResul
 }
 ```
 
-- [ ] **Step 7: Implement the tiny pure session dispatcher**
+- [ ] **Step 7: Implement the small pure session dispatcher**
 
 Create `src/game/session.ts`:
 
@@ -1456,10 +1453,10 @@ export function dispatchInput(session: SessionState, input: InputCommand): Sessi
 }
 ```
 
-- [ ] **Step 8: Run the pure-domain tests**
+- [ ] **Step 8: Run pure-domain tests**
 
 ```bash
-bun run test:unit -- src/game/movement.test.ts src/game/actions.test.ts src/game/session.test.ts
+bunx vitest run src/game/movement.test.ts src/game/actions.test.ts src/game/session.test.ts
 bun run test:unit
 bun run typecheck
 ```
@@ -1479,6 +1476,7 @@ git commit -m "feat: add movement and interaction rules"
 
 **Files:**
 - Create: `src/phaser/assets.ts`
+- Create: `src/phaser/assets.test.ts`
 - Modify: `src/phaser/WorldScene.ts`
 - Modify: `src/phaser/createGame.ts`
 - Modify: `src/ui/InteractionOverlay.ts`
@@ -1489,7 +1487,8 @@ git commit -m "feat: add movement and interaction rules"
 - Produces: `TILE_SIZE = 32`
 - Produces: `resolveAssetId(entity: Entity): string`
 - `WorldScene` consumes `getSession(): SessionState` and `onInput(input: InputCommand): void`
-- `InteractionOverlay` consumes `GameState`, `PendingInteraction`, `ActionEffect | null`, `BlockedReason | null`
+- `createGame(parent, deps)` returns `{ game: Phaser.Game; scene: WorldScene }`
+- `InteractionOverlay.render(view: OverlayView): void` exhaustively renders typed results.
 - Main remains the only mutable composition root; Phaser and overlay receive state/results.
 
 - [ ] **Step 1: Add a failing asset-contract unit test**
@@ -1514,7 +1513,7 @@ describe('placeholder asset contract', () => {
 Run:
 
 ```bash
-bun run test:unit -- src/phaser/assets.test.ts
+bunx vitest run src/phaser/assets.test.ts
 ```
 
 Expected: FAIL because `assets.ts` does not exist.
@@ -1535,7 +1534,7 @@ export function resolveAssetId(entity: Entity): string {
 
 - [ ] **Step 3: Replace the placeholder scene with authored tile/entity rendering**
 
-Make `WorldScene` take runtime callbacks in its constructor:
+Replace `src/phaser/WorldScene.ts` with:
 
 ```ts
 import Phaser from 'phaser';
@@ -1550,7 +1549,6 @@ export type WorldSceneDeps = {
 
 export class WorldScene extends Phaser.Scene {
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
-  private renderedMapId?: string;
 
   constructor(private readonly deps: WorldSceneDeps) {
     super('world');
@@ -1558,24 +1556,18 @@ export class WorldScene extends Phaser.Scene {
 
   create(): void {
     this.cursors = this.input.keyboard?.createCursorKeys();
-    this.renderWorld();
+    this.refresh();
   }
 
   update(): void {
     const command = this.readOneMoveCommand();
     if (command) this.deps.onInput(command);
-    if (this.renderedMapId !== this.deps.getSession().game.mapId) this.renderWorld();
   }
 
   refresh(): void {
-    this.renderWorld();
-  }
-
-  private renderWorld(): void {
     this.children.removeAll();
     const state = this.deps.getSession().game;
     const map = MAPS[state.mapId];
-    this.renderedMapId = map.id;
 
     map.layout.forEach((row, y) => {
       [...row].forEach((cell, x) => {
@@ -1592,11 +1584,10 @@ export class WorldScene extends Phaser.Scene {
     for (const entity of map.entities) {
       if (entity.kind === 'reward' && state.openedRewardIds.includes(entity.id)) continue;
       if (entity.kind === 'enemy' && state.defeatedEnemyIds.includes(entity.id)) continue;
-      const assetId = resolveAssetId(entity);
       const label = this.add.text(
         entity.tile.x * TILE_SIZE + TILE_SIZE / 2,
         entity.tile.y * TILE_SIZE + TILE_SIZE,
-        assetId[0]!.toUpperCase(),
+        resolveAssetId(entity)[0]!.toUpperCase(),
       );
       label.setOrigin(0.5, 1);
     }
@@ -1622,29 +1613,38 @@ export class WorldScene extends Phaser.Scene {
 }
 ```
 
-`renderWorld()` may be optimized later only if a measured need appears. For this MVP slice, rebuilding a tiny map after committed actions is simpler than maintaining independent sprite flags.
+For this MVP slice, rebuilding this tiny scene after committed actions is simpler than maintaining a second set of mutable sprite flags.
 
-- [ ] **Step 4: Update `createGame` to inject callbacks**
+- [ ] **Step 4: Update `createGame` to return the scene instance**
+
+Replace `src/phaser/createGame.ts` with:
 
 ```ts
 import Phaser from 'phaser';
 import { WorldScene, type WorldSceneDeps } from './WorldScene';
 
-export function createGame(parent: HTMLElement, deps: WorldSceneDeps): Phaser.Game {
-  return new Phaser.Game({
+export type CreatedGame = {
+  game: Phaser.Game;
+  scene: WorldScene;
+};
+
+export function createGame(parent: HTMLElement, deps: WorldSceneDeps): CreatedGame {
+  const scene = new WorldScene(deps);
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
     width: 640,
     height: 480,
-    scene: [new WorldScene(deps)],
+    scene: [scene],
     pixelArt: true,
   });
+  return { game, scene };
 }
 ```
 
-- [ ] **Step 5: Make the DOM overlay exhaustive and user-facing**
+- [ ] **Step 5: Make the DOM overlay exhaustively render typed results**
 
-Extend `InteractionOverlay` with stable blocked-reason copy and combat controls:
+Replace `src/ui/InteractionOverlay.ts` with this shape:
 
 ```ts
 import type { ActionEffect, BlockedReason, GameState, PendingInteraction } from '../game/types';
@@ -1666,52 +1666,112 @@ export type OverlayView = {
   effect: ActionEffect | null;
   blocked: BlockedReason | null;
 };
+
+function effectText(effect: ActionEffect | null): string {
+  if (!effect) return '';
+  switch (effect.kind) {
+    case 'moved':
+    case 'traveled':
+    case 'combatPrompt':
+      return '';
+    case 'clue':
+      return effect.text;
+    case 'reward':
+      return `${effect.stat.toUpperCase()} increased by ${effect.amount}.`;
+    case 'healed':
+      return `Recovered to ${effect.hp} HP.`;
+    case 'latchOpened':
+      return 'The rear latch opens. The shortcut is now usable from both sides.';
+    case 'enemyDefeated':
+      return `Enemy defeated. HP lost: ${effect.hpLost}.`;
+  }
+}
+
+export class InteractionOverlay {
+  constructor(
+    private readonly root: HTMLElement,
+    private readonly onFight: () => void = () => undefined,
+    private readonly onCancel: () => void = () => undefined,
+  ) {}
+
+  renderHud(state: GameState, mapName: string): void {
+    this.render({ state, mapName, pending: null, effect: null, blocked: null });
+  }
+
+  render(view: OverlayView): void {
+    const transient = view.blocked
+      ? `<div data-testid="blocked-reason" data-reason="${view.blocked}">${REASON_TEXT[view.blocked]}</div>`
+      : view.pending
+        ? `<section data-testid="combat-prompt">
+             <span data-testid="combat-hp-loss">HP loss: ${view.pending.preview.hpLoss}</span>
+             <button type="button" data-action="fight">Fight</button>
+             <button type="button" data-action="cancel">Cancel</button>
+           </section>`
+        : `<div data-testid="effect">${effectText(view.effect)}</div>`;
+
+    this.root.innerHTML = `
+      <section data-testid="hud" aria-label="Player status">
+        <span data-testid="map-name">${view.mapName}</span>
+        <span data-stat="hp">HP ${view.state.player.hp}/${view.state.player.maxHp}</span>
+        <span data-stat="attack">ATK ${view.state.player.attack}</span>
+        <span data-stat="defense">DEF ${view.state.player.defense}</span>
+        <div data-testid="interaction">${transient}</div>
+      </section>
+    `;
+
+    this.root.querySelector<HTMLButtonElement>('[data-action="fight"]')?.addEventListener('click', this.onFight);
+    this.root.querySelector<HTMLButtonElement>('[data-action="cancel"]')?.addEventListener('click', this.onCancel);
+  }
+
+  renderInvalidSave(onReset: () => void): void {
+    this.root.innerHTML = `
+      <section role="alert" data-testid="invalid-save">
+        <p>The local save cannot be loaded.</p>
+        <button type="button" data-action="reset-save">Reset save</button>
+      </section>
+    `;
+    this.root.querySelector<HTMLButtonElement>('[data-action="reset-save"]')?.addEventListener('click', onReset);
+  }
+}
 ```
 
-Render persistent HUD plus transient area. For blocked output use:
+- [ ] **Step 6: Compose session + scene + overlay in `main.ts` without moving rules into UI/runtime code**
 
-```html
-<div data-testid="blocked-reason" data-reason="combat-lethal">This fight would defeat you.</div>
-```
-
-For pending combat render:
-
-```html
-<section data-testid="combat-prompt">
-  <span data-testid="combat-hp-loss">HP loss: 10</span>
-  <button type="button" data-action="fight">Fight</button>
-  <button type="button" data-action="cancel">Cancel</button>
-</section>
-```
-
-Add callbacks to the overlay constructor:
+Use this structure before persistence is added:
 
 ```ts
-constructor(
-  private readonly root: HTMLElement,
-  private readonly onFight: () => void,
-  private readonly onCancel: () => void,
-) {}
-```
-
-After each render, wire `[data-action="fight"]` and `[data-action="cancel"]` buttons to those callbacks.
-
-- [ ] **Step 6: Compose session + scene + overlay in `main.ts` without putting rules there**
-
-Use this shape:
-
-```ts
+import './styles.css';
 import { MAPS } from './game/content';
 import { createInitialGameState } from './game/state';
 import { dispatchInput } from './game/session';
 import type { ActionEffect, BlockedReason, InputCommand, SessionState } from './game/types';
+import { createGame, type CreatedGame } from './phaser/createGame';
+import { InteractionOverlay } from './ui/InteractionOverlay';
+
+const gameRoot = document.querySelector<HTMLElement>('#game');
+const uiRoot = document.querySelector<HTMLElement>('#ui');
+if (!gameRoot || !uiRoot) throw new Error('Missing app roots');
 
 let session: SessionState = { game: createInitialGameState(), pending: null };
 let effect: ActionEffect | null = null;
 let blocked: BlockedReason | null = null;
+let created: CreatedGame;
 
-function renderUi(): void {
-  overlay.render({ state: session.game, mapName: MAPS[session.game.mapId].name, pending: session.pending, effect, blocked });
+const overlay = new InteractionOverlay(
+  uiRoot,
+  () => handleInput({ kind: 'fight' }),
+  () => handleInput({ kind: 'cancel' }),
+);
+
+function render(): void {
+  created.scene.refresh();
+  overlay.render({
+    state: session.game,
+    mapName: MAPS[session.game.mapId].name,
+    pending: session.pending,
+    effect,
+    blocked,
+  });
 }
 
 function handleInput(input: InputCommand): void {
@@ -1723,17 +1783,20 @@ function handleInput(input: InputCommand): void {
   } else {
     blocked = transition.reason;
   }
-  scene.refresh();
-  renderUi();
+  render();
 }
-```
 
-The exact variable ordering can differ, but rule decisions must stay inside pure modules.
+created = createGame(gameRoot, {
+  getSession: () => session,
+  onInput: handleInput,
+});
+overlay.render({ state: session.game, mapName: MAPS[session.game.mapId].name, pending: null, effect: null, blocked: null });
+```
 
 - [ ] **Step 7: Run the presentation gate**
 
 ```bash
-bun run test:unit -- src/phaser/assets.test.ts
+bunx vitest run src/phaser/assets.test.ts
 bun run test:unit
 bun run typecheck
 bun run lint
@@ -1756,7 +1819,6 @@ git commit -m "feat: render authored maze world"
 **Files:**
 - Create: `src/game/save.ts`
 - Create: `src/game/save.test.ts`
-- Modify: `src/game/content.ts`
 - Modify: `src/ui/InteractionOverlay.ts`
 - Modify: `src/main.ts`
 
@@ -1765,7 +1827,7 @@ git commit -m "feat: render authored maze world"
 - Produces: `loadGame(storage: Storage): LoadResult`
 - Produces: `resetGame(storage: Storage): GameState`
 - Produces: `LoadResult = fresh | loaded | invalid`
-- Main calls `saveGame` only when `GameState` identity changes after a successful transition.
+- Main calls `saveGame` only when a successful transition changes `GameState` identity.
 
 - [ ] **Step 1: Write failing persistence tests including stale-content validation**
 
@@ -1818,7 +1880,7 @@ describe('save/load', () => {
 - [ ] **Step 2: Run persistence tests and verify they fail**
 
 ```bash
-bun run test:unit -- src/game/save.test.ts
+bunx vitest run src/game/save.test.ts
 ```
 
 Expected: FAIL because `save.ts` does not exist.
@@ -1830,7 +1892,7 @@ Create `src/game/save.ts`:
 ```ts
 import { findEntityById, isLayoutFloor, MAPS } from './content';
 import { createInitialGameState } from './state';
-import type { GameState, MapId } from './types';
+import type { GameState } from './types';
 
 const SAVE_KEY = 'eridanus.save';
 
@@ -1855,7 +1917,7 @@ function parseShape(value: unknown): GameState | null {
 
 function isContentValid(state: GameState): boolean {
   if (!(state.mapId in MAPS)) return false;
-  if (!isLayoutFloor(state.mapId as MapId, state.tile)) return false;
+  if (!isLayoutFloor(state.mapId, state.tile)) return false;
   if (!state.openedRewardIds.every((id) => findEntityById(id)?.kind === 'reward')) return false;
   if (!state.defeatedEnemyIds.every((id) => findEntityById(id)?.kind === 'enemy')) return false;
   if (!state.openedShortcutIds.every((id) => findEntityById(id)?.kind === 'latch')) return false;
@@ -1889,56 +1951,57 @@ export function resetGame(storage: Storage): GameState {
 }
 ```
 
-- [ ] **Step 4: Add the invalid-save recovery UI**
+- [ ] **Step 4: Use the already-defined invalid-save UI for reset**
 
-Extend `InteractionOverlay` with:
-
-```ts
-renderInvalidSave(onReset: () => void): void {
-  this.root.innerHTML = `
-    <section role="alert" data-testid="invalid-save">
-      <p>The local save cannot be loaded.</p>
-      <button type="button" data-action="reset-save">Reset save</button>
-    </section>
-  `;
-  this.root.querySelector<HTMLButtonElement>('[data-action="reset-save"]')?.addEventListener('click', onReset);
-}
-```
+`InteractionOverlay.renderInvalidSave` was created in Task 5. Do not add a second recovery surface. Use it from the startup path in `main.ts`.
 
 - [ ] **Step 5: Make `main.ts` load first and autosave every state change**
 
-At startup:
+Refactor startup around `startRuntime(initialState: GameState)`:
 
 ```ts
+import { loadGame, resetGame, saveGame } from './game/save';
+import type { GameState } from './game/types';
+
+function startRuntime(initialState: GameState): void {
+  session = { game: initialState, pending: null };
+  created = createGame(gameRoot, {
+    getSession: () => session,
+    onInput: handleInput,
+  });
+  render();
+}
+
 const load = loadGame(window.localStorage);
 if (load.kind === 'invalid') {
-  overlay.renderInvalidSave(() => {
-    session = { game: resetGame(window.localStorage), pending: null };
-    startRuntime();
-  });
+  overlay.renderInvalidSave(() => startRuntime(resetGame(window.localStorage)));
 } else {
-  session = { game: load.state, pending: null };
-  startRuntime();
+  startRuntime(load.state);
 }
 ```
 
-In `handleInput`, capture the prior durable state and save only when a successful transition changes it:
+In `handleInput`, save only when a successful transition changes durable state:
 
 ```ts
 const previousGame = session.game;
 const transition = dispatchInput(session, input);
 if (transition.ok) {
   session = transition.session;
+  effect = transition.effect;
+  blocked = null;
   if (session.game !== previousGame) saveGame(window.localStorage, session.game);
+} else {
+  blocked = transition.reason;
 }
+render();
 ```
 
-This saves ordinary movement, travel, reward, recovery, latch opening, and combat resolution, but not opening/cancelling a combat prompt.
+This saves ordinary movement, travel, reward, recovery, latch opening, and combat resolution, but not combat prompt open/cancel.
 
 - [ ] **Step 6: Run persistence and full gates**
 
 ```bash
-bun run test:unit -- src/game/save.test.ts
+bunx vitest run src/game/save.test.ts
 bun run test:unit
 bun run typecheck
 bun run lint
@@ -1960,30 +2023,30 @@ git commit -m "feat: persist tower progress locally"
 
 **Files:**
 - Modify: `tests/e2e/cross-floor.spec.ts`
-- Modify only if the test exposes real gameplay readability issues: `src/game/content/village.ts`, `src/game/content/floor1.ts`, `src/game/content/floor2.ts`
-- Modify only if user-facing copy needs clarity: `src/ui/InteractionOverlay.ts`
+- Modify only if the browser journey exposes a real route/readability defect: `src/game/content/village.ts`, `src/game/content/floor1.ts`, `src/game/content/floor2.ts`
+- Modify only if user-facing copy is unclear: `src/ui/InteractionOverlay.ts`
 
 **Interfaces:**
-- Consumes the real keyboard path, HUD, combat controls, LocalStorage persistence, and authored maps.
+- Consumes real keyboard input, real HUD/combat controls, authored maps, and LocalStorage persistence.
 - Produces no test-only game API.
 
-- [ ] **Step 1: Add small real-input helpers inside the E2E file**
-
-At the top of `tests/e2e/cross-floor.spec.ts` add:
+- [ ] **Step 1: Add the real-input helper inside the E2E file**
 
 ```ts
 import type { Page } from '@playwright/test';
 
-async function press(page: Page, key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight', count: number): Promise<void> {
+async function press(
+  page: Page,
+  key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight',
+  count: number,
+): Promise<void> {
   for (let i = 0; i < count; i += 1) await page.keyboard.press(key);
 }
 ```
 
-Do not import game internals into Playwright.
-
 - [ ] **Step 2: Add the failing full journey test**
 
-Append:
+Append to `tests/e2e/cross-floor.spec.ts`:
 
 ```ts
 test('completes the cross-floor reward, combat, shortcut, recovery, and reload loop', async ({ page }) => {
@@ -1991,16 +2054,16 @@ test('completes the cross-floor reward, combat, shortcut, recovery, and reload l
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
-  // Village lead: start (2,5), move to (3,5), bump clue at (4,5).
+  // Village: start (2,5), move to (3,5), bump clue at (4,5).
   await press(page, 'ArrowRight', 2);
   await expect(page.getByTestId('interaction')).toContainText('old tower path');
 
-  // Reach village portal at (9,2) and enter Floor 1 at (2,9).
+  // Reach village portal at (9,2), arrive Floor 1 at (2,9).
   await press(page, 'ArrowUp', 3);
   await press(page, 'ArrowRight', 6);
   await expect(page.getByTestId('map-name')).toHaveText('Tower Floor 1');
 
-  // Reach the Floor 1 clue from below, then route around it to the Floor 2 portal.
+  // Read Floor 1 clue, route around it, step onto Floor 2 portal at (5,2).
   await press(page, 'ArrowRight', 3);
   await press(page, 'ArrowUp', 4);
   await page.keyboard.press('ArrowUp');
@@ -2015,7 +2078,7 @@ test('completes the cross-floor reward, combat, shortcut, recovery, and reload l
   await press(page, 'ArrowUp', 7);
   await expect(page.getByTestId('map-name')).toHaveText('Tower Floor 1');
 
-  // Rear arrival at (14,2): approach enemy at (11,5), preview before reward, then cancel.
+  // Rear arrival at (14,2): preview gatekeeper before reward, then cancel.
   await press(page, 'ArrowDown', 3);
   await press(page, 'ArrowLeft', 2);
   await page.keyboard.press('ArrowLeft');
@@ -2036,25 +2099,25 @@ test('completes the cross-floor reward, combat, shortcut, recovery, and reload l
   await page.getByRole('button', { name: 'Fight' }).click();
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 20/30');
 
-  // Walk to latch rear, open it, then reload while standing at (8,5).
-  await press(page, 'ArrowLeft', 3);
+  // Walk from (12,5) to latch rear at (8,5), bump latch at (7,5), then reload.
+  await press(page, 'ArrowLeft', 4);
   await page.keyboard.press('ArrowLeft');
   await expect(page.getByTestId('interaction')).toContainText('shortcut');
   await page.reload();
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 12');
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 20/30');
 
-  // Traverse the now-open latch to the front and return through the village portal.
+  // Traverse open latch to front side and return through Floor 1 → village portal.
   await press(page, 'ArrowLeft', 2);
   await press(page, 'ArrowLeft', 4);
   await press(page, 'ArrowDown', 4);
   await expect(page.getByTestId('map-name')).toHaveText('Starting Village');
 
-  // Move from village portal (9,2) to (3,2), bump recovery at (2,2), and heal.
+  // Village portal lands at (9,2): move to (3,2), then bump recovery at (2,2).
   await press(page, 'ArrowLeft', 7);
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30/30');
 
-  // Final reload preserves permanent progression and current village position.
+  // Final reload preserves permanent progression and village location.
   await page.reload();
   await expect(page.getByTestId('map-name')).toHaveText('Starting Village');
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 12');
@@ -2062,36 +2125,27 @@ test('completes the cross-floor reward, combat, shortcut, recovery, and reload l
 });
 ```
 
-If a move count fails, inspect the actual authored map and fix the map/readability or the explicit path in this test. Do not add a teleport/test API.
-
-- [ ] **Step 3: Run the E2E test and capture the first real failure**
+- [ ] **Step 3: Run the E2E test and capture the first real product failure**
 
 ```bash
 bun run test:e2e -- tests/e2e/cross-floor.spec.ts
 ```
 
-Expected before final integration polish: at least one assertion/path may fail due to missing transient copy or scene refresh behavior. Fix the product behavior, not the test by bypassing gameplay.
+Expected before final polish: if any path/assertion fails, use the trace to identify whether map geometry, scene refresh, button wiring, or user-facing copy is wrong. Fix the product behavior; do not bypass gameplay.
 
-- [ ] **Step 4: Make the minimum user-facing corrections exposed by E2E**
+- [ ] **Step 4: Restrict corrections to the authored slice**
 
-Allowed corrections in this task are limited to:
+Only make corrections in these categories:
 
 ```text
-- map geometry that makes the intended route impossible/unclear
+- map geometry that makes the intended route impossible or confusing
 - interaction copy needed to understand clue/reward/latch feedback
 - scene refresh after a committed state change
-- button wiring/focus that prevents Fight/Cancel from working
-- the exact enemy/reward numbers already locked to 15 HP → 10 HP
+- Fight/Cancel button wiring/focus
+- the locked 15 HP → 10 HP combat payoff
 ```
 
-Do not introduce new systems or additional floor content.
-
-For latch feedback, use copy such as:
-
-```ts
-case 'latchOpened':
-  return 'The rear latch opens. The shortcut is now usable from both sides.';
-```
+Do not add a new system or more floor content.
 
 - [ ] **Step 5: Run the complete browser journey until green**
 
@@ -2117,11 +2171,11 @@ git commit -m "test: cover cross-floor gameplay journey"
 - Modify only if verification finds a concrete defect: files from Tasks 1–7
 
 **Interfaces:**
-- No new interfaces. This task verifies the complete HPA-237 contract and keeps the PR planning/execution artifacts accurate.
+- No new interfaces. This task verifies the complete HPA-237 contract.
 
-- [ ] **Step 1: Run all three CI-equivalent commands locally**
+- [ ] **Step 1: Run all three CI-equivalent gates locally**
 
-Build & lint equivalent:
+Build & lint:
 
 ```bash
 bun install --frozen-lockfile
@@ -2133,7 +2187,7 @@ bun run build
 
 Expected: PASS.
 
-Unit-test equivalent:
+Unit tests:
 
 ```bash
 bun run test:unit
@@ -2141,7 +2195,7 @@ bun run test:unit
 
 Expected: PASS.
 
-Playwright equivalent:
+Playwright:
 
 ```bash
 bunx playwright install chromium
@@ -2152,36 +2206,34 @@ Expected: PASS.
 
 - [ ] **Step 2: Verify malformed-save recovery manually**
 
-Open browser devtools and execute:
+Open browser devtools and run:
 
 ```js
 localStorage.setItem('eridanus.save', '{bad');
 location.reload();
 ```
 
-Expected: the app shows the explicit invalid-save recovery UI, not a fresh game.
+Expected: explicit invalid-save recovery UI appears instead of a fresh game.
 
 Click **Reset save**.
 
-Expected: HUD returns to Starting Village, HP 30/30, ATK 10, DEF 2.
+Expected: Starting Village HUD returns with HP 30/30, ATK 10, DEF 2.
 
-- [ ] **Step 3: Verify pre-commit behavior stays lightweight**
+- [ ] **Step 3: Verify the pre-commit hook stays lightweight**
 
-Make a harmless formatting-only edit to `README.md`, stage it, then run:
+Make a harmless formatting edit to `README.md`, stage it, then run:
 
 ```bash
 .husky/pre-commit
 ```
 
-Expected: lint-staged runs only staged ESLint/Prettier work; it does not run Vitest or Playwright.
+Expected: only lint-staged ESLint/Prettier work runs; Vitest and Playwright do not run.
 
-Restore or keep the formatted README edit as appropriate.
+- [ ] **Step 4: Finish README with concrete development/architecture guidance**
 
-- [ ] **Step 4: Finish README with architecture and development commands**
+Add this content (merge with the existing title/summary rather than duplicating headings):
 
-README must contain these sections with concrete commands:
-
-```markdown
+````markdown
 ## Development
 
 ```sh
@@ -2206,19 +2258,16 @@ bun run build
 - Phaser renders one reusable authored-map scene and forwards input.
 - A framework-free DOM overlay renders HUD, interaction copy, combat controls, and save recovery.
 - Content is authored as closed typed entities plus compact ASCII map rows.
-```
-```
+````
 
-- [ ] **Step 5: Inspect the final diff for scope creep**
-
-Run:
+- [ ] **Step 5: Inspect final diff for scope creep**
 
 ```bash
 git diff main...HEAD --stat
 git diff main...HEAD -- . ':!docs/superpowers/plans/2026-09-15-hpa-237-cross-floor-slice.md'
 ```
 
-Confirm there is no implementation of:
+Confirm the diff contains no implementation of:
 
 ```text
 discovery/fog
@@ -2240,14 +2289,14 @@ git add README.md
 git commit -m "docs: document Eridanus development workflow"
 ```
 
-If README already matches exactly and no code defect was found, skip an empty commit.
+If README already matches exactly and no defect was found, skip an empty commit.
 
 ---
 
 ## Risks to Watch During Execution
 
 1. **Combat prompt ownership:** if movement gating or pending enemy identity appears inside `WorldScene`, stop and move it back into `PendingInteraction` + `dispatchInput` before continuing.
-2. **Content drift:** if a map change requires a new one-off entity shape, first prove the existing closed union cannot represent the mechanic. Do not add generic trigger objects.
+2. **Content drift:** if a map change requires a one-off entity shape, first prove the existing closed union cannot represent the mechanic. Do not add generic trigger objects.
 3. **Save drift:** if authored geometry/entity IDs change, keep load validation strict and let old development saves fail into explicit reset; do not add migration code.
 4. **Presentation duplication:** if Phaser and the DOM overlay both start deriving combat/reward decisions, move the decision back into `ActionEffect`/`BlockedReason`; presentation should only render typed results.
 
@@ -2257,23 +2306,23 @@ If README already matches exactly and no code defect was found, skip an empty co
 
 - Tooling, Bun pin, ESLint/Prettier/Husky/lint-staged: Task 1.
 - Three independent CI jobs: Task 1.
-- One plain durable GameState + no discovery state: Tasks 1–2.
+- One plain durable `GameState` + no discovery state: Tasks 1–2.
 - Closed authored map/entity schema and reciprocal portals: Task 2.
 - Deterministic combat formula, no final retaliation, unwinnable/lethal blocking: Task 3.
 - Rear-only latch opening then two-way traversal: Task 4.
 - Bump interactions and step-on portals: Task 4.
 - Transient combat prompt and movement gating outside Phaser/durable state: Task 4.
-- One reusable WorldScene, camera follow, tile-coordinate collision, placeholder asset seam: Task 5.
+- One reusable `WorldScene`, camera follow, tile-coordinate collision, placeholder asset seam: Task 5.
 - Persistent map/HP/ATK/DEF HUD plus Fight/Cancel and blocked reasons: Task 5.
 - One LocalStorage snapshot, movement autosave, malformed/content-invalid explicit reset: Task 6.
 - Complete village → F1 → F2 → rear F1 → reward → cheaper combat → latch → village → reload path: Task 7.
-- Final art remains deferred to HPA-22; no generated art work is mixed into HPA-237.
+- Final art remains deferred to HPA-22; no generated-art work is mixed into HPA-237.
 
 No spec requirement is left without an implementation task.
 
 ### Placeholder scan
 
-The plan contains no `TBD`, `TODO`, “implement later”, generic “add tests”, or “similar to Task N” instructions. Every coding task has named files, concrete interfaces, test examples, commands, expected outcomes, and commit checkpoints.
+The plan contains no unresolved placeholder instructions. Every coding task has named files, concrete interfaces, test examples, commands, expected outcomes, and commit checkpoints.
 
 ### Type consistency
 
