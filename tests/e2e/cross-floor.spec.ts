@@ -58,6 +58,12 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
   await press(page, 'ArrowLeft', 2);
   await press(page, 'ArrowLeft', 1);
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 15');
+  // movement gated while combat prompt open
+  await page.keyboard.press('ArrowUp', { delay: 50 });
+  await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
+    'data-reason',
+    'interaction-pending',
+  );
   await page.getByRole('button', { name: 'Cancel' }).click();
 
   // Up ×1, Left ×3, Down: collect reward; assert ATK 12
