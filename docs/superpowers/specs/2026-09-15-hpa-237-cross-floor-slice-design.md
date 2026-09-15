@@ -181,13 +181,11 @@ type WinnableCombatPreview = {
   hpLoss: number;
 };
 
-type PendingInteraction =
-  | null
-  | {
-      kind: 'combat';
-      enemyId: string;
-      preview: WinnableCombatPreview;
-    };
+type PendingInteraction = null | {
+  kind: 'combat';
+  enemyId: string;
+  preview: WinnableCombatPreview;
+};
 ```
 
 Rules:

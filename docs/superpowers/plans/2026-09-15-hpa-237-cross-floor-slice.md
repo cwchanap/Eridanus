@@ -133,9 +133,11 @@ export type ActionResult =
   | { ok: true; state: GameState; effect: ActionEffect }
   | { ok: false; reason: BlockedReason };
 
-export type PendingInteraction =
-  | null
-  | { kind: 'combat'; enemyId: string; preview: WinnableCombatPreview };
+export type PendingInteraction = null | {
+  kind: 'combat';
+  enemyId: string;
+  preview: WinnableCombatPreview;
+};
 
 export type SessionState = Readonly<{
   game: GameState;
@@ -155,6 +157,7 @@ Do not add a generic event bus or state-machine framework around these types.
 ### Task 1: Bootstrap the Runtime, Quality Tooling, HUD, and CI
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.json`
 - Create: `vite.config.ts`
@@ -178,6 +181,7 @@ Do not add a generic event bus or state-machine framework around these types.
 - Modify: `README.md`
 
 **Interfaces:**
+
 - Produces: `createInitialGameState(): GameState`
 - Produces: `InteractionOverlay.renderHud(state: GameState, mapName: string): void`
 - Produces: `createGame(parent: HTMLElement): Phaser.Game`
@@ -283,7 +287,13 @@ export function createInitialGameState(): GameState {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"]
   },
-  "include": ["src", "tests", "vite.config.ts", "vitest.config.ts", "playwright.config.ts"]
+  "include": [
+    "src",
+    "tests",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts"
+  ]
 }
 ```
 
@@ -383,7 +393,14 @@ import Phaser from 'phaser';
 import { WorldScene } from './WorldScene';
 
 export function createGame(parent: HTMLElement): Phaser.Game {
-  return new Phaser.Game({ type: Phaser.AUTO, parent, width: 640, height: 480, scene: [WorldScene], pixelArt: true });
+  return new Phaser.Game({
+    type: Phaser.AUTO,
+    parent,
+    width: 640,
+    height: 480,
+    scene: [WorldScene],
+    pixelArt: true,
+  });
 }
 ```
 
@@ -415,7 +432,10 @@ createGame(gameRoot);
     <title>Eridanus</title>
   </head>
   <body>
-    <main id="app"><div id="game"></div><div id="ui"></div></main>
+    <main id="app">
+      <div id="game"></div>
+      <div id="ui"></div>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
@@ -425,10 +445,27 @@ createGame(gameRoot);
 
 ```css
 html,
-body { margin: 0; min-height: 100%; background: #111; color: #fff; font-family: system-ui, sans-serif; }
-#app { position: relative; width: min(100vw, 640px); margin: 0 auto; }
-[data-testid='hud'] { display: flex; gap: 1rem; flex-wrap: wrap; padding: 0.5rem; }
-[data-testid='interaction'] { flex-basis: 100%; }
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #111;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+#app {
+  position: relative;
+  width: min(100vw, 640px);
+  margin: 0 auto;
+}
+[data-testid='hud'] {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.5rem;
+}
+[data-testid='interaction'] {
+  flex-basis: 100%;
+}
 ```
 
 - [ ] **Step 7: Add the first real Playwright assertion**
@@ -545,6 +582,7 @@ git commit -m "chore: bootstrap Eridanus web game"
 ### Task 2: Lock the Authored Content Schema and Author the Three Real Maps
 
 **Files:**
+
 - Modify: `src/game/types.ts`
 - Create: `src/game/content.ts`
 - Create: `src/game/content.test.ts`
@@ -555,6 +593,7 @@ git commit -m "chore: bootstrap Eridanus web game"
 - Modify: `src/main.ts`
 
 **Interfaces:**
+
 - Produces: `Entity`, `MapDefinition`, `MAPS: Record<MapId, MapDefinition>`
 - Produces: `getEntityAt(mapId, tile)`, `findEntityById(id)`, `isInBounds(mapId, tile)`, `isLayoutFloor(mapId, tile)`, `validateContent()`
 
@@ -598,13 +637,31 @@ Append to `src/game/types.ts`:
 ```ts
 export type BaseEntity = Readonly<{ id: string; tile: Tile; assetId?: string }>;
 export type ClueEntity = BaseEntity & Readonly<{ kind: 'clue'; text: string }>;
-export type RewardEntity = BaseEntity & Readonly<{ kind: 'reward'; stat: Stat; amount: number }>;
-export type EnemyEntity = BaseEntity & Readonly<{ kind: 'enemy'; stats: Readonly<{ hp: number; attack: number; defense: number }> }>;
-export type LatchEntity = BaseEntity & Readonly<{ kind: 'latch'; rearSide: Direction }>;
+export type RewardEntity = BaseEntity &
+  Readonly<{ kind: 'reward'; stat: Stat; amount: number }>;
+export type EnemyEntity = BaseEntity &
+  Readonly<{
+    kind: 'enemy';
+    stats: Readonly<{ hp: number; attack: number; defense: number }>;
+  }>;
+export type LatchEntity = BaseEntity &
+  Readonly<{ kind: 'latch'; rearSide: Direction }>;
 export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
-export type PortalEntity = BaseEntity & Readonly<{ kind: 'portal'; target: Readonly<{ mapId: MapId; tile: Tile }> }>;
-export type Entity = ClueEntity | RewardEntity | EnemyEntity | LatchEntity | RecoveryEntity | PortalEntity;
-export type MapDefinition = Readonly<{ id: MapId; name: string; layout: readonly string[]; entities: readonly Entity[] }>;
+export type PortalEntity = BaseEntity &
+  Readonly<{ kind: 'portal'; target: Readonly<{ mapId: MapId; tile: Tile }> }>;
+export type Entity =
+  | ClueEntity
+  | RewardEntity
+  | EnemyEntity
+  | LatchEntity
+  | RecoveryEntity
+  | PortalEntity;
+export type MapDefinition = Readonly<{
+  id: MapId;
+  name: string;
+  layout: readonly string[];
+  entities: readonly Entity[];
+}>;
 ```
 
 - [ ] **Step 4: Author village**
@@ -629,8 +686,18 @@ export const village: MapDefinition = {
   ],
   entities: [
     { kind: 'recovery', id: 'village-recovery', tile: { x: 2, y: 2 } },
-    { kind: 'clue', id: 'village-tower-lead', tile: { x: 4, y: 5 }, text: 'The old tower path loops below the sealed first floor.' },
-    { kind: 'portal', id: 'village-to-floor1', tile: { x: 9, y: 2 }, target: { mapId: 'floor1', tile: { x: 2, y: 9 } } },
+    {
+      kind: 'clue',
+      id: 'village-tower-lead',
+      tile: { x: 4, y: 5 },
+      text: 'The old tower path loops below the sealed first floor.',
+    },
+    {
+      kind: 'portal',
+      id: 'village-to-floor1',
+      tile: { x: 9, y: 2 },
+      target: { mapId: 'floor1', tile: { x: 2, y: 9 } },
+    },
   ],
 };
 ```
@@ -660,13 +727,49 @@ export const floor1: MapDefinition = {
     '##################',
   ],
   entities: [
-    { kind: 'portal', id: 'floor1-to-village', tile: { x: 2, y: 9 }, target: { mapId: 'village', tile: { x: 9, y: 2 } } },
-    { kind: 'portal', id: 'floor1-front-to-floor2', tile: { x: 5, y: 2 }, target: { mapId: 'floor2', tile: { x: 1, y: 8 } } },
-    { kind: 'portal', id: 'floor1-rear-to-floor2', tile: { x: 14, y: 2 }, target: { mapId: 'floor2', tile: { x: 14, y: 1 } } },
-    { kind: 'clue', id: 'floor1-lower-route-clue', tile: { x: 5, y: 4 }, text: 'Scratches on the stone point down before they turn back east.' },
-    { kind: 'latch', id: 'floor1-rear-latch', tile: { x: 7, y: 5 }, rearSide: 'east' },
-    { kind: 'reward', id: 'floor1-power-core', tile: { x: 9, y: 5 }, stat: 'attack', amount: 2 },
-    { kind: 'enemy', id: 'floor1-gatekeeper', tile: { x: 11, y: 5 }, stats: { hp: 20, attack: 7, defense: 4 } },
+    {
+      kind: 'portal',
+      id: 'floor1-to-village',
+      tile: { x: 2, y: 9 },
+      target: { mapId: 'village', tile: { x: 9, y: 2 } },
+    },
+    {
+      kind: 'portal',
+      id: 'floor1-front-to-floor2',
+      tile: { x: 5, y: 2 },
+      target: { mapId: 'floor2', tile: { x: 1, y: 8 } },
+    },
+    {
+      kind: 'portal',
+      id: 'floor1-rear-to-floor2',
+      tile: { x: 14, y: 2 },
+      target: { mapId: 'floor2', tile: { x: 14, y: 1 } },
+    },
+    {
+      kind: 'clue',
+      id: 'floor1-lower-route-clue',
+      tile: { x: 5, y: 4 },
+      text: 'Scratches on the stone point down before they turn back east.',
+    },
+    {
+      kind: 'latch',
+      id: 'floor1-rear-latch',
+      tile: { x: 7, y: 5 },
+      rearSide: 'east',
+    },
+    {
+      kind: 'reward',
+      id: 'floor1-power-core',
+      tile: { x: 9, y: 5 },
+      stat: 'attack',
+      amount: 2,
+    },
+    {
+      kind: 'enemy',
+      id: 'floor1-gatekeeper',
+      tile: { x: 11, y: 5 },
+      stats: { hp: 20, attack: 7, defense: 4 },
+    },
   ],
 };
 ```
@@ -701,8 +804,18 @@ export const floor2: MapDefinition = {
     '################',
   ],
   entities: [
-    { kind: 'portal', id: 'floor2-front-to-floor1', tile: { x: 1, y: 8 }, target: { mapId: 'floor1', tile: { x: 5, y: 2 } } },
-    { kind: 'portal', id: 'floor2-rear-to-floor1', tile: { x: 14, y: 1 }, target: { mapId: 'floor1', tile: { x: 14, y: 2 } } },
+    {
+      kind: 'portal',
+      id: 'floor2-front-to-floor1',
+      tile: { x: 1, y: 8 },
+      target: { mapId: 'floor1', tile: { x: 5, y: 2 } },
+    },
+    {
+      kind: 'portal',
+      id: 'floor2-rear-to-floor1',
+      tile: { x: 14, y: 1 },
+      target: { mapId: 'floor1', tile: { x: 14, y: 2 } },
+    },
   ],
 };
 ```
@@ -721,7 +834,12 @@ export const MAPS: Record<MapId, MapDefinition> = { village, floor1, floor2 };
 
 export function isInBounds(mapId: MapId, tile: Tile): boolean {
   const map = MAPS[mapId];
-  return tile.y >= 0 && tile.y < map.layout.length && tile.x >= 0 && tile.x < map.layout[0]!.length;
+  return (
+    tile.y >= 0 &&
+    tile.y < map.layout.length &&
+    tile.x >= 0 &&
+    tile.x < map.layout[0]!.length
+  );
 }
 
 export function isLayoutFloor(mapId: MapId, tile: Tile): boolean {
@@ -729,11 +847,15 @@ export function isLayoutFloor(mapId: MapId, tile: Tile): boolean {
 }
 
 export function getEntityAt(mapId: MapId, tile: Tile): Entity | undefined {
-  return MAPS[mapId].entities.find((entity) => entity.tile.x === tile.x && entity.tile.y === tile.y);
+  return MAPS[mapId].entities.find(
+    (entity) => entity.tile.x === tile.x && entity.tile.y === tile.y,
+  );
 }
 
 export function findEntityById(id: string): Entity | undefined {
-  return Object.values(MAPS).flatMap((map) => map.entities).find((entity) => entity.id === id);
+  return Object.values(MAPS)
+    .flatMap((map) => map.entities)
+    .find((entity) => entity.id === id);
 }
 
 export function validateContent(): readonly string[] {
@@ -742,12 +864,14 @@ export function validateContent(): readonly string[] {
 
   for (const map of Object.values(MAPS)) {
     const width = map.layout[0]?.length ?? 0;
-    if (width === 0 || map.layout.some((row) => row.length !== width)) errors.push(`${map.id}: layout must be rectangular`);
+    if (width === 0 || map.layout.some((row) => row.length !== width))
+      errors.push(`${map.id}: layout must be rectangular`);
 
     for (const entity of map.entities) {
       if (ids.has(entity.id)) errors.push(`duplicate entity id: ${entity.id}`);
       ids.add(entity.id);
-      if (!isLayoutFloor(map.id, entity.tile)) errors.push(`${entity.id}: entity tile must be floor`);
+      if (!isLayoutFloor(map.id, entity.tile))
+        errors.push(`${entity.id}: entity tile must be floor`);
 
       if (entity.kind === 'portal') {
         if (!isLayoutFloor(entity.target.mapId, entity.target.tile)) {
@@ -760,7 +884,8 @@ export function validateContent(): readonly string[] {
           back.target.mapId !== map.id ||
           back.target.tile.x !== entity.tile.x ||
           back.target.tile.y !== entity.tile.y
-        ) errors.push(`${entity.id}: reciprocal portal missing`);
+        )
+          errors.push(`${entity.id}: reciprocal portal missing`);
       }
     }
   }
@@ -798,11 +923,13 @@ git commit -m "feat: define authored tower maps"
 ### Task 3: Implement Deterministic Combat Rules First
 
 **Files:**
+
 - Modify: `src/game/types.ts`
 - Create: `src/game/combat.ts`
 - Create: `src/game/combat.test.ts`
 
 **Interfaces:**
+
 - Produces: `CombatPreview`, `WinnableCombatPreview`
 - Produces: `previewCombat(player, enemy)` and `resolveCombat(state, enemy)`
 
@@ -821,25 +948,45 @@ if (!enemy || enemy.kind !== 'enemy') throw new Error('test enemy missing');
 
 describe('combat', () => {
   it('previews baseline and upgraded HP loss', () => {
-    expect(previewCombat({ hp: 30, maxHp: 30, attack: 10, defense: 2 }, enemy.stats)).toEqual({ winnable: true, hitsNeeded: 4, hpLoss: 15 });
-    expect(previewCombat({ hp: 30, maxHp: 30, attack: 12, defense: 2 }, enemy.stats)).toEqual({ winnable: true, hitsNeeded: 3, hpLoss: 10 });
+    expect(
+      previewCombat({ hp: 30, maxHp: 30, attack: 10, defense: 2 }, enemy.stats),
+    ).toEqual({ winnable: true, hitsNeeded: 4, hpLoss: 15 });
+    expect(
+      previewCombat({ hp: 30, maxHp: 30, attack: 12, defense: 2 }, enemy.stats),
+    ).toEqual({ winnable: true, hitsNeeded: 3, hpLoss: 10 });
   });
 
   it('rejects zero player damage before division', () => {
-    expect(previewCombat({ hp: 30, maxHp: 30, attack: 4, defense: 2 }, enemy.stats)).toEqual({ winnable: false, reason: 'combat-unwinnable' });
+    expect(
+      previewCombat({ hp: 30, maxHp: 30, attack: 4, defense: 2 }, enemy.stats),
+    ).toEqual({ winnable: false, reason: 'combat-unwinnable' });
   });
 
   it('treats ending at zero HP as lethal', () => {
-    expect(previewCombat({ hp: 15, maxHp: 30, attack: 10, defense: 2 }, enemy.stats)).toEqual({ winnable: false, reason: 'combat-lethal' });
+    expect(
+      previewCombat({ hp: 15, maxHp: 30, attack: 10, defense: 2 }, enemy.stats),
+    ).toEqual({ winnable: false, reason: 'combat-lethal' });
   });
 
   it('resolution commits exactly the previewed loss', () => {
-    const state = { ...createInitialGameState(), mapId: 'floor1' as const, player: { hp: 30, maxHp: 30, attack: 12, defense: 2 } };
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor1' as const,
+      player: { hp: 30, maxHp: 30, attack: 12, defense: 2 },
+    };
     const result = resolveCombat(state, enemy);
     expect(result).toEqual({
       ok: true,
-      state: { ...state, player: { ...state.player, hp: 20 }, defeatedEnemyIds: ['floor1-gatekeeper'] },
-      effect: { kind: 'enemyDefeated', enemyId: 'floor1-gatekeeper', hpLost: 10 },
+      state: {
+        ...state,
+        player: { ...state.player, hp: 20 },
+        defeatedEnemyIds: ['floor1-gatekeeper'],
+      },
+      effect: {
+        kind: 'enemyDefeated',
+        enemyId: 'floor1-gatekeeper',
+        hpLost: 10,
+      },
     });
   });
 });
@@ -862,11 +1009,21 @@ Add the `WinnableCombatPreview`, `CombatPreview`, `BlockedReason`, `ActionEffect
 `src/game/combat.ts`:
 
 ```ts
-import type { ActionResult, CombatPreview, EnemyEntity, GameState, PlayerStats } from './types';
+import type {
+  ActionResult,
+  CombatPreview,
+  EnemyEntity,
+  GameState,
+  PlayerStats,
+} from './types';
 
-export function previewCombat(player: PlayerStats, enemy: EnemyEntity['stats']): CombatPreview {
+export function previewCombat(
+  player: PlayerStats,
+  enemy: EnemyEntity['stats'],
+): CombatPreview {
   const playerDamage = player.attack - enemy.defense;
-  if (playerDamage <= 0) return { winnable: false, reason: 'combat-unwinnable' };
+  if (playerDamage <= 0)
+    return { winnable: false, reason: 'combat-unwinnable' };
   const hitsNeeded = Math.ceil(enemy.hp / playerDamage);
   const enemyDamage = Math.max(0, enemy.attack - player.defense);
   const hpLoss = (hitsNeeded - 1) * enemyDamage;
@@ -874,11 +1031,18 @@ export function previewCombat(player: PlayerStats, enemy: EnemyEntity['stats']):
   return { winnable: true, hitsNeeded, hpLoss };
 }
 
-export function resolveCombat(state: GameState, enemy: EnemyEntity): ActionResult {
+export function resolveCombat(
+  state: GameState,
+  enemy: EnemyEntity,
+): ActionResult {
   const preview = previewCombat(state.player, enemy.stats);
   if (!preview.winnable) return { ok: false, reason: preview.reason };
   if (state.defeatedEnemyIds.includes(enemy.id)) {
-    return { ok: true, state, effect: { kind: 'enemyDefeated', enemyId: enemy.id, hpLost: 0 } };
+    return {
+      ok: true,
+      state,
+      effect: { kind: 'enemyDefeated', enemyId: enemy.id, hpLost: 0 },
+    };
   }
   return {
     ok: true,
@@ -887,7 +1051,11 @@ export function resolveCombat(state: GameState, enemy: EnemyEntity): ActionResul
       player: { ...state.player, hp: state.player.hp - preview.hpLoss },
       defeatedEnemyIds: [...state.defeatedEnemyIds, enemy.id],
     },
-    effect: { kind: 'enemyDefeated', enemyId: enemy.id, hpLost: preview.hpLoss },
+    effect: {
+      kind: 'enemyDefeated',
+      enemyId: enemy.id,
+      hpLost: preview.hpLoss,
+    },
   };
 }
 ```
@@ -914,6 +1082,7 @@ git commit -m "feat: add deterministic combat rules"
 ### Task 4: Implement Pure Movement, Interactions, and Transient Session Gating
 
 **Files:**
+
 - Modify: `src/game/types.ts`
 - Create: `src/game/actions.ts`
 - Create: `src/game/actions.test.ts`
@@ -923,6 +1092,7 @@ git commit -m "feat: add deterministic combat rules"
 - Create: `src/game/session.test.ts`
 
 **Interfaces:**
+
 - Produces: `attemptMove(state, direction): ActionResult`
 - Produces: `interactWithEntity(state, entity, fromTile): ActionResult`
 - Produces: `dispatchInput(session, input): SessionTransition`
@@ -937,14 +1107,20 @@ import { attemptMove } from './movement';
 import type { GameState } from './types';
 
 const base: GameState = {
-  mapId: 'floor1', tile: { x: 6, y: 5 },
+  mapId: 'floor1',
+  tile: { x: 6, y: 5 },
   player: { hp: 30, maxHp: 30, attack: 10, defense: 2 },
-  openedRewardIds: [], defeatedEnemyIds: [], openedShortcutIds: [],
+  openedRewardIds: [],
+  defeatedEnemyIds: [],
+  openedShortcutIds: [],
 };
 
 describe('attemptMove', () => {
   it('blocks closed latch from front', () => {
-    expect(attemptMove(base, 'east')).toEqual({ ok: false, reason: 'latch-closed-front' });
+    expect(attemptMove(base, 'east')).toEqual({
+      ok: false,
+      reason: 'latch-closed-front',
+    });
   });
 
   it('opens latch from rear without moving onto it', () => {
@@ -965,7 +1141,10 @@ describe('attemptMove', () => {
   it('steps on portal and travels', () => {
     const state = { ...base, mapId: 'village' as const, tile: { x: 8, y: 2 } };
     const result = attemptMove(state, 'east');
-    expect(result.ok && result.state).toMatchObject({ mapId: 'floor1', tile: { x: 2, y: 9 } });
+    expect(result.ok && result.state).toMatchObject({
+      mapId: 'floor1',
+      tile: { x: 2, y: 9 },
+    });
   });
 });
 ```
@@ -981,15 +1160,23 @@ import { createInitialGameState } from './state';
 const reward = findEntityById('floor1-power-core');
 const recovery = findEntityById('village-recovery');
 if (!reward || reward.kind !== 'reward') throw new Error('reward missing');
-if (!recovery || recovery.kind !== 'recovery') throw new Error('recovery missing');
+if (!recovery || recovery.kind !== 'recovery')
+  throw new Error('recovery missing');
 
 describe('actions', () => {
   it('applies reward once', () => {
-    const state = { ...createInitialGameState(), mapId: 'floor1' as const, tile: { x: 9, y: 4 } };
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor1' as const,
+      tile: { x: 9, y: 4 },
+    };
     const first = interactWithEntity(state, reward, state.tile);
     expect(first.ok && first.state.player.attack).toBe(12);
     if (!first.ok) return;
-    expect(interactWithEntity(first.state, reward, first.state.tile)).toEqual({ ok: false, reason: 'reward-already-taken' });
+    expect(interactWithEntity(first.state, reward, first.state.tile)).toEqual({
+      ok: false,
+      reason: 'reward-already-taken',
+    });
   });
 
   it('heals without resetting dungeon progress', () => {
@@ -1022,20 +1209,33 @@ import type { SessionState } from './types';
 
 const pending: SessionState = {
   game: {
-    mapId: 'floor1', tile: { x: 12, y: 5 },
+    mapId: 'floor1',
+    tile: { x: 12, y: 5 },
     player: { hp: 30, maxHp: 30, attack: 12, defense: 2 },
-    openedRewardIds: ['floor1-power-core'], defeatedEnemyIds: [], openedShortcutIds: [],
+    openedRewardIds: ['floor1-power-core'],
+    defeatedEnemyIds: [],
+    openedShortcutIds: [],
   },
-  pending: { kind: 'combat', enemyId: 'floor1-gatekeeper', preview: { winnable: true, hitsNeeded: 3, hpLoss: 10 } },
+  pending: {
+    kind: 'combat',
+    enemyId: 'floor1-gatekeeper',
+    preview: { winnable: true, hitsNeeded: 3, hpLoss: 10 },
+  },
 };
 
 describe('dispatchInput', () => {
   it('blocks movement while combat pending', () => {
-    expect(dispatchInput(pending, { kind: 'move', direction: 'north' })).toEqual({ ok: false, session: pending, reason: 'interaction-pending' });
+    expect(
+      dispatchInput(pending, { kind: 'move', direction: 'north' }),
+    ).toEqual({ ok: false, session: pending, reason: 'interaction-pending' });
   });
 
   it('cancel clears only pending state', () => {
-    expect(dispatchInput(pending, { kind: 'cancel' })).toEqual({ ok: true, session: { ...pending, pending: null }, effect: null });
+    expect(dispatchInput(pending, { kind: 'cancel' })).toEqual({
+      ok: true,
+      session: { ...pending, pending: null },
+      effect: null,
+    });
   });
 
   it('fight resolves enemy and clears prompt', () => {
@@ -1083,39 +1283,78 @@ function directionFromTo(from: Tile, to: Tile): Direction | null {
   return null;
 }
 
-export function interactWithEntity(state: GameState, entity: Entity, fromTile: Tile): ActionResult {
+export function interactWithEntity(
+  state: GameState,
+  entity: Entity,
+  fromTile: Tile,
+): ActionResult {
   switch (entity.kind) {
-    case 'clue': return { ok: true, state, effect: { kind: 'clue', text: entity.text } };
+    case 'clue':
+      return { ok: true, state, effect: { kind: 'clue', text: entity.text } };
     case 'recovery': {
-      const next = { ...state, player: { ...state.player, hp: state.player.maxHp } };
-      return { ok: true, state: next, effect: { kind: 'healed', hp: next.player.hp } };
+      const next = {
+        ...state,
+        player: { ...state.player, hp: state.player.maxHp },
+      };
+      return {
+        ok: true,
+        state: next,
+        effect: { kind: 'healed', hp: next.player.hp },
+      };
     }
     case 'reward': {
-      if (state.openedRewardIds.includes(entity.id)) return { ok: false, reason: 'reward-already-taken' };
-      const player = { ...state.player, [entity.stat]: state.player[entity.stat] + entity.amount };
+      if (state.openedRewardIds.includes(entity.id))
+        return { ok: false, reason: 'reward-already-taken' };
+      const player = {
+        ...state.player,
+        [entity.stat]: state.player[entity.stat] + entity.amount,
+      };
       if (entity.stat === 'maxHp') player.hp += entity.amount;
       return {
         ok: true,
-        state: { ...state, player, openedRewardIds: [...state.openedRewardIds, entity.id] },
+        state: {
+          ...state,
+          player,
+          openedRewardIds: [...state.openedRewardIds, entity.id],
+        },
         effect: { kind: 'reward', stat: entity.stat, amount: entity.amount },
       };
     }
     case 'latch': {
-      if (state.openedShortcutIds.includes(entity.id)) return { ok: true, state, effect: { kind: 'latchOpened', id: entity.id } };
-      if (directionFromTo(entity.tile, fromTile) !== entity.rearSide) return { ok: false, reason: 'latch-closed-front' };
+      if (state.openedShortcutIds.includes(entity.id))
+        return {
+          ok: true,
+          state,
+          effect: { kind: 'latchOpened', id: entity.id },
+        };
+      if (directionFromTo(entity.tile, fromTile) !== entity.rearSide)
+        return { ok: false, reason: 'latch-closed-front' };
       return {
         ok: true,
-        state: { ...state, openedShortcutIds: [...state.openedShortcutIds, entity.id] },
+        state: {
+          ...state,
+          openedShortcutIds: [...state.openedShortcutIds, entity.id],
+        },
         effect: { kind: 'latchOpened', id: entity.id },
       };
     }
     case 'enemy': {
-      if (state.defeatedEnemyIds.includes(entity.id)) return { ok: true, state, effect: { kind: 'enemyDefeated', enemyId: entity.id, hpLost: 0 } };
+      if (state.defeatedEnemyIds.includes(entity.id))
+        return {
+          ok: true,
+          state,
+          effect: { kind: 'enemyDefeated', enemyId: entity.id, hpLost: 0 },
+        };
       const preview = previewCombat(state.player, entity.stats);
       if (!preview.winnable) return { ok: false, reason: preview.reason };
-      return { ok: true, state, effect: { kind: 'combatPrompt', enemyId: entity.id, preview } };
+      return {
+        ok: true,
+        state,
+        effect: { kind: 'combatPrompt', enemyId: entity.id, preview },
+      };
     }
-    case 'portal': throw new Error('Portals are step-on movement');
+    case 'portal':
+      throw new Error('Portals are step-on movement');
   }
 }
 ```
@@ -1130,26 +1369,55 @@ import { interactWithEntity } from './actions';
 import type { ActionResult, Direction, GameState, Tile } from './types';
 
 const DELTA: Record<Direction, Tile> = {
-  north: { x: 0, y: -1 }, south: { x: 0, y: 1 }, west: { x: -1, y: 0 }, east: { x: 1, y: 0 },
+  north: { x: 0, y: -1 },
+  south: { x: 0, y: 1 },
+  west: { x: -1, y: 0 },
+  east: { x: 1, y: 0 },
 };
 
-export function attemptMove(state: GameState, direction: Direction): ActionResult {
+export function attemptMove(
+  state: GameState,
+  direction: Direction,
+): ActionResult {
   const delta = DELTA[direction];
   const target = { x: state.tile.x + delta.x, y: state.tile.y + delta.y };
-  if (!isInBounds(state.mapId, target)) return { ok: false, reason: 'out-of-bounds' };
+  if (!isInBounds(state.mapId, target))
+    return { ok: false, reason: 'out-of-bounds' };
   if (!isLayoutFloor(state.mapId, target)) return { ok: false, reason: 'wall' };
 
   const entity = getEntityAt(state.mapId, target);
   if (entity) {
     if (entity.kind === 'portal') {
-      return { ok: true, state: { ...state, mapId: entity.target.mapId, tile: entity.target.tile }, effect: { kind: 'traveled', mapId: entity.target.mapId } };
+      return {
+        ok: true,
+        state: {
+          ...state,
+          mapId: entity.target.mapId,
+          tile: entity.target.tile,
+        },
+        effect: { kind: 'traveled', mapId: entity.target.mapId },
+      };
     }
-    if (entity.kind === 'latch' && state.openedShortcutIds.includes(entity.id)) return { ok: true, state: { ...state, tile: target }, effect: { kind: 'moved' } };
-    if (entity.kind === 'enemy' && state.defeatedEnemyIds.includes(entity.id)) return { ok: true, state: { ...state, tile: target }, effect: { kind: 'moved' } };
+    if (entity.kind === 'latch' && state.openedShortcutIds.includes(entity.id))
+      return {
+        ok: true,
+        state: { ...state, tile: target },
+        effect: { kind: 'moved' },
+      };
+    if (entity.kind === 'enemy' && state.defeatedEnemyIds.includes(entity.id))
+      return {
+        ok: true,
+        state: { ...state, tile: target },
+        effect: { kind: 'moved' },
+      };
     return interactWithEntity(state, entity, state.tile);
   }
 
-  return { ok: true, state: { ...state, tile: target }, effect: { kind: 'moved' } };
+  return {
+    ok: true,
+    state: { ...state, tile: target },
+    effect: { kind: 'moved' },
+  };
 }
 ```
 
@@ -1163,15 +1431,25 @@ import { resolveCombat } from './combat';
 import { attemptMove } from './movement';
 import type { InputCommand, SessionState, SessionTransition } from './types';
 
-export function dispatchInput(session: SessionState, input: InputCommand): SessionTransition {
+export function dispatchInput(
+  session: SessionState,
+  input: InputCommand,
+): SessionTransition {
   if (session.pending) {
-    if (input.kind === 'move') return { ok: false, session, reason: 'interaction-pending' };
-    if (input.kind === 'cancel') return { ok: true, session: { ...session, pending: null }, effect: null };
+    if (input.kind === 'move')
+      return { ok: false, session, reason: 'interaction-pending' };
+    if (input.kind === 'cancel')
+      return { ok: true, session: { ...session, pending: null }, effect: null };
     const entity = findEntityById(session.pending.enemyId);
-    if (!entity || entity.kind !== 'enemy') throw new Error('Pending combat enemy missing');
+    if (!entity || entity.kind !== 'enemy')
+      throw new Error('Pending combat enemy missing');
     const result = resolveCombat(session.game, entity);
     if (!result.ok) return { ok: false, session, reason: result.reason };
-    return { ok: true, session: { game: result.state, pending: null }, effect: result.effect };
+    return {
+      ok: true,
+      session: { game: result.state, pending: null },
+      effect: result.effect,
+    };
   }
 
   if (input.kind !== 'move') return { ok: true, session, effect: null };
@@ -1180,11 +1458,22 @@ export function dispatchInput(session: SessionState, input: InputCommand): Sessi
   if (result.effect.kind === 'combatPrompt') {
     return {
       ok: true,
-      session: { game: result.state, pending: { kind: 'combat', enemyId: result.effect.enemyId, preview: result.effect.preview } },
+      session: {
+        game: result.state,
+        pending: {
+          kind: 'combat',
+          enemyId: result.effect.enemyId,
+          preview: result.effect.preview,
+        },
+      },
       effect: result.effect,
     };
   }
-  return { ok: true, session: { ...session, game: result.state }, effect: result.effect };
+  return {
+    ok: true,
+    session: { ...session, game: result.state },
+    effect: result.effect,
+  };
 }
 ```
 
@@ -1210,6 +1499,7 @@ git commit -m "feat: add movement and interaction rules"
 ### Task 5: Render the Authored World and Wire the Real Interaction Overlay
 
 **Files:**
+
 - Create: `src/phaser/assets.ts`
 - Create: `src/phaser/assets.test.ts`
 - Modify: `src/phaser/WorldScene.ts`
@@ -1219,6 +1509,7 @@ git commit -m "feat: add movement and interaction rules"
 - Modify: `src/styles.css`
 
 **Interfaces:**
+
 - Produces: `TILE_SIZE = 32`, `resolveAssetId(entity)`
 - `WorldScene` consumes `getSession()` + `onInput()` callbacks
 - `createGame()` returns `{ game, scene }`
@@ -1252,7 +1543,9 @@ Run `bunx vitest run src/phaser/assets.test.ts`; expected FAIL.
 ```ts
 import type { Entity } from '../game/types';
 export const TILE_SIZE = 32;
-export function resolveAssetId(entity: Entity): string { return entity.assetId ?? entity.kind; }
+export function resolveAssetId(entity: Entity): string {
+  return entity.assetId ?? entity.kind;
+}
 ```
 
 - [ ] **Step 3: Render authored map in one WorldScene**
@@ -1271,7 +1564,12 @@ Render each `#`/`.` as a 32×32 rectangle, render non-collected rewards/non-defe
 
 ```ts
 this.cameras.main.startFollow(player, true);
-this.cameras.main.setBounds(0, 0, map.layout[0]!.length * TILE_SIZE, map.layout.length * TILE_SIZE);
+this.cameras.main.setBounds(
+  0,
+  0,
+  map.layout[0]!.length * TILE_SIZE,
+  map.layout.length * TILE_SIZE,
+);
 ```
 
 Keyboard `JustDown` mapping is exactly:
@@ -1290,9 +1588,19 @@ Do not store progression or pending combat fields in the scene.
 ```ts
 export type CreatedGame = { game: Phaser.Game; scene: WorldScene };
 
-export function createGame(parent: HTMLElement, deps: WorldSceneDeps): CreatedGame {
+export function createGame(
+  parent: HTMLElement,
+  deps: WorldSceneDeps,
+): CreatedGame {
   const scene = new WorldScene(deps);
-  const game = new Phaser.Game({ type: Phaser.AUTO, parent, width: 640, height: 480, scene: [scene], pixelArt: true });
+  const game = new Phaser.Game({
+    type: Phaser.AUTO,
+    parent,
+    width: 640,
+    height: 480,
+    scene: [scene],
+    pixelArt: true,
+  });
   return { game, scene };
 }
 ```
@@ -1333,7 +1641,9 @@ blocked reason > pending combat prompt > action effect text
 Blocked reason markup:
 
 ```html
-<div data-testid="blocked-reason" data-reason="combat-lethal">This fight would defeat you.</div>
+<div data-testid="blocked-reason" data-reason="combat-lethal">
+  This fight would defeat you.
+</div>
 ```
 
 Pending combat markup:
@@ -1368,11 +1678,26 @@ function handleInput(input: InputCommand): void {
     blocked = transition.reason;
   }
   created.scene.refresh();
-  overlay.render({ state: session.game, mapName: MAPS[session.game.mapId].name, pending: session.pending, effect, blocked });
+  overlay.render({
+    state: session.game,
+    mapName: MAPS[session.game.mapId].name,
+    pending: session.pending,
+    effect,
+    blocked,
+  });
 }
 
-created = createGame(gameRoot, { getSession: () => session, onInput: handleInput });
-overlay.render({ state: session.game, mapName: MAPS[session.game.mapId].name, pending: null, effect: null, blocked: null });
+created = createGame(gameRoot, {
+  getSession: () => session,
+  onInput: handleInput,
+});
+overlay.render({
+  state: session.game,
+  mapName: MAPS[session.game.mapId].name,
+  pending: null,
+  effect: null,
+  blocked: null,
+});
 ```
 
 Overlay constructor callbacks call `handleInput({ kind: 'fight' })` / `handleInput({ kind: 'cancel' })`.
@@ -1401,11 +1726,13 @@ git commit -m "feat: render authored maze world"
 ### Task 6: Add Content-Aware LocalStorage Persistence and Explicit Recovery
 
 **Files:**
+
 - Create: `src/game/save.ts`
 - Create: `src/game/save.test.ts`
 - Modify: `src/main.ts`
 
 **Interfaces:**
+
 - Produces: `saveGame(storage, state)`, `loadGame(storage)`, `resetGame(storage)`
 - Produces: `LoadResult = fresh | loaded | invalid`
 
@@ -1415,7 +1742,10 @@ git commit -m "feat: render authored maze world"
 
 ```ts
 it('starts fresh only when key is missing', () => {
-  expect(loadGame(storage)).toEqual({ kind: 'fresh', state: createInitialGameState() });
+  expect(loadGame(storage)).toEqual({
+    kind: 'fresh',
+    state: createInitialGameState(),
+  });
 });
 
 it('round-trips ordinary movement position', () => {
@@ -1426,12 +1756,24 @@ it('round-trips ordinary movement position', () => {
 
 it('rejects malformed JSON', () => {
   storage.setItem('eridanus.save', '{bad');
-  expect(loadGame(storage)).toEqual({ kind: 'invalid', reason: 'malformed-json' });
+  expect(loadGame(storage)).toEqual({
+    kind: 'invalid',
+    reason: 'malformed-json',
+  });
 });
 
 it('rejects removed entity ids', () => {
-  storage.setItem('eridanus.save', JSON.stringify({ ...createInitialGameState(), defeatedEnemyIds: ['removed-enemy'] }));
-  expect(loadGame(storage)).toEqual({ kind: 'invalid', reason: 'invalid-content' });
+  storage.setItem(
+    'eridanus.save',
+    JSON.stringify({
+      ...createInitialGameState(),
+      defeatedEnemyIds: ['removed-enemy'],
+    }),
+  );
+  expect(loadGame(storage)).toEqual({
+    kind: 'invalid',
+    reason: 'invalid-content',
+  });
 });
 ```
 
@@ -1455,7 +1797,10 @@ const SAVE_KEY = 'eridanus.save';
 export type LoadResult =
   | { kind: 'fresh'; state: GameState }
   | { kind: 'loaded'; state: GameState }
-  | { kind: 'invalid'; reason: 'malformed-json' | 'invalid-shape' | 'invalid-content' };
+  | {
+      kind: 'invalid';
+      reason: 'malformed-json' | 'invalid-shape' | 'invalid-content';
+    };
 ```
 
 Shape validation requires mapId string, numeric tile x/y, numeric player hp/maxHp/attack/defense, and string arrays for reward/enemy/shortcut IDs.
@@ -1463,11 +1808,11 @@ Shape validation requires mapId string, numeric tile x/y, numeric player hp/maxH
 Content validation requires:
 
 ```ts
-state.mapId in MAPS
-isLayoutFloor(state.mapId, state.tile)
-openedRewardIds.every(id => findEntityById(id)?.kind === 'reward')
-defeatedEnemyIds.every(id => findEntityById(id)?.kind === 'enemy')
-openedShortcutIds.every(id => findEntityById(id)?.kind === 'latch')
+state.mapId in MAPS;
+isLayoutFloor(state.mapId, state.tile);
+openedRewardIds.every((id) => findEntityById(id)?.kind === 'reward');
+defeatedEnemyIds.every((id) => findEntityById(id)?.kind === 'enemy');
+openedShortcutIds.every((id) => findEntityById(id)?.kind === 'latch');
 ```
 
 Implement exact load behavior:
@@ -1504,7 +1849,8 @@ if (transition.ok) {
   session = transition.session;
   effect = transition.effect;
   blocked = null;
-  if (session.game !== previousGame) saveGame(window.localStorage, session.game);
+  if (session.game !== previousGame)
+    saveGame(window.localStorage, session.game);
 } else {
   blocked = transition.reason;
 }
@@ -1537,16 +1883,22 @@ git commit -m "feat: persist tower progress locally"
 ### Task 7: Expand Playwright into the Complete HPA-237 Journey
 
 **Files:**
+
 - Modify: `tests/e2e/cross-floor.spec.ts`
 - Modify only for real route/readability defects: `src/game/content/*.ts`, `src/ui/InteractionOverlay.ts`, `src/phaser/WorldScene.ts`
 
 **Interfaces:**
+
 - Uses only keyboard input and real user-facing DOM; no test-only game API.
 
 - [ ] **Step 1: Add real-input helper**
 
 ```ts
-async function press(page: Page, key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight', count: number): Promise<void> {
+async function press(
+  page: Page,
+  key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight',
+  count: number,
+): Promise<void> {
   for (let i = 0; i < count; i += 1) await page.keyboard.press(key);
 }
 ```
@@ -1634,6 +1986,7 @@ git commit -m "test: cover cross-floor gameplay journey"
 ### Task 8: Final Verification and Documentation Gate
 
 **Files:**
+
 - Modify: `README.md`
 - Modify other files only for concrete defects found by verification
 
