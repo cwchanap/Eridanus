@@ -28,17 +28,59 @@ This is a real vertical slice, not a disposable prototype. The village, Floor 1 
 - Placeholder visuals are expected, but stable asset IDs and alignment conventions must be established for the later image-asset task.
 - No generic quest engine, event scripting framework, ECS, RPG framework, map editor, backend, or cloud save.
 
-## Technology
+## Technology and project tooling
 
-Start Eridanus as a small browser game with:
+Start Eridanus as a small Bun-managed browser game with:
 
-- TypeScript
-- Vite
-- Phaser
-- Vitest
-- Playwright only if one lightweight happy-path test is cheap to add
+- TypeScript;
+- Vite;
+- Phaser;
+- ESLint using a small TypeScript-focused flat config;
+- Prettier for formatting;
+- Husky + lint-staged for lightweight pre-commit checks;
+- Vitest for unit tests;
+- Playwright for the critical browser happy path;
+- GitHub Actions for CI.
 
 Do not introduce a UI framework unless a concrete requirement makes it materially simpler than Phaser/DOM primitives.
+
+### Local quality workflow
+
+Keep the developer loop fast and predictable.
+
+Expected scripts should include the equivalents of:
+
+- `bun run dev`;
+- `bun run build`;
+- `bun run typecheck`;
+- `bun run lint`;
+- `bun run format`;
+- `bun run format:check`;
+- `bun run test:unit`;
+- `bun run test:e2e`.
+
+Use Husky for a pre-commit hook that runs lint-staged only. lint-staged should run ESLint fixes/checks and Prettier formatting on staged supported files. Do not run the full unit or Playwright suites on every commit; CI owns the slower gates.
+
+### CI contract
+
+Use one GitHub Actions workflow with exactly three independent jobs:
+
+1. **Build & lint**
+   - install dependencies with the lockfile frozen;
+   - TypeScript typecheck;
+   - ESLint;
+   - Prettier check;
+   - production Vite build.
+2. **Unit test**
+   - install dependencies with the lockfile frozen;
+   - run Vitest in CI mode.
+3. **Playwright test**
+   - install dependencies with the lockfile frozen;
+   - install the required Playwright browser/dependencies;
+   - launch the app through Playwright `webServer` or equivalent;
+   - run the browser happy-path suite.
+
+Keep the jobs separate so failures are immediately attributable. Avoid reusable-workflow abstractions, job matrices, cross-job artifacts, or CI orchestration that does not improve this small project.
 
 ## Architecture
 
@@ -174,9 +216,9 @@ Do not build a general asset pipeline in this ticket.
 
 ## Testing
 
-Prioritize pure-rule tests.
+### Vitest
 
-Required coverage:
+Prioritize pure-rule tests for:
 
 - combat formulas and rejection cases;
 - preview and resolution agreement;
@@ -186,7 +228,11 @@ Required coverage:
 - save/load round-trip for all durable state used by this slice;
 - authored portal destinations resolve correctly.
 
-A single browser/E2E happy path is useful if cheap, but should not drive architecture.
+### Playwright
+
+Ship at least one critical E2E path that proves the actual browser build can complete the defining slice. It should cover the core progression from village through the cross-floor route and verify at least one reload/persistence boundary.
+
+Do not duplicate every unit-level edge case in Playwright.
 
 ## Non-goals
 
@@ -200,7 +246,8 @@ A single browser/E2E happy path is useful if cheap, but should not drive archite
 - Backend/accounts/cloud save.
 - Generic save migrations.
 - Generic event/quest scripting.
+- elaborate CI matrices or reusable pipeline frameworks.
 
 ## Acceptance focus
 
-The slice succeeds when a fresh player can complete the full cross-floor loop, understand the alternate route without an exact quest arrow, see the permanent upgrade materially change combat preview, open a useful persistent shortcut, return to the village, reload, and resume with committed progression intact.
+The slice succeeds when a fresh player can complete the full cross-floor loop, understand the alternate route without an exact quest arrow, see the permanent upgrade materially change combat preview, open a useful persistent shortcut, return to the village, reload, and resume with committed progression intact—and when the three CI jobs independently verify build/lint, unit tests, and Playwright E2E.
