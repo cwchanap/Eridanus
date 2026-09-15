@@ -154,10 +154,11 @@ type PendingInteraction =
     };
 ```
 
-- Bumping an enemy returns `effect: { kind: 'combatPrompt', ... }` and sets the transient pending value outside `GameState`.
+- Bumping an enemy returns `effect: { kind: 'combatPrompt', ... }`; the pure input/session layer then derives the transient pending value from that effect.
+- Domain actions stay free of hidden mutation: they return `ActionResult` only and do not secretly update another store.
 - While combat is pending, movement input is rejected/ignored by a pure TypeScript input gate that can be unit tested.
 - Fight calls combat resolution against current `GameState` and the pending enemy.
-- Cancel clears the pending value without a domain mutation.
+- Cancel clears the pending value without a durable domain mutation.
 - Pending interaction state is never persisted.
 
 The implementation may express this with a small `dispatchInput(state, pending, input)` function or equivalent. Keep it specific to the current input needs rather than building a generic state machine.
