@@ -175,6 +175,12 @@ The initial village start tile lives in the default `GameState`; there is no gen
 Combat prompting is a two-phase interaction and needs a typed transient mode without becoming durable state:
 
 ```ts
+type WinnableCombatPreview = {
+  winnable: true;
+  hitsNeeded: number;
+  hpLoss: number;
+};
+
 type PendingInteraction =
   | null
   | {
@@ -333,11 +339,7 @@ Preview result:
 
 ```ts
 type CombatPreview =
-  | {
-      winnable: true;
-      hitsNeeded: number;
-      hpLoss: number;
-    }
+  | WinnableCombatPreview
   | {
       winnable: false;
       reason: 'combat-unwinnable' | 'combat-lethal';
@@ -364,6 +366,8 @@ totalHpLoss = (hitsNeeded - 1) * enemyDamage
 - After defeat, the enemy tile becomes traversable.
 
 The authored permanent reward must change the nearby encounter's preview enough to be obvious without arithmetic from the player.
+
+The encounter does not have to be a mandatory topology gate. The critical browser journey must still choose **Fight** once after observing the improved preview so combat resolution, HP loss, enemy defeat, and reload persistence are proven end to end.
 
 ## Presentation
 
@@ -449,9 +453,11 @@ No save version field, migration code, or compatibility layer is required before
 The village contains only what the loop needs:
 
 - initial player start tile;
-- one concise NPC/sign-style exploration lead;
+- one `clue` entity used as the concise village lead/sign;
 - recovery point;
 - portal/stairs into Floor 1.
+
+No separate NPC entity type is introduced in HPA-237.
 
 ### Floor 1 — front route
 
@@ -473,9 +479,11 @@ From the rear side, the player can:
 
 - reach and collect the permanent reward;
 - inspect the nearby encounter's improved preview;
-- fight it if desired/required by the authored route;
+- choose Fight once in the critical E2E journey to prove combat resolution and persistence;
 - open the latch from the rear;
 - return toward the entrance/village through the now shorter two-way path.
+
+The map topology does not require the enemy to block access to the latch. Combat is proven by the critical journey rather than by making the fight a mandatory route gate.
 
 Exact geometry and numeric values are tuning concerns, but the authored route above is fixed by the feature contract.
 
@@ -557,6 +565,7 @@ The final journey covers:
 - permanent reward and visible stat change;
 - cheaper combat preview;
 - movement gated while Fight / Cancel is active;
+- choosing Fight once and observing the committed combat result;
 - latch opened from the rear and traversable both ways;
 - ordinary movement followed by reload restoring the exact position;
 - committed reward/enemy/latch behavior surviving reload.
