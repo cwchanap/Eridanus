@@ -49,7 +49,7 @@ export class WorldScene extends Phaser.Scene {
   refresh(): void {
     const state = this.deps.getSession().game;
     const map = MAPS[state.mapId];
-    this.children.removeAll();
+    this.children.removeAll(true);
 
     for (let y = 0; y < map.layout.length; y++) {
       for (let x = 0; x < map.layout[y]!.length; x++) {
