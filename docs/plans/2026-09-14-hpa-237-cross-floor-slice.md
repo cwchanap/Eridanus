@@ -6,7 +6,7 @@ Implement the first playable Tower Maze slice in one PR and leave Eridanus with 
 
 ## Delivery rule
 
-One ticket = one PR. Do not split project scaffolding, developer tooling, CI, gameplay foundation, combat, persistence, and authored vertical-slice content into separate PRs.
+One ticket = one PR. Do not split project scaffolding, developer tooling, CI, gameplay foundation, content schema, combat, persistence, and authored vertical-slice content into separate PRs.
 
 ## Task 1 — Bootstrap the web game and developer tooling
 
@@ -24,6 +24,8 @@ Runtime/tooling:
 - Playwright;
 - GitHub Actions.
 
+Pin Bun in `package.json` using `packageManager`, and use the same version in CI.
+
 Expected scripts should include the equivalents of:
 
 ```text
@@ -37,9 +39,7 @@ bun run test:unit
 bun run test:e2e
 ```
 
-Pin Bun to one explicit version in `package.json` using `packageManager`, and configure GitHub Actions to install the same version. Treat that single pinned version as the source of truth for local/CI reproducibility.
-
-Use a simple browser entrypoint that mounts Phaser. Do not add Svelte/React or another UI framework unless implementation proves Phaser/DOM primitives insufficient.
+Use a simple browser entrypoint that mounts Phaser plus a tiny framework-free DOM overlay. Do not add Svelte/React or another UI framework.
 
 ### Pre-commit behavior
 
@@ -55,91 +55,182 @@ Add one `.github/workflows/ci.yml` with exactly three independent jobs.
 
 Run:
 
-- install the pinned Bun version;
+- pinned Bun setup;
 - frozen dependency install;
 - TypeScript typecheck;
 - ESLint;
 - Prettier check;
 - production Vite build.
 
-This is the static/build quality gate.
-
 #### Job 2 — Unit test
 
 Run:
 
-- install the pinned Bun version;
+- pinned Bun setup;
 - frozen dependency install;
 - Vitest in CI mode.
-
-Keep game-rule, persistence, and content-validation tests here.
 
 #### Job 3 — Playwright test
 
 Run:
 
-- install the pinned Bun version;
+- pinned Bun setup;
 - frozen dependency install;
-- install the required Playwright Chromium browser/dependencies;
-- start the application using Playwright `webServer` or the simplest equivalent;
+- install Playwright Chromium/dependencies;
+- start the app through Playwright `webServer` or the simplest equivalent;
 - execute the browser E2E suite.
 
-Do not add job matrices, cross-job artifacts, reusable workflows, or multiple workflow files unless implementation demonstrates a real need.
+Do not add job matrices, cross-job artifacts, reusable workflows, multiple workflow files, or CI orchestration that does not improve this small project.
 
 Validation for Task 1:
 
-- fresh `bun install --frozen-lockfile` succeeds after lockfile creation;
+- fresh frozen install succeeds after lockfile creation;
 - typecheck succeeds;
 - lint and format checks succeed;
-- unit-test command is wired and runnable;
-- Playwright is configured and `test:e2e` is wired for the real journey added in Task 8;
+- unit test command is wired;
+- Playwright config/command is wired;
 - production build succeeds;
-- Husky/lint-staged hook is installed through the normal package lifecycle.
+- Husky/lint-staged installs through the normal package lifecycle.
 
-Do not add a disposable Playwright smoke test during bootstrap. Task 8 owns the first meaningful browser test.
+Do not create a disposable Playwright smoke test here; the first browser test should be the real critical journey in Task 8.
 
-## Task 2 — Define authoritative state and authored content
+## Task 2 — Lock the domain/content contracts and author the three real maps once
 
-Create a small engine-independent game boundary.
+Create the engine-independent game boundary and write the actual village, Floor 1 slice, and Floor 2 slice immediately using one closed schema.
 
 Implement:
 
-- `GameState` with current map/tile, player stats, discoveries, rewards, defeated enemies, and shortcuts;
+- closed `MapId` for the current authored maps;
+- shared `Tile` type;
+- `MapDefinition`;
+- discriminated `Entity` union for:
+  - clue;
+  - reward;
+  - enemy;
+  - latch;
+  - recovery;
+  - portal;
 - stable map/entity/asset IDs;
-- compact authored map/entity definitions;
-- village, Floor 1 slice, and Floor 2 slice content;
-- default new-game state.
+- `GameState` with current map/tile, player stats, opened rewards, defeated enemies, and opened shortcuts;
+- one small `ActionResult` union:
 
-Tests:
+```ts
+type ActionResult =
+  | { ok: true; state: GameState }
+  | { ok: false; reason: string };
+```
 
-- unique authored IDs;
-- valid map references;
-- portal destinations resolve;
-- paired bidirectional floor connections are reciprocal;
-- default state points to valid content.
+Author the complete three-map slice now rather than stubs:
 
-Avoid generic repository/domain layers or content frameworks.
+- compact village;
+- Floor 1 front route + rear payoff route + latch;
+- Floor 2 connector route.
 
-## Task 3 — Implement movement, collision, discovery, and travel
+Content tests:
 
-Add pure movement/travel helpers and connect them to one reusable Phaser `WorldScene`.
+- map/entity IDs are unique;
+- all entity tiles are in bounds;
+- map/portal references resolve;
+- intended bidirectional portal pairs are reciprocal;
+- default state points to valid authored content;
+- latch front/rear neighbors are valid authored tiles.
 
-Behavior:
+Do not add discovery sections, inheritance, generic trigger objects, scripting DSLs, floor subclasses, or ECS components.
+
+## Task 3 — Implement movement, interaction semantics, rendering, and asset seams together
+
+Add pure movement/collision helpers and connect them to one reusable Phaser `WorldScene`.
+
+### Movement
 
 - four-direction one-tile movement;
-- blocked tiles reject movement;
-- entering an authored section marks it discovered;
-- stairs/portals change map + spawn explicitly;
-- camera follows the player and keeps the whole maze from being revealed automatically.
+- blocked floor/latch/enemy tiles reject ordinary movement;
+- blocked moves return `{ ok: false, reason }` without mutating state;
+- successful movement returns committed state.
 
-Tests:
+### Fixed interaction language
+
+Use entity kind to determine interaction behavior; do not introduce a generic interaction engine.
+
+**Bump-to-interact:**
+
+- clue;
+- reward;
+- enemy;
+- latch;
+- recovery point.
+
+The player remains on the previous tile during those interactions.
+
+**Step-on:**
+
+- portals/stairs.
+
+Successful entry immediately resolves to the authored target map/tile without a confirmation dialog.
+
+### Latch behavior
+
+Author each latch with:
+
+- its tile;
+- `frontTile`;
+- `rearTile`.
+
+Rules:
+
+- closed latch is non-walkable;
+- bump from rear opens it and records its ID;
+- bump from front while closed returns a blocked reason;
+- once open, its tile is normal walkable floor from either direction.
+
+### WorldScene + asset contract from day one
+
+`WorldScene` should:
+
+- render the current authored map;
+- follow the player with a scrolling camera;
+- translate keyboard input into pure domain actions;
+- update presentation from authoritative state;
+- use one tile-size constant;
+- resolve stable asset IDs to placeholder visuals;
+- use one-tile logical player/enemy footprints;
+- anchor character/entity visuals bottom-center;
+- use tile coordinates, not sprite bounds, for collision/interaction;
+- swap rendered map when domain state changes location.
+
+This is the HPA-22 replacement seam; do not defer it to a later retrofit task.
+
+Unit tests:
 
 - allowed and blocked movement;
-- discovery commits once;
-- portal destination correctness;
-- reciprocal stairs/portal definitions return to the intended authored destination.
+- bump interactions do not move the player onto the entity tile;
+- portal entry resolves to the correct target;
+- reciprocal authored routes work as intended;
+- latch rear/front/open behavior;
+- blocked actions preserve the original state.
 
-## Task 4 — Implement deterministic combat and interaction UI
+## Task 4 — Add the persistent DOM interaction/status overlay
+
+Create one tiny framework-free DOM layer as real player-facing UI.
+
+Persistent chrome:
+
+- current map name;
+- HP / max HP;
+- ATK;
+- DEF.
+
+Transient content:
+
+- clue text;
+- reward/recovery feedback;
+- combat preview;
+- Fight / Cancel controls;
+- blocked-action reasons.
+
+Do not expose internal game state through a test-only API. Playwright should assert this user-facing UI while driving real keyboard input.
+
+## Task 5 — Implement deterministic combat
 
 Create one pure `previewCombat` calculation used by both UI preview and resolution.
 
@@ -149,117 +240,108 @@ Cover:
 - `playerDamage <= 0` blocks combat;
 - lethal predicted outcomes block combat;
 - final enemy hit causes no retaliation;
-- exact predicted HP loss shown before confirmation;
-- Fight / Cancel prompt pauses movement interaction;
-- defeat and HP loss commit exactly once.
-
-Use a tiny framework-free DOM overlay for user-facing interaction text and the Fight / Cancel prompt when that is simpler and more testable than rendering controls inside the Phaser canvas. The overlay must remain presentation-only and dispatch game actions rather than own progression state.
-
-Prefer semantic buttons/text and small stable `data-testid` hooks only where needed by Playwright. Do not expose a test-only internal game API.
+- exact predicted HP loss is shown before confirmation;
+- Fight / Cancel blocks normal movement while the prompt is active;
+- Cancel leaves state and player tile unchanged;
+- blocked combat leaves state/tile unchanged and returns a visible reason;
+- successful defeat + HP loss commit exactly once;
+- defeated enemy tile becomes traversable.
 
 Keep presentation minimal: no battle scene, initiative, skills, status effects, or animation state machine.
 
 Tests must explicitly prove preview/resolution agreement and formula edge cases.
 
-## Task 5 — Implement required interactions
+## Task 6 — Implement reward, recovery, and other required domain actions
 
-Add only the authored interactions needed for the loop:
+Add only the authored actions needed for the loop:
 
-- inspect clue/landmark;
+- inspect clue;
 - collect one permanent stat upgrade;
-- open one rear-only shortcut/latch;
-- heal at village recovery.
+- heal at village recovery;
+- open latch from rear.
 
-Shortcut rule:
-
-- the latch may only be activated from its rear/back-route side;
-- once activated, the passage remains permanently open and traversable in both directions.
-
-Other rules:
+Rules:
 
 - reward applies exactly once;
-- recovery heals current HP to max without resetting any dungeon state.
+- recovery heals current HP to max without resetting any durable dungeon state;
+- all blocked/successful paths use `ActionResult` consistently;
+- every committed durable action autosaves through the persistence boundary.
 
 Tests:
 
-- duplicate reward is a no-op;
-- latch cannot be activated from the front side;
-- once opened, the shortcut allows traversal in both directions;
-- shortcut remains open after reload;
-- recovery preserves discoveries/rewards/enemies/shortcuts.
+- duplicate reward is a no-op/blocked result without a second stat gain;
+- recovery preserves reward/enemy/latch state;
+- latch open state remains authoritative for walkability.
 
-## Task 6 — Add autosave and reload
+## Task 7 — Add explicit save/load failure handling
 
 Use one LocalStorage snapshot.
 
-Persist after completed durable actions, including:
+Persist:
 
-- movement/map travel;
-- discovery;
-- reward collection;
-- combat resolution;
-- shortcut opening;
-- village recovery.
+- current map and tile;
+- HP/max HP, attack, defense;
+- opened reward IDs;
+- defeated enemy IDs;
+- opened shortcut IDs.
 
-A missing or malformed snapshot may start a fresh game. Do not add migration/versioning infrastructure.
+Do not persist discovery state.
+
+Load behavior:
+
+- missing key → fresh game;
+- valid snapshot → resume;
+- JSON parse failure or invalid shape → do not silently reset;
+- show an explicit recovery/reset choice through the DOM UI;
+- reset may delete the bad snapshot and start fresh.
+
+Do not add save version fields, migrations, repositories, IndexedDB, backend storage, or backward-compatibility infrastructure.
 
 Tests:
 
-- save/load round-trip;
+- round-trip all durable fields;
+- missing save returns a fresh game;
+- malformed JSON returns a load failure;
+- shape-invalid data returns a load failure;
 - reward does not duplicate after reload;
-- defeated enemy remains defeated after reload;
-- HP loss remains committed after reload;
-- shortcut remains open after reload;
-- current map/tile restores correctly.
-
-## Task 7 — Author the complete player-visible slice
-
-Build the map layout around the required sequence:
-
-1. Village lead directs attention toward the tower.
-2. Floor 1 shows the unreachable permanent upgrade early.
-3. A clue implies an alternate route without revealing the exact path.
-4. Player descends into Floor 2.
-5. Floor 2 has enough turns/looping to feel like exploration rather than a corridor.
-6. Player returns to Floor 1 behind the barrier.
-7. Player collects the permanent upgrade.
-8. Nearby enemy preview now costs visibly less HP than before.
-9. Player opens the latch from the rear side.
-10. The now-open passage works in both directions and provides a useful return path to the entrance/village.
-11. Village recovery heals and autosaves.
-12. Reload resumes correctly.
-
-Tune enemy/reward values specifically so the upgrade changes the combat preview in an obvious, easy-to-read way.
+- defeated enemy + HP loss remain committed;
+- latch remains open;
+- map/tile restores correctly.
 
 ## Task 8 — Add the critical Playwright journey
 
-Implement one small browser-level happy path proving that the runtime wiring, input, authored content, user-facing interaction UI, and persistence work together.
+Implement one browser-level happy path proving that runtime wiring, real input, authored content, UI, and persistence work together.
 
-The E2E should cover the critical progression rather than every branch:
+Cover:
 
 - launch from a fresh save;
+- verify persistent map/HP/ATK/DEF chrome;
 - leave the village and enter Floor 1;
-- reach the alternate Floor 2 route;
+- observe the unreachable reward / clue path;
+- take the alternate Floor 2 route;
 - return behind the Floor 1 barrier;
 - collect the permanent reward;
-- verify the relevant combat preview changes through the real DOM interaction surface;
-- open the rear-only latch;
-- verify the opened passage can be used as the shortcut;
-- cross at least one reload boundary and verify committed progression remains.
+- assert ATK (or whichever chosen stat) visibly changes;
+- verify the relevant combat preview is cheaper;
+- open the latch from the rear;
+- verify the shortcut is usable;
+- cross at least one reload boundary and assert committed progression through the user-facing UI.
 
-Prefer semantic DOM assertions and stable user-facing controls over pixel/screenshot assertions. Do not mirror unit tests in E2E and do not add test-only game-state accessors.
+Prefer role/text/data attributes on the real DOM overlay where useful. Do not use screenshots as the primary assertion and do not expose a test-only internal game API.
 
-## Task 9 — Lock minimal asset seams
+## Task 9 — Tune the authored slice, do not re-author it
 
-Make placeholder rendering already obey the contracts needed by HPA-22:
+Task 2 already contains the complete three real maps. This task is only for gameplay tuning after all rules are wired.
 
-- one tile-size constant;
-- stable asset IDs;
-- one-tile logical footprint for player/enemies;
-- bottom-center entity sprite alignment;
-- tile-coordinate collision/interaction rather than sprite-bound checks.
+Tune:
 
-Do not generate final art in this ticket.
+- map geometry where route readability is poor;
+- enemy/reward numbers so the permanent upgrade changes combat preview obviously;
+- clue text so the alternate route is understandable without an exact-route quest arrow;
+- shortcut placement so it meaningfully shortens the return trip;
+- interaction copy if blocked states are unclear.
+
+Do not introduce a second content schema or rewrite the maps into another format.
 
 ## Task 10 — Final validation
 
@@ -267,7 +349,7 @@ The PR is ready for implementation review only when all three CI jobs pass indep
 
 ### Build & lint job
 
-- pinned Bun version matches `packageManager`;
+- pinned Bun;
 - frozen install;
 - typecheck;
 - ESLint;
@@ -276,11 +358,18 @@ The PR is ready for implementation review only when all three CI jobs pass indep
 
 ### Unit test job
 
-- Vitest passes for domain rules, persistence, content validation, reciprocal floor connections, and shortcut semantics.
+Vitest passes for:
+
+- content validation;
+- movement/interaction rules;
+- latch semantics;
+- combat;
+- reward/recovery actions;
+- persistence and malformed-save handling.
 
 ### Playwright test job
 
-- critical browser journey passes in Chromium.
+The critical browser journey passes in Chromium.
 
 Manual gate from a fresh save:
 
@@ -289,14 +378,14 @@ Manual gate from a fresh save:
 - follow clue → Floor 2;
 - return to rear Floor 1;
 - collect upgrade;
-- verify improved combat preview;
+- verify visible stat change and improved combat preview;
 - open latch from the rear;
-- use the opened two-way shortcut;
+- traverse the now two-way shortcut;
 - return to village;
 - heal;
 - reload and verify progression.
 
-Repeat reload checks immediately after reward, combat, and shortcut activation to ensure no duplication or rollback.
+Also manually inject malformed LocalStorage data once and verify the game offers an explicit reset rather than silently wiping the save.
 
 ## Likely compact structure
 
@@ -334,24 +423,26 @@ vite.config.ts
 vitest.config.ts
 ```
 
-Treat this as guidance, not a requirement. The DOM interaction overlay can remain a single small module or be colocated with bootstrap code if that is clearer. Merge or remove modules if implementation stays simpler with fewer files.
+Treat this as guidance, not a requirement. Merge or remove modules if implementation stays clearer with fewer files.
 
 ## Scope guardrails
 
 Do not add:
 
+- discovery/fog state;
 - ECS;
 - generic quest/event scripting;
+- generic interaction/trigger framework;
 - dependency injection framework;
 - repository abstraction over LocalStorage;
-- save migration framework;
+- save migration/version framework;
 - map editor;
 - battle scene;
 - inventory/equipment/shop/crafting;
 - procedural generation;
 - backend/accounts/cloud save;
 - CI matrices or reusable-workflow abstractions;
-- test-only internal game APIs;
+- test-only game APIs;
 - abstractions justified only by hypothetical future games.
 
 Prefer the simplest direct structure that cleanly supports the next Tower Maze content tickets.
