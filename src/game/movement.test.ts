@@ -31,7 +31,9 @@ describe('attemptMove', () => {
   it('walks through open latch', () => {
     const open = { ...base, openedShortcutIds: ['floor1-rear-latch'] };
     const result = attemptMove(open, 'east');
-    expect(result.ok && result.state.tile).toEqual({ x: 7, y: 5 });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.tile).toEqual({ x: 7, y: 5 });
   });
 
   it('walks onto collected reward tile', () => {
@@ -50,7 +52,9 @@ describe('attemptMove', () => {
   it('steps on portal and travels', () => {
     const state = { ...base, mapId: 'village' as const, tile: { x: 8, y: 2 } };
     const result = attemptMove(state, 'east');
-    expect(result.ok && result.state).toMatchObject({
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state).toMatchObject({
       mapId: 'floor1',
       tile: { x: 2, y: 9 },
     });

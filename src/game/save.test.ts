@@ -125,23 +125,13 @@ describe('saveGame/loadGame', () => {
   });
 
   it('accepts player standing on a collected reward tile', () => {
-    storage.setItem(
-      'eridanus.save',
-      JSON.stringify({
-        ...createInitialGameState(),
-        mapId: 'floor1',
-        tile: { x: 9, y: 5 },
-        openedRewardIds: ['floor1-power-core'],
-      }),
-    );
     const state = {
-      mapId: 'floor1' as const,
+      ...createInitialGameState(),
+      mapId: 'floor1',
       tile: { x: 9, y: 5 },
-      player: { hp: 30, maxHp: 30, attack: 10, defense: 2 },
       openedRewardIds: ['floor1-power-core'],
-      defeatedEnemyIds: [],
-      openedShortcutIds: [],
     };
+    storage.setItem('eridanus.save', JSON.stringify(state));
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
   });
 

@@ -67,7 +67,8 @@ export class InteractionOverlay {
       transient = blockedHtml;
     } else if (effect) {
       const text = effectText(effect);
-      if (text) transient = `<div data-testid="effect">${text}</div>`;
+      if (text)
+        transient = `<div data-testid="effect" data-effect="${effect.kind}">${text}</div>`;
     }
     this.root.innerHTML = `
       <section data-testid="hud" aria-label="Player status">
