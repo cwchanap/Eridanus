@@ -76,6 +76,20 @@ describe('validateContent failure branches', () => {
     ]);
   });
 
+  it('flags stacked entities on the same tile', () => {
+    const maps = villageWith([
+      {
+        kind: 'clue',
+        id: 'stacked-clue',
+        tile: { x: 2, y: 2 },
+        text: 'shares a tile',
+      },
+    ]);
+    expect(validateContent(maps)).toEqual([
+      'stacked-clue: entity tile already occupied',
+    ]);
+  });
+
   it('flags an entity standing on a wall', () => {
     const maps = villageWith([
       {
