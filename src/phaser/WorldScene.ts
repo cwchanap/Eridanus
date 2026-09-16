@@ -59,9 +59,11 @@ export class WorldScene extends Phaser.Scene {
 
     const collected = new Set(state.openedRewardIds);
     const defeated = new Set(state.defeatedEnemyIds);
+    const opened = new Set(state.openedShortcutIds);
     for (const entity of map.entities) {
       if (entity.kind === 'reward' && collected.has(entity.id)) continue;
       if (entity.kind === 'enemy' && defeated.has(entity.id)) continue;
+      if (entity.kind === 'latch' && opened.has(entity.id)) continue;
       this.add
         .text(
           (entity.tile.x + 0.5) * TILE_SIZE,

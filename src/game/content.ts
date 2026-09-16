@@ -55,9 +55,14 @@ export function validateContent(
     if (map.layout.some((row) => /[^#.]/.test(row)))
       errors.push(`${map.id}: layout contains an invalid tile`);
 
+    const occupied = new Set<string>();
     for (const entity of map.entities) {
       if (ids.has(entity.id)) errors.push(`duplicate entity id: ${entity.id}`);
       ids.add(entity.id);
+      const tileKey = `${entity.tile.x},${entity.tile.y}`;
+      if (occupied.has(tileKey))
+        errors.push(`${entity.id}: entity tile already occupied`);
+      occupied.add(tileKey);
       if (!floorOn(map, entity.tile))
         errors.push(`${entity.id}: entity tile must be floor`);
 
