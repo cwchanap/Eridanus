@@ -25,6 +25,27 @@ class MemoryStorage implements Storage {
   }
 }
 
+class ThrowingStorage implements Storage {
+  getItem(): string | null {
+    throw new Error('storage unavailable');
+  }
+  setItem(): void {
+    throw new Error('storage unavailable');
+  }
+  removeItem(): void {
+    throw new Error('storage unavailable');
+  }
+  clear(): void {
+    throw new Error('storage unavailable');
+  }
+  key(): string | null {
+    return null;
+  }
+  get length(): number {
+    return 0;
+  }
+}
+
 let storage: Storage;
 
 beforeEach(() => {
@@ -231,6 +252,36 @@ describe('saveGame/loadGame', () => {
       kind: 'invalid',
       reason: 'invalid-content',
     });
+  });
+
+  it('rejects non-finite player stats', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify(createInitialGameState()).replace('"hp":30', '"hp":1e400'),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-shape',
+    });
+  });
+});
+
+describe('storage failures', () => {
+  it('starts fresh when getItem throws', () => {
+    expect(loadGame(new ThrowingStorage())).toEqual({
+      kind: 'fresh',
+      state: createInitialGameState(),
+    });
+  });
+
+  it('reports failure when setItem throws', () => {
+    expect(saveGame(new ThrowingStorage(), createInitialGameState())).toBe(
+      false,
+    );
+  });
+
+  it('returns fresh state when removeItem throws', () => {
+    expect(resetGame(new ThrowingStorage())).toEqual(createInitialGameState());
   });
 });
 

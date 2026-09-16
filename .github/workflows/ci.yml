@@ -1,4 +1,8 @@
 name: CI
+
+permissions:
+  contents: read
+
 on:
   pull_request:
   push:
@@ -10,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.4.2 }
       - run: bun install --frozen-lockfile
@@ -23,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.4.2 }
       - run: bun install --frozen-lockfile
@@ -33,6 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.4.2 }
       - run: bun install --frozen-lockfile
