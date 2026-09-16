@@ -52,6 +52,8 @@ export function validateContent(
     const width = map.layout[0]?.length ?? 0;
     if (width === 0 || map.layout.some((row) => row.length !== width))
       errors.push(`${map.id}: layout must be rectangular`);
+    if (map.layout.some((row) => /[^#.]/.test(row)))
+      errors.push(`${map.id}: layout contains an invalid tile`);
 
     for (const entity of map.entities) {
       if (ids.has(entity.id)) errors.push(`duplicate entity id: ${entity.id}`);

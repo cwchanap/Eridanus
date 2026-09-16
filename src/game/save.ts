@@ -31,7 +31,8 @@ function hasValidShape(state: unknown): state is GameState {
   if (typeof player !== 'object' || player === null) return false;
   const playerRecord = player as Record<string, unknown>;
   for (const stat of ['hp', 'maxHp', 'attack', 'defense'] as const) {
-    if (typeof playerRecord[stat] !== 'number') return false;
+    const value = playerRecord[stat];
+    if (typeof value !== 'number' || !Number.isFinite(value)) return false;
   }
   return (
     isStringArray(record['openedRewardIds']) &&
@@ -76,12 +77,22 @@ function hasValidContent(state: GameState): boolean {
   return !isTileOccupiedByBlockingEntity(state, state.tile);
 }
 
-export function saveGame(storage: Storage, state: GameState): void {
-  storage.setItem(SAVE_KEY, JSON.stringify(state));
+export function saveGame(storage: Storage, state: GameState): boolean {
+  try {
+    storage.setItem(SAVE_KEY, JSON.stringify(state));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function loadGame(storage: Storage): LoadResult {
-  const raw = storage.getItem(SAVE_KEY);
+  let raw: string | null;
+  try {
+    raw = storage.getItem(SAVE_KEY);
+  } catch {
+    return { kind: 'fresh', state: createInitialGameState() };
+  }
   if (raw === null) return { kind: 'fresh', state: createInitialGameState() };
 
   let parsed: unknown;
@@ -98,6 +109,10 @@ export function loadGame(storage: Storage): LoadResult {
 }
 
 export function resetGame(storage: Storage): GameState {
-  storage.removeItem(SAVE_KEY);
+  try {
+    storage.removeItem(SAVE_KEY);
+  } catch {
+    // Storage may be unavailable; still return a playable fresh state.
+  }
   return createInitialGameState();
 }

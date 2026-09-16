@@ -47,6 +47,21 @@ describe('validateContent failure branches', () => {
     ]);
   });
 
+  it('flags an invalid layout tile', () => {
+    const maps = {
+      ...MAPS,
+      village: {
+        ...village,
+        layout: village.layout.map((row, y) =>
+          y === 1 ? `#x${row.slice(2)}` : row,
+        ),
+      },
+    };
+    expect(validateContent(maps)).toEqual([
+      'village: layout contains an invalid tile',
+    ]);
+  });
+
   it('flags a duplicate entity id', () => {
     const maps = villageWith([
       {
