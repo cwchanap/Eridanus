@@ -1,0 +1,167 @@
+name: Prepare HPA-22 generated assets
+
+on:
+  push:
+    branches:
+      - jack65786656/hpa-22-tower-maze-generate-and-integrate-the-reusable-mvp-image
+    paths:
+      - .github/workflows/hpa22-prepare-assets.yml
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    env:
+      TERRAIN_URL: 'https://storage.googleapis.com/xi-backend/database/workspace/eb316816cff3434592cdf4758c204382/content_generation/aATO90DFMt4N7oYOJj7l/9Hb71kp7bmC6Rtq2YBWs/content.png?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20260917%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260917T185300Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=4860b487829bfa0897e30f571bb2c504348d8cdd996e1064f57b3b7f7b0631b024c21eb98e03fef5defbdf7c6aaf12240a1fc0a8291c4caf6e82c5f1fe045ac6dbe69f2495d2c20b4d07068f5c8f35eeabaa42a8b4f41162c047946c9470cdc986576d2a7d11b549d73c76a87d4f6c85ae75eb9c82cd2136c5bdcd4fe94962ca0d45bd9033a2a71ba952b57d45e0bbce7480128ef1b2379abd9edf30db1eaf8f319500e3c469105b9c252dccff24683e549a62a51449415e2bddea69c80fa09accea67f2ee75f9da3bcb70f7fc4e3c1c1efc5b3d2f846506eb5c29c01dd6e1e3bb845a90525170b8ad938a2424a6b3c3fffc3daa4461e3c93f77a427d677bbe2'
+      PLAYER_URL: 'https://storage.googleapis.com/xi-backend/database/workspace/eb316816cff3434592cdf4758c204382/content_generation/ixONDnoxTiAe6nqZcqLU/hed2WCXhNagkmZlYMybx/content.png?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20260917%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260917T185302Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=948474ebfb9f3bac2dedf47bb69da299d14e0e5f255d6ba1277ad309e912836f73d278d0b3ab984feebdf55260fccf76513f2a855cdbe25c75d1da3dc22bd3e1583b8a2834efeaf9e927634850ef3b78f0eb5108ff2612d3218f46d8f6fda948db64ecd7e549423be1fe5b514c3457d343defe03affb03861adc2034f90aeb0c47d5e14c83a1541fba97d21b0f98af56e6cdf7b971a87958a90424ba6fb9593d9cbfa9cf58ec1c9e84512f51136a0cb9c456bafa39975df32bed579c0464d129135f21030d707fa4d8a4b015965ef89e67e0e35e65a9a8857fc20e9e05d7658dda9a15734d0fbd6e5b75353e750d0492d1b45e857ef0db394626f3feba1f9f33'
+      ACTORS_URL: 'https://storage.googleapis.com/xi-backend/database/workspace/eb316816cff3434592cdf4758c204382/content_generation/jFq9gicmvKeTK3EFFU4Q/LgT8lvu7ByUQPVKROs5u/content.png?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20260917%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260917T185300Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=a44c130e622c9db79d830e516c9596800a5b155f7dbe985b367a49d3aa67d65c5a91c041a1b0df43c2dbf6b041ce64ec7a4c9e35535f2bc68a46f165e366a4552dda55bc784e3132f02307ffe31d010bb8b51e03b8f58629f4ba2ef6cd7268fa747ebb6c9656113e504ea7a79f55c7cabc6d2abe667f5612c1e1729d7c9285a492c121d6faf9e0af850b55ef0d588eb3ff7d94080821ff99614730d3ac59188a4642facc3d8a39201df657d840d725d2b447c9f59a10309400177b2b2811571255ad622dda816b336fba09cc12e4d3a38f3051aa430ef6d0c9f8251a4cd3622f135ea31f986243f9db2eef599b3bf98b11de621df791b72ca453108361f8d1e2'
+      INTERACTABLES_URL: 'https://storage.googleapis.com/xi-backend/database/workspace/eb316816cff3434592cdf4758c204382/content_generation/kKPdeg75LN6K3xqhuYww/UtLaSAAlJfbCyfof2uKb/content.png?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=xi-backend-prod%40xi-labs.iam.gserviceaccount.com%2F20260917%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20260917T185307Z&X-Goog-Expires=7200&X-Goog-SignedHeaders=host&X-Goog-Signature=20f0cd665ac143887e640195faba96294512167eace47a350af44c245fe48035faf4dcc489d4b30781690443ee7aba84f368576ff05b804ba6eb28aea9d92df4181f1968e23eca519b99de3090e14c5a28c80002ed48ba9a79a19ab2a42467772e3a01700ace10419a78e2e14907ae7b39c61c156e5d5b77adf5861389654cbc4a69e726ad0369008409aef3efb2603c3094847dd5c5a3977d76427dae993dd260d16832871bdc787006c87ae94d0ef5cf31d25c6d8b31d61b59656dea6d0a047ea462f8588dfe3eebd83fc64745ac290cf8285f87c66942fca43070e247a56070013dc267bd20303eb0a6c8bb5266b31a6583d5d0c49779e054e884992f7119'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pillow numpy
+      - name: Download, crop, normalize
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import urllib.request
+          from collections import deque
+          from pathlib import Path
+
+          import numpy as np
+          from PIL import Image
+
+          root = Path('prepared')
+          sources = root / '_sources'
+          sources.mkdir(parents=True, exist_ok=True)
+
+          urls = {
+              'terrain': os.environ['TERRAIN_URL'],
+              'players': os.environ['PLAYER_URL'],
+              'actors': os.environ['ACTORS_URL'],
+              'interactables': os.environ['INTERACTABLES_URL'],
+          }
+          for name, url in urls.items():
+              urllib.request.urlretrieve(url, sources / f'{name}.png')
+
+          def remove_edge_background(image: Image.Image) -> Image.Image:
+              image = image.convert('RGBA')
+              arr = np.array(image)
+              if arr[..., 3].min() < 250:
+                  return image
+              rgb = arr[..., :3].astype(np.int16)
+              border = np.concatenate([
+                  rgb[0, :, :], rgb[-1, :, :], rgb[:, 0, :], rgb[:, -1, :]
+              ], axis=0)
+              bg = np.median(border, axis=0)
+              dist = np.sqrt(((rgb - bg) ** 2).sum(axis=2))
+              candidate = dist < 48
+              h, w = candidate.shape
+              seen = np.zeros((h, w), dtype=bool)
+              q = deque()
+              for x in range(w):
+                  if candidate[0, x]: q.append((0, x))
+                  if candidate[h - 1, x]: q.append((h - 1, x))
+              for y in range(h):
+                  if candidate[y, 0]: q.append((y, 0))
+                  if candidate[y, w - 1]: q.append((y, w - 1))
+              while q:
+                  y, x = q.popleft()
+                  if y < 0 or y >= h or x < 0 or x >= w or seen[y, x] or not candidate[y, x]:
+                      continue
+                  seen[y, x] = True
+                  q.extend(((y-1,x),(y+1,x),(y,x-1),(y,x+1)))
+              arr[seen, 3] = 0
+              return Image.fromarray(arr, 'RGBA')
+
+          def fit_sprite(cell: Image.Image, out_path: Path):
+              sprite = remove_edge_background(cell)
+              alpha = sprite.getchannel('A')
+              bbox = alpha.getbbox()
+              if bbox:
+                  sprite = sprite.crop(bbox)
+              max_w = max_h = 60
+              scale = min(max_w / sprite.width, max_h / sprite.height, 1.0)
+              size = (max(1, round(sprite.width * scale)), max(1, round(sprite.height * scale)))
+              sprite = sprite.resize(size, Image.Resampling.LANCZOS)
+              canvas = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
+              x = (64 - sprite.width) // 2
+              y = 62 - sprite.height
+              canvas.alpha_composite(sprite, (x, y))
+              out_path.parent.mkdir(parents=True, exist_ok=True)
+              canvas.save(out_path)
+
+          def square_center(img: Image.Image):
+              side = min(img.width, img.height)
+              left = (img.width - side) // 2
+              top = (img.height - side) // 2
+              return img.crop((left, top, left + side, top + side))
+
+          # Terrain: central square split 2x2, row-major.
+          terrain = square_center(Image.open(sources / 'terrain.png').convert('RGB'))
+          terrain_names = [
+              'terrain/village-floor.png', 'terrain/village-wall.png',
+              'terrain/dungeon-floor.png', 'terrain/dungeon-wall.png',
+          ]
+          cw, ch = terrain.width // 2, terrain.height // 2
+          for i, rel in enumerate(terrain_names):
+              row, col = divmod(i, 2)
+              cell = terrain.crop((col*cw, row*ch, (col+1)*cw, (row+1)*ch))
+              out = root / 'public/assets' / rel
+              out.parent.mkdir(parents=True, exist_ok=True)
+              cell.resize((32, 32), Image.Resampling.LANCZOS).save(out)
+
+          # Player: central square split 2x2, row-major N/S/E/W.
+          players = square_center(Image.open(sources / 'players.png'))
+          player_names = [
+              'characters/player-north.png', 'characters/player-south.png',
+              'characters/player-east.png', 'characters/player-west.png',
+          ]
+          cw, ch = players.width // 2, players.height // 2
+          for i, rel in enumerate(player_names):
+              row, col = divmod(i, 2)
+              fit_sprite(players.crop((col*cw, row*ch, (col+1)*cw, (row+1)*ch)), root / 'public/assets' / rel)
+
+          # Actors: split left/right, then central-square each half.
+          actors = Image.open(sources / 'actors.png')
+          actor_names = ['characters/npc-village-guide.png', 'enemies/ruin-guard.png']
+          half = actors.width // 2
+          for i, rel in enumerate(actor_names):
+              cell = actors.crop((i*half, 0, (i+1)*half, actors.height))
+              fit_sprite(square_center(cell), root / 'public/assets' / rel)
+
+          # Interactables: 4 columns x 2 rows, row-major.
+          inter = Image.open(sources / 'interactables.png')
+          inter_names = [
+              'interactables/stairs-up.png', 'interactables/stairs-down.png',
+              'interactables/recovery-waystone.png', 'interactables/clue-runes.png',
+              'interactables/shortcut-gate-closed.png', 'interactables/shortcut-gate-open.png',
+              'interactables/chest-relic-closed.png', 'interactables/chest-relic-open.png',
+          ]
+          cw, ch = inter.width // 4, inter.height // 2
+          for i, rel in enumerate(inter_names):
+              row, col = divmod(i, 4)
+              cell = inter.crop((col*cw, row*ch, (col+1)*cw, (row+1)*ch))
+              fit_sprite(square_center(cell), root / 'public/assets' / rel)
+
+          # Verify runtime dimensions.
+          for path in (root / 'public/assets').rglob('*.png'):
+              with Image.open(path) as image:
+                  if '/terrain/' in path.as_posix():
+                      assert image.size == (32, 32), (path, image.size)
+                  else:
+                      assert image.width <= 64 and image.height <= 64, (path, image.size)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hpa22-prepared-assets
+          path: prepared
+          if-no-files-found: error
+          retention-days: 1
