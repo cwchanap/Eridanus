@@ -2,127 +2,29 @@
 
 ## Status
 
-Planning contract for HPA-22. This is the standalone image-generation/art-production slice for the Tower Maze MVP and remains one ticket / one implementation PR.
+Planning contract for HPA-22. This remains the standalone image-generation/art-production slice for the Tower Maze MVP and is delivered as one implementation PR.
 
-HPA-237 is complete and established the gameplay grid, one-tile collision contract, stable entity IDs, optional `assetId` seam, bottom-center visual anchoring, reusable `WorldScene`, deterministic rules, and one LocalStorage snapshot. HPA-22 replaces that slice's placeholder presentation with a small reusable art kit without changing gameplay rules or expanding Floor 1–3 content.
+HPA-237 already established the gameplay grid, one-tile collision contract, optional `assetId` seam, bottom-center anchoring convention, durable progression flags, and reusable `WorldScene`. HPA-22 replaces that vertical slice's placeholder presentation without changing gameplay rules or expanding Floor 1–3 content.
 
 ## Goal
 
-Establish a coherent, readable visual language for Eridanus and prove that generated runtime art can replace HPA-237 placeholders without renderer redesign.
+Establish a coherent, readable visual language for Eridanus and prove that generated runtime art can replace the current placeholders without renderer redesign.
 
 The ticket succeeds when:
 
-- a representative village/dungeon/character/enemy/relic sample is evaluated in the real game at the 32 px logical tile scale before the rest of the current-slice kit is produced;
-- the complete HPA-237 village → Floor 1 → Floor 2 vertical slice renders finished runtime assets instead of text/solid-color placeholders;
-- later content can extend the same catalog, scale, anchoring, filtering choice, and style conventions by adding only the images it actually consumes;
-- open/closed relic and shortcut states are visually legible while preserving the existing domain rules;
-- every catalog entry points to a committed runtime asset and every current authored `assetId` is a known catalog key;
-- prompt/style/provenance notes are committed so later content can reproduce the treatment.
-
-## Why This Is the Next Slice
-
-HPA-22 was gated by HPA-237 and is intended to merge early after the gameplay seams are proven. That blocker is cleared.
-
-HPA-235 is also unblocked, but it expands the village and Floor 1. Shipping HPA-22 first keeps image generation isolated and gives HPA-235 a stable visual contract instead of making that content PR invent art conventions while it authors gameplay.
+- a representative village/dungeon/character/enemy/relic sample is evaluated at the real 32 px logical scale before the rest of the current-slice art is produced;
+- the complete HPA-237 village → Floor 1 → Floor 2 slice renders finished runtime assets instead of text/solid-color placeholders;
+- later content can extend the same catalog, scale, anchoring, filtering, and prompt conventions without changing the renderer;
+- open/closed relic and shortcut states are visibly different while using only existing durable progression arrays;
+- every current authored asset binding resolves to a committed runtime PNG;
+- runtime image dimensions are mechanically bounded so a bad export cannot silently render several tiles tall;
+- a durable style guide records the reproducible visual rules rather than ticket bookkeeping.
 
 ## Scope
 
 ### Included
 
-Only assets consumed by the current HPA-237 vertical slice plus the four directional player stills belong in this ticket:
-
-- shared village floor/wall treatment;
-- shared dungeon/ruin floor/wall treatment;
-- player north/south/east/west stills;
-- one village-guide/NPC visual bound to the existing village clue;
-- one regular ruin enemy bound to the existing Floor 1 gatekeeper;
-- stairs/portal up/down visuals;
-- recovery waystone;
-- dungeon clue/landmark rune treatment;
-- shortcut gate closed/open pair;
-- current relic/important-reward closed/open pair;
-- runtime-ready PNG cleanup, transparency, scale normalization, and bottom-center anchoring;
-- one explicit TypeScript asset catalog and small presentation-only resolvers;
-- `WorldScene` preload/image rendering while tile coordinates remain authoritative;
-- prompt/style/provenance notes;
-- unit/browser checks for catalog coverage, current content bindings, committed files, and real Vite serving.
-
-### Deferred to the First Content Ticket That Actually Uses Them
-
-Do not generate speculative baseline assets merely to establish a library. The style guide is the reuse mechanism.
-
-Deferred examples:
-
-- additional regular enemies such as a stalker or wisp;
-- ordinary chest closed/open art;
-- named NPCs beyond the current village guide;
-- Floor-specific bosses, landmarks, mechanisms, or unusual enemies;
-- journal/map icons;
-- portraits;
-- walking/attack animation sets.
-
-When HPA-235/HPA-146/HPA-137 first places one of these, that same content PR adds the required PNG(s), `ASSET_PATHS` row(s), and if needed one `OPEN_VARIANT` row.
-
-### Non-goals
-
-Do not add:
-
-- a generic asset-management framework;
-- texture-atlas tooling or a build-time sprite-sheet pipeline;
-- an auto-tiling system;
-- a generic animation registry;
-- gameplay geometry encoded in images;
-- new entity kinds, quest systems, inventory, keys, dialogue engines, or Floor 1–3 content;
-- full-floor background images;
-- music, voice, video, cutscenes, or broad UI redesign;
-- save schema changes or migrations;
-- test-only game APIs;
-- visual-regression infrastructure.
-
-## Existing Contracts to Preserve
-
-HPA-237 already fixes the important boundaries:
-
-- `TILE_SIZE` remains `32`.
-- Collision and interaction use authored tile coordinates only.
-- Player/enemy logical footprint remains one tile regardless of source-image dimensions.
-- Character/entity visuals anchor bottom-center to their tile.
-- `MapDefinition.layout` remains ASCII `#` / `.` geometry.
-- `BaseEntity.assetId?: string` stays optional and stays in `src/game/types.ts`; the game domain must not import `AssetKey`.
-- Pure game-domain modules remain Phaser-free.
-- `WorldScene` remains presentation/input only and may keep transient presentation state such as facing.
-- Full redraw and camera follow remain unchanged.
-- The existing cross-floor browser journey remains the gameplay regression test.
-- Open reward/latch tiles remain walkable because movement rules already derive blocking from durable progression; presentation must not change that.
-
-HPA-22 may extend the presentation seam but must not move art concerns into the domain.
-
-## Approaches Considered
-
-### 1. Explicit PNG catalog + thin Phaser preload/rendering — chosen
-
-Store processed runtime PNGs under `public/assets/`, define one explicit catalog in `src/phaser/assets.ts`, load them through normal Phaser `load.image`, and resolve terrain/entity/player texture keys through small presentation helpers.
-
-Why this fits:
-
-- very little infrastructure;
-- paths are obvious in review;
-- generated assets can be replaced independently;
-- file existence and Vite serving are straightforward to test;
-- later content adds only the PNG/catalog rows it consumes;
-- no bundler magic, atlas metadata, or discovery conventions.
-
-### 2. Texture atlases / sprite sheets — rejected for now
-
-The current slice contains a small number of static images. Packing them would create extra cropping/metadata work without solving a current problem. Reconsider only if a later ticket introduces a real animation or asset-count constraint.
-
-### 3. Dynamic discovery / JSON manifest / generic asset manager — rejected
-
-Automatic discovery saves little for a small static catalog while adding another convention and failure surface. A checked-in TypeScript object remains the source of truth.
-
-## Final Runtime Asset Layout
-
-HPA-22 ends with only these consumed files:
+Generate only assets consumed by the current HPA-237 slice:
 
 ```text
 public/assets/
@@ -150,87 +52,66 @@ public/assets/
     chest-relic-open.png
 ```
 
-Raw high-resolution generations are not runtime assets. Keep selected processed files only; discarded source generations do not belong in the repo merely for provenance.
+Also included:
 
-## Visual Proof Gate
+- one explicit TypeScript asset catalog in `src/phaser/assets.ts`;
+- presentation-only terrain, player-facing, and open-state resolution;
+- Phaser preload/image rendering through the existing `WorldScene`;
+- prompt/style guidance in `docs/art/style-guide.md`;
+- fast file/dimension validation plus browser serving coverage;
+- real-game screenshots as review evidence.
 
-Before producing the remaining current-slice art, create and integrate this representative sample:
+### Deferred
 
-1. village floor/wall corner;
-2. dungeon floor/wall room treatment;
-3. player south-facing still;
-4. village-guide NPC still;
-5. `ruin-guard` enemy still;
-6. relic chest closed/open pair.
+Do not pre-generate assets that current authored content does not draw. In particular, defer:
 
-Evaluate the sample in the real game at 100% browser zoom and the real 32 px logical scale.
+- spare regular enemies such as `ruin-stalker` / `ruin-wisp`;
+- ordinary chest open/closed art;
+- additional named NPCs;
+- Floor-specific bosses or landmarks;
+- journal/map/item icon sets;
+- portraits;
+- walking/attack animation frames.
 
-### Hard pass criteria
+The first later content PR that consumes one of these adds its PNG and one catalog entry while following `docs/art/style-guide.md`.
 
-Do not proceed to the remaining assets until all criteria pass:
+### Non-goals
 
-- player, NPC, and enemy silhouettes are distinguishable at a glance;
-- feet/base align cleanly to the existing logical tile using bottom-center anchoring;
-- character art may extend upward but does not imply a larger collision footprint;
-- village and dungeon terrain are immediately distinguishable;
-- relic closed/open states are distinguishable without text or glow alone;
-- important detail survives downscale rather than becoming 32 px visual mud;
-- no selected character/interactable needs a per-entity pixel offset;
-- a sprite taller than roughly two tiles is recropped/simplified rather than accommodated by renderer hacks;
-- the treatment can be reproduced consistently for the remaining current-slice assets.
+Do not add:
 
-### Texture filtering decision
+- an atlas or sprite-sheet pipeline;
+- glob/import discovery or a JSON manifest;
+- a generic asset manager;
+- auto-tiling;
+- a generic animation registry;
+- an image build plugin;
+- runtime PNG parsing;
+- gameplay geometry encoded in images;
+- new entity kinds, quest systems, inventory, keys, or dialogue engines;
+- save schema changes or migrations;
+- a portrait framework or UI-framework rewrite;
+- full-floor background images;
+- music, voice, video, or cutscenes;
+- visual-regression infrastructure or test-only game APIs.
 
-`src/phaser/createGame.ts` currently sets `pixelArt: true`, so the proof is already rendered with nearest-neighbor filtering.
+## Existing Contracts to Preserve
 
-The proof gate must explicitly choose the filtering that matches the selected treatment:
+- `TILE_SIZE` remains exactly `32`.
+- Collision and interaction remain authored tile-coordinate rules; image bounds never affect gameplay.
+- Player/enemy logical footprint remains one tile.
+- Character/entity visuals use bottom-center anchoring.
+- `MapDefinition.layout` remains ASCII `#` / `.` geometry.
+- `BaseEntity.assetId?: string` remains a plain domain string; `src/game/` must not import `AssetKey`.
+- Pure game-domain modules remain Phaser-free.
+- `WorldScene` remains presentation/input only and keeps the existing full redraw + camera-follow approach.
+- `GameState` remains unchanged. Open reward, defeated enemy, and opened shortcut visuals derive from `openedRewardIds`, `defeatedEnemyIds`, and `openedShortcutIds`.
+- The existing browser journey remains the mechanics regression test.
 
-- if the final treatment is intentionally pixel-art-like, keep `pixelArt: true`;
-- if the final treatment is painterly/anime and reads better with normal filtering, set `pixelArt: false` (or remove the opt-in) in this ticket.
+## Architecture
 
-This is a presentation choice, not a new pipeline. Record the decision and rationale in `docs/art/hpa-22-style-guide.md`.
+### Explicit catalog
 
-## Art Direction
-
-### Shared language
-
-- Top-down fantasy with clear anime influence in character silhouette/face treatment.
-- Strong readable shapes and controlled detail over illustration density.
-- Warm, inhabited village language.
-- Cooler, older ruin language for dungeon assets.
-- Shared line/shading treatment across characters and interactables.
-- Avoid baked directional lighting that makes reusable assets look wrong elsewhere.
-
-### Logical scale
-
-- Terrain and most interactables fit a one-tile visual footprint.
-- Characters/enemies may use a taller transparent canvas but still anchor bottom-center to one tile.
-- Source generation may be larger; final runtime dimensions are normalized after crop/downscale.
-- Collision never reads image bounds.
-
-### Player
-
-Generate four directional stills only: north, south, east, west.
-
-`WorldScene` stores the latest movement direction as transient presentation state. It is not persisted. Reload resetting facing to south is correct.
-
-### NPC
-
-The existing `village-tower-lead` clue receives the village-guide visual. Do not add an NPC entity kind, portrait framework, dialogue framework, or new village cast.
-
-### Enemy
-
-The current Floor 1 gatekeeper uses the one `ruin-guard` asset. Additional enemy variants wait until a later content ticket actually places them.
-
-### Treasure and interactables
-
-HPA-22 provides only interactables consumed by the current slice: relic reward, shortcut, recovery, clue, and stairs. Ordinary chest art is deferred until an ordinary chest is authored.
-
-## Asset Catalog
-
-`src/phaser/assets.ts` remains the only runtime asset manifest.
-
-Representative final shape:
+`src/phaser/assets.ts` grows the existing HPA-237 seam in place. It owns one explicit catalog:
 
 ```ts
 export const ASSET_PATHS = {
@@ -257,11 +138,11 @@ export const ASSET_PATHS = {
 export type AssetKey = keyof typeof ASSET_PATHS;
 ```
 
-Do not add JSON manifests, import-glob discovery, dependency injection, or a second source of truth.
+This object is the only runtime asset manifest. Later content extends it explicitly.
 
-## Terrain and Player Resolution
+### Terrain mapping
 
-Presentation owns both small mappings:
+Presentation owns the exhaustive map-theme mapping rather than adding art metadata to the domain:
 
 ```ts
 type TerrainTheme = Readonly<{ floor: AssetKey; wall: AssetKey }>;
@@ -280,7 +161,15 @@ const TERRAIN_BY_MAP: Record<MapId, TerrainTheme> = {
     wall: 'terrain-dungeon-wall',
   },
 };
+```
 
+Adding a new `MapId` therefore requires a deliberate terrain decision at compile time.
+
+### Player facing
+
+Facing is presentation-only:
+
+```ts
 const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {
   north: 'player-north',
   south: 'player-south',
@@ -289,15 +178,17 @@ const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {
 };
 ```
 
-Do not add an art-theme field to `MapDefinition`; adding a map already requires extending `MapId`, so the presentation mapping remains explicit and compile-checked.
+`WorldScene` remembers the latest arrow-key direction in a private field. Reloading to south is acceptable; facing is not persisted.
 
-## Entity Resolution
+### Entity resolution
 
-The HPA-237 `entity.assetId ?? entity.kind` behavior was a placeholder-label convenience, not a safe final-art fallback. HPA-22 removes kind-based defaults that could silently paint the wrong stairs, enemy, clue, or reward.
+Content-specific visuals are explicit. Portal, enemy, clue, and reward entities do **not** have kind-based art fallbacks because their correct sprite cannot be inferred from the kind alone.
 
-Use explicit authored `assetId` for directional/content-specific visuals. Only kinds with exactly one current visual may omit it: recovery and the closed latch.
+Recovery and the closed latch are the only safe current defaults because each has exactly one visual in this slice.
 
-Open-state changes are table-driven:
+Unknown explicit `assetId` values fail closed (`null`) and are development defects caught by tests; the runtime does not substitute a plausible sprite.
+
+Open-state mapping is data, not a kind switch:
 
 ```ts
 const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey>> = {
@@ -306,146 +197,182 @@ const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey>> = {
 };
 ```
 
-Resolution rules:
+Resolution order:
 
 1. defeated enemy → `null`;
-2. if `assetId` is present, it must be a catalog key; an unknown ID resolves `null` and fails the exhaustive current-content unit test rather than silently substituting art;
-3. otherwise recovery → `recovery-waystone`, latch → `shortcut-gate-closed`, and every other kind without an explicit ID → `null`;
-4. for an opened reward or opened latch, return `OPEN_VARIANT[key] ?? key`;
-5. otherwise return the base key.
+2. explicit valid `assetId`, otherwise the recovery/latch single-visual default;
+3. if reward/latch is opened, use `OPEN_VARIANT[base] ?? base`;
+4. otherwise use the base key.
 
-Do not hardcode “opened reward means relic” and do not provide directional portal/enemy/clue/reward defaults.
+A future openable reward that forgets its `OPEN_VARIANT` row must fail content/catalog tests rather than silently showing closed art forever.
 
-This lets a later content ticket add a new closed/open pair by adding its PNG/catalog rows and one `OPEN_VARIANT` row without rewriting the resolver.
+## Runtime Dimension Contract
 
-## Presentation-only Render State
+Terrain is drawn at one logical tile and must therefore be exported exactly `32×32`.
 
-Finished visuals may remain after their gameplay blocker is removed:
+All non-terrain runtime PNGs must be at most `64×64`. They may be smaller or taller than one tile, but the bound prevents an accidental source-resolution export from covering a large portion of the board and limits overlap while `WorldScene` still renders in authored array order.
 
-- collected current reward → open relic remains visible while the tile is walkable;
-- opened shortcut → open gate remains visible while the tile is walkable;
-- defeated enemy → no sprite;
-- clue, recovery, portal → normal visual;
-- player → directional still from transient `playerFacing`.
+The catalog file test reads only the fixed PNG IHDR width/height fields (bytes 16–23) with Node `readFileSync`. This is a small test-only format assertion, not a reusable PNG parser, dependency, or runtime system.
 
-No new durable state is introduced.
+If a later real asset needs a footprint beyond this bound, change the contract deliberately in that content PR rather than introducing a generic footprint table pre-emptively.
 
-## `WorldScene` Integration
+## Proof-First Delivery
 
-Add normal `preload()` that iterates `ASSET_PATHS` and calls `load.image`.
+### Proof sample
 
-`refresh()` continues to redraw from authored map + current `GameState`, but replaces placeholder rectangles/text with images. Terrain is stretched to exactly one logical tile using `setDisplaySize(TILE_SIZE, TILE_SIZE)`; entities render at their processed native dimensions and anchor bottom-center.
+Before producing the remaining current-slice art, generate and integrate:
 
-Keep the current input model, full redraw, camera follow, state ownership, and gameplay flow. Do not optimize rendering in HPA-22.
+1. village floor/wall;
+2. dungeon floor/wall;
+3. south-facing player;
+4. village-guide NPC;
+5. `ruin-guard` enemy;
+6. relic chest closed/open pair.
 
-When an opened relic or gate shares a tile with the player, readability is solved by cropping/simplifying the PNG, not by adding entity-specific offsets or changing collision.
+At 100% browser zoom and the real 640×480 game canvas, verify:
 
-## Current Content Bindings
+- player, NPC, and enemy silhouettes are distinct;
+- bottom-center anchoring reads correctly;
+- village and dungeon terrain are clearly different;
+- relic open/closed states differ by shape/silhouette, not text or glow alone;
+- important detail survives 32 px gameplay scale;
+- no asset needs a per-entity renderer offset;
+- no non-terrain asset violates the `≤64×64` runtime bound;
+- the treatment can be reproduced for the remaining current-slice assets.
 
-Directional/content-specific current entities get explicit `assetId` values:
+### Filtering decision
 
-- village clue → `npc-village-guide`;
-- village → Floor 1 portal → `stairs-down`;
-- Floor 1 → village portal → `stairs-up`;
-- Floor 1 → Floor 2 portals → `stairs-down`;
-- Floor 2 → Floor 1 portals → `stairs-up`;
-- Floor 1 clue → `clue-runes`;
-- Floor 1 reward → `chest-relic-closed`;
-- Floor 1 enemy → `enemy-ruin-guard`.
+`src/phaser/createGame.ts` currently uses `pixelArt: true`.
 
-Recovery and latch may use their single-visual defaults. No gameplay text, coordinates, stats, portal targets, or progression semantics change.
+The proof makes one explicit decision:
 
-## Style and Provenance Notes
+- keep `pixelArt: true` when the approved treatment benefits from nearest-neighbor filtering;
+- set it to `false` when painterly/anime art is materially clearer with normal filtering.
 
-Create `docs/art/hpa-22-style-guide.md` during implementation with:
+Record the chosen value and reason in `docs/art/style-guide.md`. Do not add runtime filter switching or per-texture filtering.
 
-- the chosen visual treatment after the proof gate;
-- the final `pixelArt` filtering decision;
+### Bounded off-ramp
+
+Do not let the proof gate loop indefinitely.
+
+For a category that fails the gate, allow at most **two regeneration/recrop rounds** using the intended treatment. If it still fails, deliberately simplify that category to flat/iconic shapes with less facial/material detail and perform one final pass.
+
+HPA-22 still requires finished art for the complete current slice; do **not** ship that category as a placeholder. The fallback is reduced visual ambition, not reduced acceptance criteria.
+
+## WorldScene Integration
+
+`WorldScene.preload()` iterates `ASSET_PATHS` and registers each image.
+
+`refresh()`:
+
+- draws terrain images with `.setDisplaySize(TILE_SIZE, TILE_SIZE)`;
+- resolves each entity through `resolveEntityAsset` and draws only non-null keys;
+- leaves opened relic and gate art visible even though those tiles are walkable;
+- hides defeated enemies;
+- renders the player using `PLAYER_BY_DIRECTION` and bottom-center anchoring;
+- keeps camera follow and full redraw behavior unchanged.
+
+The proof checkpoint does not need a temporary legacy text fallback. Unbound entities may simply render nothing until the final current-slice bindings are added; gameplay interactions remain authored-domain behavior.
+
+## Style Guide
+
+Use durable path:
+
+```text
+docs/art/style-guide.md
+```
+
+Keep only information likely to be reused:
+
+- chosen visual treatment;
+- `pixelArt` filtering decision and reason;
 - shared prompt language;
-- target source size and runtime crop/downscale rules;
-- transparency/background cleanup rules;
-- bottom-center anchoring examples;
-- village vs dungeon palette/lighting guidance;
-- selected runtime asset table with generator/model, exact prompt, source/final dimensions, date, and useful seed/reference identifier when available;
-- rejected proof directions and why they failed at gameplay scale.
+- village vs dungeon guidance;
+- transparency/crop/bottom-center rules;
+- runtime dimension rules (`32×32` terrain, `≤64×64` others);
+- rejected proof directions and what failed at gameplay scale;
+- one compact line per selected asset with generator/model and prompt variant.
 
-Do not commit provider credentials or secrets.
+Do not maintain per-asset generation dates, seeds, or source dimensions. Those are ticket bookkeeping, not a durable art contract.
 
 ## Validation and Testing
 
-### Unit tests
+### Fast unit coverage
 
-`src/phaser/assets.test.ts` proves:
+`src/phaser/assets.test.ts` must cover:
 
-- `TILE_SIZE` remains 32;
-- every map resolves to known terrain keys;
-- player facing maps to exactly four known keys;
-- `OPEN_VARIANT` gives the current relic/gate open states;
-- defeated enemy resolves `null`;
-- every authored `assetId` across `Object.values(MAPS)` exists in `ASSET_PATHS`;
-- every live current entity across `Object.values(MAPS)` resolves to a known asset key (no hand-maintained per-ID snapshot);
-- every `ASSET_PATHS` path has a committed file under `public/`.
+- `TILE_SIZE === 32`;
+- every `MapId` has terrain keys present in `ASSET_PATHS`;
+- all four `Direction` values map to player asset keys;
+- unknown explicit IDs fail closed;
+- defeated enemies resolve to `null`;
+- every catalog path exists under `public/`;
+- every terrain PNG is exactly `32×32` by its IHDR header;
+- every other PNG is at most `64×64` by its IHDR header;
+- one loop over `Object.values(MAPS)` validates every current live entity;
+- every authored `assetId` is present in `ASSET_PATHS`;
+- for every current reward/latch, the opened state resolves to a non-null catalog key **different from** its closed key.
 
-The exhaustive `MAPS` loop is the guard against later binding drift and typo fallbacks.
+The generalized `MAPS` loop is the binding-drift guard. Do not replace it with a hand-maintained list of current IDs.
 
-### Browser tests
+### Browser coverage
 
-Keep the existing real-player cross-floor journey unchanged as the gameplay regression test.
+Keep the existing real-player cross-floor journey unchanged.
 
-Add one narrow `request.get` smoke test over `Object.values(ASSET_PATHS)` against the real Vite server. This catches public-path/serving mistakes without a build plugin or test-only runtime API.
+Add one Playwright request test that iterates catalog URLs and asserts:
+
+- HTTP success;
+- `content-type` includes `image/png`.
+
+This catches Vite/public-path mistakes that file existence cannot.
 
 ### Manual evidence
 
-The implementation PR includes real-game screenshots for:
+Attach real-game screenshots showing:
 
-- proof village corner;
-- proof dungeon area;
+- village proof scene;
+- dungeon proof scene;
 - relic closed/open;
-- shortcut closed/open;
-- player/NPC/enemy at normal gameplay scale.
+- shortcut gate closed/open;
+- player overlapping the opened relic tile and opened gate tile without losing readability.
 
-No visual-regression framework is added.
+Screenshots are review evidence only; do not create a visual-regression harness.
 
-## Risks and Hard Stops
+## Risks
 
-### 1. 32 px visual mud
+### 32 px mud
 
-The proof gate is a hard stop. Simplify/regenerate/crop before proceeding; do not compensate with larger logical tiles or renderer complexity.
+Use the proof gate and bounded simplification fallback. Do not increase `TILE_SIZE` or add renderer complexity to rescue unsuitable art.
 
-### 2. Filtering mismatch
+### Filtering mismatch
 
-Nearest-neighbor is already enabled by `pixelArt: true`. The proof chooses whether that remains appropriate. Record and implement one choice; do not introduce runtime filter switching.
+Resolve once in the proof with the existing Phaser `pixelArt` option and record the decision.
 
-### 3. Player overlap with persistent open art
+### Persistent-open-art overlap
 
-Open reward/gate art is new compared with HPA-237 hiding consumed blockers. Walk over both states in the real game. If the player becomes unreadable, recrop/simplify the PNG. Do not add per-entity offsets.
+Open relic/gate art remains on walkable tiles, unlike HPA-237 placeholder behavior. Verify overlap with the player. Fix image crop/padding if needed; do not add per-entity offsets.
 
-### 4. Vite `public/` path mistakes
+### Vite public-path mismatch
 
-Use `/assets/...` catalog paths and keep the real-server Playwright `request.get` test. Do not add a build plugin.
+Files live under `public/assets`, catalog URLs use `/assets/...`. The Playwright HTTP smoke test is the guard; no build plugin is needed.
 
-### 5. Binding drift
+### Binding/open-state drift
 
-Do not maintain a 12-line snapshot of current entity IDs in the asset test. Iterate `Object.values(MAPS)` so a new authored entity cannot silently bypass catalog validation.
+The generalized `MAPS` test covers both live and opened states for every current reward/latch, so later content cannot silently omit its open variant.
 
-## Error Handling
+### Invalid binary dimensions
 
-Missing/unknown art is a development defect, not a recoverable gameplay state. Catch it with exhaustive current-content/catalog tests, file-existence tests, and the Vite-serving smoke test.
+The IHDR dimension check fails fast when a regenerated PNG is exported at source resolution or an invalid runtime footprint.
 
-Do not add a runtime fallback manager. The merged implementation must have no unresolved live current entity and no missing catalog file.
+## Handoff to Later Content
 
-## Handoff to HPA-235 / HPA-146 / HPA-137
+HPA-235 / HPA-146 / HPA-137 should:
 
-Later content PRs should:
+1. reuse existing catalog keys when they fit;
+2. add a new PNG/catalog row only when new authored content consumes it;
+3. add an `OPEN_VARIANT` row when that new asset has an opened state;
+4. satisfy the same file/dimension/content tests;
+5. follow `docs/art/style-guide.md` for generation and processing;
+6. avoid reopening HPA-22 or building a larger asset framework.
 
-1. reuse existing catalog keys where the visual is genuinely shared;
-2. add only the new PNGs the authored content consumes;
-3. add catalog rows and any open-state mapping in the same content PR;
-4. follow `docs/art/hpa-22-style-guide.md` for scale, filtering, anchoring, and generation style;
-5. avoid reopening HPA-22 for a speculative “complete asset library.”
-
-HPA-22 merges once the current HPA-237 slice uses the finished shared kit and its style contract is proven.
-
-## Final Design Decision
-
-Ship the smallest truthful art seam: explicit consumed PNGs, one catalog, two small mappings for terrain/player, one two-row open-variant table, and a resolver that fails closed on unknown content-specific IDs. Keep all gameplay/domain ownership exactly where HPA-237 put it.
+HPA-22 merges once the current HPA-237 slice has finished art and the proof/runtime validation gates pass; it does not wait for later floor content.
