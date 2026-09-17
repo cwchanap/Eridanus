@@ -117,10 +117,12 @@ One `Object.values(MAPS)` loop covers every current entity's live state and ever
 ### Task 1: Add the proof-stage catalog without breaking the existing tree
 
 **Files:**
+
 - Modify: `src/phaser/assets.ts`
 - Modify: `src/phaser/assets.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Entity`, `GameState`, `MapId` from `src/game/types.ts`.
 - Produces: proof-stage `ASSET_PATHS`, `AssetKey`, `resolveTerrainAssets`, `resolveEntityAsset`, `runtimeAssetFilePath`.
 - Preserves: existing `resolveAssetId(entity)` until Task 3 rewrites `WorldScene` and removes its final consumer.
@@ -333,6 +335,7 @@ git commit -m "feat: define HPA-22 proof asset seam"
 ### Task 2: Generate the representative proof sample and enforce binary size contracts
 
 **Files:**
+
 - Create: `public/assets/terrain/village-floor.png`
 - Create: `public/assets/terrain/village-wall.png`
 - Create: `public/assets/terrain/dungeon-floor.png`
@@ -346,6 +349,7 @@ git commit -m "feat: define HPA-22 proof asset seam"
 - Modify: `src/phaser/assets.test.ts`
 
 **Interfaces:**
+
 - Consumes: proof paths from `ASSET_PATHS`.
 - Produces: nine proof PNGs plus the durable style guide.
 
@@ -433,15 +437,25 @@ Create `docs/art/style-guide.md` with:
 # Eridanus Art Style Guide
 
 ## Runtime scale
+
 ## Chosen visual treatment
+
 ## Texture filtering
+
 ## Shared prompt language
+
 ## Village guidance
+
 ## Dungeon guidance
+
 ## Character and enemy guidance
+
 ## Interactable guidance
+
 ## Transparency, crop, and bottom-center anchoring
+
 ## Rejected proof directions
+
 ## Selected asset prompt variants
 ```
 
@@ -467,6 +481,7 @@ git commit -m "art: add HPA-22 visual proof sample"
 ### Task 3: Integrate only the proof visuals and pass the hard visual/filtering gate
 
 **Files:**
+
 - Modify: `src/phaser/assets.ts`
 - Modify: `src/phaser/WorldScene.ts`
 - Modify: `src/phaser/createGame.ts` only if normal filtering wins.
@@ -475,6 +490,7 @@ git commit -m "art: add HPA-22 visual proof sample"
 - Modify: `docs/art/style-guide.md`
 
 **Interfaces:**
+
 - Consumes: proof catalog/resolver and optional authored `assetId`.
 - Produces: a playable proof checkpoint with terrain, south-facing player, village guide, relic, and ruin guard art. Unbound current entities intentionally render nothing at this checkpoint.
 
@@ -641,6 +657,7 @@ If `createGame.ts` did not change, omit it from `git add`.
 ### Task 4: Generate the remaining current-slice art and finish catalog semantics
 
 **Files:**
+
 - Create: `public/assets/characters/player-north.png`
 - Create: `public/assets/characters/player-east.png`
 - Create: `public/assets/characters/player-west.png`
@@ -655,6 +672,7 @@ If `createGame.ts` did not change, omit it from `git add`.
 - Modify: `docs/art/style-guide.md`
 
 **Interfaces:**
+
 - Consumes: treatment/filtering/crop rules that passed Task 3.
 - Produces: final `ASSET_PATHS`, `resolvePlayerAsset`, recovery/latch safe defaults, and both open-variant rows.
 
@@ -774,6 +792,7 @@ git commit -m "art: complete current tower maze asset kit"
 ### Task 5: Bind all current content and enforce live/open coverage from `MAPS`
 
 **Files:**
+
 - Modify: `src/game/content/village.ts`
 - Modify: `src/game/content/floor1.ts`
 - Modify: `src/game/content/floor2.ts`
@@ -781,6 +800,7 @@ git commit -m "art: complete current tower maze asset kit"
 - Modify: `src/phaser/assets.test.ts`
 
 **Interfaces:**
+
 - Consumes: final catalog/resolvers from Task 4.
 - Produces: every current live entity rendered through images, transient directional player art, and one generalized content/catalog test covering live and opened states.
 
@@ -804,9 +824,10 @@ it('resolves every current entity including open-state variants', () => {
       const closed = resolveEntityAsset(entity, state);
       expect(closed, `${entity.id} should resolve while live`).not.toBeNull();
       if (closed) {
-        expect(closed in ASSET_PATHS, `${entity.id} resolved outside catalog`).toBe(
-          true,
-        );
+        expect(
+          closed in ASSET_PATHS,
+          `${entity.id} resolved outside catalog`,
+        ).toBe(true);
       }
 
       if (entity.kind === 'reward' || entity.kind === 'latch') {
@@ -821,9 +842,10 @@ it('resolves every current entity including open-state variants', () => {
           closed,
         );
         if (open) {
-          expect(open in ASSET_PATHS, `${entity.id} open art outside catalog`).toBe(
-            true,
-          );
+          expect(
+            open in ASSET_PATHS,
+            `${entity.id} open art outside catalog`,
+          ).toBe(true);
         }
       }
 
@@ -951,10 +973,12 @@ git commit -m "feat: replace tower maze placeholders with generated art"
 ### Task 6: Verify real asset serving and finish the implementation gate
 
 **Files:**
+
 - Modify: `tests/e2e/cross-floor.spec.ts`
 - Modify: `docs/art/style-guide.md` only if final runtime inspection changes a durable rule.
 
 **Interfaces:**
+
 - Consumes: final `ASSET_PATHS` and the real Vite dev server.
 - Produces: HTTP evidence that every catalog image is actually served alongside the unchanged player journey.
 
