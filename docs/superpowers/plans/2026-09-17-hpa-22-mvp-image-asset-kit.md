@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace HPA-237 placeholder rendering with the smallest generated runtime art kit actually consumed by the current village → Floor 1 → Floor 2 slice, prove the treatment at real gameplay scale, and leave later content a stable extension seam.
+**Goal:** Replace HPA-237 placeholder rendering with the smallest generated runtime art kit actually consumed by the current village → Floor 1 → Floor 2 slice, prove it at real gameplay scale, and leave later content a stable extension seam.
 
-**Architecture:** Gameplay/domain code remains unchanged. Processed PNGs live under `public/assets`; one explicit `src/phaser/assets.ts` catalog owns runtime paths, terrain/player mappings, a two-row open-state table, and a small resolver that fails closed for unknown content-specific IDs. `WorldScene` preloads/render images and owns transient facing only. The proof sample is integrated before the remaining current-slice images are generated.
+**Architecture:** Gameplay/domain code remains unchanged. Processed PNGs live under `public/assets`; one explicit `src/phaser/assets.ts` catalog owns runtime paths, terrain/player mappings, the two-row open-state table, and a fail-closed entity resolver. `WorldScene` preloads/renders images and owns transient facing only. Fast tests enforce catalog bindings, open-state variants, file existence, and PNG dimensions; Playwright verifies real Vite serving.
 
 **Tech Stack:** Bun 1.4.2, Vite 8, TypeScript 5.9, Phaser 4.2, Vitest 5, Playwright 1.63, generated PNG assets.
 
@@ -12,20 +12,22 @@
 
 ## Global Constraints
 
-- Deliver HPA-22 as one implementation PR; proof, generation, runtime integration, and validation stay in that PR.
-- Keep HPA-22 the standalone art-production slice. Do not pull HPA-235 village/Floor 1 content expansion into it.
-- Generate only images consumed by the current HPA-237 slice. Do not pre-generate `ruin-stalker`, `ruin-wisp`, or ordinary-chest assets.
+- Deliver HPA-22 as one implementation PR; proof, generation, integration, and validation stay in that PR.
+- Generate only assets consumed by the current HPA-237 slice. Do not pre-generate spare enemies, ordinary chests, portraits, or later-floor props.
 - `TILE_SIZE` remains exactly `32`.
 - Tile coordinates remain the only collision/interaction geometry.
 - `src/game/` remains Phaser-free and does not import `AssetKey` or `ASSET_PATHS`.
 - `BaseEntity.assetId?: string` remains unchanged.
 - `MapDefinition.layout` remains ASCII `#` / `.` geometry.
-- Do not add an atlas pipeline, auto-tiler, animation registry, generic asset manager, portrait framework, UI framework, or image build plugin.
+- Do not add an atlas pipeline, auto-tiler, animation registry, generic asset manager, portrait framework, UI framework, image build plugin, or runtime PNG parser.
 - Do not add entity kinds, durable state fields, save migrations, quests, inventory, keys, or gameplay rules.
-- Preserve the existing full-redraw `WorldScene`, camera follow, deterministic combat, persistence, and real-player Playwright journey.
-- Generate the representative proof sample first, integrate it into the real game, and pass the visual/filtering gate before generating the remaining current-slice assets.
-- Commit selected processed runtime PNGs plus compact style/provenance notes; do not commit discarded high-resolution generations.
-- Unknown authored content-specific asset IDs are development defects. They must fail tests rather than silently fall back to a plausible but wrong sprite.
+- Preserve full-redraw `WorldScene`, camera follow, deterministic combat, persistence, and the existing browser journey.
+- Unknown explicit asset IDs are development defects and must fail tests rather than silently use a kind fallback.
+- Open reward/latch art is derived from existing progression arrays; facing remains transient.
+- Terrain PNGs must be exactly `32×32`; every non-terrain runtime PNG must be at most `64×64`.
+- The representative proof must pass before producing the remaining current-slice art.
+- If a proof category fails twice, simplify that category to a flatter/iconic treatment and make one final pass. Do not ship placeholders.
+- Use `docs/art/style-guide.md` as the durable reusable art contract.
 
 ---
 
@@ -58,19 +60,19 @@ public/assets/
     chest-relic-closed.png
     chest-relic-open.png
 
-docs/art/hpa-22-style-guide.md
+docs/art/style-guide.md
 ```
 
 ### Modify
 
-- `src/phaser/assets.ts` — explicit catalog, terrain/player maps, open-variant table, entity resolver, runtime-path helper.
-- `src/phaser/assets.test.ts` — catalog/resolver/current-content/file-existence coverage.
+- `src/phaser/assets.ts` — explicit catalog, terrain/player maps, open variants, entity resolver, runtime-path helper.
+- `src/phaser/assets.test.ts` — resolver, current-content, file-existence, and IHDR dimension coverage.
 - `src/phaser/WorldScene.ts` — preload, image rendering, transient facing.
-- `src/phaser/createGame.ts` — **only if** the proof chooses normal filtering instead of the current `pixelArt: true` nearest-neighbor treatment.
-- `src/game/content/village.ts` — explicit content-specific current asset IDs only.
-- `src/game/content/floor1.ts` — explicit content-specific current asset IDs only.
-- `src/game/content/floor2.ts` — explicit directional portal asset IDs only.
-- `tests/e2e/cross-floor.spec.ts` — catalog HTTP smoke test while retaining the existing journey.
+- `src/phaser/createGame.ts` — only if normal filtering wins the proof over the current `pixelArt: true`.
+- `src/game/content/village.ts` — explicit content-specific bindings only.
+- `src/game/content/floor1.ts` — explicit content-specific bindings only.
+- `src/game/content/floor2.ts` — explicit directional portal bindings only.
+- `tests/e2e/cross-floor.spec.ts` — catalog HTTP smoke while retaining the existing journey.
 
 ### Do Not Modify
 
@@ -86,29 +88,33 @@ docs/art/hpa-22-style-guide.md
 
 ## Risks / Hard Stops
 
-### 32 px mud
+### 32 px readability
 
-The Task 3 proof gate is a hard stop. If the selected art loses silhouette/detail at the real logical scale, simplify/regenerate/crop it. Do not increase logical tile size or add renderer complexity to rescue bad source art.
+The Task 3 proof is a hard stop. If a category fails twice after regenerate/recrop attempts, simplify it to flat/iconic shapes and perform one final proof pass. Do not enlarge the gameplay grid or add renderer machinery to rescue unsuitable source art.
 
 ### Filtering mismatch
 
-`src/phaser/createGame.ts` already sets `pixelArt: true`. The proof must deliberately keep it for a pixel-art-like treatment or set it to `false` for a painterly/anime treatment that reads better with normal filtering. Record one final choice in the style guide; do not add runtime filter switching.
+`src/phaser/createGame.ts` already has `pixelArt: true`. The proof must explicitly keep nearest-neighbor or switch once to normal filtering; no runtime toggle or per-texture filtering is allowed.
+
+### Binary export dimensions
+
+A regenerated source-resolution image can silently render many tiles tall. Fast tests read only PNG IHDR bytes 16–23: terrain must be exactly `32×32`; every other runtime file must be `≤64×64`. Do not add a PNG dependency or reusable parser.
 
 ### Persistent-open-art overlap
 
-HPA-237 currently hides consumed reward/latch placeholders. HPA-22 intentionally leaves open relic/gate art visible on walkable tiles. Task 5 must walk the player onto both tiles and verify the player remains readable. Fix crop/transparent padding if not; do not add per-entity offsets.
+Open relic/gate art remains visible on walkable tiles. Task 5 must walk the player onto each and verify the player remains readable. Fix image crop/padding if needed; do not add per-entity offsets.
 
 ### Vite public-path mismatch
 
-Catalog paths use `/assets/...` while files live under `public/assets/...`. Task 6 verifies every path with Playwright `request.get` against the real Vite server. Do not add a build plugin.
+Files live under `public/assets`, catalog URLs use `/assets/...`. Task 6 verifies every URL with Playwright `request.get`; do not add a build plugin.
 
-### Binding drift
+### Binding/open-state drift
 
-Do not maintain a hand-written list of current entity IDs in tests. Iterate `Object.values(MAPS)` so future authored entities must resolve through the same catalog contract.
+One `Object.values(MAPS)` loop covers every current entity's live state and every reward/latch opened state. Do not maintain a per-ID snapshot.
 
 ---
 
-### Task 1: Establish the proof-stage catalog and fail-closed resolver shape
+### Task 1: Add the proof-stage catalog without breaking the existing tree
 
 **Files:**
 - Modify: `src/phaser/assets.ts`
@@ -116,16 +122,16 @@ Do not maintain a hand-written list of current entity IDs in tests. Iterate `Obj
 
 **Interfaces:**
 - Consumes: `Entity`, `GameState`, `MapId` from `src/game/types.ts`.
-- Produces: `ASSET_PATHS`, `AssetKey`, `resolveTerrainAssets(mapId)`, `resolveEntityAsset(entity, state)`, and `runtimeAssetFilePath(assetKey)`.
-- `OPEN_VARIANT` begins with the relic row and is extended, not replaced, when the shortcut pair is generated.
+- Produces: proof-stage `ASSET_PATHS`, `AssetKey`, `resolveTerrainAssets`, `resolveEntityAsset`, `runtimeAssetFilePath`.
+- Preserves: existing `resolveAssetId(entity)` until Task 3 rewrites `WorldScene` and removes its final consumer.
 
-- [ ] **Step 1: Replace the old placeholder seam test with failing proof-catalog tests**
+- [ ] **Step 1: Write failing catalog/resolver tests**
 
-Use:
+Replace the old one-case asset test with:
 
 ```ts
 import { describe, expect, it } from 'vitest';
-import { findEntityById } from '../game/content';
+import type { EnemyEntity, RewardEntity } from '../game/types';
 import { INITIAL_GAME_STATE } from '../game/state';
 import {
   ASSET_PATHS,
@@ -134,8 +140,25 @@ import {
   resolveTerrainAssets,
 } from './assets';
 
+const testReward: RewardEntity = {
+  kind: 'reward',
+  id: 'test-reward',
+  tile: { x: 1, y: 1 },
+  assetId: 'chest-relic-closed',
+  stat: 'attack',
+  amount: 1,
+};
+
+const testEnemy: EnemyEntity = {
+  kind: 'enemy',
+  id: 'test-enemy',
+  tile: { x: 1, y: 1 },
+  assetId: 'enemy-ruin-guard',
+  stats: { hp: 1, attack: 1, defense: 0 },
+};
+
 describe('asset seam', () => {
-  it('keeps the 32px logical tile and maps every current map to proof terrain', () => {
+  it('keeps the 32px logical tile and maps every current map terrain', () => {
     expect(TILE_SIZE).toBe(32);
     expect(resolveTerrainAssets('village')).toEqual({
       floor: 'terrain-village-floor',
@@ -151,50 +174,40 @@ describe('asset seam', () => {
     });
   });
 
-  it('renders the proof relic closed and open from existing reward state', () => {
-    const reward = findEntityById('floor1-power-core');
-    if (!reward) throw new Error('floor1-power-core missing');
-    const boundReward = { ...reward, assetId: 'chest-relic-closed' };
-
-    expect(resolveEntityAsset(boundReward, INITIAL_GAME_STATE)).toBe(
+  it('uses the open variant for an opened reward', () => {
+    expect(resolveEntityAsset(testReward, INITIAL_GAME_STATE)).toBe(
       'chest-relic-closed',
     );
     expect(
-      resolveEntityAsset(boundReward, {
+      resolveEntityAsset(testReward, {
         ...INITIAL_GAME_STATE,
-        openedRewardIds: [reward.id],
+        openedRewardIds: [testReward.id],
       }),
     ).toBe('chest-relic-open');
   });
 
-  it('removes a defeated proof enemy', () => {
-    const enemy = findEntityById('floor1-gatekeeper');
-    if (!enemy) throw new Error('floor1-gatekeeper missing');
-    const boundEnemy = { ...enemy, assetId: 'enemy-ruin-guard' };
-
-    expect(resolveEntityAsset(boundEnemy, INITIAL_GAME_STATE)).toBe(
+  it('removes defeated enemies', () => {
+    expect(resolveEntityAsset(testEnemy, INITIAL_GAME_STATE)).toBe(
       'enemy-ruin-guard',
     );
     expect(
-      resolveEntityAsset(boundEnemy, {
+      resolveEntityAsset(testEnemy, {
         ...INITIAL_GAME_STATE,
-        defeatedEnemyIds: [enemy.id],
+        defeatedEnemyIds: [testEnemy.id],
       }),
     ).toBeNull();
   });
 
-  it('does not silently substitute an unknown explicit asset id', () => {
-    const enemy = findEntityById('floor1-gatekeeper');
-    if (!enemy) throw new Error('floor1-gatekeeper missing');
+  it('fails closed for an unknown explicit id', () => {
     expect(
       resolveEntityAsset(
-        { ...enemy, assetId: 'typo-not-in-catalog' },
+        { ...testEnemy, assetId: 'typo-not-in-catalog' },
         INITIAL_GAME_STATE,
       ),
     ).toBeNull();
   });
 
-  it('keeps proof catalog paths under /assets', () => {
+  it('keeps every catalog URL under /assets', () => {
     for (const path of Object.values(ASSET_PATHS)) {
       expect(path).toMatch(/^\/assets\//);
     }
@@ -208,16 +221,24 @@ describe('asset seam', () => {
 bunx vitest run src/phaser/assets.test.ts
 ```
 
-Expected: FAIL because the explicit catalog and state-aware resolver do not exist.
+Expected: FAIL because the explicit catalog/resolvers do not exist.
 
-- [ ] **Step 3: Implement only the proof-stage catalog**
+- [ ] **Step 3: Extend `src/phaser/assets.ts`; do not remove `resolveAssetId` yet**
 
-Replace the current `resolveAssetId`-only seam with:
+Keep these existing exports intact:
+
+```ts
+export const TILE_SIZE = 32;
+
+export function resolveAssetId(entity: Entity): string {
+  return entity.assetId ?? entity.kind;
+}
+```
+
+Add beside them:
 
 ```ts
 import type { Entity, GameState, MapId } from '../game/types';
-
-export const TILE_SIZE = 32;
 
 export const ASSET_PATHS = {
   'terrain-village-floor': '/assets/terrain/village-floor.png',
@@ -253,10 +274,6 @@ const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey>> = {
   'chest-relic-closed': 'chest-relic-open',
 };
 
-export function resolveTerrainAssets(mapId: MapId): TerrainAssets {
-  return TERRAIN_BY_MAP[mapId];
-}
-
 function explicitAsset(assetId: string | undefined): AssetKey | null {
   if (assetId === undefined) return null;
   return assetId in ASSET_PATHS ? (assetId as AssetKey) : null;
@@ -264,6 +281,10 @@ function explicitAsset(assetId: string | undefined): AssetKey | null {
 
 function baseEntityAsset(entity: Entity): AssetKey | null {
   return explicitAsset(entity.assetId);
+}
+
+export function resolveTerrainAssets(mapId: MapId): TerrainAssets {
+  return TERRAIN_BY_MAP[mapId];
 }
 
 export function resolveEntityAsset(
@@ -277,14 +298,11 @@ export function resolveEntityAsset(
   const base = baseEntityAsset(entity);
   if (!base) return null;
 
-  if (
+  const opened =
     (entity.kind === 'reward' && state.openedRewardIds.includes(entity.id)) ||
-    (entity.kind === 'latch' && state.openedShortcutIds.includes(entity.id))
-  ) {
-    return OPEN_VARIANT[base] ?? base;
-  }
+    (entity.kind === 'latch' && state.openedShortcutIds.includes(entity.id));
 
-  return base;
+  return opened ? (OPEN_VARIANT[base] ?? base) : base;
 }
 
 export function runtimeAssetFilePath(assetKey: AssetKey): string {
@@ -292,16 +310,16 @@ export function runtimeAssetFilePath(assetKey: AssetKey): string {
 }
 ```
 
-This is already the final resolver algorithm: explicit known key → optional open variant. Task 4 only adds the two safe single-visual defaults (`recovery` and closed `latch`) after those assets exist and adds the shortcut row to the same table. Do not introduce an exhaustive kind-to-art fallback switch.
+Do not add a kind-to-art switch.
 
-- [ ] **Step 4: Run focused tests and typecheck**
+- [ ] **Step 4: Verify the tree still compiles**
 
 ```bash
 bunx vitest run src/phaser/assets.test.ts
 bun run typecheck
 ```
 
-Expected: PASS.
+Expected: both PASS. `WorldScene` still compiles because `resolveAssetId` remains available.
 
 - [ ] **Step 5: Commit**
 
@@ -312,7 +330,7 @@ git commit -m "feat: define HPA-22 proof asset seam"
 
 ---
 
-### Task 2: Generate only the representative proof sample
+### Task 2: Generate the representative proof sample and enforce binary size contracts
 
 **Files:**
 - Create: `public/assets/terrain/village-floor.png`
@@ -324,16 +342,16 @@ git commit -m "feat: define HPA-22 proof asset seam"
 - Create: `public/assets/enemies/ruin-guard.png`
 - Create: `public/assets/interactables/chest-relic-closed.png`
 - Create: `public/assets/interactables/chest-relic-open.png`
-- Create: `docs/art/hpa-22-style-guide.md`
+- Create: `docs/art/style-guide.md`
 - Modify: `src/phaser/assets.test.ts`
 
 **Interfaces:**
-- Consumes: exact proof paths from `ASSET_PATHS`.
-- Produces: nine runtime proof PNGs and the initial style/provenance record.
+- Consumes: proof paths from `ASSET_PATHS`.
+- Produces: nine proof PNGs plus the durable style guide.
 
-- [ ] **Step 1: Generate the nine proof assets only**
+- [ ] **Step 1: Generate only the proof sample**
 
-Use this shared prompt language:
+Use shared prompt language:
 
 ```text
 Top-down fantasy game asset for a compact grid-maze browser game, clear anime influence,
@@ -342,62 +360,77 @@ transparent background for characters/interactables, no text, no UI border, no e
 shadow, consistent game-art treatment.
 ```
 
-Add category constraints:
+Category variants:
 
 ```text
-Village terrain: warm inhabited stone/wood language, welcoming warmth, simple repeatable tile.
-Dungeon terrain: cool ancient ruin language, slate/blue-gray stone, subtle strange accents, simple repeatable tile.
+Village terrain: warm inhabited stone/wood language, simple repeatable 32×32 tile.
+Dungeon terrain: cool ancient ruin language, slate/blue-gray stone, simple repeatable 32×32 tile.
 Characters/enemy: one-tile logical footprint, feet centered at bottom, top-down/three-quarter view.
 Relic pair: same object identity/camera angle; open state differs by silhouette, not glow alone.
 ```
 
-Do not generate extra enemies or ordinary chests in this task.
-
-- [ ] **Step 2: Process selected outputs into exact runtime files**
+- [ ] **Step 2: Process selected outputs**
 
 For each selected image:
 
 1. remove opaque background for non-terrain art;
 2. crop transparent padding without clipping silhouette;
 3. align character/interactable base to bottom-center;
-4. downscale to a runtime size readable on a 32 px logical tile;
-5. keep terrain edges repeatable;
-6. recrop/simplify any character or interactable taller than roughly two logical tiles;
-7. save to the exact path already declared in `ASSET_PATHS`.
+4. export terrain exactly `32×32`;
+5. export every non-terrain file no larger than `64×64`;
+6. keep terrain edges repeatable;
+7. save to the exact `ASSET_PATHS` path.
 
-Do not add an image-processing script unless manual processing itself becomes a demonstrated bottleneck.
+Do not add an image-processing script unless repeated manual processing becomes a demonstrated bottleneck.
 
-- [ ] **Step 3: Add proof file-existence coverage**
+- [ ] **Step 3: Add one catalog file + IHDR dimension test**
 
 Append:
 
 ```ts
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { runtimeAssetFilePath } from './assets';
 
-it('ships every cataloged proof file', () => {
+it('ships catalog files at bounded runtime dimensions', () => {
   const keys = Object.keys(ASSET_PATHS) as (keyof typeof ASSET_PATHS)[];
+
   for (const key of keys) {
-    expect(existsSync(resolve(runtimeAssetFilePath(key)))).toBe(true);
+    const file = resolve(runtimeAssetFilePath(key));
+    expect(existsSync(file), `${key} file missing`).toBe(true);
+
+    const png = readFileSync(file);
+    const width = png.readUInt32BE(16);
+    const height = png.readUInt32BE(20);
+
+    if (key.startsWith('terrain-')) {
+      expect([width, height], `${key} must be exactly one tile`).toEqual([
+        32, 32,
+      ]);
+    } else {
+      expect(width, `${key} wider than two tiles`).toBeLessThanOrEqual(64);
+      expect(height, `${key} taller than two tiles`).toBeLessThanOrEqual(64);
+    }
   }
 });
 ```
 
-- [ ] **Step 4: Run the proof file test**
+This fixed-header read is test-only. Do not extract a generic PNG utility or add a dependency.
+
+- [ ] **Step 4: Run the proof catalog test**
 
 ```bash
 bunx vitest run src/phaser/assets.test.ts
 ```
 
-Expected: PASS only when all nine proof files exist.
+Expected: PASS only when every proof file exists and satisfies its dimension contract.
 
-- [ ] **Step 5: Create the initial style/provenance guide**
+- [ ] **Step 5: Create the durable style guide**
 
-Create `docs/art/hpa-22-style-guide.md` with:
+Create `docs/art/style-guide.md` with:
 
 ```markdown
-# HPA-22 Art Style and Generation Guide
+# Eridanus Art Style Guide
 
 ## Runtime scale
 ## Chosen visual treatment
@@ -408,76 +441,61 @@ Create `docs/art/hpa-22-style-guide.md` with:
 ## Character and enemy guidance
 ## Interactable guidance
 ## Transparency, crop, and bottom-center anchoring
-## Selected proof assets and provenance
 ## Rejected proof directions
-## Rules for later Floor 1–3 assets
+## Selected asset prompt variants
 ```
 
-For each proof file record generator/model, generation date, exact prompt, source dimensions, final runtime dimensions, useful seed/reference identifier when available, and cleanup/downscale decision. Leave `Chosen visual treatment` and `Texture filtering` marked as pending proof evaluation, not as invented conclusions.
+Before the proof is judged, `Chosen visual treatment` and `Texture filtering` state that the decision is pending Task 3 evaluation.
+
+Under `Selected asset prompt variants`, keep one line per selected asset containing only:
+
+```text
+asset key — generator/model — prompt variant relative to the shared prompt
+```
+
+Do not record generation dates, seeds, or source dimensions.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add public/assets docs/art/hpa-22-style-guide.md src/phaser/assets.test.ts
+git add public/assets docs/art/style-guide.md src/phaser/assets.test.ts
 git commit -m "art: add HPA-22 visual proof sample"
 ```
 
 ---
 
-### Task 3: Integrate the proof into the real game and pass the hard visual/filtering gate
+### Task 3: Integrate only the proof visuals and pass the hard visual/filtering gate
 
 **Files:**
+- Modify: `src/phaser/assets.ts`
 - Modify: `src/phaser/WorldScene.ts`
-- Modify: `src/phaser/createGame.ts` only if normal filtering wins the proof.
+- Modify: `src/phaser/createGame.ts` only if normal filtering wins.
 - Modify: `src/game/content/village.ts`
 - Modify: `src/game/content/floor1.ts`
-- Modify: `src/phaser/assets.test.ts`
-- Modify: `docs/art/hpa-22-style-guide.md`
+- Modify: `docs/art/style-guide.md`
 
 **Interfaces:**
-- Consumes: proof catalog/resolver and existing optional `assetId` seam.
-- Produces: a playable proof checkpoint. Proof assets render as images; still-unconverted current entities retain the existing text placeholder until Task 5.
+- Consumes: proof catalog/resolver and optional authored `assetId`.
+- Produces: a playable proof checkpoint with terrain, south-facing player, village guide, relic, and ruin guard art. Unbound current entities intentionally render nothing at this checkpoint.
 
-- [ ] **Step 1: Bind only the three content-specific proof entities**
+- [ ] **Step 1: Bind the three content-specific proof entities**
 
 Add only:
 
 ```ts
-// village.ts: village-tower-lead
+// village-tower-lead
 assetId: 'npc-village-guide',
 
-// floor1.ts: floor1-power-core
+// floor1-power-core
 assetId: 'chest-relic-closed',
 
-// floor1.ts: floor1-gatekeeper
+// floor1-gatekeeper
 assetId: 'enemy-ruin-guard',
 ```
 
-Do not change coordinates, prose, stats, portal targets, or gameplay behavior.
+Do not add a temporary three-ID binding test. Task 5's generalized `MAPS` loop is the durable content coverage.
 
-- [ ] **Step 2: Add a narrow proof-binding assertion**
-
-During the proof stage only:
-
-```ts
-it('binds the three proof entities', () => {
-  expect(findEntityById('village-tower-lead')?.assetId).toBe('npc-village-guide');
-  expect(findEntityById('floor1-power-core')?.assetId).toBe('chest-relic-closed');
-  expect(findEntityById('floor1-gatekeeper')?.assetId).toBe('enemy-ruin-guard');
-});
-```
-
-This assertion is removed in Task 5 when the exhaustive `MAPS` loop replaces hand-maintained binding snapshots.
-
-Run:
-
-```bash
-bunx vitest run src/phaser/assets.test.ts src/game/content.test.ts
-```
-
-Expected: PASS after the three bindings exist.
-
-- [ ] **Step 3: Preload the proof catalog**
+- [ ] **Step 2: Preload the proof catalog**
 
 In `WorldScene` import `ASSET_PATHS`, `resolveTerrainAssets`, and `resolveEntityAsset`, then add:
 
@@ -489,7 +507,7 @@ preload(): void {
 }
 ```
 
-- [ ] **Step 4: Replace terrain rectangles with proof images**
+- [ ] **Step 3: Replace terrain rectangles with images**
 
 Inside `refresh()`:
 
@@ -507,424 +525,9 @@ this.add
   .setDisplaySize(TILE_SIZE, TILE_SIZE);
 ```
 
-- [ ] **Step 5: Render proof entities while preserving the legacy fallback only for unconverted entities**
+- [ ] **Step 4: Replace entity text rendering with resolver-only image rendering**
 
 Use:
-
-```ts
-const collected = new Set(state.openedRewardIds);
-const defeated = new Set(state.defeatedEnemyIds);
-const opened = new Set(state.openedShortcutIds);
-
-for (const entity of map.entities) {
-  if (entity.kind === 'enemy' && defeated.has(entity.id)) continue;
-  if (entity.kind === 'latch' && opened.has(entity.id)) continue;
-
-  const assetKey = resolveEntityAsset(entity, state);
-  if (assetKey) {
-    this.add
-      .image(
-        (entity.tile.x + 0.5) * TILE_SIZE,
-        (entity.tile.y + 1) * TILE_SIZE,
-        assetKey,
-      )
-      .setOrigin(0.5, 1);
-    continue;
-  }
-
-  if (entity.kind === 'reward' && collected.has(entity.id)) continue;
-
-  this.add
-    .text(
-      (entity.tile.x + 0.5) * TILE_SIZE,
-      (entity.tile.y + 1) * TILE_SIZE,
-      entity.assetId ?? entity.kind,
-      { fontSize: '10px', color: '#ffdd66' },
-    )
-    .setOrigin(0.5, 1);
-}
-```
-
-Do not rebuild the old `resolveAssetId` helper. The fallback exists only inside this temporary proof checkpoint and disappears in Task 5.
-
-- [ ] **Step 6: Render the proof player south still**
-
-Replace `@` with:
-
-```ts
-const player = this.add
-  .image(
-    (state.tile.x + 0.5) * TILE_SIZE,
-    (state.tile.y + 1) * TILE_SIZE,
-    'player-south',
-  )
-  .setOrigin(0.5, 1);
-```
-
-Do not add facing yet; first validate one stable player image.
-
-- [ ] **Step 7: Verify mechanics before visual judgment**
-
-```bash
-bun run typecheck
-bun run test:unit
-bun run build
-bun run test:e2e
-```
-
-Expected: all PASS with unchanged gameplay behavior.
-
-- [ ] **Step 8: Evaluate the proof at real scale — hard stop**
-
-Run:
-
-```bash
-bun run dev
-```
-
-At 100% browser zoom and the real 640×480 canvas verify:
-
-1. player, village guide, and ruin guard silhouettes are distinct;
-2. feet/base align to the same logical tile contract as the old placeholders;
-3. village and dungeon terrain are immediately distinguishable;
-4. relic closed/open states are distinguishable without text or glow alone;
-5. important details survive downscale;
-6. no character/interactable needs a per-entity offset;
-7. no character/interactable is so tall (roughly >2 tiles) that it obscures the board;
-8. the treatment can be reproduced for the remaining current-slice assets.
-
-If any criterion fails, regenerate/simplify/recrop and repeat this step. **Do not start Task 4 until all eight pass.**
-
-- [ ] **Step 9: Make the explicit `pixelArt` filtering decision**
-
-The repo currently has:
-
-```ts
-pixelArt: true,
-```
-
-in `src/phaser/createGame.ts`.
-
-Choose one final behavior from the proof:
-
-- if the approved treatment is intentionally pixel-art-like and nearest-neighbor reads best, keep `pixelArt: true`;
-- if the approved treatment is painterly/anime and nearest-neighbor visibly crunches faces/details, set `pixelArt: false` and reload the same proof scenes to verify normal filtering is clearer.
-
-Do not add a toggle or per-texture filtering system.
-
-- [ ] **Step 10: Record the actual proof result and commit**
-
-Update `docs/art/hpa-22-style-guide.md`:
-
-- `Chosen visual treatment` describes the treatment that actually passed;
-- `Texture filtering` records `pixelArt: true` or `false` and why;
-- rejected directions record what failed at 32 px.
-
-Then:
-
-```bash
-git add src/phaser/WorldScene.ts src/phaser/createGame.ts src/game/content/village.ts src/game/content/floor1.ts src/phaser/assets.test.ts docs/art/hpa-22-style-guide.md public/assets
-git commit -m "feat: prove generated art in the tower maze runtime"
-```
-
-If `createGame.ts` did not change, omit it from `git add`.
-
----
-
-### Task 4: Generate the remaining current-slice assets and finish the catalog/resolvers
-
-**Files:**
-- Create: `public/assets/characters/player-north.png`
-- Create: `public/assets/characters/player-east.png`
-- Create: `public/assets/characters/player-west.png`
-- Create: `public/assets/interactables/stairs-up.png`
-- Create: `public/assets/interactables/stairs-down.png`
-- Create: `public/assets/interactables/recovery-waystone.png`
-- Create: `public/assets/interactables/clue-runes.png`
-- Create: `public/assets/interactables/shortcut-gate-closed.png`
-- Create: `public/assets/interactables/shortcut-gate-open.png`
-- Modify: `src/phaser/assets.ts`
-- Modify: `src/phaser/assets.test.ts`
-- Modify: `docs/art/hpa-22-style-guide.md`
-
-**Interfaces:**
-- Consumes: the treatment/filtering/crop rules that passed Task 3.
-- Produces: final `ASSET_PATHS`, `resolvePlayerAsset(direction)`, and the same `resolveEntityAsset` algorithm with only recovery/latch safe defaults plus the shortcut open row.
-
-- [ ] **Step 1: Generate the remaining three player stills**
-
-Create north/east/west using the approved south-facing outfit, proportions, camera angle, crop, palette, and bottom-center alignment. Do not add walk-cycle frames.
-
-- [ ] **Step 2: Generate only the remaining current-slice interactables**
-
-Create:
-
-```text
-stairs-up.png
-stairs-down.png
-recovery-waystone.png
-clue-runes.png
-shortcut-gate-closed.png
-shortcut-gate-open.png
-```
-
-Do not generate extra regular enemies or ordinary chest art. Those belong to the first content PR that actually uses them.
-
-For the gate pair, keep object identity/camera angle fixed and make open/closed state differ by silhouette/shape.
-
-- [ ] **Step 3: Normalize every new PNG using the proven rules**
-
-Apply the exact crop, transparency, final dimensions, bottom-center anchoring, and filtering assumptions documented in the style guide. If a sprite reads poorly, fix the image rather than adding renderer offsets.
-
-- [ ] **Step 4: Expand `ASSET_PATHS` only with consumed current-slice entries**
-
-Add:
-
-```ts
-'player-north': '/assets/characters/player-north.png',
-'player-east': '/assets/characters/player-east.png',
-'player-west': '/assets/characters/player-west.png',
-'stairs-up': '/assets/interactables/stairs-up.png',
-'stairs-down': '/assets/interactables/stairs-down.png',
-'recovery-waystone': '/assets/interactables/recovery-waystone.png',
-'clue-runes': '/assets/interactables/clue-runes.png',
-'shortcut-gate-closed': '/assets/interactables/shortcut-gate-closed.png',
-'shortcut-gate-open': '/assets/interactables/shortcut-gate-open.png',
-```
-
-The final catalog contains no `ruin-stalker`, `ruin-wisp`, or ordinary-chest rows.
-
-- [ ] **Step 5: Add player-facing mapping tests first**
-
-Add failing test:
-
-```ts
-it('maps exactly four presentation-only player facings', () => {
-  expect(resolvePlayerAsset('north')).toBe('player-north');
-  expect(resolvePlayerAsset('south')).toBe('player-south');
-  expect(resolvePlayerAsset('east')).toBe('player-east');
-  expect(resolvePlayerAsset('west')).toBe('player-west');
-});
-```
-
-Run:
-
-```bash
-bunx vitest run src/phaser/assets.test.ts
-```
-
-Expected: FAIL until the mapping exists.
-
-- [ ] **Step 6: Implement the player mapping**
-
-In `assets.ts`:
-
-```ts
-import type { Direction } from '../game/types';
-
-const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {
-  north: 'player-north',
-  south: 'player-south',
-  east: 'player-east',
-  west: 'player-west',
-};
-
-export function resolvePlayerAsset(direction: Direction): AssetKey {
-  return PLAYER_BY_DIRECTION[direction];
-}
-```
-
-- [ ] **Step 7: Extend the same open-variant table and safe defaults**
-
-Extend—not replace—`OPEN_VARIANT`:
-
-```ts
-const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey>> = {
-  'chest-relic-closed': 'chest-relic-open',
-  'shortcut-gate-closed': 'shortcut-gate-open',
-};
-```
-
-Replace only `baseEntityAsset` with:
-
-```ts
-function baseEntityAsset(entity: Entity): AssetKey | null {
-  if (entity.assetId !== undefined) {
-    return explicitAsset(entity.assetId);
-  }
-
-  if (entity.kind === 'recovery') return 'recovery-waystone';
-  if (entity.kind === 'latch') return 'shortcut-gate-closed';
-  return null;
-}
-```
-
-Keep `resolveEntityAsset` otherwise unchanged from Task 1.
-
-Important properties:
-
-- a typo in an explicit `assetId` returns `null`; it does **not** fall through to a kind default;
-- portal, enemy, clue, and reward have no generic art fallback;
-- recovery/latch may default because each has exactly one current visual;
-- opened reward/latch derive through `OPEN_VARIANT[base] ?? base` rather than a relic hardcode.
-
-- [ ] **Step 8: Add state-behavior tests**
-
-Add:
-
-```ts
-it('renders shortcut closed/open through the variant table', () => {
-  const latch = findEntityById('floor1-rear-latch');
-  if (!latch) throw new Error('floor1-rear-latch missing');
-
-  expect(resolveEntityAsset(latch, INITIAL_GAME_STATE)).toBe(
-    'shortcut-gate-closed',
-  );
-  expect(
-    resolveEntityAsset(latch, {
-      ...INITIAL_GAME_STATE,
-      openedShortcutIds: [latch.id],
-    }),
-  ).toBe('shortcut-gate-open');
-});
-
-it('has no directional portal fallback', () => {
-  const portal = findEntityById('village-to-floor1');
-  if (!portal || portal.kind !== 'portal') throw new Error('portal missing');
-  expect(
-    resolveEntityAsset({ ...portal, assetId: undefined }, INITIAL_GAME_STATE),
-  ).toBeNull();
-});
-```
-
-- [ ] **Step 9: Let existing catalog file coverage expand automatically**
-
-The Task 2 file-existence test iterates `ASSET_PATHS`; no new hand-maintained filename list is added.
-
-Run:
-
-```bash
-bunx vitest run src/phaser/assets.test.ts
-bun run typecheck
-```
-
-Expected: PASS only when every final catalog file exists and all resolver types agree.
-
-- [ ] **Step 10: Extend provenance for each new runtime file and commit**
-
-Update the same style guide with generator/model, date, exact prompt, source/final dimensions, available seed/reference, and processing note.
-
-```bash
-git add public/assets src/phaser/assets.ts src/phaser/assets.test.ts docs/art/hpa-22-style-guide.md
-git commit -m "art: complete current tower maze asset kit"
-```
-
----
-
-### Task 5: Bind all current content, remove placeholders, and prove resolver coverage from `MAPS`
-
-**Files:**
-- Modify: `src/game/content/village.ts`
-- Modify: `src/game/content/floor1.ts`
-- Modify: `src/game/content/floor2.ts`
-- Modify: `src/phaser/WorldScene.ts`
-- Modify: `src/phaser/assets.test.ts`
-
-**Interfaces:**
-- Consumes: final catalog/resolvers from Task 4.
-- Produces: all-image rendering for every live current HPA-237 entity, transient player facing, and exhaustive current-content/catalog coverage without a per-ID snapshot.
-
-- [ ] **Step 1: Remove the temporary three-ID proof assertion**
-
-Delete Task 3's `binds the three proof entities` test. It is replaced by the generic `MAPS` coverage below.
-
-- [ ] **Step 2: Write the exhaustive current-content tests before completing bindings**
-
-Import `MAPS` from `../game/content` and add:
-
-```ts
-it('resolves every live current entity and validates every authored asset id', () => {
-  for (const map of Object.values(MAPS)) {
-    const state = { ...INITIAL_GAME_STATE, mapId: map.id };
-
-    for (const entity of map.entities) {
-      if (entity.assetId !== undefined) {
-        expect(
-          entity.assetId in ASSET_PATHS,
-          `${entity.id} has unknown assetId ${entity.assetId}`,
-        ).toBe(true);
-      }
-
-      const resolved = resolveEntityAsset(entity, state);
-      expect(resolved, `${entity.id} should resolve while live`).not.toBeNull();
-      if (resolved) {
-        expect(resolved in ASSET_PATHS, `${entity.id} resolved outside catalog`).toBe(
-          true,
-        );
-      }
-    }
-  }
-});
-```
-
-Keep the existing focused tests for opened relic, opened shortcut, defeated enemy, unknown explicit ID, terrain, player facing, and file existence.
-
-Run:
-
-```bash
-bunx vitest run src/phaser/assets.test.ts
-```
-
-Expected: FAIL for current portals/clue that still lack explicit content-specific bindings.
-
-- [ ] **Step 3: Add only required explicit current `assetId` bindings**
-
-Keep proof bindings already added, then add:
-
-```text
-village-to-floor1             -> stairs-down
-floor1-to-village             -> stairs-up
-floor1-front-to-floor2        -> stairs-down
-floor1-rear-to-floor2         -> stairs-down
-floor1-lower-route-clue       -> clue-runes
-floor2-front-to-floor1        -> stairs-up
-floor2-rear-to-floor1         -> stairs-up
-```
-
-Do not add an explicit ID to `village-recovery` or `floor1-rear-latch`; those are the two intentional single-visual defaults.
-
-Do not alter map rows, coordinates, prose, stats, targets, or progression semantics.
-
-- [ ] **Step 4: Re-run generic catalog/content coverage**
-
-```bash
-bunx vitest run src/phaser/assets.test.ts src/game/content.test.ts
-```
-
-Expected: PASS. There is no 12-line binding snapshot to maintain.
-
-- [ ] **Step 5: Add transient player facing to `WorldScene`**
-
-Import `Direction` and `resolvePlayerAsset`:
-
-```ts
-private playerFacing: Direction = 'south';
-```
-
-Update each keydown listener:
-
-```ts
-keyboard.on(`keydown-${key}`, () => {
-  this.playerFacing = direction;
-  this.deps.onInput({ kind: 'move', direction });
-});
-```
-
-Facing is presentation-only. Reload resetting it to south is correct.
-
-- [ ] **Step 6: Remove all entity text fallback and placeholder hiding logic**
-
-Delete the proof-stage fallback and render only resolver output:
 
 ```ts
 for (const entity of map.entities) {
@@ -941,9 +544,356 @@ for (const entity of map.entities) {
 }
 ```
 
-Do not pre-hide opened rewards or opened latches. The resolver deliberately leaves their open variant visible. Defeated enemies return `null` and disappear.
+There is no temporary legacy fallback. At the proof checkpoint, unbound portals/recovery/latch/clue simply have no sprite while their gameplay behavior remains unchanged.
 
-- [ ] **Step 7: Render the player through the directional mapping**
+- [ ] **Step 5: Render the south-facing proof player**
+
+Replace `@` with:
+
+```ts
+const player = this.add
+  .image(
+    (state.tile.x + 0.5) * TILE_SIZE,
+    (state.tile.y + 1) * TILE_SIZE,
+    'player-south',
+  )
+  .setOrigin(0.5, 1);
+```
+
+- [ ] **Step 6: Remove the now-unused placeholder helper**
+
+Delete `resolveAssetId` from `src/phaser/assets.ts` and remove its `WorldScene` import in the same commit. It was intentionally retained through Task 1 so every prior commit compiled.
+
+- [ ] **Step 7: Verify mechanics before judging art**
+
+```bash
+bun run typecheck
+bun run test:unit
+bun run build
+bun run test:e2e
+```
+
+Expected: all PASS. The hidden/unbound proof-checkpoint sprites do not change domain interactions.
+
+- [ ] **Step 8: Evaluate the proof at real scale**
+
+Run:
+
+```bash
+bun run dev
+```
+
+At 100% browser zoom and the real 640×480 canvas verify:
+
+1. player, guide, and guard silhouettes are distinct;
+2. bases align to the logical tile;
+3. village/dungeon terrain are clearly different;
+4. relic closed/open differ by silhouette/shape;
+5. important detail survives gameplay scale;
+6. no asset needs a per-entity offset;
+7. the treatment remains readable under the dimension limits;
+8. the treatment is reproducible for the remaining current-slice assets.
+
+For a failing category:
+
+- regeneration/recrop round 1;
+- regeneration/recrop round 2;
+- if still failing, switch that category to a flatter/iconic treatment with less detail and perform one final pass.
+
+Do not proceed to Task 4 until the proof passes. Do not ship a placeholder as the off-ramp.
+
+- [ ] **Step 9: Decide texture filtering once**
+
+The current game uses:
+
+```ts
+pixelArt: true,
+```
+
+Keep it if nearest-neighbor is clearer for the chosen treatment. If painterly/anime art is materially clearer with normal filtering, change it to:
+
+```ts
+pixelArt: false,
+```
+
+Reload the same proof scenes after the change. Do not add a runtime toggle.
+
+- [ ] **Step 10: Record the proof result and commit**
+
+Update `docs/art/style-guide.md` with:
+
+- chosen treatment;
+- final `pixelArt` value and reason;
+- any rejected direction and what failed at 32 px;
+- final crop/anchoring guidance.
+
+Then:
+
+```bash
+git add src/phaser/assets.ts src/phaser/WorldScene.ts src/phaser/createGame.ts src/game/content/village.ts src/game/content/floor1.ts docs/art/style-guide.md public/assets
+git commit -m "feat: prove generated art in the tower maze runtime"
+```
+
+If `createGame.ts` did not change, omit it from `git add`.
+
+---
+
+### Task 4: Generate the remaining current-slice art and finish catalog semantics
+
+**Files:**
+- Create: `public/assets/characters/player-north.png`
+- Create: `public/assets/characters/player-east.png`
+- Create: `public/assets/characters/player-west.png`
+- Create: `public/assets/interactables/stairs-up.png`
+- Create: `public/assets/interactables/stairs-down.png`
+- Create: `public/assets/interactables/recovery-waystone.png`
+- Create: `public/assets/interactables/clue-runes.png`
+- Create: `public/assets/interactables/shortcut-gate-closed.png`
+- Create: `public/assets/interactables/shortcut-gate-open.png`
+- Modify: `src/phaser/assets.ts`
+- Modify: `src/phaser/assets.test.ts`
+- Modify: `docs/art/style-guide.md`
+
+**Interfaces:**
+- Consumes: treatment/filtering/crop rules that passed Task 3.
+- Produces: final `ASSET_PATHS`, `resolvePlayerAsset`, recovery/latch safe defaults, and both open-variant rows.
+
+- [ ] **Step 1: Generate only the remaining consumed images**
+
+Create the three missing player directions plus stairs up/down, recovery waystone, clue runes, and shortcut gate closed/open.
+
+Do not generate ordinary chests or spare enemies.
+
+- [ ] **Step 2: Normalize and verify dimensions**
+
+Apply the exact style-guide rules. Terrain remains `32×32`; every non-terrain file remains `≤64×64`. Fix the image rather than adding offsets.
+
+- [ ] **Step 3: Expand `ASSET_PATHS`**
+
+Add:
+
+```ts
+'player-north': '/assets/characters/player-north.png',
+'player-east': '/assets/characters/player-east.png',
+'player-west': '/assets/characters/player-west.png',
+'stairs-up': '/assets/interactables/stairs-up.png',
+'stairs-down': '/assets/interactables/stairs-down.png',
+'recovery-waystone': '/assets/interactables/recovery-waystone.png',
+'clue-runes': '/assets/interactables/clue-runes.png',
+'shortcut-gate-closed': '/assets/interactables/shortcut-gate-closed.png',
+'shortcut-gate-open': '/assets/interactables/shortcut-gate-open.png',
+```
+
+- [ ] **Step 4: Write the player-facing and safe-default tests**
+
+Add:
+
+```ts
+it('maps exactly four presentation-only player facings', () => {
+  expect(resolvePlayerAsset('north')).toBe('player-north');
+  expect(resolvePlayerAsset('south')).toBe('player-south');
+  expect(resolvePlayerAsset('east')).toBe('player-east');
+  expect(resolvePlayerAsset('west')).toBe('player-west');
+});
+
+it('does not invent art for an unbound directional portal', () => {
+  const portal = {
+    kind: 'portal' as const,
+    id: 'test-portal',
+    tile: { x: 1, y: 1 },
+    target: { mapId: 'floor1' as const, tile: { x: 1, y: 1 } },
+  };
+  expect(resolveEntityAsset(portal, INITIAL_GAME_STATE)).toBeNull();
+});
+```
+
+- [ ] **Step 5: Implement the player mapping and final open/default tables**
+
+Add:
+
+```ts
+const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {
+  north: 'player-north',
+  south: 'player-south',
+  east: 'player-east',
+  west: 'player-west',
+};
+
+export function resolvePlayerAsset(direction: Direction): AssetKey {
+  return PLAYER_BY_DIRECTION[direction];
+}
+```
+
+Extend `OPEN_VARIANT` to its final two rows:
+
+```ts
+const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey>> = {
+  'chest-relic-closed': 'chest-relic-open',
+  'shortcut-gate-closed': 'shortcut-gate-open',
+};
+```
+
+Change only `baseEntityAsset`:
+
+```ts
+function baseEntityAsset(entity: Entity): AssetKey | null {
+  if (entity.assetId !== undefined) {
+    return explicitAsset(entity.assetId);
+  }
+
+  if (entity.kind === 'recovery') return 'recovery-waystone';
+  if (entity.kind === 'latch') return 'shortcut-gate-closed';
+  return null;
+}
+```
+
+Portal, enemy, clue, and reward retain no generic kind fallback.
+
+- [ ] **Step 6: Re-run catalog/file/dimension tests**
+
+The Task 2 loop automatically covers every newly added catalog file.
+
+```bash
+bunx vitest run src/phaser/assets.test.ts
+bun run typecheck
+```
+
+Expected: PASS only when all final catalog files exist, fit the dimension contract, and resolver types agree.
+
+- [ ] **Step 7: Extend durable style notes and commit**
+
+Add one model + prompt-variant line for each new asset; do not add dates, seeds, or source dimensions.
+
+```bash
+git add public/assets src/phaser/assets.ts src/phaser/assets.test.ts docs/art/style-guide.md
+git commit -m "art: complete current tower maze asset kit"
+```
+
+---
+
+### Task 5: Bind all current content and enforce live/open coverage from `MAPS`
+
+**Files:**
+- Modify: `src/game/content/village.ts`
+- Modify: `src/game/content/floor1.ts`
+- Modify: `src/game/content/floor2.ts`
+- Modify: `src/phaser/WorldScene.ts`
+- Modify: `src/phaser/assets.test.ts`
+
+**Interfaces:**
+- Consumes: final catalog/resolvers from Task 4.
+- Produces: every current live entity rendered through images, transient directional player art, and one generalized content/catalog test covering live and opened states.
+
+- [ ] **Step 1: Write the generalized `MAPS` coverage first**
+
+Import `MAPS` and add:
+
+```ts
+it('resolves every current entity including open-state variants', () => {
+  for (const map of Object.values(MAPS)) {
+    const state = { ...INITIAL_GAME_STATE, mapId: map.id };
+
+    for (const entity of map.entities) {
+      if (entity.assetId !== undefined) {
+        expect(
+          entity.assetId in ASSET_PATHS,
+          `${entity.id} has unknown assetId ${entity.assetId}`,
+        ).toBe(true);
+      }
+
+      const closed = resolveEntityAsset(entity, state);
+      expect(closed, `${entity.id} should resolve while live`).not.toBeNull();
+      if (closed) {
+        expect(closed in ASSET_PATHS, `${entity.id} resolved outside catalog`).toBe(
+          true,
+        );
+      }
+
+      if (entity.kind === 'reward' || entity.kind === 'latch') {
+        const openedState =
+          entity.kind === 'reward'
+            ? { ...state, openedRewardIds: [entity.id] }
+            : { ...state, openedShortcutIds: [entity.id] };
+        const open = resolveEntityAsset(entity, openedState);
+
+        expect(open, `${entity.id} has no open art`).not.toBeNull();
+        expect(open, `${entity.id} open art is identical to closed`).not.toBe(
+          closed,
+        );
+        if (open) {
+          expect(open in ASSET_PATHS, `${entity.id} open art outside catalog`).toBe(
+            true,
+          );
+        }
+      }
+
+      if (entity.kind === 'enemy') {
+        expect(
+          resolveEntityAsset(entity, {
+            ...state,
+            defeatedEnemyIds: [entity.id],
+          }),
+        ).toBeNull();
+      }
+    }
+  }
+});
+```
+
+This replaces per-ID open-state/binding snapshots.
+
+- [ ] **Step 2: Run the focused test and verify missing bindings fail**
+
+```bash
+bunx vitest run src/phaser/assets.test.ts
+```
+
+Expected: FAIL for current portals/clue that do not yet have explicit content-specific art IDs.
+
+- [ ] **Step 3: Add the missing explicit current bindings**
+
+Keep the three proof bindings and add:
+
+```text
+village-to-floor1             -> stairs-down
+floor1-to-village             -> stairs-up
+floor1-front-to-floor2        -> stairs-down
+floor1-rear-to-floor2         -> stairs-down
+floor1-lower-route-clue       -> clue-runes
+floor2-front-to-floor1        -> stairs-up
+floor2-rear-to-floor1         -> stairs-up
+```
+
+Do not add explicit IDs to `village-recovery` or `floor1-rear-latch`; those intentionally use the two safe single-visual defaults.
+
+Do not alter layout rows, coordinates, text, stats, targets, or progression semantics.
+
+- [ ] **Step 4: Re-run generalized coverage**
+
+```bash
+bunx vitest run src/phaser/assets.test.ts src/game/content.test.ts
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Add transient player facing**
+
+Import `Direction` and `resolvePlayerAsset`, then add:
+
+```ts
+private playerFacing: Direction = 'south';
+```
+
+Update each movement listener:
+
+```ts
+keyboard.on(`keydown-${key}`, () => {
+  this.playerFacing = direction;
+  this.deps.onInput({ kind: 'move', direction });
+});
+```
+
+Render the player with:
 
 ```ts
 const player = this.add
@@ -955,13 +905,12 @@ const player = this.add
   .setOrigin(0.5, 1);
 ```
 
-No walk animation or durable facing field is added.
+Do not persist facing.
 
-- [ ] **Step 8: Run the automated regression gate**
+- [ ] **Step 6: Run mechanics/build/browser regression checks**
 
 ```bash
 bun run typecheck
-bun run lint
 bun run test:unit
 bun run build
 bun run test:e2e
@@ -969,7 +918,7 @@ bun run test:e2e
 
 Expected: all PASS.
 
-- [ ] **Step 9: Manually verify the two new overlap cases and final art states**
+- [ ] **Step 7: Verify persistent-open overlap in the real game**
 
 Run:
 
@@ -977,39 +926,39 @@ Run:
 bun run dev
 ```
 
-Verify in the real game:
+Verify:
 
-1. recovery, guide, stairs, clue, gate, relic, and guard are recognizable;
-2. arrow input changes player north/south/east/west stills;
-3. collecting the relic leaves the open relic sprite while the tile remains walkable;
-4. walk the player **onto the open relic tile** and confirm both player and open relic remain readable;
-5. opening the shortcut leaves the open gate sprite while the tile remains walkable;
-6. walk the player **onto the open gate tile** and confirm both player and gate remain readable;
-7. defeating the gatekeeper removes its sprite;
-8. camera follow and gameplay interactions remain unchanged.
+1. every current entity is visibly represented;
+2. player facing changes north/south/east/west;
+3. collected relic remains visibly open and its tile is walkable;
+4. opened shortcut remains visibly open and its tile is walkable;
+5. player standing on the open relic tile remains readable;
+6. player standing on the open gate tile remains readable;
+7. defeated gatekeeper disappears;
+8. camera follow and interactions remain unchanged.
 
-If overlap is muddy, recrop/simplify the PNG or transparent padding. Do not add per-entity offsets, z-order exceptions, or collision changes merely to compensate for the asset.
+If overlap is unclear, recrop/simplify the PNG. Do not add per-entity offsets.
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add src/game/content/village.ts src/game/content/floor1.ts src/game/content/floor2.ts src/phaser/WorldScene.ts src/phaser/assets.test.ts public/assets
-git commit -m "feat: replace vertical slice placeholders with generated art"
+git commit -m "feat: replace tower maze placeholders with generated art"
 ```
 
 ---
 
-### Task 6: Verify real asset serving and complete the HPA-22 delivery gate
+### Task 6: Verify real asset serving and finish the implementation gate
 
 **Files:**
 - Modify: `tests/e2e/cross-floor.spec.ts`
-- Modify: `docs/art/hpa-22-style-guide.md` only if final runtime inspection changes a documented crop/filtering rule.
+- Modify: `docs/art/style-guide.md` only if final runtime inspection changes a durable rule.
 
 **Interfaces:**
-- Consumes: final `ASSET_PATHS` and the real Vite server.
-- Produces: HTTP evidence that every catalog PNG is served while the existing gameplay journey still passes.
+- Consumes: final `ASSET_PATHS` and the real Vite dev server.
+- Produces: HTTP evidence that every catalog image is actually served alongside the unchanged player journey.
 
-- [ ] **Step 1: Add the catalog-serving smoke test**
+- [ ] **Step 1: Add the asset-serving smoke test**
 
 Import:
 
@@ -1029,8 +978,6 @@ test('serves every runtime image in the asset catalog', async ({ request }) => {
 });
 ```
 
-This tests the existing public HTTP surface. Do not add a game test API or Vite plugin.
-
 - [ ] **Step 2: Run the full local gate**
 
 ```bash
@@ -1044,35 +991,22 @@ bun run test:e2e
 
 Expected: every command PASS.
 
-- [ ] **Step 3: Capture implementation-PR review evidence from the real game**
+- [ ] **Step 3: Capture review screenshots**
 
-Attach screenshots to the implementation PR description/comment showing:
+Attach real-game screenshots to the implementation PR showing:
 
-1. village corner with player + village guide;
-2. dungeon area with ruin guard + clue treatment;
-3. relic closed and open;
-4. shortcut gate closed and open;
-5. player/NPC/enemy together at normal gameplay scale.
+1. village proof scene with player + guide;
+2. dungeon proof scene with guard;
+3. relic closed/open;
+4. shortcut gate closed/open;
+5. player overlapping the opened relic/gate visuals at normal gameplay scale.
 
-Do not create a committed screenshot corpus or visual-regression framework.
+Do not add committed screenshot fixtures or visual-regression tooling.
 
-- [ ] **Step 4: Audit final diff against the narrowed HPA-22 scope**
-
-Confirm the implementation PR states:
-
-- proof sample was integrated/evaluated before remaining art generation;
-- final filtering choice is recorded and matches `createGame.ts`;
-- all HPA-237 vertical-slice placeholders are replaced;
-- all current live entities resolve through the catalog and all catalog files exist/serve;
-- open relic/gate remain readable while occupied by the player;
-- prompt/style/provenance notes are committed;
-- no speculative extra enemies or ordinary chests were generated;
-- no HPA-235 content, portrait system, animation system, auto-tiler, atlas, asset manager, build plugin, or domain-state change was added.
-
-- [ ] **Step 5: Commit final browser coverage**
+- [ ] **Step 4: Commit browser coverage**
 
 ```bash
-git add tests/e2e/cross-floor.spec.ts docs/art/hpa-22-style-guide.md
+git add tests/e2e/cross-floor.spec.ts docs/art/style-guide.md
 git commit -m "test: verify runtime asset delivery"
 ```
 
@@ -1091,10 +1025,8 @@ bun run build
 bun run test:e2e
 ```
 
-Expected: all commands pass; mechanics are unchanged; every current live entity resolves; every catalog PNG exists and is served; no unused speculative art was added; the selected art/filtering remains readable at the real 32 px logical tile scale.
+Expected result: all commands pass; mechanics remain unchanged; every catalog PNG exists, satisfies the runtime dimension contract, and is served by Vite; every current live/open visual resolves through the catalog; the real game remains readable at 32 px logical scale.
 
 ## Implementation Handoff
 
-Execute this plan on the same HPA-22 branch/PR. Recommended workflow: `superpowers:subagent-driven-development`.
-
-The hard execution checkpoint is Task 3: do not begin Task 4 until the proof sample passes at real gameplay scale and the `pixelArt` filtering choice is recorded.
+Execute this plan on the same HPA-22 branch/PR. Recommended workflow: `superpowers:subagent-driven-development`. The hard checkpoint is Task 3: do not produce the remaining current-slice art until the proof treatment and filtering choice pass in the real game.
