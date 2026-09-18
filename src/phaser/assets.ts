@@ -47,7 +47,7 @@ const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey>> = {
 
 function explicitAsset(assetId: string | undefined): AssetKey | null {
   if (assetId === undefined) return null;
-  return assetId in ASSET_PATHS ? (assetId as AssetKey) : null;
+  return Object.hasOwn(ASSET_PATHS, assetId) ? (assetId as AssetKey) : null;
 }
 
 function baseEntityAsset(entity: Entity): AssetKey | null {
