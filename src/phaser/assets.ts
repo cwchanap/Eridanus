@@ -2,10 +2,6 @@ import type { Direction, Entity, GameState, MapId } from '../game/types';
 
 export const TILE_SIZE = 32;
 
-export function resolveAssetId(entity: Entity): string {
-  return entity.assetId ?? entity.kind;
-}
-
 export const ASSET_PATHS = {
   'terrain-village-floor': '/assets/terrain/village-floor.png',
   'terrain-village-wall': '/assets/terrain/village-wall.png',

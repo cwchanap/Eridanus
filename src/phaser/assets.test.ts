@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { MAPS } from '../game/content';
 import { createInitialGameState } from '../game/state';
 import type { EnemyEntity, RewardEntity } from '../game/types';
 import {
@@ -105,6 +106,58 @@ describe('asset seam', () => {
       target: { mapId: 'floor1' as const, tile: { x: 1, y: 1 } },
     };
     expect(resolveEntityAsset(portal, createInitialGameState())).toBeNull();
+  });
+
+  it('resolves every current entity including open-state variants', () => {
+    for (const map of Object.values(MAPS)) {
+      const state = { ...createInitialGameState(), mapId: map.id };
+
+      for (const entity of map.entities) {
+        if (entity.assetId !== undefined) {
+          expect(
+            entity.assetId in ASSET_PATHS,
+            `${entity.id} has unknown assetId ${entity.assetId}`,
+          ).toBe(true);
+        }
+
+        const closed = resolveEntityAsset(entity, state);
+        expect(closed, `${entity.id} should resolve while live`).not.toBeNull();
+        if (closed) {
+          expect(
+            closed in ASSET_PATHS,
+            `${entity.id} resolved outside catalog`,
+          ).toBe(true);
+        }
+
+        if (entity.kind === 'reward' || entity.kind === 'latch') {
+          const openedState =
+            entity.kind === 'reward'
+              ? { ...state, openedRewardIds: [entity.id] }
+              : { ...state, openedShortcutIds: [entity.id] };
+          const open = resolveEntityAsset(entity, openedState);
+
+          expect(open, `${entity.id} has no open art`).not.toBeNull();
+          expect(open, `${entity.id} open art is identical to closed`).not.toBe(
+            closed,
+          );
+          if (open) {
+            expect(
+              open in ASSET_PATHS,
+              `${entity.id} open art outside catalog`,
+            ).toBe(true);
+          }
+        }
+
+        if (entity.kind === 'enemy') {
+          expect(
+            resolveEntityAsset(entity, {
+              ...state,
+              defeatedEnemyIds: [entity.id],
+            }),
+          ).toBeNull();
+        }
+      }
+    }
   });
 
   it('maps exactly four presentation-only player facings', () => {
