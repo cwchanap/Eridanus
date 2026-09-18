@@ -26,17 +26,27 @@ export class WorldScene extends Phaser.Scene {
   private playerFacing: Direction = 'south';
   private ready = false;
 
+  private readonly handleKeyDown = (event: KeyboardEvent): void => {
+    const direction = KEY_DIRECTIONS.get(event.key);
+    if (direction === undefined) return;
+    event.preventDefault();
+    this.playerFacing = direction;
+    this.deps.onInput({ kind: 'move', direction });
+  };
+
   constructor(deps: WorldSceneDeps) {
     super('world');
     this.deps = deps;
     // Bound here rather than in create() so presses landing during asset
     // preload still reach handleInput; refresh() stays inert until ready.
-    window.addEventListener('keydown', (event) => {
-      const direction = KEY_DIRECTIONS.get(event.key);
-      if (direction === undefined) return;
-      event.preventDefault();
-      this.playerFacing = direction;
-      this.deps.onInput({ kind: 'move', direction });
+    window.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  init(): void {
+    // this.events is only injected once the SceneManager boots the scene,
+    // so the constructor cannot register this hook.
+    this.events.once(Phaser.Scenes.Events.DESTROY, () => {
+      window.removeEventListener('keydown', this.handleKeyDown);
     });
   }
 
