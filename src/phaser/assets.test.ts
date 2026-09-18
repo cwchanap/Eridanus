@@ -1,12 +1,144 @@
 import { describe, expect, it } from 'vitest';
-import { findEntityById } from '../game/content';
-import { resolveAssetId, TILE_SIZE } from './assets';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { createInitialGameState } from '../game/state';
+import type { EnemyEntity, RewardEntity } from '../game/types';
+import {
+  ASSET_PATHS,
+  TILE_SIZE,
+  resolveEntityAsset,
+  resolvePlayerAsset,
+  resolveTerrainAssets,
+  runtimeAssetFilePath,
+} from './assets';
+
+const testReward: RewardEntity = {
+  kind: 'reward',
+  id: 'test-reward',
+  tile: { x: 1, y: 1 },
+  assetId: 'chest-relic-closed',
+  stat: 'attack',
+  amount: 1,
+};
+
+const testEnemy: EnemyEntity = {
+  kind: 'enemy',
+  id: 'test-enemy',
+  tile: { x: 1, y: 1 },
+  assetId: 'enemy-ruin-guard',
+  stats: { hp: 1, attack: 1, defense: 0 },
+};
 
 describe('asset seam', () => {
-  it('locks tile size and defaults asset id to entity kind', () => {
-    const reward = findEntityById('floor1-power-core');
-    if (!reward) throw new Error('reward missing');
+  it('keeps the 32px logical tile and maps every current map terrain', () => {
     expect(TILE_SIZE).toBe(32);
-    expect(resolveAssetId(reward)).toBe('reward');
+    expect(resolveTerrainAssets('village')).toEqual({
+      floor: 'terrain-village-floor',
+      wall: 'terrain-village-wall',
+    });
+    expect(resolveTerrainAssets('floor1')).toEqual({
+      floor: 'terrain-dungeon-floor',
+      wall: 'terrain-dungeon-wall',
+    });
+    expect(resolveTerrainAssets('floor2')).toEqual({
+      floor: 'terrain-dungeon-floor',
+      wall: 'terrain-dungeon-wall',
+    });
+  });
+
+  it('uses the open variant for an opened reward', () => {
+    expect(resolveEntityAsset(testReward, createInitialGameState())).toBe(
+      'chest-relic-closed',
+    );
+    expect(
+      resolveEntityAsset(testReward, {
+        ...createInitialGameState(),
+        openedRewardIds: [testReward.id],
+      }),
+    ).toBe('chest-relic-open');
+  });
+
+  it('uses the open variant for an opened latch bound by default', () => {
+    const latch = {
+      kind: 'latch' as const,
+      id: 'test-latch',
+      tile: { x: 1, y: 1 },
+      rearSide: 'east' as const,
+    };
+    expect(resolveEntityAsset(latch, createInitialGameState())).toBe(
+      'shortcut-gate-closed',
+    );
+    expect(
+      resolveEntityAsset(latch, {
+        ...createInitialGameState(),
+        openedShortcutIds: [latch.id],
+      }),
+    ).toBe('shortcut-gate-open');
+  });
+
+  it('removes defeated enemies', () => {
+    expect(resolveEntityAsset(testEnemy, createInitialGameState())).toBe(
+      'enemy-ruin-guard',
+    );
+    expect(
+      resolveEntityAsset(testEnemy, {
+        ...createInitialGameState(),
+        defeatedEnemyIds: [testEnemy.id],
+      }),
+    ).toBeNull();
+  });
+
+  it('fails closed for an unknown explicit id', () => {
+    expect(
+      resolveEntityAsset(
+        { ...testEnemy, assetId: 'typo-not-in-catalog' },
+        createInitialGameState(),
+      ),
+    ).toBeNull();
+  });
+
+  it('does not invent art for an unbound directional portal', () => {
+    const portal = {
+      kind: 'portal' as const,
+      id: 'test-portal',
+      tile: { x: 1, y: 1 },
+      target: { mapId: 'floor1' as const, tile: { x: 1, y: 1 } },
+    };
+    expect(resolveEntityAsset(portal, createInitialGameState())).toBeNull();
+  });
+
+  it('maps exactly four presentation-only player facings', () => {
+    expect(resolvePlayerAsset('north')).toBe('player-north');
+    expect(resolvePlayerAsset('south')).toBe('player-south');
+    expect(resolvePlayerAsset('east')).toBe('player-east');
+    expect(resolvePlayerAsset('west')).toBe('player-west');
+  });
+
+  it('keeps every catalog URL under /assets', () => {
+    for (const path of Object.values(ASSET_PATHS)) {
+      expect(path).toMatch(/^\/assets\//);
+    }
+  });
+
+  it('ships catalog files at bounded runtime dimensions', () => {
+    const keys = Object.keys(ASSET_PATHS) as (keyof typeof ASSET_PATHS)[];
+
+    for (const key of keys) {
+      const file = resolve(runtimeAssetFilePath(key));
+      expect(existsSync(file), `${key} file missing`).toBe(true);
+
+      const png = readFileSync(file);
+      const width = png.readUInt32BE(16);
+      const height = png.readUInt32BE(20);
+
+      if (key.startsWith('terrain-')) {
+        expect([width, height], `${key} must be exactly one tile`).toEqual([
+          32, 32,
+        ]);
+      } else {
+        expect(width, `${key} wider than two tiles`).toBeLessThanOrEqual(64);
+        expect(height, `${key} taller than two tiles`).toBeLessThanOrEqual(64);
+      }
+    }
   });
 });
