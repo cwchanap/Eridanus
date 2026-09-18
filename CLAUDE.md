@@ -50,7 +50,7 @@ keyboard (WorldScene) / button click (InteractionOverlay)
 
 - **`src/game/`** — pure TypeScript, zero Phaser imports. `types.ts` holds every closed union; `state.ts` the initial state; `movement.ts` → `actions.ts` → `combat.ts` the rule chain; `session.ts` the pending-interaction gate; `save.ts` the localStorage boundary.
 - **`src/game/content/`** — authored maps (`village`, `floor1`, `floor2`), re-exported through `content.ts` as `MAPS`.
-- **`src/phaser/`** — `WorldScene.refresh()` clears and redraws every child from `GameState` each input; `createGame.ts` boots Phaser; `assets.ts` is the art-replacement seam (`ASSET_PATHS` catalog, terrain/player/entity resolvers, `TILE_SIZE`).
+- **`src/phaser/`** — `WorldScene.refresh()` clears and redraws every child each input from `GameState` plus the transient `playerFacing` (which selects the player texture); `createGame.ts` boots Phaser; `assets.ts` is the art-replacement seam (`ASSET_PATHS` catalog, terrain/player/entity resolvers, `TILE_SIZE`).
 - **`src/ui/InteractionOverlay.ts`** — framework-free DOM, rendered by `innerHTML` + re-bound listeners. HUD, effect text, combat prompt, blocked reasons, invalid-save recovery.
 - **`src/main.ts`** — the only stateful module: holds `session`, `effect`, `blocked`, wires input, autosaves, re-renders.
 

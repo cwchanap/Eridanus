@@ -278,7 +278,7 @@ const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey>> = {
 
 function explicitAsset(assetId: string | undefined): AssetKey | null {
   if (assetId === undefined) return null;
-  return assetId in ASSET_PATHS ? (assetId as AssetKey) : null;
+  return Object.hasOwn(ASSET_PATHS, assetId) ? (assetId as AssetKey) : null;
 }
 
 function baseEntityAsset(entity: Entity): AssetKey | null {
@@ -816,7 +816,7 @@ it('resolves every current entity including open-state variants', () => {
     for (const entity of map.entities) {
       if (entity.assetId !== undefined) {
         expect(
-          entity.assetId in ASSET_PATHS,
+          Object.hasOwn(ASSET_PATHS, entity.assetId),
           `${entity.id} has unknown assetId ${entity.assetId}`,
         ).toBe(true);
       }
@@ -825,7 +825,7 @@ it('resolves every current entity including open-state variants', () => {
       expect(closed, `${entity.id} should resolve while live`).not.toBeNull();
       if (closed) {
         expect(
-          closed in ASSET_PATHS,
+          Object.hasOwn(ASSET_PATHS, closed),
           `${entity.id} resolved outside catalog`,
         ).toBe(true);
       }
@@ -843,7 +843,7 @@ it('resolves every current entity including open-state variants', () => {
         );
         if (open) {
           expect(
-            open in ASSET_PATHS,
+            Object.hasOwn(ASSET_PATHS, open),
             `${entity.id} open art outside catalog`,
           ).toBe(true);
         }
