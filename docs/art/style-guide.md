@@ -16,7 +16,7 @@ The selected sources were generated with `gpt-image-2` from one shared style ref
 
 ## Texture filtering
 
-The artwork is pre-downsampled and retains anti-aliased painterly/cel-shaded edges. During runtime integration, compare the existing Phaser `pixelArt: true` setting against normal filtering. Normal filtering is the initial recommendation for this treatment, but the real integration proof decides the final setting; do not add per-texture filtering or a runtime toggle.
+Decision: keep Phaser `pixelArt: true` in `src/phaser/createGame.ts`. Every runtime asset is pre-downsampled to its final resolution and renders 1:1 (terrain at exactly 32 px, sprites at natural ≤64 px with no scaling), so normal filtering offers no material sharpness gain, while nearest filtering plus Phaser's pixel-art rounding avoids sub-pixel shimmer as the camera follows the player. No per-texture filtering and no runtime toggle.
 
 ## Shared prompt language
 
