@@ -1,7 +1,13 @@
 import Phaser from 'phaser';
 import { MAPS } from '../game/content';
-import type { InputCommand, SessionState } from '../game/types';
-import { TILE_SIZE, resolveAssetId } from './assets';
+import type { Direction, InputCommand, SessionState } from '../game/types';
+import {
+  ASSET_PATHS,
+  TILE_SIZE,
+  resolveEntityAsset,
+  resolvePlayerAsset,
+  resolveTerrainAssets,
+} from './assets';
 
 export type WorldSceneDeps = {
   getSession: () => SessionState;
@@ -17,10 +23,17 @@ const DIRECTIONS = [
 
 export class WorldScene extends Phaser.Scene {
   private readonly deps: WorldSceneDeps;
+  private playerFacing: Direction = 'south';
 
   constructor(deps: WorldSceneDeps) {
     super('world');
     this.deps = deps;
+  }
+
+  preload(): void {
+    for (const [assetKey, path] of Object.entries(ASSET_PATHS)) {
+      this.load.image(assetKey, path);
+    }
   }
 
   create(): void {
@@ -29,9 +42,10 @@ export class WorldScene extends Phaser.Scene {
     if (keyboard) {
       for (const { key, direction } of DIRECTIONS) {
         // Event listeners never miss sub-frame taps, unlike JustDown polling.
-        keyboard.on(`keydown-${key}`, () =>
-          this.deps.onInput({ kind: 'move', direction }),
-        );
+        keyboard.on(`keydown-${key}`, () => {
+          this.playerFacing = direction;
+          this.deps.onInput({ kind: 'move', direction });
+        });
       }
     }
     this.refresh();
@@ -42,50 +56,36 @@ export class WorldScene extends Phaser.Scene {
     const map = MAPS[state.mapId];
     this.children.removeAll(true);
 
+    const terrain = resolveTerrainAssets(state.mapId);
     for (let y = 0; y < map.layout.length; y++) {
       for (let x = 0; x < map.layout[y]!.length; x++) {
         const isWall = map.layout[y]![x] === '#';
+        const texture = isWall ? terrain.wall : terrain.floor;
         this.add
-          .rectangle(
-            x * TILE_SIZE,
-            y * TILE_SIZE,
-            TILE_SIZE,
-            TILE_SIZE,
-            isWall ? 0x3a3a3a : 0x181818,
-          )
-          .setOrigin(0);
+          .image(x * TILE_SIZE, y * TILE_SIZE, texture)
+          .setOrigin(0)
+          .setDisplaySize(TILE_SIZE, TILE_SIZE);
       }
     }
 
-    const collected = new Set(state.openedRewardIds);
-    const defeated = new Set(state.defeatedEnemyIds);
-    const opened = new Set(state.openedShortcutIds);
     for (const entity of map.entities) {
-      if (entity.kind === 'reward' && collected.has(entity.id)) continue;
-      if (entity.kind === 'enemy' && defeated.has(entity.id)) continue;
-      if (entity.kind === 'latch' && opened.has(entity.id)) continue;
+      const assetKey = resolveEntityAsset(entity, state);
+      if (!assetKey) continue;
+
       this.add
-        .text(
+        .image(
           (entity.tile.x + 0.5) * TILE_SIZE,
           (entity.tile.y + 1) * TILE_SIZE,
-          resolveAssetId(entity),
-          {
-            fontSize: '10px',
-            color: '#ffdd66',
-          },
+          assetKey,
         )
         .setOrigin(0.5, 1);
     }
 
     const player = this.add
-      .text(
+      .image(
         (state.tile.x + 0.5) * TILE_SIZE,
         (state.tile.y + 1) * TILE_SIZE,
-        '@',
-        {
-          fontSize: '16px',
-          color: '#ffffff',
-        },
+        resolvePlayerAsset(this.playerFacing),
       )
       .setOrigin(0.5, 1);
 
