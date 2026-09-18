@@ -14,20 +14,30 @@ export type WorldSceneDeps = {
   onInput: (input: InputCommand) => void;
 };
 
-const DIRECTIONS = [
-  { key: 'UP', direction: 'north' },
-  { key: 'DOWN', direction: 'south' },
-  { key: 'LEFT', direction: 'west' },
-  { key: 'RIGHT', direction: 'east' },
-] as const;
+const KEY_DIRECTIONS = new Map<string, Direction>([
+  ['ArrowUp', 'north'],
+  ['ArrowDown', 'south'],
+  ['ArrowLeft', 'west'],
+  ['ArrowRight', 'east'],
+]);
 
 export class WorldScene extends Phaser.Scene {
   private readonly deps: WorldSceneDeps;
   private playerFacing: Direction = 'south';
+  private ready = false;
 
   constructor(deps: WorldSceneDeps) {
     super('world');
     this.deps = deps;
+    // Bound here rather than in create() so presses landing during asset
+    // preload still reach handleInput; refresh() stays inert until ready.
+    window.addEventListener('keydown', (event) => {
+      const direction = KEY_DIRECTIONS.get(event.key);
+      if (direction === undefined) return;
+      event.preventDefault();
+      this.playerFacing = direction;
+      this.deps.onInput({ kind: 'move', direction });
+    });
   }
 
   preload(): void {
@@ -38,20 +48,12 @@ export class WorldScene extends Phaser.Scene {
 
   create(): void {
     this.cameras.main.setBackgroundColor('#111111');
-    const keyboard = this.input.keyboard;
-    if (keyboard) {
-      for (const { key, direction } of DIRECTIONS) {
-        // Event listeners never miss sub-frame taps, unlike JustDown polling.
-        keyboard.on(`keydown-${key}`, () => {
-          this.playerFacing = direction;
-          this.deps.onInput({ kind: 'move', direction });
-        });
-      }
-    }
+    this.ready = true;
     this.refresh();
   }
 
   refresh(): void {
+    if (!this.ready) return;
     const state = this.deps.getSession().game;
     const map = MAPS[state.mapId];
     this.children.removeAll(true);
