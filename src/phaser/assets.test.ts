@@ -96,6 +96,13 @@ describe('asset seam', () => {
         createInitialGameState(),
       ),
     ).toBeNull();
+    // Inherited Object.prototype names must not count as catalog keys.
+    expect(
+      resolveEntityAsset(
+        { ...testEnemy, assetId: 'toString' },
+        createInitialGameState(),
+      ),
+    ).toBeNull();
   });
 
   it('does not invent art for an unbound directional portal', () => {
@@ -115,7 +122,7 @@ describe('asset seam', () => {
       for (const entity of map.entities) {
         if (entity.assetId !== undefined) {
           expect(
-            entity.assetId in ASSET_PATHS,
+            Object.hasOwn(ASSET_PATHS, entity.assetId),
             `${entity.id} has unknown assetId ${entity.assetId}`,
           ).toBe(true);
         }
@@ -124,7 +131,7 @@ describe('asset seam', () => {
         expect(closed, `${entity.id} should resolve while live`).not.toBeNull();
         if (closed) {
           expect(
-            closed in ASSET_PATHS,
+            Object.hasOwn(ASSET_PATHS, closed),
             `${entity.id} resolved outside catalog`,
           ).toBe(true);
         }
@@ -142,7 +149,7 @@ describe('asset seam', () => {
           );
           if (open) {
             expect(
-              open in ASSET_PATHS,
+              Object.hasOwn(ASSET_PATHS, open),
               `${entity.id} open art outside catalog`,
             ).toBe(true);
           }
