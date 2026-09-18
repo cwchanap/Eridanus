@@ -28,6 +28,30 @@ test('boots the real game with persistent player stats', async ({ page }) => {
   await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 2');
 });
 
+test('accepts movement while assets are still loading', async ({ page }) => {
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  // Hold every image response so Phaser stays in preload() throughout the
+  // presses; the overlay assertions below can only pass if the keydowns
+  // were captured before the scene's create().
+  await page.route('**/*.png', async (route) => {
+    await gate;
+    await route.continue();
+  });
+  try {
+    await page.goto('/');
+    await press(page, 'ArrowRight', 2);
+    const villageClue = page
+      .getByTestId('interaction')
+      .locator('[data-effect="clue"]');
+    await expect(villageClue).toHaveAttribute('data-effect', 'clue');
+  } finally {
+    release();
+  }
+});
+
 test('completes the village-to-floor2 journey', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
