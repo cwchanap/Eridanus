@@ -1184,7 +1184,7 @@ From fresh village:
 ~~~text
 Right, Up -> talk to warden
 Right x5, Up x3, Right x3, Up x3 -> village stair at (11,2) -> Floor 1 (2,14)
-Right, Up x2 -> bump/fight west sentry at (3,11)
+Right, Up x3 -> bump west sentry at (3,11) and open the combat prompt
 Fight
 Up x2, Right x4, Up, Right x2, Down -> collect Tower Sigil at (9,10)
 Left x3, Down, Left x2, Up x6, Right x4, Up, Right, Up -> front Floor-2 stair (9,2)
@@ -1212,17 +1212,26 @@ Keep the current connector route from floor2 (1,8):
 Right x13, Up x7 -> rear portal -> Floor 1 (21,3)
 ~~~
 
-Then route to the existing HPA-237 power core/gatekeeper/latch using the new Floor-1 geometry. Do not change combat formulas or latch semantics to make the test easier.
+Continue from Floor 1 rear portal arrival at (21,3):
 
-The assertions must still prove:
+~~~text
+Left, Down x7, Left x4, Left -> preview floor1-gatekeeper at 15 HP loss; Cancel
+Down, Left x3, Up x3 -> collect floor1-power-core; ATK becomes 12
+Down, Right x2 -> preview floor1-gatekeeper at 10 HP loss; Fight
+Left x2, Up x2, Left -> open floor1-rear-latch from the east/rear side
+Left x2 -> cross the now-open latch into the front side
+~~~
 
-- floor1-power-core increases ATK by 2;
-- the nearby deterministic combat preview changes after the reward;
-- Fight records HP loss and defeated enemy persistence;
-- floor1-rear-latch opens only from the east/rear side;
-- the opened latch becomes two-way.
+Assert:
 
-If exact arrow counts differ after the first real-browser pass, correct only the authored route counts in this test; do not add teleport/test APIs.
+- the first gatekeeper preview is HP loss 15;
+- floor1-power-core increases ATK from 10 to 12;
+- the second preview is HP loss 10;
+- Fight records the defeat and leaves HP at 12 after the earlier west-sentry fight;
+- floor1-rear-latch opens from the east/rear side;
+- the opened latch is traversable in both directions after reload.
+
+Do not change combat formulas, latch semantics, or add teleport/test APIs to make this route pass.
 
 - [ ] **Step 4: Prove journal/save persistence**
 
