@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { ASSET_PATHS } from '../../src/phaser/assets';
+
 async function press(
   page: Page,
   key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight',
@@ -9,6 +11,14 @@ async function press(
     // Small delay keeps each press a distinct keydown event.
     await page.keyboard.press(key, { delay: 50 });
 }
+
+test('serves every runtime image in the asset catalog', async ({ request }) => {
+  for (const path of Object.values(ASSET_PATHS)) {
+    const response = await request.get(path);
+    expect(response.ok(), `${path} should be served`).toBe(true);
+    expect(response.headers()['content-type']).toContain('image/png');
+  }
+});
 
 test('boots the real game with persistent player stats', async ({ page }) => {
   await page.goto('/');
