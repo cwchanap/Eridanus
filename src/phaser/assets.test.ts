@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { MAPS } from '../game/content';
 import { createInitialGameState } from '../game/state';
-import type { EnemyEntity, RewardEntity } from '../game/types';
+import type { EnemyEntity, NpcEntity, RewardEntity } from '../game/types';
 import {
   ASSET_PATHS,
   TILE_SIZE,
@@ -18,8 +18,17 @@ const testReward: RewardEntity = {
   id: 'test-reward',
   tile: { x: 1, y: 1 },
   assetId: 'chest-relic-closed',
+  grant: 'stat',
   stat: 'attack',
   amount: 1,
+};
+
+const testNpc: NpcEntity = {
+  kind: 'npc',
+  id: 'test-npc',
+  tile: { x: 1, y: 1 },
+  name: 'Guide',
+  introFactId: 'optional-route-lead',
 };
 
 const testEnemy: EnemyEntity = {
@@ -87,6 +96,12 @@ describe('asset seam', () => {
         defeatedEnemyIds: [testEnemy.id],
       }),
     ).toBeNull();
+  });
+
+  it('falls back to guide art for an npc without an explicit asset', () => {
+    expect(resolveEntityAsset(testNpc, createInitialGameState())).toBe(
+      'npc-village-guide',
+    );
   });
 
   it('fails closed for an unknown explicit id', () => {

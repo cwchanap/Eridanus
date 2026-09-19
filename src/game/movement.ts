@@ -1,5 +1,6 @@
 import { getEntityAt, isInBounds, isLayoutFloor } from './content';
 import { interactWithEntity } from './actions';
+import { discoverCurrentSection, recordFact } from './progress';
 import type { ActionResult, Direction, GameState, Tile } from './types';
 
 const DELTA: Record<Direction, Tile> = {
@@ -22,40 +23,40 @@ export function attemptMove(
   const entity = getEntityAt(state.mapId, target);
   if (entity) {
     if (entity.kind === 'portal') {
+      if (entity.lock && !state.itemIds.includes(entity.lock.requiresItemId)) {
+        const next = recordFact(state, entity.lock.lockedFactId);
+        return {
+          ok: true,
+          state: next,
+          effect: {
+            kind: 'accessLocked',
+            text: entity.lock.lockedText,
+          },
+        };
+      }
+      let next: GameState = {
+        ...state,
+        mapId: entity.target.mapId,
+        tile: entity.target.tile,
+      };
+      if (entity.factId) next = recordFact(next, entity.factId);
       return {
         ok: true,
-        state: {
-          ...state,
-          mapId: entity.target.mapId,
-          tile: entity.target.tile,
-        },
+        state: discoverCurrentSection(next),
         effect: { kind: 'traveled', mapId: entity.target.mapId },
       };
     }
-    if (entity.kind === 'latch' && state.openedShortcutIds.includes(entity.id))
-      return {
-        ok: true,
-        state: { ...state, tile: target },
-        effect: { kind: 'moved' },
-      };
-    if (entity.kind === 'enemy' && state.defeatedEnemyIds.includes(entity.id))
-      return {
-        ok: true,
-        state: { ...state, tile: target },
-        effect: { kind: 'moved' },
-      };
-    if (entity.kind === 'reward' && state.openedRewardIds.includes(entity.id))
-      return {
-        ok: true,
-        state: { ...state, tile: target },
-        effect: { kind: 'moved' },
-      };
-    return interactWithEntity(state, entity, state.tile);
+    const passable =
+      (entity.kind === 'latch' &&
+        state.openedShortcutIds.includes(entity.id)) ||
+      (entity.kind === 'enemy' && state.defeatedEnemyIds.includes(entity.id)) ||
+      (entity.kind === 'reward' && state.openedRewardIds.includes(entity.id));
+    if (!passable) return interactWithEntity(state, entity, state.tile);
   }
 
   return {
     ok: true,
-    state: { ...state, tile: target },
+    state: discoverCurrentSection({ ...state, tile: target }),
     effect: { kind: 'moved' },
   };
 }

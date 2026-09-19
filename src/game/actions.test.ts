@@ -2,28 +2,57 @@ import { describe, expect, it } from 'vitest';
 import { findEntityById } from './content';
 import { interactWithEntity } from './actions';
 import { createInitialGameState } from './state';
+import type { NpcEntity } from './types';
 
 const reward = findEntityById('floor1-power-core');
+const sigil = findEntityById('floor1-depth-sigil');
 const recovery = findEntityById('village-recovery');
 const latch = findEntityById('floor1-rear-latch');
 const enemy = findEntityById('floor1-gatekeeper');
+const overlook = findEntityById('floor1-treasury-overlook');
 if (!reward || reward.kind !== 'reward') throw new Error('reward missing');
+if (!sigil || sigil.kind !== 'reward' || sigil.grant !== 'item')
+  throw new Error('sigil missing');
 if (!recovery || recovery.kind !== 'recovery')
   throw new Error('recovery missing');
 if (!latch || latch.kind !== 'latch') throw new Error('latch missing');
 if (!enemy || enemy.kind !== 'enemy') throw new Error('enemy missing');
+if (!overlook || overlook.kind !== 'clue') throw new Error('clue missing');
 
 describe('actions', () => {
   it('applies reward once', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor1' as const,
-      tile: { x: 9, y: 4 },
+      tile: { x: 12, y: 8 },
     };
     const first = interactWithEntity(state, reward, state.tile);
     expect(first.ok && first.state.player.attack).toBe(12);
     if (!first.ok) return;
     expect(interactWithEntity(first.state, reward, first.state.tile)).toEqual({
+      ok: false,
+      reason: 'reward-already-taken',
+    });
+  });
+
+  it('grants an item reward once and keeps the player in place', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor1' as const,
+      tile: { x: 12, y: 8 },
+    };
+    const first = interactWithEntity(state, sigil, state.tile);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.state.itemIds).toEqual(['tower-depth-sigil']);
+    expect(first.state.openedRewardIds).toEqual(['floor1-depth-sigil']);
+    expect(first.state.tile).toEqual(state.tile);
+    expect(first.effect).toEqual({
+      kind: 'itemReward',
+      itemId: 'tower-depth-sigil',
+      label: sigil.label,
+    });
+    expect(interactWithEntity(first.state, sigil, first.state.tile)).toEqual({
       ok: false,
       reason: 'reward-already-taken',
     });
@@ -46,11 +75,50 @@ describe('actions', () => {
     });
   });
 
+  it('bumping an npc records the intro fact and returns the current line', () => {
+    const artisan: NpcEntity = {
+      kind: 'npc',
+      id: 'village-artisan',
+      tile: { x: 5, y: 2 },
+      name: 'Artisan',
+      introFactId: 'optional-heirloom-lead',
+    };
+    const state = {
+      ...createInitialGameState(),
+      factIds: ['floor1-treasury-sealed'],
+    };
+    const result = interactWithEntity(state, artisan, state.tile);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.factIds).toEqual([
+      'floor1-treasury-sealed',
+      'optional-heirloom-lead',
+    ]);
+    expect(result.effect).toEqual({
+      kind: 'dialogue',
+      speaker: 'Artisan',
+      lineId: 'artisan-find-other-entrance',
+    });
+  });
+
+  it('inspecting the treasury overlook records the sealed fact', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor1' as const,
+      tile: { x: 10, y: 4 },
+    };
+    const result = interactWithEntity(state, overlook, state.tile);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'clue', text: overlook.text });
+    expect(result.state.factIds).toContain('floor1-treasury-sealed');
+  });
+
   it('bumping an opened latch changes nothing', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor1' as const,
-      tile: { x: 6, y: 5 },
+      tile: { x: 12, y: 8 },
       openedShortcutIds: ['floor1-rear-latch'],
     };
     expect(interactWithEntity(state, latch, state.tile)).toEqual({
@@ -64,7 +132,7 @@ describe('actions', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor1' as const,
-      tile: { x: 10, y: 5 },
+      tile: { x: 14, y: 10 },
       defeatedEnemyIds: ['floor1-gatekeeper'],
     };
     expect(interactWithEntity(state, enemy, state.tile)).toEqual({

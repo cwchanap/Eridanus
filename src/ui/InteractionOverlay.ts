@@ -4,6 +4,9 @@ import type {
   GameState,
   PendingInteraction,
 } from '../game/types';
+import { DIALOGUE_LINES } from '../game/content/dialogue';
+import type { JournalView } from '../game/journal';
+import { renderJournal } from './JournalPanel';
 
 export type OverlayView = Readonly<{
   state: GameState;
@@ -11,6 +14,7 @@ export type OverlayView = Readonly<{
   pending: PendingInteraction | null;
   effect: ActionEffect | null;
   blocked: BlockedReason | null;
+  journal: JournalView;
 }>;
 
 const REASON_TEXT: Record<BlockedReason, string> = {
@@ -39,6 +43,12 @@ function effectText(effect: ActionEffect): string {
       return 'The rear latch opens. The shortcut is now usable from both sides.';
     case 'enemyDefeated':
       return `Enemy defeated. HP lost: ${effect.hpLost}.`;
+    case 'dialogue':
+      return effect.speaker + ': ' + DIALOGUE_LINES[effect.lineId];
+    case 'itemReward':
+      return 'Obtained ' + effect.label + '.';
+    case 'accessLocked':
+      return effect.text;
   }
 }
 
@@ -50,7 +60,10 @@ export class InteractionOverlay {
   ) {}
 
   render(view: OverlayView): void {
-    const { state, mapName, pending, effect, blocked } = view;
+    const { state, mapName, pending, effect, blocked, journal } = view;
+    const journalWasOpen =
+      this.root.querySelector<HTMLDetailsElement>('[data-testid="journal"]')
+        ?.open ?? false;
     const blockedHtml = blocked
       ? `<div data-testid="blocked-reason" data-reason="${blocked}">${REASON_TEXT[blocked]}</div>`
       : '';
@@ -72,12 +85,17 @@ export class InteractionOverlay {
     }
     this.root.innerHTML = `
       <section data-testid="hud" aria-label="Player status">
-        <span data-testid="map-name">${mapName}</span>
+        <span data-testid="map-name" data-map-id="${state.mapId}">${mapName}</span>
         <span data-stat="hp">HP ${state.player.hp}/${state.player.maxHp}</span>
         <span data-stat="attack">ATK ${state.player.attack}</span>
         <span data-stat="defense">DEF ${state.player.defense}</span>
         <div data-testid="interaction">${transient}</div>
+        ${renderJournal(journal)}
       </section>`;
+    const journalElement = this.root.querySelector<HTMLDetailsElement>(
+      '[data-testid="journal"]',
+    );
+    if (journalElement) journalElement.open = journalWasOpen;
     this.root
       .querySelector<HTMLButtonElement>('[data-action="fight"]')
       ?.addEventListener('click', () => this.onFight());

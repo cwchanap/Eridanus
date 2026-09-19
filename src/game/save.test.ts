@@ -136,7 +136,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 9, y: 5 },
+        tile: { x: 13, y: 8 },
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -149,24 +149,84 @@ describe('saveGame/loadGame', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor1',
-      tile: { x: 9, y: 5 },
+      tile: { x: 13, y: 8 },
       openedRewardIds: ['floor1-power-core'],
     };
     storage.setItem('eridanus.save', JSON.stringify(state));
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
   });
 
-  it('round-trips every durable field', () => {
+  it('round-trips a coherent late-game journey', () => {
     const state = {
+      ...createInitialGameState(),
       mapId: 'floor1' as const,
-      tile: { x: 10, y: 5 },
-      player: { hp: 20, maxHp: 30, attack: 12, defense: 2 },
-      openedRewardIds: ['floor1-power-core'],
-      defeatedEnemyIds: ['floor1-gatekeeper'],
+      tile: { x: 14, y: 10 },
+      player: { hp: 12, maxHp: 30, attack: 12, defense: 2 },
+      openedRewardIds: ['floor1-depth-sigil', 'floor1-power-core'],
+      defeatedEnemyIds: ['floor1-west-sentry', 'floor1-gatekeeper'],
       openedShortcutIds: ['floor1-rear-latch'],
+      itemIds: ['tower-depth-sigil'],
+      factIds: [
+        'main-missing-person-lead',
+        'village-tower-stairs-used',
+        'floor1-treasury-seen',
+        'floor1-depth-stairs-used',
+        'floor1-rear-stairs-used',
+      ],
+      discoveredSectionIds: [
+        'village-square',
+        'village-north-path',
+        'floor1-entry-court',
+        'floor1-lower-loop',
+        'floor1-upper-gallery',
+        'floor2-connector',
+        'floor1-rear-wing',
+      ],
     };
     saveGame(storage, state);
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('rejects unknown fact ids', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        factIds: ['not-a-fact'],
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('rejects unknown item ids', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        itemIds: ['no-such-item'],
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('rejects unknown section ids', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        discoveredSectionIds: ['no-such-section'],
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
   });
 
   it('rejects a save standing on an undefeated enemy tile', () => {
@@ -175,7 +235,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 11, y: 5 },
+        tile: { x: 15, y: 10 },
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -190,7 +250,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 11, y: 5 },
+        tile: { x: 15, y: 10 },
         defeatedEnemyIds: ['floor1-gatekeeper'],
       }),
     );
@@ -203,7 +263,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 7, y: 5 },
+        tile: { x: 11, y: 8 },
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -218,7 +278,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 7, y: 5 },
+        tile: { x: 11, y: 8 },
         openedShortcutIds: ['floor1-rear-latch'],
       }),
     );
@@ -231,7 +291,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 5, y: 4 },
+        tile: { x: 9, y: 4 },
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -246,6 +306,20 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         tile: { x: 2, y: 2 },
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('rejects a save standing on an npc tile', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        tile: { x: 3, y: 7 },
       }),
     );
     expect(loadGame(storage)).toEqual({

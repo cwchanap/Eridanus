@@ -10,10 +10,36 @@ export type PlayerStats = Readonly<{
   defense: number;
 }>;
 
+export type DialogueLineId =
+  | 'warden-main-lead'
+  | 'warden-sigil-found'
+  | 'artisan-find-workshop'
+  | 'artisan-workshop-seen'
+  | 'artisan-find-other-entrance'
+  | 'scout-find-marks'
+  | 'scout-marks-seen'
+  | 'scribe-find-ledger'
+  | 'scribe-fragment-found';
+
 export type BaseEntity = Readonly<{ id: string; tile: Tile; assetId?: string }>;
-export type ClueEntity = BaseEntity & Readonly<{ kind: 'clue'; text: string }>;
+export type ClueEntity = BaseEntity &
+  Readonly<{
+    kind: 'clue';
+    text: string;
+    factId?: string;
+  }>;
+export type NpcEntity = BaseEntity &
+  Readonly<{
+    kind: 'npc';
+    name: string;
+    introFactId: string;
+  }>;
 export type RewardEntity = BaseEntity &
-  Readonly<{ kind: 'reward'; stat: Stat; amount: number }>;
+  Readonly<{ kind: 'reward' }> &
+  (
+    | Readonly<{ grant: 'stat'; stat: Stat; amount: number }>
+    | Readonly<{ grant: 'item'; itemId: string; label: string }>
+  );
 export type EnemyEntity = BaseEntity &
   Readonly<{
     kind: 'enemy';
@@ -22,20 +48,44 @@ export type EnemyEntity = BaseEntity &
 export type LatchEntity = BaseEntity &
   Readonly<{ kind: 'latch'; rearSide: Direction }>;
 export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
+export type PortalLock = Readonly<{
+  requiresItemId: string;
+  lockedText: string;
+  lockedFactId: string;
+}>;
+
 export type PortalEntity = BaseEntity &
-  Readonly<{ kind: 'portal'; target: Readonly<{ mapId: MapId; tile: Tile }> }>;
+  Readonly<{
+    kind: 'portal';
+    target: Readonly<{ mapId: MapId; tile: Tile }>;
+    factId?: string;
+    lock?: PortalLock;
+  }>;
 export type Entity =
   | ClueEntity
   | RewardEntity
   | EnemyEntity
   | LatchEntity
   | RecoveryEntity
+  | NpcEntity
   | PortalEntity;
+export type MapSection = Readonly<{
+  id: string;
+  name: string;
+  bounds: Readonly<{
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  }>;
+  factIds?: readonly string[];
+}>;
 export type MapDefinition = Readonly<{
   id: MapId;
   name: string;
   layout: readonly string[];
   entities: readonly Entity[];
+  sections: readonly MapSection[];
 }>;
 
 export type GameState = Readonly<{
@@ -45,6 +95,9 @@ export type GameState = Readonly<{
   openedRewardIds: readonly string[];
   defeatedEnemyIds: readonly string[];
   openedShortcutIds: readonly string[];
+  itemIds: readonly string[];
+  factIds: readonly string[];
+  discoveredSectionIds: readonly string[];
 }>;
 
 export type WinnableCombatPreview = {
@@ -77,7 +130,10 @@ export type ActionEffect =
   | { kind: 'healed'; hp: number }
   | { kind: 'latchOpened'; id: string }
   | { kind: 'combatPrompt'; enemyId: string; preview: WinnableCombatPreview }
-  | { kind: 'enemyDefeated'; enemyId: string; hpLost: number };
+  | { kind: 'enemyDefeated'; enemyId: string; hpLost: number }
+  | { kind: 'dialogue'; speaker: string; lineId: DialogueLineId }
+  | { kind: 'itemReward'; itemId: string; label: string }
+  | { kind: 'accessLocked'; text: string };
 
 export type ActionResult =
   | { ok: true; state: GameState; effect: ActionEffect }
