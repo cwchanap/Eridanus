@@ -4,7 +4,7 @@
 
 Planning design for HPA-235. This extends the merged HPA-237 gameplay foundation and HPA-22 image kit. The implementation stays on one HPA-235 PR.
 
-This revision incorporates the first external plan review. The architecture remains fact-first; the corrections tighten type sequencing, first-conversation semantics, journal DOM behavior, visibility semantics, and content validation.
+This revision incorporates two external plan reviews. The architecture remains fact-first; the corrections tighten type sequencing, authored-content contracts, camera-truthful treasury semantics, journal/dialogue copy ownership, and topology validation.
 
 ## Goal
 
@@ -32,9 +32,9 @@ HPA-235 extends those seams rather than adding a quest engine, scripting system,
 
 ## Chosen Approach
 
-Persist only gameplay facts, owned items, and discovered authored sections. Derive dialogue, quest leads, and journal/map notes from those facts.
+Persist only gameplay facts, carried item IDs, and discovered authored sections. Derive dialogue selection, quest leads, known areas, and journal notes from those facts.
 
-This naturally satisfies the early-discovery requirement. The player may inspect the treasury overlook or collect a ledger fragment before meeting the relevant NPC. Talking to that NPC adds only the missing context fact; the spoken line and derived journal immediately interpret the evidence already present.
+This naturally satisfies the early-discovery requirement. The player may see the treasury, inspect its sealed approach, or collect a ledger fragment before meeting the relevant NPC. Talking to that NPC adds only the missing context fact; the selected dialogue and derived journal immediately interpret evidence already present.
 
 Do not persist quest objects or quest status. Do not add a generic event/quest DSL.
 
@@ -61,8 +61,52 @@ Semantics:
 - itemIds stores reusable or carried authored items. HPA-235 uses tower-depth-sigil and ledger-fragment-1.
 - factIds stores observations and learned context, not derived quest status.
 - discoveredSectionIds stores authored map-area IDs.
-- dialogue, current leads, stair notes, and observation labels are derived and are not separately persisted.
+- dialogue selection, journal lead IDs, and note visibility are derived and are not separately persisted.
 - old development saves missing these fields become invalid and use the existing explicit reset path. No migration is added.
+
+## Authored Fact Registry
+
+Add src/game/content/facts.ts as the single registry of valid durable facts:
+
+~~~ts
+export const FACTS = {
+  'main-missing-person-lead': {},
+  'optional-heirloom-lead': {},
+  'optional-route-lead': {},
+  'optional-ledger-lead': {},
+  'village-tower-stairs-used': {
+    note: 'Stairs connect the village and Floor 1.',
+  },
+  'floor1-treasury-seen': {
+    note: 'A sealed treasury is visible from the Entry Court.',
+  },
+  'floor1-treasury-sealed': {
+    note: 'The treasury arch is bricked from this side.',
+  },
+  'floor1-route-mark-seen': {
+    note: 'Route scratches point toward a connection that returns from below.',
+  },
+  'floor1-depth-seal-seen': {
+    note: 'A crest-shaped socket seals the lower stair.',
+  },
+  'floor1-depth-stairs-used': {
+    note: 'The lower stair reaches Floor 2.',
+  },
+  'floor1-rear-stairs-used': {
+    note: 'A second stair returns to the Rear Wing.',
+  },
+} as const satisfies Record<string, { note?: string }>;
+~~~
+
+Responsibilities:
+
+- save validation accepts a fact only when Object.hasOwn(FACTS, id);
+- journal observations are state.factIds whose FACTS row has note copy;
+- validateContent verifies every authored fact carrier references a FACTS key.
+
+This replaces collectKnownFactIds() and the separate hardcoded observation switch.
+
+The registry is content, not a generic event system.
 
 ## Authored Content Extensions
 
@@ -92,11 +136,24 @@ type MapDefinition = Readonly<{
 }>;
 ~~~
 
-A successful move/travel records every section containing the destination tile plus section facts.
+A successful move/travel records every section containing the destination tile plus its section facts.
 
-Sections represent area discovery, not line-of-sight. The broad Upper Gallery does not set floor1-treasury-seen. That fact comes from a dedicated bumpable overlook clue placed where the sealed treasury is visible in the 640x480 runtime camera.
+Every authored walkable floor tile must belong to at least one section. Sections may overlap and may include wall tiles; coverage is checked only for floor cells.
 
-Floor 2 receives one floor2-connector section covering the existing connector map so journal discovery remains consistent without expanding Floor 2 content.
+Floor 2 receives one floor2-connector section covering the existing connector map so journal discovery remains consistent without expanding Floor-2 gameplay.
+
+### Treasury visibility
+
+The 24x16 Floor 1 is only 768x512 pixels while the runtime viewport is 640x480. With camera bounds clamping and no occlusion/line-of-sight system, the chest at (16,7) is on-screen from the Entry Court and effectively from the entire walkable floor.
+
+Therefore:
+
+- floor1-entry-court has factIds: ['floor1-treasury-seen'];
+- the journal may truthfully record the visible treasury immediately on Floor-1 arrival;
+- floor1-treasury-overlook remains an optional clue, but records floor1-treasury-sealed: inspection reveals the approach is bricked/sealed from this side;
+- the artisan's stronger "find another entrance" follow-up keys off floor1-treasury-sealed, not floor1-treasury-seen.
+
+No fog, line-of-sight, camera changes, or occlusion system is introduced.
 
 ### Clues
 
@@ -128,20 +185,22 @@ type NpcEntity = BaseEntity &
 
 All four HPA-235 village NPCs use the existing npc-village-guide image through the safe NPC default in src/phaser/assets.ts. Unique NPC art is not generated in this ticket.
 
-NPC dialogue is an explicit switch on NPC ID. Interaction order is important:
+NPC dialogue copy lives in src/game/content/dialogue.ts with the other authored text. src/game/dialogue.ts contains only selection logic and returns a closed DialogueLineId.
+
+Interaction order is:
 
 ~~~ts
 const next = recordFact(state, entity.introFactId);
-const text = resolveNpcDialogue(entity.id, next);
+const lineId = resolveNpcDialogue(entity.id, next);
 ~~~
 
-The first conversation therefore acknowledges already-known evidence. If the player saw the treasury before meeting the artisan, that first conversation interprets it rather than playing an unaware introduction while the journal already knows better.
+The first conversation therefore acknowledges already-known evidence.
 
-There is no branching dialogue-tree schema.
+validateContent verifies every authored NpcEntity ID is covered by the dialogue content table so a typo fails unit tests rather than throwing in the browser.
 
 ### Rewards
 
-Keep reward as the one collectible/chest semantic, but discriminate the grant explicitly:
+Keep reward as the one collectible/chest semantic, discriminated explicitly:
 
 ~~~ts
 type RewardEntity = BaseEntity &
@@ -166,36 +225,50 @@ No consumable keys are added in HPA-235.
 
 ### Required-item portals
 
-PortalEntity gains an optional reusable access requirement:
+Represent a lock as one optional nested value so incomplete lock states are unrepresentable:
 
 ~~~ts
+type PortalLock = Readonly<{
+  requiresItemId: string;
+  lockedText: string;
+  lockedFactId: string;
+}>;
+
 type PortalEntity = BaseEntity &
   Readonly<{
     kind: 'portal';
     target: Readonly<{ mapId: MapId; tile: Tile }>;
     factId?: string;
-    requiresItemId?: string;
-    lockedText?: string;
-    lockedFactId?: string;
+    lock?: PortalLock;
   }>;
 ~~~
 
-The Floor 1 front stair into Floor 2 requires tower-depth-sigil. Missing the item does not travel; it records floor1-depth-seal-seen and returns an accessLocked effect. The item is never consumed.
+The Floor-1 front stair into Floor 2 uses:
 
-Content validation makes the lock contract strict: whenever requiresItemId is present, lockedText and lockedFactId must both be present/non-empty and requiresItemId must resolve to an authored item reward. Movement therefore has no silent fallback copy.
+~~~ts
+lock: {
+  requiresItemId: 'tower-depth-sigil',
+  lockedText: 'A crest-shaped socket seals the lower stair.',
+  lockedFactId: 'floor1-depth-seal-seen',
+}
+~~~
 
-Successful portal travel may record factId so the journal can remember used stair connections.
+Missing the item does not travel; it records the lock fact and returns accessLocked. The item is never consumed.
+
+accessLocked is intentionally ok: true rather than a BlockedReason because the interaction commits a durable observation fact; the failure arm of ActionResult cannot carry a changed GameState.
+
+validateContent only needs the genuine cross-content lock rule: lock.requiresItemId must resolve to an authored item reward. The nested type owns lock-field completeness.
 
 ## Progress Helpers
 
 Add a tiny pure progress module:
 
-- recordFact(state, id): add once and return the same state object when already known;
+- recordFact(state, id): add once and preserve object identity on a repeat;
 - recordFacts(state, ids): repeated recordFact;
 - addItem(state, id): add once;
 - discoverCurrentSection(state): inspect MAPS[state.mapId], add matching section IDs, and record section facts.
 
-Movement invokes section discovery only after a tile/map change. Bump interactions explicitly record only their own facts.
+Movement calls discoverCurrentSection directly after a tile/map change. Bump interactions explicitly record only their own facts.
 
 There is no trigger runner or event bus.
 
@@ -203,26 +276,45 @@ There is no trigger runner or event bus.
 
 ### Dialogue
 
-src/game/dialogue.ts exports resolveNpcDialogue(npcId, state).
+src/game/content/dialogue.ts owns the authored dialogue lines and NPC coverage table.
 
-The four NPC roles are:
+src/game/dialogue.ts owns only the state-to-line choice:
 
-- village-warden: main missing-person / silent-tower lead;
-- village-artisan: spatial/heirloom thread;
-- village-scout: route-discovery thread;
-- village-scribe: evidence/ledger thread.
+~~~ts
+type DialogueLineId =
+  | 'warden-main-lead'
+  | 'warden-sigil-found'
+  | 'artisan-find-workshop'
+  | 'artisan-workshop-seen'
+  | 'artisan-find-other-entrance'
+  | 'scout-find-marks'
+  | 'scout-marks-seen'
+  | 'scribe-find-ledger'
+  | 'scribe-fragment-found';
+~~~
 
-Follow-up dialogue is derived only from current facts/items.
+The exact line strings live in content/dialogue.ts. Tests assert selected line IDs, not English substrings.
 
 ### Journal
 
-src/game/journal.ts exports:
+src/game/journal.ts returns structured IDs, not finished prose:
 
 ~~~ts
+type LeadId =
+  | 'seek-warden'
+  | 'find-sigil'
+  | 'descend'
+  | 'heirloom-find-workshop'
+  | 'heirloom-inspect-treasury'
+  | 'heirloom-find-other-entrance'
+  | 'route-find-marks'
+  | 'route-verify-return'
+  | 'ledger-find-fragment'
+  | 'ledger-find-later-pages';
+
 type JournalEntry = Readonly<{
-  id: string;
-  title: string;
-  lead: string;
+  id: 'main' | 'heirloom' | 'route' | 'ledger';
+  lead: LeadId;
 }>;
 
 type JournalSection = Readonly<{
@@ -230,31 +322,26 @@ type JournalSection = Readonly<{
   name: string;
 }>;
 
-type JournalObservation = Readonly<{
-  id: string;
-  text: string;
-}>;
-
 type JournalView = Readonly<{
   main: JournalEntry;
   optional: readonly JournalEntry[];
   sections: readonly JournalSection[];
-  observations: readonly JournalObservation[];
+  observationFactIds: readonly string[];
 }>;
 ~~~
 
-There is no status field. HPA-235 does not complete the optional threads, and the main lead continues into Floor 2.
-
 Rules:
 
-- the main entry always exists; before the warden conversation it points the player to the warden;
+- the main entry always exists;
 - optional entries appear only after their NPC intro fact is known;
-- early discoveries/items immediately influence the first visible lead;
+- early discoveries/items immediately influence the selected lead ID;
 - sections are derived from discoveredSectionIds;
-- observations remember used stairs, inspected route marks, the locked depth stair, and the inspected treasury overlook;
+- observationFactIds includes only known FACTS rows with note copy;
 - no entry contains tile coordinates or exact route sequences.
 
-The IDs are also presentation test seams, not durable UI state.
+JournalPanel owns entry titles and lead copy through Record tables keyed by entry/lead IDs. It reads FACTS[id].note for observation copy.
+
+There is no status field.
 
 ## Village Content
 
@@ -269,31 +356,35 @@ Player starts at (2,8). The hub contains:
 - village-scribe;
 - stairs to Floor 1.
 
-All NPCs use the NPC kind default art. Interaction text identifies the speaker.
+All NPCs use the NPC kind default art.
 
 ## Floor 1 Content
 
-Floor 1 becomes a 24x16 authored maze with four broad remembered sections:
+Floor 1 becomes a 24x16 authored maze with four remembered sections:
 
 - Entry Court;
 - Lower Loop;
 - Upper Gallery;
 - Rear Wing.
 
+The section rectangles cover every walkable cell. The Rear Wing begins at x=11 so the latch tile at (11,8) is covered.
+
 The layout has two approach choices out of the entry area, fixed enemies, a side defense cache, a route-mark clue, a ledger fragment, and the reusable Tower Sigil.
 
 The front Floor-2 stair sits in the Upper Gallery and is sealed until the sigil is collected.
 
-The sealed future treasury is authored in the Rear Wing side of the map with no Floor-1 entrance. A separate floor1-treasury-overlook clue at (10,3) is adjacent to a reachable Upper Gallery tile from which the chest is on-camera. Bumping it records floor1-treasury-seen. The broad gallery section itself does not claim visibility.
+The future treasury at (16,7) is visibly present from arrival but sits in a sealed pocket with no Floor-1 entrance. HPA-146 later adds the secondary Floor-2 connection that reaches it from behind.
 
-The merged HPA-237 rear route remains intact as a regression loop:
+floor1-treasury-overlook remains optional authored evidence about the sealed approach; the required progression path does not depend on inspecting it.
+
+The merged HPA-237 rear route remains intact:
 
 - Floor 2 rear stair returns to the Rear Wing;
 - floor1-power-core remains a permanent attack reward;
 - floor1-gatekeeper remains nearby;
 - floor1-rear-latch still opens only from the east/rear side and then becomes a two-way shortcut.
 
-Required progression does not depend on the future treasury, ledger thread, route thread, heirloom thread, optional defense cache, or HPA-237 power core.
+Required progression does not depend on the future treasury, optional evidence threads, defense cache, or HPA-237 power core.
 
 ## Floor 2 Content
 
@@ -301,9 +392,9 @@ Do not expand the connector.
 
 Only:
 
-- retain the current Floor-2 geometry;
+- retain current Floor-2 geometry;
 - update reciprocal Floor-1 portal target coordinates required by the new Floor-1 layout;
-- add one floor2-connector section covering the existing walkable connector.
+- add one floor2-connector section covering every existing walkable connector tile.
 
 No mechanisms, quests, enemies, rewards, or story beats are added here.
 
@@ -313,10 +404,10 @@ HPA-235 generates no images.
 
 Reuse HPA-22 assets:
 
-- npc-village-guide as the safe default for NpcEntity in baseEntityAsset;
+- npc-village-guide as the safe default for NpcEntity;
 - enemy-ruin-guard for Floor-1 enemies;
 - chest-relic-closed/open for stat and item rewards;
-- clue-runes for environmental evidence/overlook;
+- clue-runes for environmental evidence;
 - stairs-up/down, recovery-waystone, and shortcut-gate variants.
 
 If a distinct new image later proves necessary, create a separate art ticket/PR.
@@ -325,38 +416,29 @@ If a distinct new image later proves necessary, create a separate art ticket/PR.
 
 Keep Phaser unchanged in responsibility.
 
-InteractionOverlay gains effect text for:
+InteractionOverlay gains effect rendering for:
 
-- dialogue;
+- dialogue line IDs resolved through authored dialogue content;
 - item reward;
 - locked access.
 
-Add a small JournalPanel string renderer. The journal uses native details/summary and no new InputCommand.
+Add JournalPanel as a pure string renderer. It maps closed lead IDs to display copy and renders FACTS note copy.
 
-Because InteractionOverlay replaces its entire root with innerHTML on every render, it must preserve presentation-only open state explicitly:
+The journal uses native details/summary and no new InputCommand.
 
-~~~ts
-const wasOpen =
-  this.root.querySelector<HTMLDetailsElement>('[data-testid="journal"]')
-    ?.open ?? false;
+InteractionOverlay continues its existing full-root innerHTML render. Before replacement it snapshots the single presentation state HPA-235 introduces—journal.open—and restores it afterward. This is intentionally narrower than restructuring the overlay into cached shell nodes.
 
-// replace root.innerHTML
-
-const journal =
-  this.root.querySelector<HTMLDetailsElement>('[data-testid="journal"]');
-if (journal) journal.open = wasOpen;
-~~~
-
-Do not persist this state and do not add a second DOM root.
+A persistent-shell refactor is deferred because the current invalid-save path replaces the root and then reuses the same InteractionOverlay instance when Reset save starts the runtime; cached child references would require an additional shell-rebuild lifecycle. HPA-235 needs only one native open bit, which is covered by Playwright.
 
 Stable DOM seams:
 
-- action feedback keeps data-effect="dialogue", data-effect="itemReward", and data-effect="accessLocked";
-- journal entries use data-lead="<entry id>";
-- discovered areas use data-section="<section id>";
-- notes use data-note="<observation id>".
+- action feedback keeps data-effect for dialogue/itemReward/accessLocked;
+- map name adds data-map-id;
+- journal entries use data-lead;
+- discovered areas use data-section;
+- notes use data-note.
 
-Authored prose remains display content, not the primary E2E contract.
+Authored prose is display content, not the test contract.
 
 ## Persistence and Validation
 
@@ -367,70 +449,70 @@ Save content validation requires:
 - every opened reward/enemy/shortcut ID resolves to the correct kind;
 - every item ID resolves to exactly one authored item reward;
 - every item reward in itemIds is also opened, and every opened item reward has its itemId carried;
-- every saved fact ID is authored by an NPC intro, clue, portal/lock, or section;
+- every saved fact ID is a FACTS key;
 - every discoveredSectionId resolves to an authored section;
 - dynamic walkability treats NPCs as blocking and preserves current reward/enemy/latch semantics.
 
-Content validation also requires:
+Content validation requires:
 
 - globally unique section IDs;
 - globally unique itemIds;
 - section bounds stay within their map;
-- present fact IDs are non-empty;
-- requiresItemId implies non-empty lockedText + lockedFactId and references an authored item reward;
+- every walkable floor tile belongs to at least one section;
+- every authored fact carrier references a FACTS key;
+- every NpcEntity ID is covered by the dialogue content table;
+- every portal lock item ID resolves to an authored item reward;
 - portal reciprocity remains valid;
 - the initial tile lies inside village-square.
 
-No version field, migration, compatibility adapter, or defaulting of old save shapes is added.
+No save version field, migration, compatibility adapter, or defaulting of old save shapes is added.
+
+## Topology Tests
+
+Task 3 adds geometry-level flood-fill tests as the immediate gate for the risky map rewrite.
+
+Keep them simpler than a second game simulator:
+
+- from the final village start tile, every village entity tile is floor-connected;
+- on Floor 2, the front and rear portal tiles are connected by walkable geometry;
+- on Floor 1, take the union of flood fills from the front entrance portal tile and rear Floor-2 portal tile; every Floor-1 entity tile except floor1-future-treasury is in that union;
+- floor1-future-treasury is outside that union.
+
+These tests intentionally ignore combat/resource costs and dynamic interaction state. Existing unit rules cover those mechanics; Playwright covers the real progression sequence.
 
 ## Testing Strategy
 
 Unit tests cover:
 
 - idempotent fact/item recording and section discovery;
-- dialogue progression from facts/items;
-- first conversation acknowledging treasury/ledger evidence discovered earlier;
-- journal derivation without a status enum or exact-route coordinates;
+- dialogue line selection, including first conversation after early evidence;
+- journal lead IDs rather than prose;
 - discriminated stat/item reward collection;
-- missing-sigil portal inspection vs successful non-consuming travel;
+- missing-sigil portal observation vs successful non-consuming travel;
 - save round-trip and invalid unknown fact/item/section IDs;
 - NPC blocking and content validation;
-- unique item IDs and strict portal-lock fields;
+- unique item IDs, fact registry references, section coverage, NPC dialogue coverage, portal-lock item references;
 - complete authored-map validity and reciprocal portals;
-- initial tile inside village-square;
-- renderJournal emitting stable data-testid/data-lead/data-section/data-note seams.
+- geometry reachability/sealed-treasury topology.
 
-Playwright covers one real village -> Floor 1 -> sigil -> Floor 2 -> rear Floor 1 journey. It verifies:
-
-- stable data-effect/data-lead/data-section/data-note attributes rather than authored English copy;
-- journal open state survives movement/re-render;
-- reload preserves discovery/journal facts;
-- the HPA-237 rear reward/combat/latch loop remains usable.
+Playwright covers one real village -> Floor 1 -> sigil -> Floor 2 -> rear Floor 1 journey. It verifies stable data attributes, journal open-state preservation, reload persistence, and the HPA-237 rear reward/combat/latch loop.
 
 ## Implementation Sequencing Constraint
 
 Adding NpcEntity, required GameState fields, sections, and the discriminated reward union touches existing exhaustive switches and literal fixtures immediately.
 
-The implementation plan therefore makes its first task a compile-safe contract cut. That task updates:
+The implementation plan therefore makes Task 1 a compile-safe contract cut. It updates current map sections, switches, save shape/blocking, assets, and direct GameState literals before claiming typecheck.
 
-- all three current maps with baseline sections;
-- existing stat rewards with grant: 'stat';
-- actions.ts reward narrowing and the new NPC/clue branches;
-- save.ts NPC blocking and new state-shape/content checks;
-- assets.ts NPC default art;
-- direct GameState literals in movement/session/save/state tests;
-- the asset test RewardEntity fixture.
-
-Typecheck is not advertised until all of those consumers compile.
+The final map rewrite occurs before the final Playwright route update, so intermediate commits after that rewrite may fail the existing E2E suite. This is explicit and temporary inside the draft PR; the final branch must pass all CI-equivalent gates before review.
 
 ## Risks
 
-1. Closed-union sequencing: adding types without updating exhaustive consumers produces a false-green plan. Task 1 owns the whole compile cut.
-2. Journal open state: root innerHTML replacement destroys native details state unless render snapshots/restores .open.
-3. Treasury visibility: broad area discovery must not claim the player saw an off-camera chest. Only the overlook clue records the fact.
-4. E2E route fragility: the map rewrite requires re-walking counted key presses; never add teleport/test APIs to compensate.
-5. Content/save drift: lock fields, item IDs, facts, sections, and current authored IDs must remain validated together.
-6. Art scope: all new content must resolve through HPA-22 assets; no image work belongs in HPA-235.
+1. Closed-union sequencing: Task 1 owns the complete compile cut.
+2. E2E route fragility: map/entity movement changes counted routes; re-walk rather than adding test APIs.
+3. Camera semantics: treasury visibility follows the actual 640x480 clamped camera, not imagined occlusion.
+4. Section coverage: every walkable tile must belong to a section so discovery never silently misses a traversed tile.
+5. Content/save drift: FACTS, item rewards, dialogue coverage, sections, and current authored IDs must validate together.
+6. Art scope: all new content must resolve through HPA-22 assets.
 
 ## Non-Goals
 
@@ -439,22 +521,23 @@ Do not add:
 - generic quest objects, registry, DSL, event scripting, or branching narrative engine;
 - graphical minimap, fog-of-war grid, line-of-sight system, route arrows, or coordinate-based journal directions;
 - consumable-key system or inventory management UI;
+- persistent-shell UI framework/refactor beyond HPA-235's journal-open preservation;
 - XP, equipment, skills, crafting, random loot, random encounters, or roaming enemies;
 - new art generation or image-processing tooling;
-- new Floor-2 content beyond reciprocal coordinates + one discovery section;
+- new Floor-2 gameplay beyond reciprocal coordinates + one discovery section;
 - save versioning/migrations;
-- UI framework or backend.
+- backend.
 
 ## Self-Review
 
-- The fact-first architecture remains unchanged.
-- Early evidence is acknowledged on the first NPC bump because introFactId is recorded before dialogue resolution.
-- ClueEntity.factId is explicit.
-- RewardEntity uses a closed grant discriminant.
-- JournalEntry.status is removed.
-- Treasury visibility is tied to an inspectable overlook, not the whole gallery.
-- Journal native open state is preserved across innerHTML replacement without persistent UI state.
-- Content validation owns lock completeness and unique item IDs.
-- Floor 2 has one discovery section but no expanded gameplay.
-- Implementation sequencing keeps typecheck honest.
-- E2E contracts use stable data attributes rather than authored prose.
+- Fact-first architecture remains unchanged.
+- Treasury-seen now reflects actual camera behavior: Entry Court arrival records it.
+- Overlook clue records a distinct sealed-approach fact.
+- Portal lock is one nested optional object.
+- FACTS centralizes durable fact validity and journal-note copy.
+- Dialogue authored text moved into content; game logic selects line IDs.
+- Journal logic returns closed lead IDs; presentation owns lead copy.
+- Section coverage/NPC dialogue/fact-registry validations fail loudly at build time.
+- Topology flood-fill protects the sealed treasury and connector geometry without duplicating gameplay rules.
+- Snapshot/restore remains the smaller journal-open fix for the current overlay lifecycle.
+- No new image generation, save migrations, or Floor-2 feature expansion.
