@@ -93,7 +93,7 @@ Modify:
 - Produces resolveNpcDialogue(npcId, state): DialogueLineId.
 - Produces findSectionById and findItemRewardByItemId.
 
-- [ ] **Step 1: Write the failing state/progress tests**
+- [x] **Step 1: Write the failing state/progress tests**
 
 Add:
 
@@ -126,7 +126,7 @@ bunx vitest run src/game/state.test.ts src/game/progress.test.ts
 
 Expected: FAIL because the new fields/helpers do not exist.
 
-- [ ] **Step 2: Add the fact registry**
+- [x] **Step 2: Add the fact registry**
 
 src/game/content/facts.ts:
 
@@ -166,7 +166,7 @@ export function hasFact(id: string): boolean {
 
 Do not add a generic fact handler/registry class.
 
-- [ ] **Step 3: Add authored dialogue content**
+- [x] **Step 3: Add authored dialogue content**
 
 Add DialogueLineId to src/game/types.ts:
 
@@ -223,7 +223,7 @@ export function hasNpcDialogue(id: string): boolean {
 
 The initial warden interaction records main-missing-person-lead first, so the selected first line is warden-main-lead; no separate unaware intro line is needed.
 
-- [ ] **Step 4: Extend the closed gameplay types**
+- [x] **Step 4: Extend the closed gameplay types**
 
 In src/game/types.ts:
 
@@ -292,7 +292,7 @@ Add ActionEffect variants:
 | { kind: 'accessLocked'; text: string }
 ```
 
-- [ ] **Step 5: Make current authored maps satisfy the required contracts**
+- [x] **Step 5: Make current authored maps satisfy the required contracts**
 
 Do not change current geometry/portal coordinates yet.
 
@@ -329,7 +329,7 @@ sections: [
 
 Add grant: 'stat' to current floor1-power-core.
 
-- [ ] **Step 6: Initialize the new durable fields without moving the current start tile**
+- [x] **Step 6: Initialize the new durable fields without moving the current start tile**
 
 Keep current tile { x: 2, y: 5 } until Task 3 changes village geometry.
 
@@ -343,7 +343,7 @@ discoveredSectionIds: ['village-square'],
 
 Update state.test.ts.
 
-- [ ] **Step 7: Implement progress helpers**
+- [x] **Step 7: Implement progress helpers**
 
 src/game/progress.ts:
 
@@ -391,7 +391,7 @@ export function discoverCurrentSection(state: GameState): GameState {
 }
 ```
 
-- [ ] **Step 8: Implement dialogue selection as IDs only**
+- [x] **Step 8: Implement dialogue selection as IDs only**
 
 src/game/dialogue.ts:
 
@@ -452,7 +452,7 @@ expect(
 
 Do not assert dialogue prose in game-domain tests.
 
-- [ ] **Step 9: Extend actions exhaustively**
+- [x] **Step 9: Extend actions exhaustively**
 
 Clue records factId when present.
 
@@ -516,7 +516,7 @@ case 'reward': {
 
 Add a synthetic artisan NPC action test proving one bump appends optional-heirloom-lead and returns lineId artisan-find-other-entrance when floor1-treasury-sealed was already known.
 
-- [ ] **Step 10: Add content helpers and validation**
+- [x] **Step 10: Add content helpers and validation**
 
 Add:
 
@@ -557,7 +557,7 @@ Extend validateContent with:
 
 No validator rules for missing lock text/fact fields: PortalLock makes those states unrepresentable.
 
-- [ ] **Step 11: Extend save validation now**
+- [x] **Step 11: Extend save validation now**
 
 hasValidShape requires itemIds, factIds, discoveredSectionIds string arrays.
 
@@ -586,7 +586,7 @@ for (const openedId of state.openedRewardIds) {
 }
 ```
 
-- [ ] **Step 12: Add the NPC asset default and update fixtures**
+- [x] **Step 12: Add the NPC asset default and update fixtures**
 
 In src/phaser/assets.ts, after explicit asset handling:
 
@@ -598,7 +598,7 @@ Update the RewardEntity fixture to grant: 'stat' and add a synthetic NPC resolve
 
 Update every direct GameState literal, including movement.test.ts base, session.test.ts pending.game, save.test.ts durable literal, and state.test.ts exact expectation, with the three new arrays.
 
-- [ ] **Step 13: Run the compile-safe Task 1 gate**
+- [x] **Step 13: Run the compile-safe Task 1 gate**
 
 ```bash
 bunx vitest run   src/game/state.test.ts   src/game/progress.test.ts   src/game/dialogue.test.ts   src/game/actions.test.ts   src/game/content.test.ts   src/game/save.test.ts   src/phaser/assets.test.ts
@@ -610,7 +610,7 @@ bun run format:check
 
 Expected: PASS.
 
-- [ ] **Step 14: Commit**
+- [x] **Step 14: Commit**
 
 ```bash
 git add src/game src/phaser/assets.ts src/phaser/assets.test.ts
@@ -634,7 +634,7 @@ git commit -m "feat: add fact-driven progress contracts"
 - JournalView carries lead IDs and observation fact IDs, not finished sentences.
 - JournalPanel owns title/lead display copy and uses FACTS note copy.
 
-- [ ] **Step 1: Add journal selection tests**
+- [x] **Step 1: Add journal selection tests**
 
 ```ts
 it('keeps optional quests hidden until context is learned', () => {
@@ -673,7 +673,7 @@ it('selects only registered note facts as observations', () => {
 
 Do not use regex/prose assertions to prove absence of coordinates.
 
-- [ ] **Step 2: Implement closed lead IDs**
+- [x] **Step 2: Implement closed lead IDs**
 
 src/game/journal.ts:
 
@@ -725,7 +725,7 @@ state.factIds.filter(
 
 Use a small helper if needed to avoid repeating the cast; do not add a generic registry abstraction.
 
-- [ ] **Step 3: Implement JournalPanel copy tables**
+- [x] **Step 3: Implement JournalPanel copy tables**
 
 src/ui/JournalPanel.ts:
 
@@ -766,7 +766,7 @@ For each observation fact ID, render FACTS[id].note.
 
 All displayed text is authored source code/content; do not add a separate escaping utility or adversarial injection test in this ticket.
 
-- [ ] **Step 4: Test markup contracts, not prose**
+- [x] **Step 4: Test markup contracts, not prose**
 
 JournalPanel.test.ts uses a literal JournalView and asserts returned markup contains:
 
@@ -779,7 +779,7 @@ data-note="floor1-treasury-sealed"
 
 Do not assert exact English copy.
 
-- [ ] **Step 5: Run Task 2 gate**
+- [x] **Step 5: Run Task 2 gate**
 
 ```bash
 bunx vitest run src/game/journal.test.ts src/ui/JournalPanel.test.ts
@@ -789,7 +789,7 @@ bun run typecheck
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/game/journal.ts src/game/journal.test.ts src/ui/JournalPanel.ts src/ui/JournalPanel.test.ts
@@ -821,7 +821,7 @@ git commit -m "feat: derive exploration journal"
 - Produces movement-driven section discovery and PortalEntity.lock behavior.
 - Adds geometry-level flood-fill tests for the rewritten maps.
 
-- [ ] **Step 1: Replace the village layout and start tile atomically**
+- [x] **Step 1: Replace the village layout and start tile atomically**
 
 Village:
 
@@ -867,7 +867,7 @@ village-to-floor1: portal (11,2) -> floor1 (2,14)
 
 Update createInitialGameState tile to { x: 2, y: 8 } in the same change.
 
-- [ ] **Step 2: Replace Floor-1 geometry and section coverage**
+- [x] **Step 2: Replace Floor-1 geometry and section coverage**
 
 Use:
 
@@ -917,7 +917,7 @@ sections: [
 
 Rear Wing starts at x=11 so the latch floor tile is covered.
 
-- [ ] **Step 3: Author final Floor-1 entities**
+- [x] **Step 3: Author final Floor-1 entities**
 
 ```text
 floor1-to-village: portal (2,14) -> village (11,2), stairs-up
@@ -958,7 +958,7 @@ floor1-future-treasury: reward (16,7), grant stat, defense +2
 
 The future treasury remains sealed with no Floor-1 entrance.
 
-- [ ] **Step 4: Keep Floor 2 to reciprocal coordinates + one section**
+- [x] **Step 4: Keep Floor 2 to reciprocal coordinates + one section**
 
 Keep existing layout.
 
@@ -981,7 +981,7 @@ floor2-front-to-floor1 -> floor1 (9,2)
 floor2-rear-to-floor1 -> floor1 (21,3)
 ```
 
-- [ ] **Step 5: Wire movement directly through discoverCurrentSection**
+- [x] **Step 5: Wire movement directly through discoverCurrentSection**
 
 Import discoverCurrentSection and recordFact.
 
@@ -1013,7 +1013,7 @@ if (entity.lock && !state.itemIds.includes(entity.lock.requiresItemId)) {
 
 Successful portal travel records entity.factId when present, then discovers the destination section.
 
-- [ ] **Step 6: Add focused interaction/movement tests**
+- [x] **Step 6: Add focused interaction/movement tests**
 
 Test:
 
@@ -1023,7 +1023,7 @@ Test:
 - inspecting floor1-treasury-overlook records floor1-treasury-sealed;
 - first artisan conversation with floor1-treasury-sealed already known returns lineId artisan-find-other-entrance.
 
-- [ ] **Step 7: Add authored-content validation tests**
+- [x] **Step 7: Add authored-content validation tests**
 
 Assert validateContent() === [] and:
 
@@ -1045,7 +1045,7 @@ Failure tests:
 
 Do not add impossible lock-shape tests; PortalLock already enforces those fields.
 
-- [ ] **Step 8: Add lean geometry flood-fill tests**
+- [x] **Step 8: Add lean geometry flood-fill tests**
 
 In content.test.ts add a local helper that flood-fills '.' cells from one or more start tiles, ignoring entity blocking/combat because this is geometry validation only.
 
@@ -1088,7 +1088,7 @@ for (const entity of floor1.entities) {
 
 This proves the sealed-pocket promise and general map connectivity without recreating gameplay state transitions.
 
-- [ ] **Step 9: Update save round-trip with a coherent final journey**
+- [x] **Step 9: Update save round-trip with a coherent final journey**
 
 Use:
 
@@ -1123,7 +1123,7 @@ const state = {
 
 Also add invalid unknown fact/item/section tests.
 
-- [ ] **Step 10: Verify HPA-22 asset reuse**
+- [x] **Step 10: Verify HPA-22 asset reuse**
 
 ```bash
 bunx vitest run src/phaser/assets.test.ts
@@ -1131,7 +1131,7 @@ bunx vitest run src/phaser/assets.test.ts
 
 Expected: PASS with no ASSET_PATHS additions and no PNG changes.
 
-- [ ] **Step 11: Run Task 3 domain/content gate**
+- [x] **Step 11: Run Task 3 domain/content gate**
 
 ```bash
 bunx vitest run   src/game/state.test.ts   src/game/content.test.ts   src/game/actions.test.ts   src/game/movement.test.ts   src/game/save.test.ts   src/game/journal.test.ts   src/phaser/assets.test.ts
@@ -1145,7 +1145,7 @@ Expected: PASS.
 
 The existing Playwright route is now stale and may fail until Task 5; do not weaken product behavior or add test APIs to keep it temporarily green.
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add src/game src/phaser/assets.test.ts
@@ -1170,7 +1170,7 @@ git commit -m "feat: complete village and floor one progression"
 - Journal details open state remains DOM-only and is snapshotted/restored across root replacement.
 - HUD adds data-map-id.
 
-- [ ] **Step 1: Extend effect rendering**
+- [x] **Step 1: Extend effect rendering**
 
 Import DIALOGUE_LINES.
 
@@ -1187,7 +1187,7 @@ case 'accessLocked':
 
 Keep data-effect equal to effect.kind.
 
-- [ ] **Step 2: Add journal view + stable map ID**
+- [x] **Step 2: Add journal view + stable map ID**
 
 OverlayView adds journal: JournalView.
 
@@ -1199,7 +1199,7 @@ Map span:
 
 Append renderJournal(journal) to the normal overlay template.
 
-- [ ] **Step 3: Preserve the single new native UI state**
+- [x] **Step 3: Preserve the single new native UI state**
 
 Before assigning root.innerHTML:
 
@@ -1222,7 +1222,7 @@ Then rebind current Fight/Cancel listeners as today.
 
 Do not rebuild InteractionOverlay as a persistent cached shell in this ticket. renderInvalidSave currently replaces the root and Reset save later reuses the same overlay instance; a cached-shell design would require an additional rebuild lifecycle that HPA-235 does not otherwise need.
 
-- [ ] **Step 4: Pass buildJournalView(session.game) from main.ts**
+- [x] **Step 4: Pass buildJournalView(session.game) from main.ts**
 
 ```ts
 overlay.render({
@@ -1235,11 +1235,11 @@ overlay.render({
 });
 ```
 
-- [ ] **Step 5: Add only compact journal CSS**
+- [x] **Step 5: Add only compact journal CSS**
 
 Keep the journal max-width aligned with the 640px game and use small h3/ul spacing. No modal, tabs, second root, router, or component framework.
 
-- [ ] **Step 6: Run Task 4 gate**
+- [x] **Step 6: Run Task 4 gate**
 
 ```bash
 bunx vitest run src/ui/JournalPanel.test.ts
@@ -1252,7 +1252,7 @@ bun run build
 
 Expected: PASS. Playwright still uses the old route until Task 5.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/ui src/main.ts src/styles.css
@@ -1274,7 +1274,7 @@ git commit -m "feat: show exploration journal"
 - Uses data-effect, data-map-id, data-lead, data-section, data-note, existing data-stat/testids.
 - No test-only game API.
 
-- [ ] **Step 1: Update preload-input smoke coverage**
+- [x] **Step 1: Update preload-input smoke coverage**
 
 Fresh village starts at (2,8):
 
@@ -1285,11 +1285,11 @@ Up -> bump village-warden
 
 Assert data-effect="dialogue"; do not assert the line text.
 
-- [ ] **Step 2: Prove journal open survives overlay rerenders**
+- [x] **Step 2: Prove journal open survives overlay rerenders**
 
 Open the journal via summary, press Right, assert the details still has open, then press Up to talk to the warden.
 
-- [ ] **Step 3: Travel to Floor 1 and assert camera-truthful treasury knowledge**
+- [x] **Step 3: Travel to Floor 1 and assert camera-truthful treasury knowledge**
 
 After the warden bump, player remains at (3,8):
 
@@ -1315,7 +1315,7 @@ await expect(page.locator('[data-note="floor1-treasury-seen"]')).toHaveCount(1);
 
 The optional floor1-treasury-overlook clue is not required in this main E2E path; unit/content tests own floor1-treasury-sealed.
 
-- [ ] **Step 4: Fight the west sentry and collect the Tower Sigil**
+- [x] **Step 4: Fight the west sentry and collect the Tower Sigil**
 
 From Floor 1 (2,14):
 
@@ -1333,7 +1333,7 @@ Down -> collect floor1-depth-sigil
 
 Assert HP loss 8, HP 22/30, and data-effect="itemReward".
 
-- [ ] **Step 5: Reach the front Floor-2 stair**
+- [x] **Step 5: Reach the front Floor-2 stair**
 
 After collecting the sigil, player remains at (9,9).
 
@@ -1361,7 +1361,7 @@ Assert data-map-id="floor2" and data-section="floor2-connector".
 
 Reload and assert floor1-entry-court/floor1-treasury-seen/floor2-connector discovery survives.
 
-- [ ] **Step 6: Traverse Floor 2 to rear Floor 1**
+- [x] **Step 6: Traverse Floor 2 to rear Floor 1**
 
 From (1,8):
 
@@ -1372,7 +1372,7 @@ Up x7 -> rear portal -> Floor 1 (21,3)
 
 Assert data-map-id="floor1".
 
-- [ ] **Step 7: Prove the HPA-237 power-core/combat/latch loop**
+- [x] **Step 7: Prove the HPA-237 power-core/combat/latch loop**
 
 From rear arrival:
 
@@ -1417,7 +1417,7 @@ Left x2 -> cross to front
 
 Reload, traverse the open latch in both directions, and assert no blocked-reason.
 
-- [ ] **Step 8: Keep early-discovery ordering and topology in unit tests**
+- [x] **Step 8: Keep early-discovery ordering and topology in unit tests**
 
 Do not add a second long E2E for artisan/scribe ordering or the sealed treasury pocket.
 
@@ -1428,7 +1428,7 @@ Unit/content tests already prove:
 - the treasury is geometry-sealed;
 - all other authored entity tiles are floor-connected from legitimate front/rear entries.
 
-- [ ] **Step 9: Run Playwright**
+- [x] **Step 9: Run Playwright**
 
 ```bash
 bun run test:e2e -- tests/e2e/cross-floor.spec.ts
@@ -1438,7 +1438,7 @@ Expected: PASS.
 
 If a count fails, re-walk the authored maze and fix the test or real map defect. Do not add teleport APIs or hidden game-state hooks.
 
-- [ ] **Step 10: Run every CI-equivalent gate**
+- [x] **Step 10: Run every CI-equivalent gate**
 
 ```bash
 bun install --frozen-lockfile
@@ -1453,7 +1453,7 @@ bun run test:e2e
 
 Expected: PASS.
 
-- [ ] **Step 11: Inspect scope**
+- [x] **Step 11: Inspect scope**
 
 ```bash
 git diff main...HEAD --stat
@@ -1469,7 +1469,7 @@ Confirm:
 - no UI framework/persistent-shell refactor;
 - no consumable-key system.
 
-- [ ] **Step 12: Commit browser coverage**
+- [x] **Step 12: Commit browser coverage**
 
 ```bash
 git add tests/e2e/cross-floor.spec.ts

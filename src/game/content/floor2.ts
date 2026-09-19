@@ -29,6 +29,7 @@ export const floor2: MapDefinition = {
       tile: { x: 14, y: 1 },
       assetId: 'stairs-up',
       target: { mapId: 'floor1', tile: { x: 21, y: 3 } },
+      factId: 'floor1-rear-stairs-used',
     },
   ],
   sections: [
