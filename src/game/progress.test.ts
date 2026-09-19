@@ -39,7 +39,7 @@ describe('progress', () => {
     const next = discoverCurrentSection(start);
     expect(next.discoveredSectionIds).toEqual([
       'village-square',
-      'floor1-proof',
+      'floor1-upper-gallery',
     ]);
     expect(discoverCurrentSection(next)).toBe(next);
   });
