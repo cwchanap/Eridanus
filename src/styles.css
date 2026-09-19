@@ -32,3 +32,16 @@ body {
 [data-testid='interaction'] button {
   cursor: pointer;
 }
+[data-testid='journal'] {
+  max-width: min(100vw, 640px);
+}
+[data-testid='journal'] summary {
+  cursor: pointer;
+}
+[data-testid='journal'] p,
+[data-testid='journal'] ul {
+  margin: 0.25rem 0;
+}
+[data-testid='journal'] ul {
+  padding-left: 1.25rem;
+}

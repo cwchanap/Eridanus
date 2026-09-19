@@ -12,6 +12,8 @@ const view: JournalView = {
 describe('renderJournal', () => {
   it('renders the stable markup contract for a literal view', () => {
     const html = renderJournal(view);
+    expect(html).toContain('<details data-testid="journal"');
+    expect(html).toContain('<summary>');
     expect(html).toContain('data-testid="journal"');
     expect(html).toContain('data-lead="heirloom-find-other-entrance"');
     expect(html).toContain('data-section="floor1-upper-gallery"');

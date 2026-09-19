@@ -38,10 +38,10 @@ export function renderJournal(view: JournalView): string {
   const notes = view.observationFactIds
     .map((id) => `<li data-note="${id}">${factNote(id) ?? ''}</li>`)
     .join('');
-  return `<section data-testid="journal" aria-label="Journal">
-    <h2>Journal</h2>
+  return `<details data-testid="journal" aria-label="Journal">
+    <summary>Journal</summary>
     <div>${entries}</div>
     <div>${sections}</div>
     <ul>${notes}</ul>
-  </section>`;
+  </details>`;
 }
