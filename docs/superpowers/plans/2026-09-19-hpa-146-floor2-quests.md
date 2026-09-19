@@ -43,22 +43,22 @@ Modify:
 - `src/game/movement.test.ts`
 - `src/game/save.test.ts`
 
-### Step 1: Write the presence contract tests first
+### Step 1: Write only the pure presence/validation tests first
 
-Add focused tests for a synthetic/present NPC before changing runtime code.
+Task 1 must not invent a synthetic MAPS occupant or a maps-injection seam just to test runtime occupancy before the real subject entities exist.
 
-Cover:
+In `src/game/content.test.ts`, cover with object literals / the existing `villageWith` fixture:
 
 1. an NPC with `presence: { factId, when: 'unknown' }` is active before the fact and inactive after it;
 2. an NPC with `when: 'known'` behaves in the opposite direction;
 3. an always-present NPC stays active;
-4. `validateContent` rejects an unknown presence fact;
-5. movement ignores an inactive NPC tile and still bumps an active NPC;
-6. save validation rejects a current tile occupied by an active NPC but accepts the same tile once that NPC is fact-hidden.
+4. `validateContent` rejects an unknown presence fact.
 
-Prefer testing exported helpers rather than reaching through Phaser.
+After wiring movement/save in Step 4, keep the existing real-content regressions green, including the current save test that standing on the village warden is invalid. Do **not** add a test-only `maps` parameter, throwaway village NPC, or synthetic presence tile for `attemptMove` / `loadGame`.
 
-Expected first run: compile/test failure because the presence type/helper does not exist.
+Real movement, vacated-tile, and save occupancy tests for `floor2-missing-subject` / `village-returned-subject` belong in Task 4 after those authored entities exist.
+
+Expected first run: the pure helper/validator tests fail because the presence type/helper does not exist.
 
 Run:
 
@@ -164,8 +164,10 @@ Add dialogue tests that prove:
 
 Add journal tests that prove:
 
-- after the first real descent fact, main lead becomes `search-floor2`;
-- after `main-subject-returned`, main lead becomes `investigate-deeper`;
+- the existing depth facts without the carried sigil still leave the earlier main lead intact;
+- carrying `tower-depth-sigil` without `floor1-depth-stairs-used` keeps the existing `descend` lead;
+- carrying `tower-depth-sigil` **and** knowing `floor1-depth-stairs-used` selects `search-floor2`;
+- `main-subject-returned` selects `investigate-deeper`;
 - heirloom lead becomes `heirloom-claim-treasury` after the return stair fact;
 - heirloom lead becomes `heirloom-resolved` after `floor1-future-treasury` is opened;
 - route lead becomes `route-resolved` from the return stair fact;
@@ -208,6 +210,7 @@ Keep exact English in `src/game/content/dialogue.ts`; `src/game/dialogue.ts` sho
 
 Selection precedence matters:
 
+- `floor2-missing-subject` and `village-returned-subject` select their lines by NPC ID, not by whether `main-subject-returned` is known; the Floor 2 bump records that fact before resolving dialogue;
 - warden: returned subject beats sigil-found;
 - artisan: opened treasury beats route-found beats current Floor-1 evidence;
 - scout: verified route beats route-mark seen;
@@ -269,6 +272,8 @@ Rewrite `floor2.ts` as one compact rectangular maze organized into these authore
 
 Remove `floor2-connector` once every walkable cell is covered by the new sections.
 
+In this same content commit, replace the current `findSectionById('floor2-connector')` assertion in `src/game/content.test.ts` with assertions for the new section IDs so the first Task 3 test run does not fail for a stale lookup unrelated to the new topology.
+
 Do not preserve the old section ID for compatibility; pre-release saves may use the existing invalid-save/reset path.
 
 Preserve the existing portal IDs:
@@ -289,7 +294,8 @@ Both are ordinary `LatchEntity` values using current closed/open gate art.
 
 Map them so:
 
-- each rear side is reachable without the other latch being open;
+- when both latch tiles are treated as closed walls, `floor2-front-to-floor1` can still reach `floor2-rear-to-floor1`; the proven HPA-237 rear stair is not mechanism-gated;
+- each latch's rear approach is computed as the neighboring tile in its authored `rearSide` and is reachable from the front route without crossing either closed latch;
 - opening one never prevents reaching/opening the other;
 - at least one materially shortens a return route through familiar space.
 
@@ -300,10 +306,13 @@ Do not add switch entities, remote door IDs, reversible state, or mechanism-spec
 Add:
 
 - `floor2-missing-subject` in the authored required-story route with
-  `presence: { factId: 'main-subject-returned', when: 'unknown' }`
-  and `introFactId: 'main-subject-returned'`;
+  `introFactId: 'main-subject-returned'` and
+  `presence: { factId: 'main-subject-returned', when: 'unknown' }`;
 - `village-returned-subject` on a safe village floor tile with
+  `introFactId: 'main-subject-returned'` and
   `presence: { factId: 'main-subject-returned', when: 'known' }`.
+
+Do not invent a second subject-seen/reported fact. Both intro writes are intentionally idempotent, and the two subject dialogue lines are selected by NPC ID.
 
 Use the existing NPC default art.
 
@@ -333,29 +342,31 @@ Add one clue entity for the ledger thread that records `floor2-paired-release-le
 
 Add a small fixed set of:
 
-- stationary enemies using `enemy-ruin-guard`;
+- stationary enemies using `enemy-ruin-guard` in optional branch/wing routes;
 - authored stat/item rewards only where they improve route decisions;
 - at least one optional hidden clue or reward in a side alcove.
 
-Do not add random loot, roaming enemies, new combat rules, or required consumable keys.
+The critical structural route must be enemy-free: no enemy may be the only route from the front landing to the existing rear stair, either computed latch rear approach, the missing subject, or the treasury-return portal. This makes the topology proof sufficient for reachability and avoids a hidden dependency on optional Floor 1 rewards.
 
-Tune values so the required story route is completable from required prior progression without the Floor 1 treasury or optional hidden reward.
+Do not add random loot, roaming enemies, new combat rules, or required consumable keys. The Playwright journey should deliberately detour to fight at least one optional Floor 2 enemy so combat is still proven end to end.
 
 ### Step 6: Replace topology assertions with HPA-146 relationships
 
 Keep tests in `src/game/content.test.ts`; do not create a second map-validation framework.
 
-Add small helpers as needed to reason about floor geometry with selected latch tiles treated as blocked.
+Extend the existing test-local `floodFloor`; do not extract a topology module. Support two explicit modes where needed: layout-only floor connectivity, and floor connectivity with selected closed latch tiles treated as walls.
+
+Compute each latch rear approach from its real `tile` + `rearSide` using the same direction geometry as `src/game/actions.ts`; do not hardcode separate coordinates.
 
 Prove:
 
 1. all authored content validates;
 2. every Floor 2 walkable cell is covered by a section;
-3. front/rear existing portals remain floor-connected in authored geometry;
-4. with both Floor 2 latches closed, the authored rear approach tile for each latch is reachable from the front route without crossing either latch tile;
-5. therefore either latch can be opened first;
-6. after opening either latch, the other rear approach remains reachable;
-7. the missing subject and new treasury portal are on the required route without optional reward assumptions;
+3. layout-only connectivity remains sane;
+4. with both Floor 2 latch tiles treated as walls, the front portal still reaches the existing rear portal;
+5. in that same closed-latch mode, each computed latch rear approach is reachable from the front route;
+6. therefore either latch can be opened first, and after opening either one the other rear approach remains reachable;
+7. the missing subject and new treasury portal are reachable on the critical enemy-free topology without optional rewards;
 8. the new Floor 1 treasury portal sits inside the isolated pocket and the pocket flood reaches `floor1-future-treasury`;
 9. the pocket remains unreachable from ordinary Floor 1 front/rear floor geometry alone;
 10. the new portal pair is reciprocal.
@@ -400,13 +411,16 @@ Resolve `floor2-missing-subject` through authored content and call the real acti
 
 Prove:
 
+- before the fact, the Floor 2 subject is active/blocking and the returned village subject is inactive;
 - first bump records `main-subject-returned`;
-- effect line is `subject-returning`;
+- effect line is `subject-returning` even though the fact was recorded before dialogue selection;
 - second runtime lookup no longer returns the Floor 2 subject;
-- village runtime lookup returns `village-returned-subject`;
-- repeating facts remains idempotent.
+- movement can walk onto the vacated Floor 2 subject tile;
+- village runtime lookup returns `village-returned-subject`, which is now blocking/interactable;
+- save validation rejects standing on the Floor 2 subject tile before the fact and accepts that same tile after the fact;
+- repeating the shared intro fact remains idempotent.
 
-Do not add a dedicated rescue action.
+Do not add a dedicated rescue action or maps-injection seam.
 
 ### Step 2: Test both actual Floor 2 latches
 
@@ -500,7 +514,7 @@ Once on the completed Floor 2:
 1. assert the new Floor 2 section IDs appear as the player explores;
 2. traverse one representative wing order;
 3. open `floor2-west-release` and `floor2-east-release` through real rear-side movement;
-4. fight at least one Floor 2 enemy through the real Fight prompt;
+4. deliberately detour into an optional branch and fight at least one Floor 2 enemy through the real Fight prompt;
 5. inspect the ledger evidence;
 6. interact with the missing subject and assert `data-effect="dialogue"`;
 7. use the new Floor 2 -> Floor 1 treasury stair;
@@ -575,12 +589,16 @@ Before marking the PR ready:
 - [ ] No new `GameState` field was added unless a concrete requirement proved facts/opened IDs insufficient.
 - [ ] No generic quest/mechanism/event framework exists.
 - [ ] Both Floor 2 mechanisms use existing latch semantics.
+- [ ] With both latch tiles closed, the existing HPA-237 rear stair remains reachable from the front portal.
+- [ ] Latch rear approaches are derived from `tile + rearSide`, not separately hardcoded.
 - [ ] Both latch orders are proven without duplicating the whole browser journey.
-- [ ] Missing subject moves Floor 2 -> village from one durable fact, with no escort state.
+- [ ] Missing subject moves Floor 2 -> village from the single shared `main-subject-returned` intro/presence fact, with no escort state.
 - [ ] Heirloom and route completion are derived from treasury traversal/reward state.
 - [ ] Ledger thread advances but does not finish.
 - [ ] New reciprocal treasury stair reaches the formerly isolated Floor 1 pocket.
 - [ ] Existing HPA-237 rear Floor 1 loop still works.
+- [ ] `search-floor2` keys on carried `tower-depth-sigil` + `floor1-depth-stairs-used`; the depth fact alone does not skip earlier leads.
+- [ ] The critical rear-stair/latch-rear/subject/treasury topology is enemy-free.
 - [ ] Required progression does not depend on optional treasure/consumable keys.
 - [ ] Save shape remains current-format-only with no migration/version layer.
 - [ ] HPA-22 assets are reused; no generated art is mixed into this task.
