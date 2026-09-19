@@ -116,12 +116,12 @@ This is not a generic conditional-entity scripting system. Only NPCs need it in 
 
 ## Missing Character Transition
 
-Author two NPC instances with distinct globally unique entity IDs:
+Author two NPC instances with distinct globally unique entity IDs. Both use the same idempotent story fact for intro and presence:
 
-- a Floor 2 missing-character NPC with `presence: { factId: 'main-subject-returned', when: 'unknown' }`;
-- a village returned-character NPC with `presence: { factId: 'main-subject-returned', when: 'known' }`.
+- `floor2-missing-subject`: `introFactId: 'main-subject-returned'` and `presence: { factId: 'main-subject-returned', when: 'unknown' }`;
+- `village-returned-subject`: `introFactId: 'main-subject-returned'` and `presence: { factId: 'main-subject-returned', when: 'known' }`.
 
-The Floor 2 NPC's existing `introFactId` behavior records `main-subject-returned` on the first interaction before dialogue selection. The returned dialogue can therefore say the character can make their own way back.
+The Floor 2 bump records `main-subject-returned` before dialogue selection, so the subject's Floor 2 and village lines must be selected by NPC ID rather than by checking whether that fact is already known. This preserves the one interaction that records the fact while avoiding a second "seen/reported" story flag. Repeating the village intro fact is intentionally idempotent.
 
 After that action:
 
@@ -150,11 +150,11 @@ Required topology relationships:
 
 1. Front Landing reaches Central Hall without optional rewards.
 2. Both West Archive and East Service Wing are reachable from the central area.
-3. The rear side of each Floor 2 latch is reachable without the other latch being open.
+3. With both Floor 2 latch tiles treated as closed walls, the rear approach of each latch is reachable from the front route without crossing either latch. A latch rear approach is computed from `latch.tile + delta[latch.rearSide]`, matching the existing action geometry; tests must not hardcode separate approach coordinates.
 4. Opening either latch leaves the other mechanism completable.
-5. The existing Floor 2 rear stair to the Floor 1 Rear Wing remains usable.
+5. With both `floor2-west-release` and `floor2-east-release` closed, `floor2-front-to-floor1` still reaches `floor2-rear-to-floor1` without crossing either latch tile. The latches may shorten return routes, but must not gate the proven HPA-237 rear stair.
 6. A new reciprocal stair reaches the sealed 3x3 Floor 1 treasury pocket.
-7. The new treasury stair and missing-character encounter are reachable on the required story path without optional quest rewards.
+7. The new treasury stair and missing-character encounter are reachable on the acceptance path without optional quest rewards.
 8. Optional hidden evidence/reward may sit in a side alcove but must not gate the main route.
 
 Complexity belongs in authored walls, loops, and connection placement. Do not add reversible switch state or procedural rooms.
@@ -185,14 +185,15 @@ Quest progress stays derived. The journal continues to expose one closed lead ID
 
 ### Main story
 
-Extend the main lead sequence conceptually to:
+Extend the main lead with explicit existing-state gates, in this precedence order:
 
-1. existing village lead / sigil search;
-2. descend into Floor 2;
-3. search Floor 2 for the missing subject;
-4. after `main-subject-returned`, point toward the unresolved deeper mystery / next-floor investigation.
+1. `main-subject-returned` -> `investigate-deeper`;
+2. `tower-depth-sigil` carried **and** `floor1-depth-stairs-used` known -> `search-floor2`;
+3. `tower-depth-sigil` carried -> existing `descend`;
+4. `main-missing-person-lead` known -> existing `find-sigil`;
+5. otherwise -> existing `seek-warden`.
 
-Do not add a separate "reported to warden" durable flag merely to create another stage.
+`floor1-depth-stairs-used` is the named required-stair descent fact. The depth fact alone, without the sigil, must not skip the earlier main-story lead. Do not add a separate "reported to warden" durable flag merely to create another stage.
 
 ### Heirloom
 
@@ -253,14 +254,17 @@ Dialogue selection remains direct state inspection in `resolveNpcDialogue`. Do n
 
 Reuse deterministic combat unchanged.
 
-Floor 2 may add a small authored set of stationary enemies and fixed rewards to shape route pressure. Exact counts and stat numbers are tuning decisions, but these constraints are fixed:
+Floor 2 may add a small authored set of stationary enemies and fixed rewards to shape optional route pressure. Exact counts and stat numbers are tuning decisions, but the critical structural path is enemy-free: no stationary enemy may be the only path from the front landing to the existing rear stair, either latch rear approach, the missing subject, or the treasury-return portal.
+
+This keeps the topology proof aligned with actual required reachability and avoids making optional Floor 1 rewards a hidden combat prerequisite. Floor 2 combat still exists in optional wing/side routes, and the real browser journey deliberately fights at least one such enemy to prove combat remains integrated.
+
+Other constraints remain fixed:
 
 - no random encounters;
 - no roaming AI;
 - no new combat commands;
 - no XP or levels;
 - no optional consumable key required for the main story route;
-- a fresh required-story run remains completable using required progression only;
 - optional treasury/hidden rewards may make later encounters cheaper but are not required to avoid a dead end.
 
 Reuse `enemy-ruin-guard`, `chest-relic-closed/open`, gate, clue, NPC, and stairs assets. HPA-146 does not generate images.
@@ -317,9 +321,10 @@ No new HUD subsystem is required.
 
 Cover the risky contracts directly:
 
-- fact-gated NPC presence before/after `main-subject-returned`;
-- movement sees only active NPC occupancy;
-- save validation allows the vacated NPC tile only after the presence fact;
+- pure fact-gated NPC presence before/after `main-subject-returned` using object literals;
+- content validation rejects an unknown NPC presence fact without adding a maps-injection seam;
+- once the real subject entities are authored, movement sees only active NPC occupancy;
+- once the real subject entities are authored, save validation allows the vacated Floor 2 NPC tile only after the presence fact;
 - content validation rejects an unknown NPC presence fact;
 - missing-character interaction records the return fact and returns the intended dialogue line;
 - warden/artisan/scout/scribe dialogue acknowledges HPA-146 facts even when discoveries happened before first conversation;
@@ -329,7 +334,8 @@ Cover the risky contracts directly:
 - new treasury portals are reciprocal and traversal records `floor1-treasury-return-used`;
 - treasury reward is reachable through the new connection and still collected exactly once;
 - every Floor 2 walkable tile belongs to a section;
-- required Floor 2 topology remains connected without optional rewards.
+- with both Floor 2 latches treated as closed walls, the existing HPA-237 rear stair and both computed latch rear approaches remain reachable from the front route;
+- the critical subject/treasury/latch/rear-stair topology is enemy-free and remains connected without optional rewards.
 
 Prefer geometry/flood-fill assertions over a second simulation framework.
 
@@ -372,7 +378,13 @@ The full HPA-146 implementation stays on this one PR.
 
 If rendering filters an NPC but movement/save validation still use static authored occupancy, the subject can become invisible but continue blocking or invalidate legitimate saves.
 
-Mitigation: one pure presence helper, used by the three runtime occupancy/rendering call sites.
+Mitigation: one pure presence helper, used by the three runtime occupancy/rendering call sites. Task 1 tests the pure helper and validator only; real movement/save occupancy is tested after the subject entities exist. Do not add a maps-injection seam just for tests.
+
+### Main-lead fact drift
+
+The current journal intentionally does not advance from depth facts alone. An unnamed "descent" stage would make implementation and tests disagree.
+
+Mitigation: `search-floor2` requires both the carried `tower-depth-sigil` and the existing `floor1-depth-stairs-used` fact; `main-subject-returned` then advances to `investigate-deeper`.
 
 ### Over-generalizing mechanisms
 
