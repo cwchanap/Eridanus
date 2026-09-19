@@ -35,4 +35,31 @@ describe('buildJournalView', () => {
       'floor1-treasury-seen',
     ]);
   });
+
+  it('keys the main descend lead on the carried sigil, not depth facts', () => {
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        factIds: ['floor1-depth-seal-seen', 'floor1-depth-stairs-used'],
+      }).main.lead,
+    ).toBe('seek-warden');
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        itemIds: ['tower-depth-sigil'],
+      }).main.lead,
+    ).toBe('descend');
+  });
+
+  it('keys the ledger later-pages lead on the carried ledger fragment', () => {
+    const state = {
+      ...createInitialGameState(),
+      factIds: ['optional-ledger-lead'],
+      itemIds: ['ledger-fragment-1'],
+    };
+    const entry = buildJournalView(state).optional.find(
+      (candidate) => candidate.id === 'ledger',
+    );
+    expect(entry?.lead).toBe('ledger-find-later-pages');
+  });
 });
