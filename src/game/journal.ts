@@ -41,14 +41,14 @@ function knows(factIds: readonly string[], id: string): boolean {
   return factIds.includes(id);
 }
 
-function mainLead(factIds: readonly string[]): LeadId {
-  if (knows(factIds, 'floor1-depth-seal-seen')) return 'descend';
-  if (knows(factIds, 'floor1-depth-stairs-used')) return 'descend';
-  if (knows(factIds, 'village-tower-stairs-used')) return 'find-sigil';
+function mainLead(state: GameState): LeadId {
+  if (state.itemIds.includes('tower-depth-sigil')) return 'descend';
+  if (knows(state.factIds, 'village-tower-stairs-used')) return 'find-sigil';
   return 'seek-warden';
 }
 
-function optionalEntries(factIds: readonly string[]): JournalEntry[] {
+function optionalEntries(state: GameState): JournalEntry[] {
+  const factIds = state.factIds;
   const entries: JournalEntry[] = [];
   if (knows(factIds, 'optional-heirloom-lead')) {
     entries.push({
@@ -71,7 +71,7 @@ function optionalEntries(factIds: readonly string[]): JournalEntry[] {
   if (knows(factIds, 'optional-ledger-lead')) {
     entries.push({
       id: 'ledger',
-      lead: knows(factIds, 'floor1-depth-stairs-used')
+      lead: state.itemIds.includes('ledger-fragment-1')
         ? 'ledger-find-later-pages'
         : 'ledger-find-fragment',
     });
@@ -81,8 +81,8 @@ function optionalEntries(factIds: readonly string[]): JournalEntry[] {
 
 export function buildJournalView(state: GameState): JournalView {
   return {
-    main: { id: 'main', lead: mainLead(state.factIds) },
-    optional: optionalEntries(state.factIds),
+    main: { id: 'main', lead: mainLead(state) },
+    optional: optionalEntries(state),
     sections: state.discoveredSectionIds.flatMap((id) => {
       const section = findSectionById(id);
       return section ? [{ id: section.id, name: section.name }] : [];

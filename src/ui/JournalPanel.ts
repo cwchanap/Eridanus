@@ -36,12 +36,12 @@ export function renderJournal(view: JournalView): string {
     )
     .join('');
   const notes = view.observationFactIds
-    .map((id) => `<li data-note="${id}">${factNote(id)}</li>`)
+    .map((id) => `<li data-note="${id}">${factNote(id) ?? ''}</li>`)
     .join('');
   return `<section data-testid="journal" aria-label="Journal">
     <h2>Journal</h2>
-    <div data-testid="journal-leads">${entries}</div>
-    <div data-testid="journal-sections">${sections}</div>
-    <ul data-testid="journal-notes">${notes}</ul>
+    <div>${entries}</div>
+    <div>${sections}</div>
+    <ul>${notes}</ul>
   </section>`;
 }
