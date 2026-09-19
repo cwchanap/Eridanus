@@ -36,6 +36,24 @@ describe('buildJournalView', () => {
     ]);
   });
 
+  it('advances the main lead through the warden fact and the carried sigil', () => {
+    expect(buildJournalView(createInitialGameState()).main.lead).toBe(
+      'seek-warden',
+    );
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        factIds: ['main-missing-person-lead'],
+      }).main.lead,
+    ).toBe('find-sigil');
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        itemIds: ['tower-depth-sigil'],
+      }).main.lead,
+    ).toBe('descend');
+  });
+
   it('keys the main descend lead on the carried sigil, not depth facts', () => {
     expect(
       buildJournalView({

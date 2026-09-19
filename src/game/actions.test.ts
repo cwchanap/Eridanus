@@ -5,11 +5,14 @@ import { createInitialGameState } from './state';
 import type { NpcEntity } from './types';
 
 const reward = findEntityById('floor1-power-core');
+const sigil = findEntityById('floor1-depth-sigil');
 const recovery = findEntityById('village-recovery');
 const latch = findEntityById('floor1-rear-latch');
 const enemy = findEntityById('floor1-gatekeeper');
 const overlook = findEntityById('floor1-treasury-overlook');
 if (!reward || reward.kind !== 'reward') throw new Error('reward missing');
+if (!sigil || sigil.kind !== 'reward' || sigil.grant !== 'item')
+  throw new Error('sigil missing');
 if (!recovery || recovery.kind !== 'recovery')
   throw new Error('recovery missing');
 if (!latch || latch.kind !== 'latch') throw new Error('latch missing');
@@ -27,6 +30,29 @@ describe('actions', () => {
     expect(first.ok && first.state.player.attack).toBe(12);
     if (!first.ok) return;
     expect(interactWithEntity(first.state, reward, first.state.tile)).toEqual({
+      ok: false,
+      reason: 'reward-already-taken',
+    });
+  });
+
+  it('grants an item reward once and keeps the player in place', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor1' as const,
+      tile: { x: 12, y: 8 },
+    };
+    const first = interactWithEntity(state, sigil, state.tile);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.state.itemIds).toEqual(['tower-depth-sigil']);
+    expect(first.state.openedRewardIds).toEqual(['floor1-depth-sigil']);
+    expect(first.state.tile).toEqual(state.tile);
+    expect(first.effect).toEqual({
+      kind: 'itemReward',
+      itemId: 'tower-depth-sigil',
+      label: sigil.label,
+    });
+    expect(interactWithEntity(first.state, sigil, first.state.tile)).toEqual({
       ok: false,
       reason: 'reward-already-taken',
     });

@@ -3,6 +3,7 @@ import { floor2 } from './content/floor2';
 import { village } from './content/village';
 import { hasFact } from './content/facts';
 import { hasNpcDialogue } from './content/dialogue';
+import { createInitialGameState } from './state';
 import type {
   Entity,
   MapDefinition,
@@ -81,6 +82,30 @@ export function validateContent(
     );
   };
 
+  const square = maps.village.sections.find(
+    (section) => section.id === 'village-square',
+  );
+  if (!square) errors.push('village: missing village-square section');
+  else if (
+    square.bounds.minX <= square.bounds.maxX &&
+    square.bounds.minY <= square.bounds.maxY
+  ) {
+    const start = createInitialGameState().tile;
+    const { minX, maxX, minY, maxY } = square.bounds;
+    const inside =
+      start.x >= minX && start.x <= maxX && start.y >= minY && start.y <= maxY;
+    if (!inside)
+      errors.push('village-square: section bounds exclude the initial tile');
+  }
+
+  const knownItemIds = new Set<string>();
+  for (const map of Object.values(maps)) {
+    for (const entity of map.entities) {
+      if (entity.kind === 'reward' && entity.grant === 'item')
+        knownItemIds.add(entity.itemId);
+    }
+  }
+
   for (const map of Object.values(maps)) {
     const width = map.layout[0]?.length ?? 0;
     const height = map.layout.length;
@@ -155,7 +180,7 @@ export function validateContent(
             errors.push(
               `${entity.id}: unknown lock fact id: ${entity.lock.lockedFactId}`,
             );
-          if (!findItemRewardByItemId(entity.lock.requiresItemId))
+          if (!knownItemIds.has(entity.lock.requiresItemId))
             errors.push(
               `${entity.id}: unknown lock item id: ${entity.lock.requiresItemId}`,
             );
