@@ -1,5 +1,6 @@
 import './styles.css';
 import { MAPS } from './game/content';
+import { buildJournalView } from './game/journal';
 import { dispatchInput } from './game/session';
 import { loadGame, resetGame, saveGame } from './game/save';
 import { createInitialGameState } from './game/state';
@@ -34,6 +35,7 @@ function renderOverlay(): void {
     pending: session.pending,
     effect,
     blocked,
+    journal: buildJournalView(session.game),
   });
 }
 
