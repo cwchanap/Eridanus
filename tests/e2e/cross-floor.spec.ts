@@ -159,6 +159,9 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
     'data-map-id',
     'floor1',
   );
+  await expect(
+    page.locator('[data-note="floor1-rear-stairs-used"]'),
+  ).toHaveCount(1);
 
   // Left, Down x7, Left x4, Left: preview gatekeeper at 15 HP loss; Cancel
   await press(page, 'ArrowLeft', 1);

@@ -95,6 +95,19 @@ describe('attemptMove', () => {
     expect(result.state.itemIds).toEqual(['tower-depth-sigil']);
   });
 
+  it('descending the rear floor2 stair records the rear stair fact', () => {
+    const state = { ...base, mapId: 'floor2' as const, tile: { x: 14, y: 2 } };
+    const result = attemptMove(state, 'north');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state).toMatchObject({
+      mapId: 'floor1',
+      tile: { x: 21, y: 3 },
+    });
+    expect(result.state.factIds).toContain('floor1-rear-stairs-used');
+    expect(result.state.discoveredSectionIds).toContain('floor1-rear-wing');
+  });
+
   it('arriving on floor one discovers the entry court and the treasury', () => {
     const state = { ...base, mapId: 'village' as const, tile: { x: 12, y: 2 } };
     const result = attemptMove(state, 'west');

@@ -2,7 +2,7 @@
 
 ## Status
 
-Planning design for HPA-235. This extends the merged HPA-237 gameplay foundation and HPA-22 image kit. The implementation stays on one HPA-235 PR.
+Implemented on this PR. This extends the merged HPA-237 gameplay foundation and HPA-22 image kit. Design and implementation stayed on one HPA-235 PR.
 
 This revision incorporates two external plan reviews. The architecture remains fact-first; the corrections tighten type sequencing, authored-content contracts, camera-truthful treasury semantics, journal/dialogue copy ownership, and topology validation.
 
