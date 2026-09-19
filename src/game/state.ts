@@ -8,5 +8,8 @@ export function createInitialGameState(): GameState {
     openedRewardIds: [],
     defeatedEnemyIds: [],
     openedShortcutIds: [],
+    itemIds: [],
+    factIds: [],
+    discoveredSectionIds: ['village-square'],
   };
 }

@@ -30,4 +30,11 @@ export const village: MapDefinition = {
       target: { mapId: 'floor1', tile: { x: 2, y: 9 } },
     },
   ],
+  sections: [
+    {
+      id: 'village-square',
+      name: 'Village Square',
+      bounds: { minX: 1, maxX: 10, minY: 1, maxY: 6 },
+    },
+  ],
 };

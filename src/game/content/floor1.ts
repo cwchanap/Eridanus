@@ -57,6 +57,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-power-core',
       tile: { x: 9, y: 5 },
       assetId: 'chest-relic-closed',
+      grant: 'stat',
       stat: 'attack',
       amount: 2,
     },
@@ -66,6 +67,13 @@ export const floor1: MapDefinition = {
       tile: { x: 11, y: 5 },
       assetId: 'enemy-ruin-guard',
       stats: { hp: 20, attack: 7, defense: 4 },
+    },
+  ],
+  sections: [
+    {
+      id: 'floor1-proof',
+      name: 'Tower Floor 1',
+      bounds: { minX: 1, maxX: 16, minY: 1, maxY: 10 },
     },
   ],
 };

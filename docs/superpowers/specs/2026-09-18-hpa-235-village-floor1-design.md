@@ -42,7 +42,7 @@ Do not persist quest objects or quest status. Do not add a generic event/quest D
 
 GameState gains exactly three arrays:
 
-~~~ts
+```ts
 type GameState = Readonly<{
   mapId: MapId;
   tile: Tile;
@@ -54,7 +54,7 @@ type GameState = Readonly<{
   factIds: readonly string[];
   discoveredSectionIds: readonly string[];
 }>;
-~~~
+```
 
 Semantics:
 
@@ -68,7 +68,7 @@ Semantics:
 
 Add src/game/content/facts.ts as the single registry of valid durable facts:
 
-~~~ts
+```ts
 export const FACTS = {
   'main-missing-person-lead': {},
   'optional-heirloom-lead': {},
@@ -96,7 +96,7 @@ export const FACTS = {
     note: 'A second stair returns to the Rear Wing.',
   },
 } as const satisfies Record<string, { note?: string }>;
-~~~
+```
 
 Responsibilities:
 
@@ -114,7 +114,7 @@ The registry is content, not a generic event system.
 
 MapDefinition gains authored rectangular sections:
 
-~~~ts
+```ts
 type MapSection = Readonly<{
   id: string;
   name: string;
@@ -134,7 +134,7 @@ type MapDefinition = Readonly<{
   sections: readonly MapSection[];
   entities: readonly Entity[];
 }>;
-~~~
+```
 
 A successful move/travel records every section containing the destination tile plus its section facts.
 
@@ -159,14 +159,14 @@ No fog, line-of-sight, camera changes, or occlusion system is introduced.
 
 ClueEntity gains one optional durable fact:
 
-~~~ts
+```ts
 type ClueEntity = BaseEntity &
   Readonly<{
     kind: 'clue';
     text: string;
     factId?: string;
   }>;
-~~~
+```
 
 Bumping the clue records factId first, when present, and returns the existing clue effect.
 
@@ -174,14 +174,14 @@ Bumping the clue records factId first, when present, and returns the existing cl
 
 Add one blocking bump-interaction entity:
 
-~~~ts
+```ts
 type NpcEntity = BaseEntity &
   Readonly<{
     kind: 'npc';
     name: string;
     introFactId: string;
   }>;
-~~~
+```
 
 All four HPA-235 village NPCs use the existing npc-village-guide image through the safe NPC default in src/phaser/assets.ts. Unique NPC art is not generated in this ticket.
 
@@ -189,10 +189,10 @@ NPC dialogue copy lives in src/game/content/dialogue.ts with the other authored 
 
 Interaction order is:
 
-~~~ts
+```ts
 const next = recordFact(state, entity.introFactId);
 const lineId = resolveNpcDialogue(entity.id, next);
-~~~
+```
 
 The first conversation therefore acknowledges already-known evidence.
 
@@ -202,7 +202,7 @@ validateContent verifies every authored NpcEntity ID is covered by the dialogue 
 
 Keep reward as the one collectible/chest semantic, discriminated explicitly:
 
-~~~ts
+```ts
 type RewardEntity = BaseEntity &
   Readonly<{ kind: 'reward' }> &
   (
@@ -217,7 +217,7 @@ type RewardEntity = BaseEntity &
         label: string;
       }>
   );
-~~~
+```
 
 Both variants use openedRewardIds for one-time collection and become walkable after opening. Item rewards additionally add itemId to itemIds.
 
@@ -227,7 +227,7 @@ No consumable keys are added in HPA-235.
 
 Represent a lock as one optional nested value so incomplete lock states are unrepresentable:
 
-~~~ts
+```ts
 type PortalLock = Readonly<{
   requiresItemId: string;
   lockedText: string;
@@ -241,17 +241,17 @@ type PortalEntity = BaseEntity &
     factId?: string;
     lock?: PortalLock;
   }>;
-~~~
+```
 
 The Floor-1 front stair into Floor 2 uses:
 
-~~~ts
+```ts
 lock: {
   requiresItemId: 'tower-depth-sigil',
   lockedText: 'A crest-shaped socket seals the lower stair.',
   lockedFactId: 'floor1-depth-seal-seen',
 }
-~~~
+```
 
 Missing the item does not travel; it records the lock fact and returns accessLocked. The item is never consumed.
 
@@ -280,7 +280,7 @@ src/game/content/dialogue.ts owns the authored dialogue lines and NPC coverage t
 
 src/game/dialogue.ts owns only the state-to-line choice:
 
-~~~ts
+```ts
 type DialogueLineId =
   | 'warden-main-lead'
   | 'warden-sigil-found'
@@ -291,7 +291,7 @@ type DialogueLineId =
   | 'scout-marks-seen'
   | 'scribe-find-ledger'
   | 'scribe-fragment-found';
-~~~
+```
 
 The exact line strings live in content/dialogue.ts. Tests assert selected line IDs, not English substrings.
 
@@ -299,7 +299,7 @@ The exact line strings live in content/dialogue.ts. Tests assert selected line I
 
 src/game/journal.ts returns structured IDs, not finished prose:
 
-~~~ts
+```ts
 type LeadId =
   | 'seek-warden'
   | 'find-sigil'
@@ -328,7 +328,7 @@ type JournalView = Readonly<{
   sections: readonly JournalSection[];
   observationFactIds: readonly string[];
 }>;
-~~~
+```
 
 Rules:
 

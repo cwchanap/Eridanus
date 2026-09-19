@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { createInitialGameState } from './state';
 
 describe('createInitialGameState', () => {
+  it('starts with empty facts/items and the current village section discovered', () => {
+    expect(createInitialGameState()).toMatchObject({
+      itemIds: [],
+      factIds: [],
+      discoveredSectionIds: ['village-square'],
+    });
+  });
+
   it('starts in the village with baseline stats', () => {
     expect(createInitialGameState()).toEqual({
       mapId: 'village',
@@ -10,6 +18,9 @@ describe('createInitialGameState', () => {
       openedRewardIds: [],
       defeatedEnemyIds: [],
       openedShortcutIds: [],
+      itemIds: [],
+      factIds: [],
+      discoveredSectionIds: ['village-square'],
     });
   });
 });

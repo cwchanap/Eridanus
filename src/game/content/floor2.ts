@@ -31,4 +31,11 @@ export const floor2: MapDefinition = {
       target: { mapId: 'floor1', tile: { x: 14, y: 2 } },
     },
   ],
+  sections: [
+    {
+      id: 'floor2-connector',
+      name: 'Floor 2 Connector',
+      bounds: { minX: 1, maxX: 14, minY: 1, maxY: 8 },
+    },
+  ],
 };

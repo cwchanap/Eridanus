@@ -4,6 +4,7 @@ import type {
   GameState,
   PendingInteraction,
 } from '../game/types';
+import { DIALOGUE_LINES } from '../game/content/dialogue';
 
 export type OverlayView = Readonly<{
   state: GameState;
@@ -39,6 +40,12 @@ function effectText(effect: ActionEffect): string {
       return 'The rear latch opens. The shortcut is now usable from both sides.';
     case 'enemyDefeated':
       return `Enemy defeated. HP lost: ${effect.hpLost}.`;
+    case 'dialogue':
+      return effect.speaker + ': ' + DIALOGUE_LINES[effect.lineId];
+    case 'itemReward':
+      return 'Obtained ' + effect.label + '.';
+    case 'accessLocked':
+      return effect.text;
   }
 }
 

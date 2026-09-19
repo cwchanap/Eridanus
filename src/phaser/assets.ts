@@ -56,6 +56,7 @@ function baseEntityAsset(entity: Entity): AssetKey | null {
   }
   if (entity.kind === 'recovery') return 'recovery-waystone';
   if (entity.kind === 'latch') return 'shortcut-gate-closed';
+  if (entity.kind === 'npc') return 'npc-village-guide';
   return null;
 }
 

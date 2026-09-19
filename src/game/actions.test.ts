@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { findEntityById } from './content';
 import { interactWithEntity } from './actions';
 import { createInitialGameState } from './state';
+import type { NpcEntity } from './types';
 
 const reward = findEntityById('floor1-power-core');
 const recovery = findEntityById('village-recovery');
@@ -43,6 +44,32 @@ describe('actions', () => {
       openedRewardIds: ['floor1-power-core'],
       defeatedEnemyIds: ['floor1-gatekeeper'],
       openedShortcutIds: ['floor1-rear-latch'],
+    });
+  });
+
+  it('bumping an npc records the intro fact and returns the current line', () => {
+    const artisan: NpcEntity = {
+      kind: 'npc',
+      id: 'village-artisan',
+      tile: { x: 5, y: 2 },
+      name: 'Artisan',
+      introFactId: 'optional-heirloom-lead',
+    };
+    const state = {
+      ...createInitialGameState(),
+      factIds: ['floor1-treasury-sealed'],
+    };
+    const result = interactWithEntity(state, artisan, state.tile);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.factIds).toEqual([
+      'floor1-treasury-sealed',
+      'optional-heirloom-lead',
+    ]);
+    expect(result.effect).toEqual({
+      kind: 'dialogue',
+      speaker: 'Artisan',
+      lineId: 'artisan-find-other-entrance',
     });
   });
 
