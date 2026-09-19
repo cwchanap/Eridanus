@@ -132,4 +132,99 @@ describe('validateContent failure branches', () => {
       'village-to-floor1: reciprocal portal missing',
     ]);
   });
+
+  it('flags a duplicate section id', () => {
+    const maps = {
+      ...MAPS,
+      village: {
+        ...village,
+        sections: [...village.sections, { ...village.sections[0]! }],
+      },
+    };
+    expect(validateContent(maps)).toEqual([
+      'duplicate section id: village-square',
+    ]);
+  });
+
+  it('flags inverted section bounds', () => {
+    const maps = {
+      ...MAPS,
+      village: {
+        ...village,
+        sections: [
+          {
+            id: 'village-square',
+            name: 'Village Square',
+            bounds: { minX: 10, maxX: 1, minY: 1, maxY: 6 },
+          },
+        ],
+      },
+    };
+    expect(validateContent(maps)).toEqual([
+      'village-square: section bounds are inverted',
+      expect.stringContaining('village: floor tiles not covered by a section'),
+    ]);
+  });
+
+  it('flags an uncovered floor tile', () => {
+    const maps = {
+      ...MAPS,
+      village: {
+        ...village,
+        sections: [
+          {
+            id: 'village-square',
+            name: 'Village Square',
+            bounds: { minX: 1, maxX: 9, minY: 1, maxY: 6 },
+          },
+        ],
+      },
+    };
+    expect(validateContent(maps)).toEqual([
+      'village: floor tiles not covered by a section: 10,1, 10,2, 10,3, 10,4, 10,5, 10,6',
+    ]);
+  });
+
+  it('flags an unknown fact id on a clue', () => {
+    const maps = villageWith([
+      {
+        kind: 'clue',
+        id: 'typo-clue',
+        tile: { x: 3, y: 3 },
+        text: 'points nowhere',
+        factId: 'not-a-fact',
+      },
+    ]);
+    expect(validateContent(maps)).toEqual([
+      'typo-clue: unknown fact id: not-a-fact',
+    ]);
+  });
+
+  it('flags an npc without dialogue and an unknown lock item', () => {
+    const maps = villageWith([
+      {
+        kind: 'npc',
+        id: 'village-mystery',
+        tile: { x: 3, y: 3 },
+        name: 'Mystery',
+        introFactId: 'main-missing-person-lead',
+      },
+      {
+        kind: 'portal',
+        id: 'village-to-floor1',
+        tile: { x: 9, y: 2 },
+        target: { mapId: 'village', tile: { x: 4, y: 3 } },
+        lock: {
+          requiresItemId: 'no-such-item',
+          lockedText: 'sealed',
+          lockedFactId: 'main-missing-person-lead',
+        },
+      },
+    ]);
+    expect(validateContent(maps)).toEqual([
+      'village-mystery: npc has no dialogue lines',
+      'village-to-floor1: unknown lock item id: no-such-item',
+      'village-to-floor1: reciprocal portal missing',
+    ]);
+  });
 });

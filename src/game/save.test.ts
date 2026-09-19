@@ -164,6 +164,9 @@ describe('saveGame/loadGame', () => {
       openedRewardIds: ['floor1-power-core'],
       defeatedEnemyIds: ['floor1-gatekeeper'],
       openedShortcutIds: ['floor1-rear-latch'],
+      itemIds: [],
+      factIds: [],
+      discoveredSectionIds: ['floor1-proof'],
     };
     saveGame(storage, state);
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state });

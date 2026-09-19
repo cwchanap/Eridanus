@@ -10,6 +10,9 @@ const pending: SessionState = {
     openedRewardIds: ['floor1-power-core'],
     defeatedEnemyIds: [],
     openedShortcutIds: [],
+    itemIds: [],
+    factIds: [],
+    discoveredSectionIds: ['floor1-proof'],
   },
   pending: {
     kind: 'combat',

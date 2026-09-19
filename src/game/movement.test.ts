@@ -9,6 +9,9 @@ const base: GameState = {
   openedRewardIds: [],
   defeatedEnemyIds: [],
   openedShortcutIds: [],
+  itemIds: [],
+  factIds: [],
+  discoveredSectionIds: ['floor1-proof'],
 };
 
 describe('attemptMove', () => {

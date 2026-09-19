@@ -1,4 +1,6 @@
 import { previewCombat } from './combat';
+import { resolveNpcDialogue } from './dialogue';
+import { addItem, recordFact } from './progress';
 import type { ActionResult, Direction, Entity, GameState, Tile } from './types';
 
 function directionFromTo(from: Tile, to: Tile): Direction | null {
@@ -15,8 +17,14 @@ export function interactWithEntity(
   fromTile: Tile,
 ): ActionResult {
   switch (entity.kind) {
-    case 'clue':
-      return { ok: true, state, effect: { kind: 'clue', text: entity.text } };
+    case 'clue': {
+      const next = entity.factId ? recordFact(state, entity.factId) : state;
+      return {
+        ok: true,
+        state: next,
+        effect: { kind: 'clue', text: entity.text },
+      };
+    }
     case 'recovery': {
       const next = {
         ...state,
@@ -28,14 +36,44 @@ export function interactWithEntity(
         effect: { kind: 'healed', hp: next.player.hp },
       };
     }
+    case 'npc': {
+      const next = recordFact(state, entity.introFactId);
+      const lineId = resolveNpcDialogue(entity.id, next);
+      return {
+        ok: true,
+        state: next,
+        effect: { kind: 'dialogue', speaker: entity.name, lineId },
+      };
+    }
     case 'reward': {
       if (state.openedRewardIds.includes(entity.id))
         return { ok: false, reason: 'reward-already-taken' };
+
+      if (entity.grant === 'item') {
+        const next = addItem(
+          {
+            ...state,
+            openedRewardIds: [...state.openedRewardIds, entity.id],
+          },
+          entity.itemId,
+        );
+        return {
+          ok: true,
+          state: next,
+          effect: {
+            kind: 'itemReward',
+            itemId: entity.itemId,
+            label: entity.label,
+          },
+        };
+      }
+
       const player = {
         ...state.player,
         [entity.stat]: state.player[entity.stat] + entity.amount,
       };
       if (entity.stat === 'maxHp') player.hp += entity.amount;
+
       return {
         ok: true,
         state: {

@@ -1,4 +1,12 @@
-import { findEntityById, getEntityAt, isLayoutFloor, MAPS } from './content';
+import {
+  findEntityById,
+  findItemRewardByItemId,
+  findSectionById,
+  getEntityAt,
+  isLayoutFloor,
+  MAPS,
+} from './content';
+import { hasFact } from './content/facts';
 import { createInitialGameState } from './state';
 import type { GameState, Tile } from './types';
 
@@ -37,7 +45,10 @@ function hasValidShape(state: unknown): state is GameState {
   return (
     isStringArray(record['openedRewardIds']) &&
     isStringArray(record['defeatedEnemyIds']) &&
-    isStringArray(record['openedShortcutIds'])
+    isStringArray(record['openedShortcutIds']) &&
+    isStringArray(record['itemIds']) &&
+    isStringArray(record['factIds']) &&
+    isStringArray(record['discoveredSectionIds'])
   );
 }
 
@@ -53,6 +64,7 @@ function isTileOccupiedByBlockingEntity(state: GameState, tile: Tile): boolean {
       return !state.openedShortcutIds.includes(entity.id);
     case 'clue':
     case 'recovery':
+    case 'npc':
       return true;
     case 'portal':
       return false;
@@ -74,6 +86,25 @@ function hasValidContent(state: GameState): boolean {
     !state.openedShortcutIds.every((id) => findEntityById(id)?.kind === 'latch')
   )
     return false;
+  if (!state.factIds.every(hasFact)) return false;
+  if (!state.discoveredSectionIds.every((id) => findSectionById(id)))
+    return false;
+
+  for (const itemId of state.itemIds) {
+    const reward = findItemRewardByItemId(itemId);
+    if (!reward || !state.openedRewardIds.includes(reward.id)) return false;
+  }
+
+  for (const openedId of state.openedRewardIds) {
+    const reward = findEntityById(openedId);
+    if (
+      reward?.kind === 'reward' &&
+      reward.grant === 'item' &&
+      !state.itemIds.includes(reward.itemId)
+    )
+      return false;
+  }
+
   return !isTileOccupiedByBlockingEntity(state, state.tile);
 }
 
