@@ -153,6 +153,8 @@ Modify:
 
 Pin state semantics before adding prose/content.
 
+Dialogue selection is ID-keyed, so these tests may land before the subject entities are authored. Only movement/save occupancy waits for Task 4.
+
 Add dialogue tests that prove:
 
 - warden acknowledges `main-subject-returned`;
