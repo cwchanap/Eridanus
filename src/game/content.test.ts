@@ -263,6 +263,25 @@ describe('validateContent failure branches', () => {
     ]);
   });
 
+  it('flags village-square bounds excluding the initial tile', () => {
+    const maps = {
+      ...MAPS,
+      village: {
+        ...village,
+        sections: village.sections.map((section) => {
+          if (section.id === 'village-square')
+            return { ...section, bounds: { ...section.bounds, maxY: 7 } };
+          if (section.id === 'village-north-path')
+            return { ...section, bounds: { ...section.bounds, maxY: 8 } };
+          return section;
+        }),
+      },
+    };
+    expect(validateContent(maps)).toEqual([
+      'village-square: section bounds exclude the initial tile',
+    ]);
+  });
+
   it('flags an unknown fact id on a clue', () => {
     const maps = villageWith([
       {

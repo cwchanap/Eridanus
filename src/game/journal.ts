@@ -43,7 +43,7 @@ function knows(factIds: readonly string[], id: string): boolean {
 
 function mainLead(state: GameState): LeadId {
   if (state.itemIds.includes('tower-depth-sigil')) return 'descend';
-  if (knows(state.factIds, 'village-tower-stairs-used')) return 'find-sigil';
+  if (knows(state.factIds, 'main-missing-person-lead')) return 'find-sigil';
   return 'seek-warden';
 }
 

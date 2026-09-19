@@ -314,6 +314,20 @@ describe('saveGame/loadGame', () => {
     });
   });
 
+  it('rejects a save standing on an npc tile', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        tile: { x: 3, y: 7 },
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
   it('rejects non-finite player stats', () => {
     storage.setItem(
       'eridanus.save',
