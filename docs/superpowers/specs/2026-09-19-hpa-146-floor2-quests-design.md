@@ -325,7 +325,6 @@ Cover the risky contracts directly:
 - content validation rejects an unknown NPC presence fact without adding a maps-injection seam;
 - once the real subject entities are authored, movement sees only active NPC occupancy;
 - once the real subject entities are authored, save validation allows the vacated Floor 2 NPC tile only after the presence fact;
-- content validation rejects an unknown NPC presence fact;
 - missing-character interaction records the return fact and returns the intended dialogue line;
 - warden/artisan/scout/scribe dialogue acknowledges HPA-146 facts even when discoveries happened before first conversation;
 - journal leads resolve heirloom and lost-route threads from existing facts/opened reward state and advance ledger without completing it;
