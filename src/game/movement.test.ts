@@ -97,14 +97,14 @@ describe('attemptMove', () => {
     if (!result.ok) return;
     expect(result.state).toMatchObject({
       mapId: 'floor2',
-      tile: { x: 1, y: 8 },
+      tile: { x: 8, y: 10 },
     });
     expect(result.state.itemIds).toEqual(['tower-depth-sigil']);
   });
 
   it('descending the rear floor2 stair records the rear stair fact', () => {
-    const state = { ...base, mapId: 'floor2' as const, tile: { x: 14, y: 2 } };
-    const result = attemptMove(state, 'north');
+    const state = { ...base, mapId: 'floor2' as const, tile: { x: 15, y: 1 } };
+    const result = attemptMove(state, 'east');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.state).toMatchObject({

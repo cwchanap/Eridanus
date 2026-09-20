@@ -46,6 +46,14 @@ export const village: MapDefinition = {
       introFactId: 'optional-ledger-lead',
     },
     {
+      kind: 'npc',
+      id: 'village-returned-subject',
+      tile: { x: 5, y: 8 },
+      name: 'Returned Subject',
+      introFactId: 'main-subject-returned',
+      presence: { factId: 'main-subject-returned', when: 'known' },
+    },
+    {
       kind: 'portal',
       id: 'village-to-floor1',
       tile: { x: 11, y: 2 },
