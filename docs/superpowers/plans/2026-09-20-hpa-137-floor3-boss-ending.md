@@ -22,6 +22,7 @@
 - Reuse HPA-22 assets only. Do not generate boss/Floor 3 art in this PR.
 - Keep the optional ledger outcome derived from facts; do not add quest status.
 - Keep the final ending fact idempotent and owned by the village warden interaction.
+- Keep the existing string + FACTS runtime-validation model for fact IDs in HPA-137; do not add a FactId type migration in this content ticket.
 - HPA-21 owns release balancing/polish; HPA-137 only proves required-path viability.
 
 ## Review Focus
@@ -923,8 +924,8 @@ await expect(
   page.locator('[data-section="floor3-heart-approach"]'),
 ).toHaveCount(1);
 
-// Route around the two blocking bump entities at (7,4) no longer exists,
-// but the heart clue at (9,3) still blocks a straight row-3 crossing.
+// The heart clue at (9,3) blocks a straight row-3 crossing,
+// so dogleg through (8,4) before returning to the center column.
 // Up -> (6,3), Right x2 -> (8,3), Down -> (8,4),
 // Right x2 -> (10,4), Down x3 -> (10,7).
 await press(page, 'ArrowUp', 1);
