@@ -53,30 +53,43 @@
 
 In src/game/movement.test.ts keep the existing Floor 1 sigil gate assertions and update the expected authored lock shape to include kind: 'item'.
 
-In src/game/content.test.ts add a validator case with a synthetic fact lock:
+In src/game/content.test.ts add a validator case with a reciprocal synthetic pair so the new fact-lock assertion cannot fail on portal topology first:
 
 ~~~ts
-{
-  kind: 'portal',
-  id: 'fact-locked-portal',
-  tile: { x: 4, y: 3 },
-  target: { mapId: 'village', tile: { x: 5, y: 3 } },
-  lock: {
-    kind: 'fact',
-    requiresFactId: 'not-a-fact',
-    lockedText: 'sealed',
-    lockedFactId: 'main-missing-person-lead',
+const maps = villageWith([
+  {
+    kind: 'portal',
+    id: 'fact-locked-portal',
+    tile: { x: 4, y: 3 },
+    target: { mapId: 'village', tile: { x: 5, y: 3 } },
+    lock: {
+      kind: 'fact',
+      requiresFactId: 'not-a-fact',
+      lockedText: 'sealed',
+      lockedFactId: 'main-missing-person-lead',
+    },
   },
-}
+  {
+    kind: 'portal',
+    id: 'fact-locked-portal-back',
+    tile: { x: 5, y: 3 },
+    target: { mapId: 'village', tile: { x: 4, y: 3 } },
+  },
+]);
 ~~~
 
-Assert the validator reports:
+Both tiles are empty village floor. Assert the validator reports only:
 
 ~~~text
 fact-locked-portal: unknown lock fact id: not-a-fact
 ~~~
 
-Keep the reciprocal-portal assertion separate so the lock failure is not coupled to a second error.
+When the union lands in Step 2, migrate **both** existing item-lock authoring sites in the same compile-safe edit:
+
+- add kind: 'item' to floor1-front-to-floor2 in src/game/content/floor1.ts;
+- add kind: 'item' to the existing unknown-item-lock fixture in src/game/content.test.ts.
+
+Keep that existing fixture's established two-error expectation (unknown item + reciprocal portal missing); do not weaken it just to make the new union compile.
 
 Run:
 
@@ -119,30 +132,67 @@ lock: {
 },
 ~~~
 
-- [ ] **Step 3: Evaluate the union in movement**
+- [ ] **Step 3: Evaluate the union exhaustively in movement**
 
-In attemptMove, replace the item-only condition with one local boolean:
+Add one small local helper in src/game/movement.ts:
 
 ~~~ts
-const locked =
-  entity.lock?.kind === 'item'
-    ? !state.itemIds.includes(entity.lock.requiresItemId)
-    : entity.lock?.kind === 'fact'
-      ? !state.factIds.includes(entity.lock.requiresFactId)
-      : false;
+function isPortalLocked(lock: PortalLock, state: GameState): boolean {
+  switch (lock.kind) {
+    case 'item':
+      return !state.itemIds.includes(lock.requiresItemId);
+    case 'fact':
+      return !state.factIds.includes(lock.requiresFactId);
+  }
+}
 ~~~
 
-When locked, preserve the current behavior: record lockedFactId and return accessLocked without moving.
+Import PortalLock as a type. In attemptMove, use:
 
-Do not extract a generic condition engine.
+~~~ts
+if (entity.lock && isPortalLocked(entity.lock, state)) {
+  const next = recordFact(state, entity.lock.lockedFactId);
+  return {
+    ok: true,
+    state: next,
+    effect: { kind: 'accessLocked', text: entity.lock.lockedText },
+  };
+}
+~~~
 
-- [ ] **Step 4: Validate both lock variants**
+There is deliberately no default/fallback branch. Adding a future PortalLock variant must create a TypeScript exhaustiveness failure instead of silently unlocking it.
 
-In validateContent:
+Do not generalize this helper into a condition engine.
 
-- always validate lockedFactId with hasFact;
-- for kind: 'item', require knownItemIds to contain requiresItemId;
-- for kind: 'fact', require hasFact(requiresFactId).
+- [ ] **Step 4: Validate both lock variants exhaustively**
+
+In validateContent, keep the shared lockedFactId validation, then switch on lock.kind with no default:
+
+~~~ts
+if (entity.lock) {
+  if (!hasFact(entity.lock.lockedFactId))
+    errors.push(
+      `${entity.id}: unknown lock fact id: ${entity.lock.lockedFactId}`,
+    );
+
+  switch (entity.lock.kind) {
+    case 'item':
+      if (!knownItemIds.has(entity.lock.requiresItemId))
+        errors.push(
+          `${entity.id}: unknown lock item id: ${entity.lock.requiresItemId}`,
+        );
+      break;
+    case 'fact':
+      if (!hasFact(entity.lock.requiresFactId))
+        errors.push(
+          `${entity.id}: unknown lock fact id: ${entity.lock.requiresFactId}`,
+        );
+      break;
+  }
+}
+~~~
+
+The duplicate wording for lockedFactId vs requiresFactId is acceptable because each message names the bad ID; do not add another error taxonomy just for this union.
 
 Keep reciprocal portal validation unchanged.
 
@@ -636,7 +686,7 @@ The two ordinary enemies are optional side pressure. They must not occupy x=6 or
 
 - [ ] **Step 6: Prove the topology through the shared runtime blocking rule**
 
-Reuse tileKey, floodFloor, hasAdjacentApproach, portal, and latch helpers already in src/game/content.test.ts.
+Add these Floor 3 assertions **inside the existing describe('authored content') block** in src/game/content.test.ts. The tileKey, floodFloor, hasAdjacentApproach, portal, and latch helpers are scoped to that describe; reuse them there rather than copying them into a new top-level Floor 3 describe.
 
 Create a required Floor 3 state:
 
@@ -829,35 +879,81 @@ At floor2-depth-to-floor3:
 
 The early-locked branch is already covered in Task 3 unit/movement tests; do not replay a second browser timeline.
 
-- [ ] **Step 3: Walk one authored Floor 3 route and open the shortcut from the rear**
+- [ ] **Step 3: Walk the pinned west-spine route and open the shortcut from the rear**
 
-Use the east or west side route, then:
+From floor3-to-floor2 at (10,13), use this exact counted walk:
 
-- assert floor3-twin-galleries discovery;
-- reach (10,7), immediately north of floor3-heart-shortcut;
-- bump south into the latch so rearSide: north opens it;
-- assert effect data-effect=latchOpened;
-- cross the now-open shortcut once to prove two-way use.
+~~~ts
+// Up: Entry Vestibule portal tile (10,13) -> Twin Galleries row (10,12)
+await press(page, 'ArrowUp', 1);
 
-Keep the keypress comments synchronized with the exact Task 3 layout.
+// Left x4: move to the west spine at (6,12)
+await press(page, 'ArrowLeft', 4);
 
-- [ ] **Step 4: Heal, preview, and defeat the boss**
+// Up x8: follow the unobstructed west spine to Heart Approach (6,4)
+await press(page, 'ArrowUp', 8);
+await expect(
+  page.locator('[data-section="floor3-heart-approach"]'),
+).toHaveCount(1);
 
-Reach floor3-heart-waystone and bump it; assert HP equals max HP.
+// Right x4, Down x3: reach (10,7), immediately north of the shortcut
+await press(page, 'ArrowRight', 4);
+await press(page, 'ArrowDown', 3);
 
-Approach floor3-core-guardian and assert the combat prompt shows the HP loss calculated from the journey's actual current stats.
+// Down: bump floor3-heart-shortcut (10,8) from rearSide=north
+await press(page, 'ArrowDown', 1);
+await expect(page.getByTestId('effect')).toHaveAttribute(
+  'data-effect',
+  'latchOpened',
+);
 
-Click Fight and assert:
+// Down x2 crosses the opened latch to (10,9); Up x2 proves it is now two-way
+await press(page, 'ArrowDown', 2);
+await press(page, 'ArrowUp', 2);
+await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+~~~
+
+The west route is intentionally independent of floor3-vault-sentry at (2,6). If the authored layout changes, update these counts in the same content change rather than turning the e2e into route-search logic.
+
+- [ ] **Step 4: Heal, preview, and defeat the boss with counted presses**
+
+After Step 3 the player is back at (10,7). Walk to the waystone and boss exactly:
+
+~~~ts
+// Up x3 -> (10,4); Left x2 -> (8,4); final Left bumps waystone (7,4)
+await press(page, 'ArrowUp', 3);
+await press(page, 'ArrowLeft', 2);
+await press(page, 'ArrowLeft', 1);
+await expect(page.getByTestId('effect')).toHaveAttribute(
+  'data-effect',
+  'healed',
+);
+~~~
+
+Assert HUD HP equals max HP after the heal.
+
+Then:
+
+~~~ts
+// Right x2 -> (10,4); Up -> (10,3); final Up bumps core guardian (10,2)
+await press(page, 'ArrowRight', 2);
+await press(page, 'ArrowUp', 1);
+await press(page, 'ArrowUp', 1);
+~~~
+
+Assert the combat prompt shows the HP loss calculated from the journey's **actual** current stats, then click Fight.
+
+Assert:
 
 - enemyDefeated effect;
 - the player remains alive;
-- stepping onto the former boss tile is unblocked.
+- one Up moves onto the former boss tile (10,2) without blocking.
 
 Do not hardcode 25 HP loss in Playwright because the existing journey already collects optional Floor 1 rewards; Task 4 owns the baseline 25-loss contract.
 
 - [ ] **Step 5: Claim the Restoration Core and reload once**
 
-Bump floor3-restoration-core and assert itemReward text contains Restoration Core.
+After stepping onto the defeated boss tile (10,2), press Up once to bump floor3-restoration-core at (10,1). Assert itemReward text contains Restoration Core.
 
 Assert the main lead becomes return-restoration-core.
 
@@ -927,16 +1023,17 @@ Expected: every command exits 0.
 
 - [ ] **Step 2: Re-read the HPA-137 acceptance criteria against the branch**
 
-Verify explicitly:
+Verify explicitly, keeping the required-only and browser evidence separate:
 
-- fresh save reaches the ending without optional quest completion;
-- Floor 3 has two route spines, a permanent shortcut, and optional hidden vault;
-- boss uses unchanged preview/resolution;
-- baseline boss proof is 6 hits / 25 HP loss after mandatory recovery;
-- final ledger evidence resolves the optional thread;
-- expanded ending uses the same main-village-restored fact;
-- boss/core/shortcut/ending survive reload;
-- no new GameState field, save migration, combat subsystem, quest engine, or art asset exists.
+- **Unit/content proof of required-path viability:** full baseline HP 30 / ATK 10 / DEF 2 previews floor3-core-guardian at 6 hits / 25 HP loss after the mandatory recovery seam; the Floor 3 fact lock works; the ending fact is idempotent; final ledger evidence resolves even when discovered before the scribe.
+- **Single browser proof:** the existing fresh-save Playwright journey reaches data-lead="story-complete". It may keep the optional Floor 1/Floor 2 rewards already exercised by that journey; it is not the proof that optionals are unnecessary.
+- Floor 3 has two route spines, a permanent shortcut, and optional hidden vault.
+- Boss uses unchanged preview/resolution.
+- Final ledger evidence resolves the optional thread.
+- Expanded ending uses the same main-village-restored fact.
+- Boss/core/shortcut/ending survive reload.
+- No new GameState field, save migration, combat subsystem, quest engine, or art asset exists.
+- Do **not** add a second Playwright playthrough to prove required-only viability; the unit/content proof above owns that acceptance condition.
 
 - [ ] **Step 3: Mark completed plan checkboxes/status only after verification**
 
