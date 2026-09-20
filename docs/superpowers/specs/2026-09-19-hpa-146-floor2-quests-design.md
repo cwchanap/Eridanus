@@ -2,9 +2,11 @@
 
 ## Status
 
-Draft / planning only. This PR is the single HPA-146 PR and starts from the merged HPA-237, HPA-22, and HPA-235 foundation.
+Implemented. This PR is the single HPA-146 PR, built on the merged HPA-237, HPA-22, and HPA-235 foundation.
 
-The implementation should extend the current fact-first authored-content model. It must not introduce a quest engine, generic mechanism system, event bus, escort system, save migration layer, or new art pipeline.
+The implementation extends the current fact-first authored-content model. It introduces no quest engine, generic mechanism system, event bus, escort system, save migration layer, or new art pipeline.
+
+Implementation deviations: none of the design contracts changed. Two test-facing consequences are worth recording. The browser journey now claims `floor1-future-treasury` before the Floor 1 rear-wing fights, so the gatekeeper previews resolve at 9/6 HP loss (previously 15/10) — a direct consequence of the +2 defense reward, not a combat-rule change. The rewritten journey also folds the old mid-journey discovery reload into the single HPA-146 reload checkpoint, which asserts section discovery, both opened releases, the vacated subject tile, the returned village subject, and the claimed treasury in one pass.
 
 ## Goal
 
