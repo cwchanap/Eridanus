@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialGameState } from './state';
+import { attemptMove } from './movement';
 import { buildJournalView } from './journal';
 
 describe('buildJournalView', () => {
@@ -153,6 +154,34 @@ describe('buildJournalView', () => {
         itemIds: ['ledger-fragment-1'],
       }).optional.find((candidate) => candidate.id === 'ledger')?.lead,
     ).toBe('ledger-follow-deeper-record');
+  });
+
+  it('reflects the treasury traversal and reward in the heirloom and route leads immediately', () => {
+    const start = {
+      ...createInitialGameState(),
+      mapId: 'floor2' as const,
+      tile: { x: 4, y: 3 },
+      factIds: ['optional-heirloom-lead', 'optional-route-lead'],
+    };
+    const traveled = attemptMove(start, 'north');
+    expect(traveled.ok).toBe(true);
+    if (!traveled.ok) return;
+    const view = buildJournalView(traveled.state);
+    expect(view.optional.find((entry) => entry.id === 'heirloom')?.lead).toBe(
+      'heirloom-claim-treasury',
+    );
+    expect(view.optional.find((entry) => entry.id === 'route')?.lead).toBe(
+      'route-resolved',
+    );
+
+    const rewarded = attemptMove(traveled.state, 'west');
+    expect(rewarded.ok).toBe(true);
+    if (!rewarded.ok) return;
+    expect(
+      buildJournalView(rewarded.state).optional.find(
+        (entry) => entry.id === 'heirloom',
+      )?.lead,
+    ).toBe('heirloom-resolved');
   });
 
   it('advances optional leads even when discoveries precede their intro facts', () => {

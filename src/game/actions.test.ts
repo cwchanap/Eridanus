@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { findEntityById } from './content';
+import { findEntityById, getActiveEntityAt, isEntityBlocking } from './content';
 import { interactWithEntity } from './actions';
+import { attemptMove } from './movement';
 import { createInitialGameState } from './state';
 import type { NpcEntity } from './types';
 
@@ -18,6 +19,12 @@ if (!recovery || recovery.kind !== 'recovery')
 if (!latch || latch.kind !== 'latch') throw new Error('latch missing');
 if (!enemy || enemy.kind !== 'enemy') throw new Error('enemy missing');
 if (!overlook || overlook.kind !== 'clue') throw new Error('clue missing');
+const missingSubject = findEntityById('floor2-missing-subject');
+const returnedSubject = findEntityById('village-returned-subject');
+if (!missingSubject || missingSubject.kind !== 'npc')
+  throw new Error('floor2-missing-subject missing');
+if (!returnedSubject || returnedSubject.kind !== 'npc')
+  throw new Error('village-returned-subject missing');
 
 describe('actions', () => {
   it('applies reward once', () => {
@@ -144,5 +151,73 @@ describe('actions', () => {
         hpLost: 0,
       },
     });
+  });
+
+  it('blocks on the missing subject before the return, and the bump records it with the returning line', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor2' as const,
+      tile: { x: 11, y: 3 },
+    };
+    expect(getActiveEntityAt(state, missingSubject.tile)).toEqual(
+      missingSubject,
+    );
+    expect(isEntityBlocking(missingSubject, state)).toBe(true);
+
+    const bump = attemptMove(state, 'north');
+    expect(bump.ok).toBe(true);
+    if (!bump.ok) return;
+    expect(bump.state.factIds).toEqual(['main-subject-returned']);
+    expect(bump.state.tile).toEqual(state.tile);
+    expect(bump.effect).toEqual({
+      kind: 'dialogue',
+      speaker: missingSubject.name,
+      lineId: 'subject-returning',
+    });
+  });
+
+  it('lets the player onto the vacated subject tile after the return', () => {
+    const returned = {
+      ...createInitialGameState(),
+      mapId: 'floor2' as const,
+      tile: { x: 11, y: 3 },
+      factIds: ['main-subject-returned'],
+    };
+    expect(getActiveEntityAt(returned, missingSubject.tile)).toBeUndefined();
+
+    const step = attemptMove(returned, 'north');
+    expect(step.ok).toBe(true);
+    if (!step.ok) return;
+    expect(step.state.tile).toEqual({ x: 11, y: 2 });
+    expect(step.effect).toEqual({ kind: 'moved' });
+  });
+
+  it('activates the village subject only after the return and repeats the shared fact idempotently', () => {
+    const before = { ...createInitialGameState(), tile: { x: 5, y: 7 } };
+    expect(getActiveEntityAt(before, returnedSubject.tile)).toBeUndefined();
+    const passesThrough = attemptMove(before, 'south');
+    expect(passesThrough.ok && passesThrough.state.tile).toEqual({
+      x: 5,
+      y: 8,
+    });
+
+    const after = { ...before, factIds: ['main-subject-returned'] };
+    expect(getActiveEntityAt(after, returnedSubject.tile)).toEqual(
+      returnedSubject,
+    );
+    expect(isEntityBlocking(returnedSubject, after)).toBe(true);
+
+    const bump = attemptMove(after, 'south');
+    expect(bump.ok).toBe(true);
+    if (!bump.ok) return;
+    expect(bump.state.tile).toEqual(after.tile);
+    expect(bump.effect).toEqual({
+      kind: 'dialogue',
+      speaker: returnedSubject.name,
+      lineId: 'subject-village',
+    });
+    expect(
+      bump.state.factIds.filter((id) => id === 'main-subject-returned'),
+    ).toHaveLength(1);
   });
 });

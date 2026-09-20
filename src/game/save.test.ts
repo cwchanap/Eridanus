@@ -162,9 +162,22 @@ describe('saveGame/loadGame', () => {
       mapId: 'floor1' as const,
       tile: { x: 14, y: 10 },
       player: { hp: 12, maxHp: 30, attack: 12, defense: 2 },
-      openedRewardIds: ['floor1-depth-sigil', 'floor1-power-core'],
-      defeatedEnemyIds: ['floor1-west-sentry', 'floor1-gatekeeper'],
-      openedShortcutIds: ['floor1-rear-latch'],
+      openedRewardIds: [
+        'floor1-depth-sigil',
+        'floor1-power-core',
+        'floor1-future-treasury',
+        'floor2-service-cache',
+      ],
+      defeatedEnemyIds: [
+        'floor1-west-sentry',
+        'floor1-gatekeeper',
+        'floor2-east-sentry',
+      ],
+      openedShortcutIds: [
+        'floor1-rear-latch',
+        'floor2-west-release',
+        'floor2-east-release',
+      ],
       itemIds: ['tower-depth-sigil'],
       factIds: [
         'main-missing-person-lead',
@@ -172,6 +185,9 @@ describe('saveGame/loadGame', () => {
         'floor1-treasury-seen',
         'floor1-depth-stairs-used',
         'floor1-rear-stairs-used',
+        'floor1-treasury-return-used',
+        'floor2-paired-release-ledger-read',
+        'main-subject-returned',
       ],
       discoveredSectionIds: [
         'village-square',
@@ -181,6 +197,9 @@ describe('saveGame/loadGame', () => {
         'floor1-upper-gallery',
         'floor2-front-landing',
         'floor1-rear-wing',
+        'floor2-central-hall',
+        'floor2-west-archive',
+        'floor2-east-service',
       ],
     };
     saveGame(storage, state);
@@ -326,6 +345,32 @@ describe('saveGame/loadGame', () => {
       kind: 'invalid',
       reason: 'invalid-content',
     });
+  });
+
+  it('rejects a save standing on the missing subject tile before the return fact', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        mapId: 'floor2',
+        tile: { x: 11, y: 2 },
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('accepts a save standing on the subject tile after the return fact', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor2',
+      tile: { x: 11, y: 2 },
+      factIds: ['main-subject-returned'],
+    };
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
   });
 
   it('rejects non-finite player stats', () => {
