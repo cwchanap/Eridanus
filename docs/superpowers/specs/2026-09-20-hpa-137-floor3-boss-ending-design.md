@@ -98,7 +98,7 @@ Pin its authored stats at:
 
 At the baseline starting stats (30 HP, 10 ATK, 2 DEF), a full-health player deals 6 damage per hit, needs 6 hits, and loses 25 HP. Therefore the boss is beatable without the optional Floor 1 treasury, Floor 2 caches, Floor 3 vault, or any consumable treasure.
 
-Place an ordinary recovery waystone on the mandatory approach before the boss so reaching the fight with earlier attrition cannot make optional rewards mandatory.
+Place an ordinary recovery waystone one bump from the sole boss-approach tile. Recovery entities are intentionally blocking bump interactions, so the waystone must sit beside the corridor rather than on it; every route to the boss can deliberately full-heal immediately before the fight without requiring an optional reward.
 
 The boss is distinguished by:
 
@@ -182,7 +182,7 @@ Use one compact rectangular map with six recognizable sections:
 - Twin Galleries — central landmark where the route visibly splits east/west.
 - Keeper Archive — evidence-heavy east-side route containing the final ledger record.
 - Hidden Vault — optional side pocket hinted by repeated route symbols.
-- Heart Approach — both main routes reconnect here; contains the recovery waystone and the rear side of the shortcut.
+- Heart Approach — both main routes reconnect here; contains the rear side of the shortcut and leads to the sole boss-approach tile, with the recovery waystone one bump beside that approach.
 - Heart Chamber — final clue, boss, and Restoration Core.
 
 The exact rectangle size and tile coordinates are implementation details; tests should pin relationships, not arbitrary dimensions.
@@ -194,10 +194,10 @@ From the Floor 3 entry with no optional rewards claimed, no optional enemies def
 1. the player can reach the Heart Approach through the west gallery;
 2. the player can also reach it through the east gallery;
 3. the final keeper record has a reachable interaction approach on the east route;
-4. the hidden-vault clue/entrance has a reachable interaction approach without being on the main route;
+4. the hidden-vault clue/entrance has a reachable interaction approach while its optional section excludes the west main-route spine;
 5. the rear side of floor3-heart-shortcut is reachable from the Heart Approach;
-6. the recovery waystone is reachable before the boss;
-7. the boss blocks the only direct passage into the Restoration Core pocket.
+6. the sole boss-approach tile is adjacent to the recovery waystone, so a full heal is always one deliberate bump away;
+7. the boss blocks the only interaction approach to the Restoration Core pocket.
 
 Opening floor3-heart-shortcut creates a permanent shorter return from the Heart Approach to the Entry Vestibule. Do not add fast travel.
 
@@ -320,11 +320,11 @@ Prove:
 - MAPS contains floor3 and all content validates;
 - Floor 2 and Floor 3 depth portals are reciprocal;
 - both main Floor 3 gallery routes reach the Heart Approach with runtime blocking;
-- the final ledger and hidden-vault approaches are optional/reachable;
+- the final ledger and hidden-vault approaches are optional/reachable, and their optional section bounds exclude the x=15 east and x=6 west main-route spines;
 - the shortcut rear approach is reachable while closed;
-- the recovery point is reachable before the boss;
-- the undefeated boss separates entry-side reachability from the Restoration Core pocket;
-- after marking the boss defeated, the resource pocket becomes reachable.
+- the recovery waystone is cardinally adjacent to the sole boss-approach tile;
+- while the boss is alive, the Restoration Core has no reachable adjacent interaction tile;
+- after marking the boss defeated, the boss tile becomes that reachable Core interaction approach.
 
 ### Combat/progression/save tests
 
