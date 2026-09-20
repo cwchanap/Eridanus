@@ -18,7 +18,7 @@
 - Reuse previewCombat and resolveCombat unchanged for the boss.
 - Pin floor3-core-guardian at HP 36 / ATK 7 / DEF 4.
 - A full-health baseline player at HP 30 / ATK 10 / DEF 2 must preview the boss as 6 hits and 25 HP loss.
-- Put a normal recovery waystone on the mandatory pre-boss approach.
+- Put a normal recovery waystone one bump from the sole boss-approach tile; never place the blocking RecoveryEntity on the corridor itself.
 - Reuse HPA-22 assets only. Do not generate boss/Floor 3 art in this PR.
 - Keep the optional ledger outcome derived from facts; do not add quest status.
 - Keep the final ending fact idempotent and owned by the village warden interaction.
@@ -28,7 +28,7 @@
 
 - **Premature Floor 3 entry:** touching the Floor 2 depth portal before main-subject-returned must show the locked text and record only floor2-depth-seal-seen; it must not record the requirement fact or travel.
 - **Ending outcome order:** the warden must record main-village-restored exactly once with the Restoration Core, and choose the expanded line only when floor3-keeper-final-record-read is already known.
-- **Boss viability without optional rewards:** the authored recovery point plus baseline stats must make the boss preview exactly 6 hits / 25 HP loss; no optional cache may be required.
+- **Boss viability without optional rewards:** baseline full health must preview the boss at exactly 6 hits / 25 HP loss, and the sole boss-approach tile must be one bump from the recovery waystone so any attrition can be cleared immediately before the fight.
 - **Dynamic save occupancy:** undefeated boss/unopened core tiles must reject saves while defeated/opened variants load and remain traversable.
 - **Optional evidence before quest intro:** reading the final ledger record before speaking to the scribe must still resolve the ledger read model and later produce the expanded ending.
 
@@ -522,17 +522,19 @@ layout: [
   '######..........######',
   '######..........######',
   '##.###.###.####.###.##',
+  '##..##.###.####.##..##',
+  '##...#.###.####.#...##',
   '##.....###.####.....##',
-  '##.....###.####.....##',
-  '##..................##',
-  '##.....###.####.....##',
-  '##.....###.####.....##',
-  '##.....###.####.....##',
-  '##..................##',
+  '##.#...###.####...#.##',
+  '##...#.###.####.#...##',
+  '####...###.####...####',
+  '######..........######',
   '##########.###########',
   '######################',
 ],
 ~~~
+
+The interior wall ribs deliberately make Floor 3 more corridor-heavy than Floor 2 while preserving the same two main spines and all pinned entity coordinates. Do not simplify the side wings back into open 5x6 rooms.
 
 This shape intentionally creates:
 
@@ -551,9 +553,9 @@ Sections:
   { id: 'floor3-twin-galleries', name: 'Twin Galleries',
     bounds: { minX: 2, maxX: 19, minY: 5, maxY: 12 } },
   { id: 'floor3-keeper-archive', name: 'Keeper Archive',
-    bounds: { minX: 15, maxX: 19, minY: 5, maxY: 8 } },
+    bounds: { minX: 16, maxX: 19, minY: 5, maxY: 8 } },
   { id: 'floor3-hidden-vault', name: 'Hidden Vault',
-    bounds: { minX: 2, maxX: 6, minY: 5, maxY: 8 } },
+    bounds: { minX: 2, maxX: 5, minY: 5, maxY: 8 } },
   { id: 'floor3-heart-approach', name: 'Heart Approach',
     bounds: { minX: 6, maxX: 15, minY: 3, maxY: 4 } },
   { id: 'floor3-heart-chamber', name: 'Heart Chamber',
@@ -617,7 +619,7 @@ Add these exact required entities:
 {
   kind: 'recovery',
   id: 'floor3-heart-waystone',
-  tile: { x: 7, y: 4 },
+  tile: { x: 11, y: 3 },
 },
 {
   kind: 'clue',
@@ -705,12 +707,16 @@ With floor3-heart-shortcut closed, optional enemies undefeated, and all rewards 
 - assert the east spine reaches (15,4);
 - assert an adjacent approach exists for floor3-keeper-final-record;
 - assert an adjacent approach exists for floor3-vault-route-mark;
+- assert the Hidden Vault section excludes the west main spine x=6 and the Keeper Archive section excludes the east main spine x=15;
+- assert floor3-vault-route-mark lies west of x=6 and floor3-keeper-final-record lies east of x=15, so neither optional clue sits on a main spine;
 - assert tileInDirection(shortcut.tile, shortcut.rearSide) is reachable;
-- assert an adjacent approach exists for floor3-heart-waystone;
+- import directionFromTo beside tileInDirection and assert directionFromTo(waystone.tile, { x: 10, y: 3 }) is not null;
 - assert an adjacent approach exists for floor3-core-guardian;
-- assert floor3-restoration-core is not reachable while the boss is active.
+- assert hasAdjacentApproach(reachable, floor3-restoration-core.tile) is false while the boss is active.
 
-Then set defeatedEnemyIds: ['floor3-core-guardian'] and assert the boss tile plus an interaction approach to floor3-restoration-core become reachable.
+Then set defeatedEnemyIds: ['floor3-core-guardian'] and assert the boss tile is reachable and hasAdjacentApproach(reachableAfter, floor3-restoration-core.tile) is true.
+
+Do not assert that the Core reward tile itself is in the flood: unopened rewards are blocking by design, so that assertion would be vacuous.
 
 Do not build a second pathfinder.
 
@@ -759,7 +765,7 @@ expect(previewCombat(createInitialGameState().player, boss.stats)).toEqual({
 });
 ~~~
 
-Also assert the floor3-heart-waystone exists and is on the mandatory reachable side of the boss through the topology test from Task 3.
+Also assert the floor3-heart-waystone exists and Task 3 proves it is cardinally adjacent to the sole boss approach at (10,3). This is the structural guarantee that a full heal is always available immediately before combat without putting a blocking RecoveryEntity on the corridor.
 
 Run:
 
@@ -866,9 +872,30 @@ Keep the current test name and its HPA-146 path. Continue immediately after the 
 
 Do not clone the entire village/Floor 1/Floor 2 setup into a second Playwright test.
 
-- [ ] **Step 2: Re-enter Floor 2 and prove the story gate is now open**
+- [ ] **Step 2: Re-enter Floor 2 with counted presses and prove the story gate is now open**
 
-Walk through the existing village -> Floor 1 -> Floor 2 portals using the already-open shortcuts.
+The existing HPA-146 journey ends at village (6,8) after bumping village-returned-subject. Re-enter the tower exactly:
+
+~~~ts
+// Village (6,8) -> village-to-floor1 (11,2) -> Floor 1 (2,14)
+await press(page, 'ArrowRight', 1);
+await press(page, 'ArrowUp', 3);
+await press(page, 'ArrowRight', 2);
+await press(page, 'ArrowUp', 2);
+await press(page, 'ArrowRight', 2);
+await press(page, 'ArrowUp', 1);
+
+// Floor 1 (2,14) -> front Floor-2 stair (9,2) -> Floor 2 (8,10)
+await press(page, 'ArrowUp', 2);
+await press(page, 'ArrowRight', 1);
+await press(page, 'ArrowUp', 8);
+await press(page, 'ArrowRight', 3);
+await press(page, 'ArrowUp', 2);
+await press(page, 'ArrowRight', 3);
+
+// Floor 2 central column -> depth stair (8,1) -> Floor 3 (10,13)
+await press(page, 'ArrowUp', 9);
+~~~
 
 At floor2-depth-to-floor3:
 
@@ -896,8 +923,14 @@ await expect(
   page.locator('[data-section="floor3-heart-approach"]'),
 ).toHaveCount(1);
 
-// Right x4, Down x3: reach (10,7), immediately north of the shortcut
-await press(page, 'ArrowRight', 4);
+// Route around the two blocking bump entities at (7,4) no longer exists,
+// but the heart clue at (9,3) still blocks a straight row-3 crossing.
+// Up -> (6,3), Right x2 -> (8,3), Down -> (8,4),
+// Right x2 -> (10,4), Down x3 -> (10,7).
+await press(page, 'ArrowUp', 1);
+await press(page, 'ArrowRight', 2);
+await press(page, 'ArrowDown', 1);
+await press(page, 'ArrowRight', 2);
 await press(page, 'ArrowDown', 3);
 
 // Down: bump floor3-heart-shortcut (10,8) from rearSide=north
@@ -917,13 +950,14 @@ The west route is intentionally independent of floor3-vault-sentry at (2,6). If 
 
 - [ ] **Step 4: Heal, preview, and defeat the boss with counted presses**
 
-After Step 3 the player is back at (10,7). Walk to the waystone and boss exactly:
+After Step 3 the player is back at (10,7). The moved waystone is one bump from the only boss approach:
 
 ~~~ts
-// Up x3 -> (10,4); Left x2 -> (8,4); final Left bumps waystone (7,4)
-await press(page, 'ArrowUp', 3);
-await press(page, 'ArrowLeft', 2);
-await press(page, 'ArrowLeft', 1);
+// Up x4 -> sole boss approach (10,3)
+await press(page, 'ArrowUp', 4);
+
+// Right: bump floor3-heart-waystone (11,3), staying at (10,3)
+await press(page, 'ArrowRight', 1);
 await expect(page.getByTestId('effect')).toHaveAttribute(
   'data-effect',
   'healed',
@@ -935,9 +969,7 @@ Assert HUD HP equals max HP after the heal.
 Then:
 
 ~~~ts
-// Right x2 -> (10,4); Up -> (10,3); final Up bumps core guardian (10,2)
-await press(page, 'ArrowRight', 2);
-await press(page, 'ArrowUp', 1);
+// Up: bump core guardian (10,2) from the sole approach
 await press(page, 'ArrowUp', 1);
 ~~~
 
@@ -967,11 +999,41 @@ Reload the page and assert:
 
 This is the HPA-137 persistence checkpoint.
 
-- [ ] **Step 6: Return through the existing floor chain and finish at the warden**
+- [ ] **Step 6: Return through the existing floor chain with counted presses and finish at the warden**
 
-Use the opened Floor 3 shortcut, floor3-to-floor2, existing Floor 2/Floor 1 shortcuts, then floor1-to-village.
+After the HPA-137 reload, the player is at (10,2). Return exactly:
 
-Bump village-warden.
+~~~ts
+// Floor 3 (10,2) -> opened center shortcut -> floor3-to-floor2 (10,13)
+// The 11th Down steps on the portal and arrives at Floor 2 (8,1).
+await press(page, 'ArrowDown', 11);
+
+// Floor 2 Rear Gallery -> floor2-rear-to-floor1 (16,1) -> Floor 1 (21,3)
+await press(page, 'ArrowRight', 8);
+
+// Floor 1 rear wing -> opened rear latch -> village portal (2,14)
+await press(page, 'ArrowDown', 1);
+await press(page, 'ArrowLeft', 8);
+await press(page, 'ArrowDown', 4);
+await press(page, 'ArrowLeft', 3);
+await press(page, 'ArrowDown', 1);
+await press(page, 'ArrowLeft', 3);
+await press(page, 'ArrowDown', 1);
+await press(page, 'ArrowLeft', 4);
+await press(page, 'ArrowDown', 4);
+await press(page, 'ArrowLeft', 1);
+
+// Village arrival is (11,2). Route around the standing NPCs to (4,7).
+await press(page, 'ArrowDown', 3);
+await press(page, 'ArrowLeft', 3);
+await press(page, 'ArrowDown', 1);
+await press(page, 'ArrowLeft', 3);
+await press(page, 'ArrowDown', 1);
+await press(page, 'ArrowLeft', 1);
+
+// Left: bump village-warden at (3,7)
+await press(page, 'ArrowLeft', 1);
+~~~
 
 Assert:
 
@@ -1025,7 +1087,7 @@ Expected: every command exits 0.
 
 Verify explicitly, keeping the required-only and browser evidence separate:
 
-- **Unit/content proof of required-path viability:** full baseline HP 30 / ATK 10 / DEF 2 previews floor3-core-guardian at 6 hits / 25 HP loss after the mandatory recovery seam; the Floor 3 fact lock works; the ending fact is idempotent; final ledger evidence resolves even when discovered before the scribe.
+- **Unit/content proof of required-path viability:** full baseline HP 30 / ATK 10 / DEF 2 previews floor3-core-guardian at 6 hits / 25 HP loss; the sole boss approach is one bump from the recovery waystone; the Floor 3 fact lock works; the ending fact is idempotent; final ledger evidence resolves even when discovered before the scribe.
 - **Single browser proof:** the existing fresh-save Playwright journey reaches data-lead="story-complete". It may keep the optional Floor 1/Floor 2 rewards already exercised by that journey; it is not the proof that optionals are unnecessary.
 - Floor 3 has two route spines, a permanent shortcut, and optional hidden vault.
 - Boss uses unchanged preview/resolution.
