@@ -21,6 +21,12 @@ describe('attemptMove', () => {
   if (!latchEntity || latchEntity.kind !== 'latch')
     throw new Error('floor1-rear-latch missing');
   const rearTile = tileInDirection(latchEntity.tile, latchEntity.rearSide);
+  const westRelease = findEntityById('floor2-west-release');
+  const eastRelease = findEntityById('floor2-east-release');
+  if (!westRelease || westRelease.kind !== 'latch')
+    throw new Error('floor2-west-release missing');
+  if (!eastRelease || eastRelease.kind !== 'latch')
+    throw new Error('floor2-east-release missing');
 
   it('blocks closed latch from front', () => {
     expect(attemptMove(base, 'east')).toEqual({
@@ -160,6 +166,131 @@ describe('attemptMove', () => {
     if (!result.ok) return;
     expect(result.effect.kind).toBe('combatPrompt');
     expect(result.state).toBe(beforeGatekeeper);
+  });
+
+  for (const release of [westRelease, eastRelease]) {
+    const rear = tileInDirection(release.tile, release.rearSide);
+    const front = tileInDirection(
+      release.tile,
+      release.rearSide === 'east' ? 'west' : 'east',
+    );
+    const frontMove: Direction = release.rearSide;
+    const rearMove: Direction = release.rearSide === 'east' ? 'west' : 'east';
+
+    it(`blocks ${release.id} from the front`, () => {
+      const atFront = { ...base, mapId: 'floor2' as const, tile: front };
+      expect(attemptMove(atFront, frontMove)).toEqual({
+        ok: false,
+        reason: 'latch-closed-front',
+      });
+    });
+
+    it(`opens ${release.id} from the rear where the player stands`, () => {
+      const atRear = { ...base, mapId: 'floor2' as const, tile: rear };
+      const result = attemptMove(atRear, rearMove);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.state.tile).toEqual(rear);
+      expect(result.state.openedShortcutIds).toEqual([release.id]);
+    });
+
+    it(`an opened ${release.id} is traversable both ways without duplicating its id`, () => {
+      const open = {
+        ...base,
+        mapId: 'floor2' as const,
+        tile: front,
+        openedShortcutIds: [release.id],
+      };
+      const enter = attemptMove(open, frontMove);
+      expect(enter.ok).toBe(true);
+      if (!enter.ok) return;
+      expect(enter.state.tile).toEqual(release.tile);
+      const exit = attemptMove(enter.state, frontMove);
+      expect(exit.ok).toBe(true);
+      if (!exit.ok) return;
+      expect(exit.state.tile).toEqual(rear);
+      const back = attemptMove(exit.state, rearMove);
+      expect(back.ok).toBe(true);
+      if (!back.ok) return;
+      expect(back.state.tile).toEqual(release.tile);
+      const leave = attemptMove(back.state, rearMove);
+      expect(leave.ok).toBe(true);
+      if (!leave.ok) return;
+      expect(leave.state.tile).toEqual(front);
+      expect(leave.state.openedShortcutIds).toEqual([release.id]);
+    });
+  }
+
+  it('opens both floor2 releases in either order', () => {
+    const westFirst = attemptMove(
+      { ...base, mapId: 'floor2' as const, tile: { x: 6, y: 6 } },
+      'west',
+    );
+    expect(westFirst.ok).toBe(true);
+    if (!westFirst.ok) return;
+    const thenEast = attemptMove(
+      { ...westFirst.state, tile: { x: 11, y: 6 } },
+      'east',
+    );
+    expect(thenEast.ok).toBe(true);
+    if (!thenEast.ok) return;
+    expect(thenEast.state.openedShortcutIds).toHaveLength(2);
+    expect(thenEast.state.openedShortcutIds).toEqual(
+      expect.arrayContaining(['floor2-west-release', 'floor2-east-release']),
+    );
+
+    const eastFirst = attemptMove(
+      { ...base, mapId: 'floor2' as const, tile: { x: 11, y: 6 } },
+      'east',
+    );
+    expect(eastFirst.ok).toBe(true);
+    if (!eastFirst.ok) return;
+    const thenWest = attemptMove(
+      { ...eastFirst.state, tile: { x: 6, y: 6 } },
+      'west',
+    );
+    expect(thenWest.ok).toBe(true);
+    if (!thenWest.ok) return;
+    expect(thenWest.state.openedShortcutIds).toHaveLength(2);
+    expect(thenWest.state.openedShortcutIds).toEqual(
+      expect.arrayContaining(['floor2-west-release', 'floor2-east-release']),
+    );
+  });
+
+  it('returns through the treasury stair, records the fact, and discovers the workshop treasury', () => {
+    const onFloor2 = {
+      ...base,
+      mapId: 'floor2' as const,
+      tile: { x: 4, y: 3 },
+    };
+    const result = attemptMove(onFloor2, 'north');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor1' });
+    expect(result.state.mapId).toBe('floor1');
+    expect(result.state.tile).toEqual({ x: 17, y: 7 });
+    expect(result.state.factIds).toContain('floor1-treasury-return-used');
+    expect(result.state.discoveredSectionIds).toContain(
+      'floor1-workshop-treasury',
+    );
+  });
+
+  it('applies the treasury reward once and leaves its tile walkable', () => {
+    const arrived = { ...base, tile: { x: 17, y: 7 } };
+    const take = attemptMove(arrived, 'west');
+    expect(take.ok).toBe(true);
+    if (!take.ok) return;
+    expect(take.effect).toEqual({ kind: 'reward', stat: 'defense', amount: 2 });
+    expect(take.state.player.defense).toBe(4);
+    expect(take.state.tile).toEqual({ x: 17, y: 7 });
+    expect(take.state.openedRewardIds).toContain('floor1-future-treasury');
+
+    const walk = attemptMove(take.state, 'west');
+    expect(walk.ok).toBe(true);
+    if (!walk.ok) return;
+    expect(walk.effect).toEqual({ kind: 'moved' });
+    expect(walk.state.tile).toEqual({ x: 16, y: 7 });
+    expect(walk.state.player.defense).toBe(4);
   });
 
   it('leaves the passed-in state untouched on blocked results', () => {
