@@ -19,11 +19,23 @@ export type DialogueLineId =
   | 'scout-find-marks'
   | 'scout-marks-seen'
   | 'scribe-find-ledger'
-  | 'scribe-fragment-found';
+  | 'scribe-fragment-found'
+  | 'warden-subject-returned'
+  | 'subject-returning'
+  | 'subject-village'
+  | 'artisan-treasury-route-found'
+  | 'artisan-heirloom-recovered'
+  | 'scout-route-verified'
+  | 'scribe-floor2-ledger-read';
 
 export type BaseEntity = Readonly<{ id: string; tile: Tile; assetId?: string }>;
 export type NpcId =
-  'village-warden' | 'village-artisan' | 'village-scout' | 'village-scribe';
+  | 'village-warden'
+  | 'village-artisan'
+  | 'village-scout'
+  | 'village-scribe'
+  | 'floor2-missing-subject'
+  | 'village-returned-subject';
 export type NpcPresence = Readonly<{
   factId: string;
   when: 'known' | 'unknown';

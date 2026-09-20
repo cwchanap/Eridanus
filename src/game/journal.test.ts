@@ -80,4 +80,101 @@ describe('buildJournalView', () => {
     );
     expect(entry?.lead).toBe('ledger-find-later-pages');
   });
+
+  it('keeps the earlier main lead when depth facts exist without the sigil', () => {
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        factIds: ['main-missing-person-lead', 'floor1-depth-stairs-used'],
+      }).main.lead,
+    ).toBe('find-sigil');
+  });
+
+  it('requires the used depth stair with the carried sigil to select search-floor2', () => {
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        itemIds: ['tower-depth-sigil'],
+      }).main.lead,
+    ).toBe('descend');
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        itemIds: ['tower-depth-sigil'],
+        factIds: ['floor1-depth-stairs-used'],
+      }).main.lead,
+    ).toBe('search-floor2');
+  });
+
+  it('advances the main lead to investigate-deeper once the subject returns', () => {
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        itemIds: ['tower-depth-sigil'],
+        factIds: ['floor1-depth-stairs-used', 'main-subject-returned'],
+      }).main.lead,
+    ).toBe('investigate-deeper');
+  });
+
+  it('advances the heirloom lead through the return stair and the opened reward', () => {
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        factIds: ['optional-heirloom-lead', 'floor1-treasury-return-used'],
+      }).optional.find((candidate) => candidate.id === 'heirloom')?.lead,
+    ).toBe('heirloom-claim-treasury');
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        factIds: ['optional-heirloom-lead', 'floor1-treasury-return-used'],
+        openedRewardIds: ['floor1-future-treasury'],
+      }).optional.find((candidate) => candidate.id === 'heirloom')?.lead,
+    ).toBe('heirloom-resolved');
+  });
+
+  it('resolves the route lead from the return stair fact', () => {
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        factIds: [
+          'optional-route-lead',
+          'floor1-route-mark-seen',
+          'floor1-treasury-return-used',
+        ],
+      }).optional.find((candidate) => candidate.id === 'route')?.lead,
+    ).toBe('route-resolved');
+  });
+
+  it('advances the ledger lead after the Floor 2 paired-release evidence', () => {
+    expect(
+      buildJournalView({
+        ...createInitialGameState(),
+        factIds: ['optional-ledger-lead', 'floor2-paired-release-ledger-read'],
+        itemIds: ['ledger-fragment-1'],
+      }).optional.find((candidate) => candidate.id === 'ledger')?.lead,
+    ).toBe('ledger-follow-deeper-record');
+  });
+
+  it('advances optional leads even when discoveries precede their intro facts', () => {
+    const view = buildJournalView({
+      ...createInitialGameState(),
+      factIds: [
+        'floor1-treasury-return-used',
+        'floor2-paired-release-ledger-read',
+        'optional-heirloom-lead',
+        'optional-route-lead',
+        'optional-ledger-lead',
+      ],
+      openedRewardIds: ['floor1-future-treasury'],
+    });
+    expect(view.optional.find((c) => c.id === 'heirloom')?.lead).toBe(
+      'heirloom-resolved',
+    );
+    expect(view.optional.find((c) => c.id === 'route')?.lead).toBe(
+      'route-resolved',
+    );
+    expect(view.optional.find((c) => c.id === 'ledger')?.lead).toBe(
+      'ledger-follow-deeper-record',
+    );
+  });
 });

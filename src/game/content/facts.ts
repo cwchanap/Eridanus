@@ -24,6 +24,13 @@ export const FACTS = {
   'floor1-rear-stairs-used': {
     note: 'A second stair returns to the Rear Wing.',
   },
+  'main-subject-returned': {},
+  'floor1-treasury-return-used': {
+    note: 'A hidden stair behind the treasury reaches Floor 2 — the sealed treasury can be entered from behind.',
+  },
+  'floor2-paired-release-ledger-read': {
+    note: 'The keeper paired two rear-release mechanisms: each passage opens only from its far side.',
+  },
 } as const satisfies Record<string, { note?: string }>;
 
 export function hasFact(id: string): boolean {
