@@ -30,6 +30,8 @@ No new `GameState` fields are planned.
 
 ## Task 1: Centralize entity presence, blocking, NPC IDs, and direction geometry
 
+**Status: complete.**
+
 ### Files
 
 Modify:
@@ -119,8 +121,8 @@ Do not put fact conditions on `BaseEntity` and do not add a generic condition ex
 Create `src/game/geometry.ts` with the small cardinal helpers needed by current rules, including:
 
 ```ts
-export function tileInDirection(tile: Tile, direction: Direction): Tile
-export function directionFromTo(from: Tile, to: Tile): Direction | null
+export function tileInDirection(tile: Tile, direction: Direction): Tile;
+export function directionFromTo(from: Tile, to: Tile): Direction | null;
 ```
 
 Use one private direction-delta table inside that module.
@@ -190,6 +192,8 @@ refactor: centralize entity runtime rules
 ---
 
 ## Task 2: Extend HPA-146 facts, dialogue, and journal derivation
+
+**Status: complete.**
 
 ### Files
 
@@ -313,6 +317,8 @@ feat: extend floor two story and quest read models
 ---
 
 ## Task 3: Author the complete Floor 2 and treasury return connection
+
+**Status: complete.**
 
 ### Files
 
@@ -486,6 +492,8 @@ feat: complete floor two authored content
 
 ## Task 4: Prove interactions, alternate order, and persistence
 
+**Status: complete.**
+
 ### Files
 
 Modify:
@@ -575,6 +583,8 @@ test: prove floor two progression and persistence
 ---
 
 ## Task 5: Re-walk one focused real browser journey and finish HPA-146
+
+**Status: complete.**
 
 ### Files
 

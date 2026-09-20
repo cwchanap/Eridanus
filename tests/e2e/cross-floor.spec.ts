@@ -83,7 +83,8 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
     'dialogue',
   );
 
-  // Right x5, Up x3, Right x3, Up x3: village portal → Floor 1 (2,14)
+  // Right x5, Up x3, Right x3, Up x3: village portal → Floor 1 (2,14).
+  // The walk passes over the returned subject's (5,8) tile, still absent.
   await press(page, 'ArrowRight', 5);
   await press(page, 'ArrowUp', 3);
   await press(page, 'ArrowRight', 3);
@@ -99,9 +100,14 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
     1,
   );
 
-  // Right, Up x3: bump floor1-west-sentry; Fight → HP 22/30
+  // Right, Up x3: bump floor1-west-sentry; Cancel clears the prompt, the
+  // re-bump re-opens it, Fight → HP 22/30
   await press(page, 'ArrowRight', 1);
   await press(page, 'ArrowUp', 3);
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByTestId('combat-prompt')).toHaveCount(0);
+  await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
   await page.getByRole('button', { name: 'Fight' }).click();
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 22/30');
@@ -126,35 +132,144 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
   await press(page, 'ArrowUp', 1);
   await press(page, 'ArrowRight', 3);
 
-  // Up: sigil unlocks the front Floor-2 stair → Floor 2 (1,8)
+  // Up: sigil unlocks the front Floor-2 stair → Front Landing (8,10)
   await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
     'floor2',
   );
-  await expect(page.locator('[data-section="floor2-connector"]')).toHaveCount(
-    1,
+  await expect(
+    page.locator('[data-section="floor2-front-landing"]'),
+  ).toHaveCount(1);
+
+  // Up x2: into the Central Hall (8,8)
+  await press(page, 'ArrowUp', 2);
+  await expect(
+    page.locator('[data-section="floor2-central-hall"]'),
+  ).toHaveCount(1);
+
+  // Up x2, Right x4: the last press bumps floor2-east-release (12,6) from
+  // its rear (west) side and opens it
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 4);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'latchOpened',
   );
 
-  // Discovery survives reload
+  // Right x2: through the open release into the East Service Wing
+  await press(page, 'ArrowRight', 2);
+  await expect(
+    page.locator('[data-section="floor2-east-service"]'),
+  ).toHaveCount(1);
+
+  // Up x5: the north column reaches the Rear Gallery (13,1)
+  await press(page, 'ArrowUp', 5);
+  await expect(
+    page.locator('[data-section="floor2-rear-gallery"]'),
+  ).toHaveCount(1);
+
+  // Left x2, Down: bump floor2-missing-subject (11,2) → it departs for the
+  // village and the main lead advances
+  await press(page, 'ArrowLeft', 2);
+  await press(page, 'ArrowDown', 1);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'dialogue',
+  );
+  await expect(page.locator('[data-lead="investigate-deeper"]')).toHaveCount(1);
+
+  // Down x2: the vacated subject tile neither blocks nor talks
+  await press(page, 'ArrowDown', 2);
+  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+  await expect(page.getByTestId('effect')).toHaveCount(0);
+
+  // Down x3, Left x6: the last press bumps floor2-west-release (5,6) from
+  // its rear (east) side and opens it
+  await press(page, 'ArrowDown', 3);
+  await press(page, 'ArrowLeft', 6);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'latchOpened',
+  );
+
+  // Left x2: through the open release into the West Archive (4,6)
+  await press(page, 'ArrowLeft', 2);
+  await expect(
+    page.locator('[data-section="floor2-west-archive"]'),
+  ).toHaveCount(1);
+
+  // Up x4: the new treasury stair (4,2) → Floor 1 workshop treasury (17,7)
+  await press(page, 'ArrowUp', 4);
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'floor1',
+  );
+  await expect(
+    page.locator('[data-section="floor1-workshop-treasury"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('[data-note="floor1-treasury-return-used"]'),
+  ).toHaveCount(1);
+
+  // Left: claim floor1-future-treasury → DEF 2→4
+  await press(page, 'ArrowLeft', 1);
+  await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 4');
+
+  // One HPA-146 reload checkpoint: discovered sections, player stats, and
+  // every committed mechanism survive localStorage
   await page.reload();
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'floor1',
+  );
+  await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 4');
+  await expect(page.locator('[data-section="floor1-entry-court"]')).toHaveCount(
+    1,
+  );
+  await expect(
+    page.locator('[data-section="floor2-front-landing"]'),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('[data-section="floor1-workshop-treasury"]'),
+  ).toHaveCount(1);
+
+  // Left: the claimed treasury tile stays traversable and is never
+  // re-granted (a reset reward would block or bump DEF again)
+  await press(page, 'ArrowLeft', 1);
+  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+  await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 4');
+
+  // Right: back through the treasury stair → Floor 2 (4,2). Down x4,
+  // Right x2: crossing the west release from its front side only works
+  // while it stays open
+  await press(page, 'ArrowRight', 1);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
     'floor2',
   );
-  await expect(page.locator('[data-section="floor1-entry-court"]')).toHaveCount(
-    1,
-  );
-  await expect(page.locator('[data-note="floor1-treasury-seen"]')).toHaveCount(
-    1,
-  );
-  await expect(page.locator('[data-section="floor2-connector"]')).toHaveCount(
-    1,
-  );
+  await press(page, 'ArrowDown', 4);
+  await press(page, 'ArrowRight', 2);
+  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
 
-  // Right x13, Up x7: F2 rear portal → Floor 1 rear (21,3)
-  await press(page, 'ArrowRight', 13);
-  await press(page, 'ArrowUp', 7);
+  // Up x3, Right x2, Up x2, Right x5, Down x5: around the rear gallery to
+  // (13,6), then Left x2: crossing the east release from its front side
+  // only works while it stays open
+  await press(page, 'ArrowUp', 3);
+  await press(page, 'ArrowRight', 2);
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 5);
+  await press(page, 'ArrowDown', 5);
+  await press(page, 'ArrowLeft', 2);
+  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+
+  // Up x5: the missing subject's tile is still walkable — it stays gone
+  await press(page, 'ArrowUp', 5);
+  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+  await expect(page.getByTestId('effect')).toHaveCount(0);
+
+  // Right x5: rear portal → Floor 1 rear wing (21,3)
+  await press(page, 'ArrowRight', 5);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
     'floor1',
@@ -163,12 +278,11 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
     page.locator('[data-note="floor1-rear-stairs-used"]'),
   ).toHaveCount(1);
 
-  // Left, Down x7, Left x4, Left: preview gatekeeper at 15 HP loss; Cancel
+  // Left, Down x7, Left x5: preview the gatekeeper at 9 HP loss; Cancel
   await press(page, 'ArrowLeft', 1);
   await press(page, 'ArrowDown', 7);
-  await press(page, 'ArrowLeft', 4);
-  await press(page, 'ArrowLeft', 1);
-  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 15');
+  await press(page, 'ArrowLeft', 5);
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 9');
   await page.getByRole('button', { name: 'Cancel' }).click();
 
   // Down, Left x3, Up x3: collect floor1-power-core → ATK 12
@@ -177,14 +291,14 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
   await press(page, 'ArrowUp', 3);
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 12');
 
-  // Down, Right x2: preview gatekeeper at 10 HP loss; Fight → HP 12/30
+  // Down, Right x2: preview the gatekeeper at 6 HP loss; Fight → HP 16/30
   await press(page, 'ArrowDown', 1);
   await press(page, 'ArrowRight', 2);
-  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 10');
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 6');
   await page.getByRole('button', { name: 'Fight' }).click();
-  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 12/30');
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 16/30');
 
-  // Left x2, Up x2, Left: open rear latch from the east side
+  // Left x2, Up x2, Left: open the rear latch from its east side
   await press(page, 'ArrowLeft', 2);
   await press(page, 'ArrowUp', 2);
   await press(page, 'ArrowLeft', 1);
@@ -193,20 +307,29 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
     'latchOpened',
   );
 
-  // Left x2: cross the open latch to the front side (10,8)
+  // Left x2: cross the rear latch (10,8). Then through the defeated
+  // sentry's gap down to the village portal → village (11,2)
   await press(page, 'ArrowLeft', 2);
-
-  // Reload: exact position, stats, and the open latch all survive
-  await page.reload();
+  await press(page, 'ArrowDown', 2);
+  await press(page, 'ArrowLeft', 1);
+  await press(page, 'ArrowUp', 1);
+  await press(page, 'ArrowLeft', 2);
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowLeft', 4);
+  await press(page, 'ArrowDown', 4);
+  await press(page, 'ArrowLeft', 1);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
-    'floor1',
+    'village',
   );
-  await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 12');
-  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 12/30');
-  // Traverse the open latch tile in both directions with no blocked reason
-  await press(page, 'ArrowRight', 1);
-  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
-  await press(page, 'ArrowLeft', 1);
-  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+
+  // Down x3, Left x3, Down x3, Left x3: bump village-returned-subject (5,8)
+  await press(page, 'ArrowDown', 3);
+  await press(page, 'ArrowLeft', 3);
+  await press(page, 'ArrowDown', 3);
+  await press(page, 'ArrowLeft', 3);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'dialogue',
+  );
 });
