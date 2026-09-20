@@ -685,30 +685,30 @@ test: complete floor two browser journey
 
 Before marking the PR ready:
 
-- [ ] HPA-146 remains one PR.
-- [ ] No new `GameState` field was added unless a concrete requirement proved facts/opened IDs insufficient.
-- [ ] No generic quest/mechanism/event framework exists.
-- [ ] Both Floor 2 mechanisms use existing latch semantics.
-- [ ] Runtime presence/blocking has one shared implementation used by movement, save validation, rendering/topology as appropriate.
-- [ ] Defeated-enemy disappearance is owned by active-entity lookup, not `resolveEntityAsset`.
-- [ ] `NpcEntity.id` is a closed `NpcId`; `resolveNpcDialogue` is exhaustive with no string coverage Set.
-- [ ] Direction math is shared through `tileInDirection` / `directionFromTo`.
-- [ ] With runtime blocking applied, the existing HPA-237 rear stair remains reachable from the front portal.
-- [ ] Latch rear approaches are derived from `tileInDirection(latch.tile, latch.rearSide)`, not separately hardcoded.
-- [ ] Both latch orders are proven without duplicating the whole browser journey.
-- [ ] Missing subject moves Floor 2 -> village from the single shared `main-subject-returned` intro/presence fact, with no escort state.
-- [ ] Heirloom and route completion are derived from treasury traversal/reward state.
-- [ ] Ledger thread advances but does not finish.
-- [ ] New reciprocal treasury stair reaches the formerly isolated Floor 1 pocket.
-- [ ] Existing HPA-237 rear Floor 1 loop still works.
-- [ ] `search-floor2` keys on carried `tower-depth-sigil` + `floor1-depth-stairs-used`; the depth fact alone does not skip earlier leads.
-- [ ] Runtime-blocked topology reaches the rear stair, both latch rear approaches, subject/ledger interaction approaches, and treasury portal from the front.
-- [ ] Floor 1 gains the overlapping `floor1-workshop-treasury` discovery section.
-- [ ] Required progression does not depend on optional treasure/consumable keys.
-- [ ] Save shape remains current-format-only with no migration/version layer.
-- [ ] HPA-22 assets are reused; no generated art is mixed into this task.
-- [ ] Real Playwright controls are used; no test-only game API exists.
-- [ ] Full CI-equivalent gate is green.
+- [x] HPA-146 remains one PR.
+- [x] No new `GameState` field was added unless a concrete requirement proved facts/opened IDs insufficient.
+- [x] No generic quest/mechanism/event framework exists.
+- [x] Both Floor 2 mechanisms use existing latch semantics.
+- [x] Runtime presence/blocking has one shared implementation used by movement, save validation, rendering/topology as appropriate.
+- [x] Defeated-enemy disappearance is owned by active-entity lookup, not `resolveEntityAsset`.
+- [x] `NpcEntity.id` is a closed `NpcId`; `resolveNpcDialogue` is exhaustive with no string coverage Set.
+- [x] Direction math is shared through `tileInDirection` / `directionFromTo`.
+- [x] With runtime blocking applied, the existing HPA-237 rear stair remains reachable from the front portal.
+- [x] Latch rear approaches are derived from `tileInDirection(latch.tile, latch.rearSide)`, not separately hardcoded.
+- [x] Both latch orders are proven without duplicating the whole browser journey.
+- [x] Missing subject moves Floor 2 -> village from the single shared `main-subject-returned` intro/presence fact, with no escort state.
+- [x] Heirloom and route completion are derived from treasury traversal/reward state.
+- [x] Ledger thread advances but does not finish.
+- [x] New reciprocal treasury stair reaches the formerly isolated Floor 1 pocket.
+- [x] Existing HPA-237 rear Floor 1 loop still works.
+- [x] `search-floor2` keys on carried `tower-depth-sigil` + `floor1-depth-stairs-used`; the depth fact alone does not skip earlier leads.
+- [x] Runtime-blocked topology reaches the rear stair, both latch rear approaches, subject/ledger interaction approaches, and treasury portal from the front.
+- [x] Floor 1 gains the overlapping `floor1-workshop-treasury` discovery section.
+- [x] Required progression does not depend on optional treasure/consumable keys.
+- [x] Save shape remains current-format-only with no migration/version layer.
+- [x] HPA-22 assets are reused; no generated art is mixed into this task.
+- [x] Real Playwright controls are used; no test-only game API exists.
+- [x] Full CI-equivalent gate is green.
 
 ## Expected Final PR Scope
 
