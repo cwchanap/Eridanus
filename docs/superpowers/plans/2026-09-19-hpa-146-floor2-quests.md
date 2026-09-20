@@ -91,6 +91,11 @@ Change `resolveNpcDialogue(npcId, state)` to accept `NpcId` and make its switch 
 
 Remove the separate `NPC_DIALOGUE_IDS: Set<string>` / `hasNpcDialogue` coverage list and the corresponding content-validator branch. The type + exhaustive switch become the single dialogue-coverage contract.
 
+Update the tests that existed only for the old stringly runtime failure:
+
+- delete the `resolveNpcDialogue('nobody', ...)` throw test; an invalid ID should no longer type-check;
+- remove the `village-mystery` "NPC without dialogue" validator case and keep its unrelated unknown-lock-item assertion as its own validation test.
+
 Task 2 widens `NpcId` with the two HPA-146 subject IDs at the same time it adds their switch cases, keeping every intermediate commit compile-safe.
 
 ### Step 3: Add the narrow NPC presence type
