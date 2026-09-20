@@ -73,13 +73,21 @@ Do not persist `questStatus`, `rescuedCharacterIds`, `mechanismIds`, or a generi
 
 Old development saves may become content-invalid as authored map IDs move during pre-release development. Use the existing explicit reset behavior; do not add migration compatibility.
 
-### 3. Add one narrow fact-gated NPC presence seam
+### 3. Add one narrow fact-gated NPC presence seam and centralize runtime entity truth
 
 The missing character must disappear from Floor 2 after the encounter and appear in the village. A static NPC cannot model that, while a new story-state subsystem would duplicate `factIds`.
 
-Extend only `NpcEntity` with an optional fact gate:
+Extend only `NpcEntity` with an optional fact gate, and narrow its ID to a closed `NpcId` union:
 
 ```ts
+type NpcId =
+  | 'village-warden'
+  | 'village-artisan'
+  | 'village-scout'
+  | 'village-scribe'
+  | 'floor2-missing-subject'
+  | 'village-returned-subject';
+
 type NpcPresence = Readonly<{
   factId: string;
   when: 'known' | 'unknown';
@@ -87,6 +95,7 @@ type NpcPresence = Readonly<{
 
 type NpcEntity = BaseEntity &
   Readonly<{
+    id: NpcId;
     kind: 'npc';
     name: string;
     introFactId: string;
@@ -94,25 +103,27 @@ type NpcEntity = BaseEntity &
   }>;
 ```
 
-Semantics:
+`resolveNpcDialogue` takes `NpcId` and uses an exhaustive switch with no default. The existing string `NPC_DIALOGUE_IDS` coverage set is removed rather than becoming a second list to maintain. Adding a mistyped or unhandled authored NPC must fail TypeScript, not at runtime.
 
-- no `presence` means always present;
+Presence semantics:
+
+- an NPC without `presence` is always present;
 - `when: 'unknown'` is present only before the fact is known;
-- `when: 'known'` is present only after the fact is known.
+- `when: 'known'` is present only after the fact is known;
+- the existing defeated-enemy disappearance is also centralized in the same runtime-presence helper rather than remaining hidden inside the asset resolver.
 
-Add one pure helper such as `isEntityPresent(entity, state)` and one state-aware tile lookup such as `getActiveEntityAt(state, tile)`.
+Add these small shared helpers beside the authored lookups in `src/game/content.ts`:
 
-Use the state-aware lookup only where runtime occupancy matters:
+- `isEntityPresent(entity, state)` — runtime existence/visibility for conditional NPCs and defeated enemies;
+- `getActiveEntities(state)` — current map entities filtered through that predicate;
+- `getActiveEntityAt(state, tile)` — state-aware runtime lookup;
+- `isEntityBlocking(entity, state)` plus a tile wrapper — the single rule for reward/enemy/latch consumption plus clue/recovery/NPC/portal blocking semantics.
 
-- movement interaction/blocking;
-- save validation of the current tile;
-- Phaser entity rendering.
+Movement, save validation, and topology tests reuse the same blocking rule. `WorldScene` iterates `getActiveEntities(state)`. `resolveEntityAsset` becomes texture selection only; it no longer decides whether a defeated enemy exists.
 
-Keep static authored lookups such as `findEntityById` and reciprocal-portal validation independent of runtime presence.
+Keep static authored lookups such as `getEntityAt(mapId, tile)`, `findEntityById`, and reciprocal-portal validation independent of runtime presence.
 
-Content validation verifies any NPC presence fact exists in `FACTS`.
-
-This is not a generic conditional-entity scripting system. Only NPCs need it in HPA-146.
+Content validation verifies any NPC presence fact exists in `FACTS`. No generic condition language is added.
 
 ## Missing Character Transition
 
@@ -146,22 +157,38 @@ The completed floor should contain five recognizable authored areas:
 
 Exact section rectangles are implementation details, but every walkable tile remains covered by at least one section because that is an existing content invariant.
 
-Required topology relationships:
+Required topology is verified against the game's real blocking rules, not layout glyphs alone.
 
-1. Front Landing reaches Central Hall without optional rewards.
-2. Both West Archive and East Service Wing are reachable from the central area.
-3. With both Floor 2 latch tiles treated as closed walls, the rear approach of each latch is reachable from the front route without crossing either latch. A latch rear approach is computed from `latch.tile + delta[latch.rearSide]`, matching the existing action geometry; tests must not hardcode separate approach coordinates.
-4. Opening either latch leaves the other mechanism completable.
-5. With both `floor2-west-release` and `floor2-east-release` closed, `floor2-front-to-floor1` still reaches `floor2-rear-to-floor1` without crossing either latch tile. The latches may shorten return routes, but must not gate the proven HPA-237 rear stair.
-6. A new reciprocal stair reaches the sealed 3x3 Floor 1 treasury pocket.
-7. The new treasury stair and missing-character encounter are reachable on the acceptance path without optional quest rewards.
-8. Optional hidden evidence/reward may sit in a side alcove but must not gate the main route.
+Use a fresh required-state Floor 2 snapshot with unopened rewards, undefeated enemies, unopened latches, and `main-subject-returned` still unknown. Flood only floor tiles for which the shared runtime blocking predicate says the player may stand there. Bump-only entities such as the missing subject or ledger clue are targets via a reachable adjacent approach tile, not by pretending their occupied tile is walkable.
+
+The compact proof is:
+
+1. from `floor2-front-to-floor1`, the blocked-state flood reaches `floor2-rear-to-floor1`;
+2. it reaches the rear approach of both Floor 2 latches, with each approach derived through the shared direction helper from `latch.tile` and `latch.rearSide`;
+3. it reaches an interaction approach for the missing subject and ledger clue, plus the new treasury-return portal;
+4. the new reciprocal stair reaches the sealed Floor 1 treasury pocket.
+
+These checks imply either latch can be opened first while preserving the proven HPA-237 rear-stair route. Latches may shorten return routes but are not required to enter that loop. Optional hidden evidence/reward may sit in side alcoves but must not invalidate the blocked-state reachability proof.
+
+Keep a separate layout-only flood only where it proves the Floor 1 treasury pocket remains geometrically isolated from ordinary Floor 1 front/rear entries.
 
 Complexity belongs in authored walls, loops, and connection placement. Do not add reversible switch state or procedural rooms.
 
 ## New Floor 1 Treasury Connection
 
 Preserve the current sealed treasury pocket around `floor1-future-treasury`.
+
+Add an overlapping authored section for the payoff room:
+
+```ts
+{
+  id: 'floor1-workshop-treasury',
+  name: 'Workshop Treasury',
+  bounds: { minX: 15, maxX: 17, minY: 6, maxY: 8 },
+}
+```
+
+Overlapping sections are already legal, and `discoverCurrentSection` records every matching section. This gives the strongest cross-floor exploration payoff its own journal-visible place and a stable browser checkpoint rather than silently reusing the already-discovered broad Rear Wing section.
 
 Add one new portal tile inside that isolated pocket and a reciprocal Floor 2 portal:
 
@@ -254,9 +281,9 @@ Dialogue selection remains direct state inspection in `resolveNpcDialogue`. Do n
 
 Reuse deterministic combat unchanged.
 
-Floor 2 may add a small authored set of stationary enemies and fixed rewards to shape optional route pressure. Exact counts and stat numbers are tuning decisions, but the critical structural path is enemy-free: no stationary enemy may be the only path from the front landing to the existing rear stair, either latch rear approach, the missing subject, or the treasury-return portal.
+Floor 2 may add a small authored set of stationary enemies and fixed rewards to shape route pressure. Do not encode a separate English "enemy-free critical path" rule. The shared blocking predicate and required-state topology flood are the executable contract: if an undefeated enemy, clue, recovery point, NPC, closed latch, or unopened reward cuts the only route to a required interaction approach, the content test fails.
 
-This keeps the topology proof aligned with actual required reachability and avoids making optional Floor 1 rewards a hidden combat prerequisite. Floor 2 combat still exists in optional wing/side routes, and the real browser journey deliberately fights at least one such enemy to prove combat remains integrated.
+This is deliberately stronger and simpler than a second combat/path simulator. HPA-146 adds no combat mechanics, so the browser journey does not need a new Floor 2-specific combat detour; existing cross-floor browser coverage already proves Fight/Cancel integration.
 
 Other constraints remain fixed:
 
@@ -275,10 +302,13 @@ If distinct new art is desired later, scope it as a separate art task/PR rather 
 
 No save shape changes are needed.
 
-The only save-validation behavior change is dynamic occupancy:
+Move the current save-only blocking switch into shared runtime content logic. Save validation calls that same predicate used by movement and topology tests.
 
-- inactive fact-gated NPCs do not block saved current tiles;
-- active NPCs still do.
+Dynamic occupancy then follows one rule:
+
+- inactive fact-gated NPCs and defeated enemies are absent from active lookup;
+- unopened rewards, undefeated active enemies, closed latches, clues, recovery points, and active NPCs block;
+- opened rewards/latches and portals do not block standing/traversal according to the existing semantics.
 
 Add a regression case proving a save can load while standing on the former Floor 2 subject tile after `main-subject-returned` is known, while the same tile is blocking before that fact.
 
@@ -298,10 +328,11 @@ Existing rules continue to cover:
 - globally unique carried item IDs;
 - valid entity floor tiles;
 - complete section coverage;
-- dialogue coverage for every NPC ID;
 - authored fact references;
 - reciprocal portals;
 - valid portal lock item references.
+
+Dialogue coverage no longer needs a runtime Set/string validator once `NpcEntity.id` is a closed `NpcId` and `resolveNpcDialogue` is exhaustive.
 
 Do not add a second validator for Floor 2.
 
@@ -309,7 +340,8 @@ Do not add a second validator for Floor 2.
 
 No new HUD subsystem is required.
 
-- `WorldScene` skips inactive NPCs before resolving/drawing their assets.
+- `WorldScene` iterates `getActiveEntities(state)`; it does not own a second visibility filter.
+- `resolveEntityAsset` becomes texture-only. Defeated-enemy disappearance moves to the shared presence predicate.
 - Existing NPC guide art is reused for both subject instances.
 - Existing effect rendering already handles dialogue, clue, reward, latch, travel, and combat.
 - `JournalPanel` only needs new closed lead IDs and display copy.
@@ -321,41 +353,42 @@ No new HUD subsystem is required.
 
 Cover the risky contracts directly:
 
+- closed `NpcId` authoring and exhaustive dialogue selection;
 - pure fact-gated NPC presence before/after `main-subject-returned` using object literals;
+- defeated enemies and fact-hidden NPCs disappear through the same active-entity rule;
+- the shared blocking predicate preserves current reward/enemy/latch/clue/recovery/NPC/portal semantics;
 - content validation rejects an unknown NPC presence fact without adding a maps-injection seam;
+- the shared `tileInDirection` / direction geometry drives movement, latch interaction, and topology rear-approach derivation;
 - once the real subject entities are authored, movement sees only active NPC occupancy;
 - once the real subject entities are authored, save validation allows the vacated Floor 2 NPC tile only after the presence fact;
 - missing-character interaction records the return fact and returns the intended dialogue line;
 - warden/artisan/scout/scribe dialogue acknowledges HPA-146 facts even when discoveries happened before first conversation;
 - journal leads resolve heirloom and lost-route threads from existing facts/opened reward state and advance ledger without completing it;
-- each Floor 2 latch opens from its authored rear side and remains durable;
-- the two latches are independently completable in either intended order;
 - new treasury portals are reciprocal and traversal records `floor1-treasury-return-used`;
 - treasury reward is reachable through the new connection and still collected exactly once;
-- every Floor 2 walkable tile belongs to a section;
-- with both Floor 2 latches treated as closed walls, the existing HPA-237 rear stair and both computed latch rear approaches remain reachable from the front route;
-- the critical subject/treasury/latch/rear-stair topology is enemy-free and remains connected without optional rewards.
+- the blocked-state Floor 2 flood reaches the rear portal, both derived latch rear approaches, and interaction approaches for the subject/ledger plus the treasury portal;
+- the Floor 1 treasury pocket remains geometrically isolated except through the new reciprocal portal;
+- arriving in the pocket discovers `floor1-workshop-treasury`.
 
-Prefer geometry/flood-fill assertions over a second simulation framework.
+Do not build a second simulator; the topology test reuses the same blocking predicate as the runtime.
 
 ### Playwright
 
 Extend the existing real `tests/e2e/cross-floor.spec.ts`; do not create a test-only game API.
 
-The critical browser journey should prove one representative order:
+Keep the browser journey focused on integration surfaces unit tests cannot prove cheaply:
 
 - fresh village -> Floor 1 -> Floor 2;
-- take real route choices through the completed floor;
-- open both mechanisms;
-- encounter the missing subject and commit the return fact;
-- read the Floor 2 ledger evidence;
+- after each authored Floor 2 navigation leg, assert the expected `data-section` checkpoint so a changed wall fails near the bad leg rather than much later;
+- open both mechanisms through real rear-side movement;
+- encounter the missing subject and prove the presence flip through real movement/rendering;
 - use the new treasury-return stair;
-- claim the previously sealed Floor 1 treasury reward;
-- observe derived journal/dialogue payoff;
-- return to the village and see the subject/warden updated there;
-- reload at meaningful checkpoints and verify mechanisms, subject placement, evidence, opened treasure, and defeated enemies do not duplicate or regress.
+- assert `floor1-workshop-treasury` on arrival and claim the previously sealed reward;
+- assert one representative derived lead, `investigate-deeper`, to prove main-state -> journal -> DOM wiring;
+- return to the village and interact with the returned subject;
+- perform one reload checkpoint proving the new latch/subject/treasury state survives.
 
-Unit tests, not a duplicated second browser journey, prove the alternate mechanism order.
+Do not duplicate all four journal leads or re-bump artisan/scout/scribe in E2E; Task 2 unit tests own those read-model branches. Existing browser coverage already proves combat and general reload behavior. Unit tests, not a second browser journey, prove the alternate mechanism order.
 
 ## Implementation Sequencing
 
@@ -373,11 +406,11 @@ The full HPA-146 implementation stays on this one PR.
 
 ## Risks
 
-### Conditional NPC occupancy drift
+### Runtime blocking drift
 
-If rendering filters an NPC but movement/save validation still use static authored occupancy, the subject can become invisible but continue blocking or invalidate legitimate saves.
+If movement, save validation, rendering, and topology each encode their own entity-state rules, a content proof can pass while the real maze is soft-locked.
 
-Mitigation: one pure presence helper, used by the three runtime occupancy/rendering call sites. Task 1 tests the pure helper and validator only; real movement/save occupancy is tested after the subject entities exist. Do not add a maps-injection seam just for tests.
+Mitigation: one runtime presence rule, one blocking predicate, and state-aware active lookups in shared game code. Movement, save validation, renderer iteration, and topology tests consume those helpers. Task 1 tests the pure helpers; real subject-tile occupancy is tested after authored entities exist. Do not add a maps-injection seam just for tests.
 
 ### Main-lead fact drift
 
@@ -401,7 +434,7 @@ Mitigation: derive all HPA-146 journal/dialogue states from existing durable evi
 
 Replacing Floor 2 geometry invalidates current counted-key e2e navigation.
 
-Mitigation: land unit/topology proof with the map rewrite, then re-walk and update the existing Playwright route. Intermediate planning/implementation commits may temporarily fail that journey; the final branch must be green.
+Mitigation: land runtime-aware topology proof with the map rewrite, then re-walk one trimmed Playwright route. Assert the expected journal section after each navigation leg to localize a bad wall immediately. Intermediate planning/implementation commits may temporarily fail that journey; the final branch must be green.
 
 ### Art scope creep
 
@@ -429,4 +462,6 @@ Do not add:
 
 HPA-146 is primarily authored-content expansion on top of HPA-235.
 
-The only new runtime abstraction is a narrow fact-gated NPC presence rule so the missing character can move from Floor 2 to the village without adding story-state machinery. Everything else—mechanisms, quests, evidence, treasury payoff, combat, persistence, and journal updates—reuses the existing latch/fact/reward/portal/read-model seams.
+The only new gameplay behavior is a narrow fact-gated NPC presence rule so the missing character can move from Floor 2 to the village without adding story-state machinery.
+
+Supporting refactors only consolidate rules that already exist: closed `NpcId` dialogue dispatch, shared direction geometry, shared runtime presence/blocking, and state-aware active-entity lookup. Everything else—mechanisms, quests, evidence, treasury payoff, combat, persistence, and journal updates—reuses the existing latch/fact/reward/portal/read-model seams.
