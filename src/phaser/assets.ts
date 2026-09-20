@@ -72,10 +72,6 @@ export function resolveEntityAsset(
   entity: Entity,
   state: GameState,
 ): AssetKey | null {
-  if (entity.kind === 'enemy' && state.defeatedEnemyIds.includes(entity.id)) {
-    return null;
-  }
-
   const base = baseEntityAsset(entity);
   if (!base) return null;
 

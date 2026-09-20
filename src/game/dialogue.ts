@@ -1,7 +1,7 @@
-import type { DialogueLineId, GameState } from './types';
+import type { DialogueLineId, GameState, NpcId } from './types';
 
 export function resolveNpcDialogue(
-  npcId: string,
+  npcId: NpcId,
   state: GameState,
 ): DialogueLineId {
   switch (npcId) {
@@ -26,8 +26,5 @@ export function resolveNpcDialogue(
       return state.itemIds.includes('ledger-fragment-1')
         ? 'scribe-fragment-found'
         : 'scribe-find-ledger';
-
-    default:
-      throw new Error('Unknown NPC: ' + npcId);
   }
 }

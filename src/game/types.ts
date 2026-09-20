@@ -22,6 +22,12 @@ export type DialogueLineId =
   | 'scribe-fragment-found';
 
 export type BaseEntity = Readonly<{ id: string; tile: Tile; assetId?: string }>;
+export type NpcId =
+  'village-warden' | 'village-artisan' | 'village-scout' | 'village-scribe';
+export type NpcPresence = Readonly<{
+  factId: string;
+  when: 'known' | 'unknown';
+}>;
 export type ClueEntity = BaseEntity &
   Readonly<{
     kind: 'clue';
@@ -31,8 +37,10 @@ export type ClueEntity = BaseEntity &
 export type NpcEntity = BaseEntity &
   Readonly<{
     kind: 'npc';
+    id: NpcId;
     name: string;
     introFactId: string;
+    presence?: NpcPresence;
   }>;
 export type RewardEntity = BaseEntity &
   Readonly<{ kind: 'reward' }> &

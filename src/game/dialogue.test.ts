@@ -57,10 +57,4 @@ describe('resolveNpcDialogue', () => {
       }),
     ).toBe('scribe-fragment-found');
   });
-
-  it('throws for an unknown npc', () => {
-    expect(() =>
-      resolveNpcDialogue('nobody', createInitialGameState()),
-    ).toThrow('Unknown NPC: nobody');
-  });
 });

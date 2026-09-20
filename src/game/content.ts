@@ -2,10 +2,10 @@ import { floor1 } from './content/floor1';
 import { floor2 } from './content/floor2';
 import { village } from './content/village';
 import { hasFact } from './content/facts';
-import { hasNpcDialogue } from './content/dialogue';
 import { createInitialGameState } from './state';
 import type {
   Entity,
+  GameState,
   MapDefinition,
   MapId,
   MapSection,
@@ -40,6 +40,54 @@ export function findEntityById(id: string): Entity | undefined {
   return Object.values(MAPS)
     .flatMap((map) => map.entities)
     .find((entity) => entity.id === id);
+}
+
+export function isEntityPresent(entity: Entity, state: GameState): boolean {
+  if (entity.kind === 'enemy')
+    return !state.defeatedEnemyIds.includes(entity.id);
+  if (entity.kind === 'npc' && entity.presence) {
+    const known = state.factIds.includes(entity.presence.factId);
+    return entity.presence.when === 'known' ? known : !known;
+  }
+  return true;
+}
+
+export function getActiveEntities(state: GameState): readonly Entity[] {
+  return MAPS[state.mapId].entities.filter((entity) =>
+    isEntityPresent(entity, state),
+  );
+}
+
+export function getActiveEntityAt(
+  state: GameState,
+  tile: Tile,
+): Entity | undefined {
+  return getActiveEntities(state).find(
+    (entity) => entity.tile.x === tile.x && entity.tile.y === tile.y,
+  );
+}
+
+export function isEntityBlocking(entity: Entity, state: GameState): boolean {
+  if (!isEntityPresent(entity, state)) return false;
+  switch (entity.kind) {
+    case 'reward':
+      return !state.openedRewardIds.includes(entity.id);
+    case 'enemy':
+      return true;
+    case 'latch':
+      return !state.openedShortcutIds.includes(entity.id);
+    case 'clue':
+    case 'recovery':
+    case 'npc':
+      return true;
+    case 'portal':
+      return false;
+  }
+}
+
+export function isTileBlockedByEntity(state: GameState, tile: Tile): boolean {
+  const entity = getActiveEntityAt(state, tile);
+  return entity !== undefined && isEntityBlocking(entity, state);
 }
 
 export function findSectionById(id: string): MapSection | undefined {
@@ -157,8 +205,10 @@ export function validateContent(
         errors.push(`${entity.id}: entity tile must be floor`);
 
       if (entity.kind === 'npc') {
-        if (!hasNpcDialogue(entity.id))
-          errors.push(`${entity.id}: npc has no dialogue lines`);
+        if (entity.presence && !hasFact(entity.presence.factId))
+          errors.push(
+            `${entity.id}: unknown presence fact id: ${entity.presence.factId}`,
+          );
         if (!hasFact(entity.introFactId))
           errors.push(
             `${entity.id}: unknown intro fact id: ${entity.introFactId}`,

@@ -25,7 +25,7 @@ const testReward: RewardEntity = {
 
 const testNpc: NpcEntity = {
   kind: 'npc',
-  id: 'test-npc',
+  id: 'village-warden',
   tile: { x: 1, y: 1 },
   name: 'Guide',
   introFactId: 'optional-route-lead',
@@ -86,7 +86,7 @@ describe('asset seam', () => {
     ).toBe('shortcut-gate-open');
   });
 
-  it('removes defeated enemies', () => {
+  it('keeps texture selection independent of runtime activity', () => {
     expect(resolveEntityAsset(testEnemy, createInitialGameState())).toBe(
       'enemy-ruin-guard',
     );
@@ -95,7 +95,7 @@ describe('asset seam', () => {
         ...createInitialGameState(),
         defeatedEnemyIds: [testEnemy.id],
       }),
-    ).toBeNull();
+    ).toBe('enemy-ruin-guard');
   });
 
   it('falls back to guide art for an npc without an explicit asset', () => {
@@ -176,7 +176,7 @@ describe('asset seam', () => {
               ...state,
               defeatedEnemyIds: [entity.id],
             }),
-          ).toBeNull();
+          ).toBe('enemy-ruin-guard');
         }
       }
     }

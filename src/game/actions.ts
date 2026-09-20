@@ -1,15 +1,8 @@
 import { previewCombat } from './combat';
 import { resolveNpcDialogue } from './dialogue';
+import { directionFromTo } from './geometry';
 import { addItem, recordFact } from './progress';
-import type { ActionResult, Direction, Entity, GameState, Tile } from './types';
-
-function directionFromTo(from: Tile, to: Tile): Direction | null {
-  if (to.x === from.x && to.y === from.y - 1) return 'north';
-  if (to.x === from.x && to.y === from.y + 1) return 'south';
-  if (to.x === from.x - 1 && to.y === from.y) return 'west';
-  if (to.x === from.x + 1 && to.y === from.y) return 'east';
-  return null;
-}
+import type { ActionResult, Entity, GameState, Tile } from './types';
 
 export function interactWithEntity(
   state: GameState,

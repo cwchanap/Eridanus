@@ -20,14 +20,3 @@ export const DIALOGUE_LINES: Record<DialogueLineId, string> = {
   'scribe-fragment-found':
     'This fragment mentions paired mechanisms. More pages must survive deeper in the tower.',
 };
-
-export const NPC_DIALOGUE_IDS = new Set([
-  'village-warden',
-  'village-artisan',
-  'village-scout',
-  'village-scribe',
-]);
-
-export function hasNpcDialogue(id: string): boolean {
-  return NPC_DIALOGUE_IDS.has(id);
-}
