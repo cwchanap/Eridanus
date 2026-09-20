@@ -2,13 +2,13 @@ import {
   findEntityById,
   findItemRewardByItemId,
   findSectionById,
-  getEntityAt,
   isLayoutFloor,
+  isTileBlockedByEntity,
   MAPS,
 } from './content';
 import { hasFact } from './content/facts';
 import { createInitialGameState } from './state';
-import type { GameState, Tile } from './types';
+import type { GameState } from './types';
 
 const SAVE_KEY = 'eridanus.save';
 
@@ -52,25 +52,6 @@ function hasValidShape(state: unknown): state is GameState {
   );
 }
 
-function isTileOccupiedByBlockingEntity(state: GameState, tile: Tile): boolean {
-  const entity = getEntityAt(state.mapId, tile);
-  if (!entity) return false;
-  switch (entity.kind) {
-    case 'reward':
-      return !state.openedRewardIds.includes(entity.id);
-    case 'enemy':
-      return !state.defeatedEnemyIds.includes(entity.id);
-    case 'latch':
-      return !state.openedShortcutIds.includes(entity.id);
-    case 'clue':
-    case 'recovery':
-    case 'npc':
-      return true;
-    case 'portal':
-      return false;
-  }
-}
-
 function hasValidContent(state: GameState): boolean {
   if (!Object.hasOwn(MAPS, state.mapId)) return false;
   if (!isLayoutFloor(state.mapId, state.tile)) return false;
@@ -105,7 +86,7 @@ function hasValidContent(state: GameState): boolean {
       return false;
   }
 
-  return !isTileOccupiedByBlockingEntity(state, state.tile);
+  return !isTileBlockedByEntity(state, state.tile);
 }
 
 export function saveGame(storage: Storage, state: GameState): boolean {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { attemptMove } from './movement';
+import { findEntityById } from './content';
+import { tileInDirection } from './geometry';
 import type { Direction, GameState } from './types';
 
 const base: GameState = {
@@ -15,6 +17,11 @@ const base: GameState = {
 };
 
 describe('attemptMove', () => {
+  const latchEntity = findEntityById('floor1-rear-latch');
+  if (!latchEntity || latchEntity.kind !== 'latch')
+    throw new Error('floor1-rear-latch missing');
+  const rearTile = tileInDirection(latchEntity.tile, latchEntity.rearSide);
+
   it('blocks closed latch from front', () => {
     expect(attemptMove(base, 'east')).toEqual({
       ok: false,
@@ -23,7 +30,7 @@ describe('attemptMove', () => {
   });
 
   it('opens latch from rear without moving onto it', () => {
-    const rear = { ...base, tile: { x: 12, y: 8 } };
+    const rear = { ...base, tile: rearTile };
     const result = attemptMove(rear, 'west');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -36,7 +43,7 @@ describe('attemptMove', () => {
     const result = attemptMove(open, 'east');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.state.tile).toEqual({ x: 11, y: 8 });
+    expect(result.state.tile).toEqual(latchEntity.tile);
     expect(result.state.discoveredSectionIds).toContain('floor1-rear-wing');
   });
 

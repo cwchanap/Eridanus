@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { MAPS } from '../game/content';
+import { MAPS, getActiveEntities } from '../game/content';
 import type { Direction, InputCommand, SessionState } from '../game/types';
 import {
   ASSET_PATHS,
@@ -80,7 +80,7 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    for (const entity of map.entities) {
+    for (const entity of getActiveEntities(state)) {
       const assetKey = resolveEntityAsset(entity, state);
       if (!assetKey) continue;
 

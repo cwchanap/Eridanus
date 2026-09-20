@@ -4,11 +4,130 @@ import {
   findEntityById,
   findItemRewardByItemId,
   findSectionById,
+  getActiveEntities,
+  isEntityBlocking,
+  isEntityPresent,
+  isTileBlockedByEntity,
   validateContent,
 } from './content';
 import { createInitialGameState } from './state';
 import { village } from './content/village';
-import type { Entity, MapDefinition, MapId, Tile } from './types';
+import type {
+  Entity,
+  MapDefinition,
+  MapId,
+  NpcEntity,
+  NpcId,
+  Tile,
+} from './types';
+
+const entity = (id: string): Entity => {
+  const found = findEntityById(id);
+  if (!found) throw new Error(`missing entity: ${id}`);
+  return found;
+};
+
+const npc = (id: NpcId): NpcEntity => {
+  const found = entity(id);
+  if (found.kind !== 'npc') throw new Error(`${id} is not an npc`);
+  return found;
+};
+
+describe('runtime entity presence', () => {
+  const state = createInitialGameState();
+
+  it('keeps an npc without presence always present', () => {
+    expect(isEntityPresent(npc('village-warden'), state)).toBe(true);
+  });
+
+  it('gates an npc with a known presence on the fact', () => {
+    const gated: NpcEntity = {
+      ...npc('village-warden'),
+      presence: { factId: 'floor1-treasury-seen', when: 'known' },
+    };
+    expect(isEntityPresent(gated, state)).toBe(false);
+    expect(
+      isEntityPresent(gated, { ...state, factIds: ['floor1-treasury-seen'] }),
+    ).toBe(true);
+  });
+
+  it('gates an npc with an unknown presence on the absence of the fact', () => {
+    const gated: NpcEntity = {
+      ...npc('village-warden'),
+      presence: { factId: 'floor1-treasury-seen', when: 'unknown' },
+    };
+    expect(isEntityPresent(gated, state)).toBe(true);
+    expect(
+      isEntityPresent(gated, { ...state, factIds: ['floor1-treasury-seen'] }),
+    ).toBe(false);
+  });
+
+  it('excludes defeated enemies from the active entities', () => {
+    const active = getActiveEntities({
+      ...state,
+      mapId: 'floor1',
+      defeatedEnemyIds: ['floor1-gatekeeper'],
+    });
+    expect(active.some((e) => e.id === 'floor1-gatekeeper')).toBe(false);
+    expect(active.some((e) => e.id === 'floor1-west-sentry')).toBe(true);
+  });
+});
+
+describe('isEntityBlocking', () => {
+  const state = createInitialGameState();
+
+  it('blocks an unopened reward and not an opened one', () => {
+    const reward = entity('floor1-power-core');
+    expect(isEntityBlocking(reward, state)).toBe(true);
+    expect(
+      isEntityBlocking(reward, {
+        ...state,
+        openedRewardIds: ['floor1-power-core'],
+      }),
+    ).toBe(false);
+  });
+
+  it('blocks an active enemy while a defeated enemy is inactive', () => {
+    const enemy = entity('floor1-gatekeeper');
+    expect(isEntityBlocking(enemy, state)).toBe(true);
+    expect(
+      isEntityBlocking(enemy, {
+        ...state,
+        defeatedEnemyIds: ['floor1-gatekeeper'],
+      }),
+    ).toBe(false);
+  });
+
+  it('blocks a closed latch and not an opened one', () => {
+    const latch = entity('floor1-rear-latch');
+    expect(isEntityBlocking(latch, state)).toBe(true);
+    expect(
+      isEntityBlocking(latch, {
+        ...state,
+        openedShortcutIds: ['floor1-rear-latch'],
+      }),
+    ).toBe(false);
+  });
+
+  it('blocks clues, recoveries, and active npcs', () => {
+    expect(isEntityBlocking(entity('floor1-route-mark'), state)).toBe(true);
+    expect(isEntityBlocking(entity('village-recovery'), state)).toBe(true);
+    expect(isEntityBlocking(npc('village-warden'), state)).toBe(true);
+  });
+
+  it('never blocks a portal', () => {
+    expect(isEntityBlocking(entity('village-to-floor1'), state)).toBe(false);
+  });
+
+  it('rejects a save tile standing on an active npc through the tile wrapper', () => {
+    expect(
+      isTileBlockedByEntity(createInitialGameState(), { x: 3, y: 7 }),
+    ).toBe(true);
+    expect(
+      isTileBlockedByEntity(createInitialGameState(), { x: 4, y: 7 }),
+    ).toBe(false);
+  });
+});
 
 describe('authored content', () => {
   it('defines all current maps', () => {
@@ -297,15 +416,8 @@ describe('validateContent failure branches', () => {
     ]);
   });
 
-  it('flags an npc without dialogue and an unknown lock item', () => {
+  it('flags an unknown lock item id', () => {
     const maps = villageWith([
-      {
-        kind: 'npc',
-        id: 'village-mystery',
-        tile: { x: 3, y: 3 },
-        name: 'Mystery',
-        introFactId: 'main-missing-person-lead',
-      },
       {
         kind: 'portal',
         id: 'village-to-floor1',
@@ -319,9 +431,28 @@ describe('validateContent failure branches', () => {
       },
     ]);
     expect(validateContent(maps)).toEqual([
-      'village-mystery: npc has no dialogue lines',
       'village-to-floor1: unknown lock item id: no-such-item',
       'village-to-floor1: reciprocal portal missing',
+    ]);
+  });
+
+  it('flags an npc presence fact that does not exist', () => {
+    const maps = {
+      ...MAPS,
+      village: {
+        ...village,
+        entities: village.entities.map((e) =>
+          e.kind === 'npc' && e.id === 'village-warden'
+            ? {
+                ...e,
+                presence: { factId: 'not-a-fact', when: 'known' } as const,
+              }
+            : e,
+        ),
+      },
+    };
+    expect(validateContent(maps)).toEqual([
+      'village-warden: unknown presence fact id: not-a-fact',
     ]);
   });
 

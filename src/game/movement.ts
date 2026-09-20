@@ -1,26 +1,24 @@
-import { getEntityAt, isInBounds, isLayoutFloor } from './content';
+import {
+  getActiveEntityAt,
+  isEntityBlocking,
+  isInBounds,
+  isLayoutFloor,
+} from './content';
 import { interactWithEntity } from './actions';
+import { tileInDirection } from './geometry';
 import { discoverCurrentSection, recordFact } from './progress';
-import type { ActionResult, Direction, GameState, Tile } from './types';
-
-const DELTA: Record<Direction, Tile> = {
-  north: { x: 0, y: -1 },
-  south: { x: 0, y: 1 },
-  west: { x: -1, y: 0 },
-  east: { x: 1, y: 0 },
-};
+import type { ActionResult, Direction, GameState } from './types';
 
 export function attemptMove(
   state: GameState,
   direction: Direction,
 ): ActionResult {
-  const delta = DELTA[direction];
-  const target = { x: state.tile.x + delta.x, y: state.tile.y + delta.y };
+  const target = tileInDirection(state.tile, direction);
   if (!isInBounds(state.mapId, target))
     return { ok: false, reason: 'out-of-bounds' };
   if (!isLayoutFloor(state.mapId, target)) return { ok: false, reason: 'wall' };
 
-  const entity = getEntityAt(state.mapId, target);
+  const entity = getActiveEntityAt(state, target);
   if (entity) {
     if (entity.kind === 'portal') {
       if (entity.lock && !state.itemIds.includes(entity.lock.requiresItemId)) {
@@ -46,12 +44,8 @@ export function attemptMove(
         effect: { kind: 'traveled', mapId: entity.target.mapId },
       };
     }
-    const passable =
-      (entity.kind === 'latch' &&
-        state.openedShortcutIds.includes(entity.id)) ||
-      (entity.kind === 'enemy' && state.defeatedEnemyIds.includes(entity.id)) ||
-      (entity.kind === 'reward' && state.openedRewardIds.includes(entity.id));
-    if (!passable) return interactWithEntity(state, entity, state.tile);
+    if (isEntityBlocking(entity, state))
+      return interactWithEntity(state, entity, state.tile);
   }
 
   return {
