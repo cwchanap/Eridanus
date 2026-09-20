@@ -41,6 +41,7 @@ Modify:
 - `src/game/save.ts`
 - `src/game/dialogue.ts`
 - `src/game/content/dialogue.ts`
+- `src/game/dialogue.test.ts`
 - `src/phaser/WorldScene.ts`
 - `src/phaser/assets.ts`
 - `src/game/content.test.ts`
