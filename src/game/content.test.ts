@@ -11,6 +11,7 @@ import {
   validateContent,
 } from './content';
 import { createInitialGameState } from './state';
+import { tileInDirection } from './geometry';
 import { village } from './content/village';
 import type {
   Entity,
@@ -149,72 +150,154 @@ describe('authored content', () => {
       'floor1-depth-sigil',
     );
     expect(findSectionById('floor1-upper-gallery')?.name).toBe('Upper Gallery');
-    expect(findSectionById('floor2-connector')?.name).toBe('Floor 2 Connector');
+    expect(findSectionById('floor2-front-landing')?.name).toBe('Front Landing');
+    expect(findSectionById('floor2-central-hall')?.name).toBe('Central Hall');
+    expect(findSectionById('floor2-west-archive')?.name).toBe('West Archive');
+    expect(findSectionById('floor2-east-service')?.name).toBe(
+      'East Service Wing',
+    );
+    expect(findSectionById('floor2-rear-gallery')?.name).toBe('Rear Gallery');
   });
 
-  it('flood-fills every map from real entrances and honors the sealed pocket', () => {
-    const tileKey = (tile: Tile): string => `${tile.x},${tile.y}`;
-    const floodFloor = (
-      map: MapDefinition,
-      starts: readonly Tile[],
-    ): Set<string> => {
-      const reachable = new Set<string>();
-      const queue = starts.filter(
-        (tile) => map.layout[tile.y]?.[tile.x] === '.',
-      );
-      while (queue.length > 0) {
-        const tile = queue.pop()!;
-        const key = tileKey(tile);
-        if (reachable.has(key)) continue;
-        reachable.add(key);
-        for (const next of [
-          { x: tile.x - 1, y: tile.y },
-          { x: tile.x + 1, y: tile.y },
-          { x: tile.x, y: tile.y - 1 },
-          { x: tile.x, y: tile.y + 1 },
-        ]) {
-          if (
-            map.layout[next.y]?.[next.x] === '.' &&
-            !reachable.has(tileKey(next))
-          )
-            queue.push(next);
-        }
+  const tileKey = (tile: Tile): string => `${tile.x},${tile.y}`;
+  const floodFloor = (
+    map: MapDefinition,
+    starts: readonly Tile[],
+    canStand: (tile: Tile) => boolean = (tile) =>
+      map.layout[tile.y]?.[tile.x] === '.',
+  ): Set<string> => {
+    const reachable = new Set<string>();
+    const queue = starts.filter((tile) => canStand(tile));
+    while (queue.length > 0) {
+      const tile = queue.pop()!;
+      const key = tileKey(tile);
+      if (reachable.has(key)) continue;
+      reachable.add(key);
+      for (const next of [
+        { x: tile.x - 1, y: tile.y },
+        { x: tile.x + 1, y: tile.y },
+        { x: tile.x, y: tile.y - 1 },
+        { x: tile.x, y: tile.y + 1 },
+      ]) {
+        if (canStand(next) && !reachable.has(tileKey(next))) queue.push(next);
       }
-      return reachable;
-    };
+    }
+    return reachable;
+  };
+  const hasAdjacentApproach = (reachable: Set<string>, tile: Tile): boolean =>
+    [
+      { x: tile.x - 1, y: tile.y },
+      { x: tile.x + 1, y: tile.y },
+      { x: tile.x, y: tile.y - 1 },
+      { x: tile.x, y: tile.y + 1 },
+    ].some((approach) => reachable.has(tileKey(approach)));
+  const portal = (id: string) => {
+    const found = entity(id);
+    if (found.kind !== 'portal') throw new Error(`${id} is not a portal`);
+    return found;
+  };
+  const latch = (id: string) => {
+    const found = entity(id);
+    if (found.kind !== 'latch') throw new Error(`${id} is not a latch`);
+    return found;
+  };
 
+  it('flood-fills the village from the initial tile', () => {
     const villageReachable = floodFloor(village, [
       createInitialGameState().tile,
     ]);
     for (const entity of village.entities) {
       expect(villageReachable.has(tileKey(entity.tile))).toBe(true);
     }
+  });
 
-    const floor2Front = findEntityById('floor2-front-to-floor1');
-    const floor2Rear = findEntityById('floor2-rear-to-floor1');
-    if (!floor2Front || floor2Front.kind !== 'portal')
-      throw new Error('floor2 front portal missing');
-    if (!floor2Rear || floor2Rear.kind !== 'portal')
-      throw new Error('floor2 rear portal missing');
+  it('reaches the required floor two route through the runtime blocking rule', () => {
+    // Fresh required-state snapshot: nothing opened or defeated, the missing
+    // subject still present because main-subject-returned is unknown.
+    const freshFloor2 = {
+      ...createInitialGameState(),
+      mapId: 'floor2' as const,
+    };
+    const reachable = floodFloor(
+      MAPS.floor2,
+      [portal('floor2-front-to-floor1').tile],
+      (tile) =>
+        MAPS.floor2.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(freshFloor2, tile),
+    );
+
+    expect(reachable.has(tileKey(portal('floor2-rear-to-floor1').tile))).toBe(
+      true,
+    );
     expect(
-      floodFloor(MAPS.floor2, [floor2Front.tile]).has(tileKey(floor2Rear.tile)),
+      reachable.has(tileKey(portal('floor2-treasury-to-floor1').tile)),
     ).toBe(true);
-
-    const front = findEntityById('floor1-to-village');
-    const rear = findEntityById('floor1-rear-to-floor2');
-    if (!front || front.kind !== 'portal')
-      throw new Error('floor1 front portal missing');
-    if (!rear || rear.kind !== 'portal')
-      throw new Error('floor1 rear portal missing');
-    const reachable = floodFloor(MAPS.floor1, [front.tile, rear.tile]);
-
-    for (const entity of MAPS.floor1.entities) {
-      if (entity.id === 'floor1-future-treasury') {
-        expect(reachable.has(tileKey(entity.tile))).toBe(false);
-      } else {
-        expect(reachable.has(tileKey(entity.tile)), entity.id).toBe(true);
-      }
+    for (const id of ['floor2-west-release', 'floor2-east-release'] as const) {
+      const release = latch(id);
+      expect(
+        reachable.has(tileKey(tileInDirection(release.tile, release.rearSide))),
+      ).toBe(true);
     }
+    expect(
+      hasAdjacentApproach(reachable, entity('floor2-missing-subject').tile),
+    ).toBe(true);
+    expect(
+      hasAdjacentApproach(
+        reachable,
+        entity('floor2-paired-release-ledger').tile,
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps the treasury pocket sealed from ordinary floor one entries', () => {
+    const reachable = floodFloor(MAPS.floor1, [
+      portal('floor1-to-village').tile,
+      portal('floor1-rear-to-floor2').tile,
+    ]);
+    expect(reachable.has(tileKey(entity('floor1-future-treasury').tile))).toBe(
+      false,
+    );
+    expect(
+      reachable.has(tileKey(entity('floor1-treasury-to-floor2').tile)),
+    ).toBe(false);
+    for (const entity of MAPS.floor1.entities) {
+      if (
+        entity.id === 'floor1-future-treasury' ||
+        entity.id === 'floor1-treasury-to-floor2'
+      )
+        continue;
+      expect(reachable.has(tileKey(entity.tile)), entity.id).toBe(true);
+    }
+  });
+
+  it('opens the sealed treasury through the new reciprocal pocket stair', () => {
+    const pocketPortal = portal('floor1-treasury-to-floor2');
+    const floor2Side = portal('floor2-treasury-to-floor1');
+    expect(pocketPortal.target).toEqual({
+      mapId: 'floor2',
+      tile: floor2Side.tile,
+    });
+    expect(floor2Side.target).toEqual({
+      mapId: 'floor1',
+      tile: pocketPortal.tile,
+    });
+    expect(floor2Side.factId).toBe('floor1-treasury-return-used');
+
+    const inside = floodFloor(MAPS.floor1, [pocketPortal.tile]);
+    expect(inside.has(tileKey(entity('floor1-future-treasury').tile))).toBe(
+      true,
+    );
+
+    const section = findSectionById('floor1-workshop-treasury');
+    expect(section?.name).toBe('Workshop Treasury');
+    if (!section) return;
+    const inBounds = (tile: Tile): boolean =>
+      tile.x >= section.bounds.minX &&
+      tile.x <= section.bounds.maxX &&
+      tile.y >= section.bounds.minY &&
+      tile.y <= section.bounds.maxY;
+    expect(inBounds(pocketPortal.tile)).toBe(true);
+    expect(inBounds(entity('floor1-future-treasury').tile)).toBe(true);
   });
 });
 

@@ -34,7 +34,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-front-to-floor2',
       tile: { x: 9, y: 2 },
       assetId: 'stairs-down',
-      target: { mapId: 'floor2', tile: { x: 1, y: 8 } },
+      target: { mapId: 'floor2', tile: { x: 8, y: 10 } },
       factId: 'floor1-depth-stairs-used',
       lock: {
         requiresItemId: 'tower-depth-sigil',
@@ -47,7 +47,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-rear-to-floor2',
       tile: { x: 21, y: 3 },
       assetId: 'stairs-down',
-      target: { mapId: 'floor2', tile: { x: 14, y: 1 } },
+      target: { mapId: 'floor2', tile: { x: 16, y: 1 } },
       factId: 'floor1-rear-stairs-used',
     },
     {
@@ -130,6 +130,13 @@ export const floor1: MapDefinition = {
       stats: { hp: 20, attack: 7, defense: 4 },
     },
     {
+      kind: 'portal',
+      id: 'floor1-treasury-to-floor2',
+      tile: { x: 17, y: 7 },
+      assetId: 'stairs-down',
+      target: { mapId: 'floor2', tile: { x: 4, y: 2 } },
+    },
+    {
       kind: 'reward',
       id: 'floor1-future-treasury',
       tile: { x: 16, y: 7 },
@@ -160,6 +167,11 @@ export const floor1: MapDefinition = {
       id: 'floor1-rear-wing',
       name: 'Rear Wing',
       bounds: { minX: 11, maxX: 22, minY: 1, maxY: 14 },
+    },
+    {
+      id: 'floor1-workshop-treasury',
+      name: 'Workshop Treasury',
+      bounds: { minX: 15, maxX: 17, minY: 6, maxY: 8 },
     },
   ],
 };

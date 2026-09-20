@@ -179,7 +179,7 @@ describe('saveGame/loadGame', () => {
         'floor1-entry-court',
         'floor1-lower-loop',
         'floor1-upper-gallery',
-        'floor2-connector',
+        'floor2-front-landing',
         'floor1-rear-wing',
       ],
     };
