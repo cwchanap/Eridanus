@@ -19,6 +19,8 @@ if (!recovery || recovery.kind !== 'recovery')
 if (!latch || latch.kind !== 'latch') throw new Error('latch missing');
 if (!enemy || enemy.kind !== 'enemy') throw new Error('enemy missing');
 if (!overlook || overlook.kind !== 'clue') throw new Error('clue missing');
+const warden = findEntityById('village-warden');
+if (!warden || warden.kind !== 'npc') throw new Error('village-warden missing');
 const missingSubject = findEntityById('floor2-missing-subject');
 const returnedSubject = findEntityById('village-returned-subject');
 if (!missingSubject || missingSubject.kind !== 'npc')
@@ -119,6 +121,30 @@ describe('actions', () => {
     if (!result.ok) return;
     expect(result.effect).toEqual({ kind: 'clue', text: overlook.text });
     expect(result.state.factIds).toContain('floor1-treasury-sealed');
+  });
+
+  it('bumping the warden with the restoration core records the outcome fact exactly once', () => {
+    const state = {
+      ...createInitialGameState(),
+      tile: { x: 2, y: 7 },
+      itemIds: ['tower-restoration-core'],
+    };
+    const first = interactWithEntity(state, warden, state.tile);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.effect).toEqual({
+      kind: 'dialogue',
+      speaker: warden.name,
+      lineId: 'warden-restoration-ending',
+    });
+    expect(first.state.factIds).toContain('main-village-restored');
+
+    const second = interactWithEntity(first.state, warden, state.tile);
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(
+      second.state.factIds.filter((id) => id === 'main-village-restored'),
+    ).toHaveLength(1);
   });
 
   it('bumping an opened latch changes nothing', () => {

@@ -31,6 +31,16 @@ const LEAD_TEXT: Record<LeadId, string> = {
   'ledger-find-later-pages': 'Look deeper in the tower for later ledger pages.',
   'ledger-follow-deeper-record':
     'The paired rear-release mechanisms explain the fragment. Seek the final record deeper in the tower.',
+  'reach-heart-chamber':
+    'Floor 3 is open. Follow the paired routes toward the tower heart.',
+  'claim-restoration-core':
+    'The core guardian is defeated. Recover the Restoration Core.',
+  'return-restoration-core':
+    'Bring the Restoration Core back to the village warden.',
+  'story-complete':
+    'The Restoration Core is back in the village. The tower can be restored.',
+  'ledger-resolved':
+    'The final keeper record explains the guardian isolation failure.',
 };
 
 export function renderJournal(view: JournalView): string {

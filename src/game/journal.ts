@@ -18,7 +18,12 @@ export type LeadId =
   | 'route-resolved'
   | 'ledger-find-fragment'
   | 'ledger-find-later-pages'
-  | 'ledger-follow-deeper-record';
+  | 'ledger-follow-deeper-record'
+  | 'reach-heart-chamber'
+  | 'claim-restoration-core'
+  | 'return-restoration-core'
+  | 'story-complete'
+  | 'ledger-resolved';
 
 export type JournalEntry = Readonly<{
   id: 'main' | 'heirloom' | 'route' | 'ledger';
@@ -48,6 +53,13 @@ function knows(factIds: readonly string[], id: string): boolean {
 }
 
 function mainLead(state: GameState): LeadId {
+  if (knows(state.factIds, 'main-village-restored')) return 'story-complete';
+  if (state.itemIds.includes('tower-restoration-core'))
+    return 'return-restoration-core';
+  if (state.defeatedEnemyIds.includes('floor3-core-guardian'))
+    return 'claim-restoration-core';
+  if (knows(state.factIds, 'floor2-depth-stairs-used'))
+    return 'reach-heart-chamber';
   if (knows(state.factIds, 'main-subject-returned'))
     return 'investigate-deeper';
   if (state.itemIds.includes('tower-depth-sigil')) {
@@ -89,11 +101,13 @@ function optionalEntries(state: GameState): JournalEntry[] {
   if (knows(factIds, 'optional-ledger-lead')) {
     entries.push({
       id: 'ledger',
-      lead: knows(factIds, 'floor2-paired-release-ledger-read')
-        ? 'ledger-follow-deeper-record'
-        : state.itemIds.includes('ledger-fragment-1')
-          ? 'ledger-find-later-pages'
-          : 'ledger-find-fragment',
+      lead: knows(factIds, 'floor3-keeper-final-record-read')
+        ? 'ledger-resolved'
+        : knows(factIds, 'floor2-paired-release-ledger-read')
+          ? 'ledger-follow-deeper-record'
+          : state.itemIds.includes('ledger-fragment-1')
+            ? 'ledger-find-later-pages'
+            : 'ledger-find-fragment',
     });
   }
   return entries;

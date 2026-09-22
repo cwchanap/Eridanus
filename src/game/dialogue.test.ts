@@ -1,126 +1,161 @@
 import { describe, expect, it } from 'vitest';
-import { resolveNpcDialogue } from './dialogue';
+import { resolveNpcInteraction } from './dialogue';
 import { createInitialGameState } from './state';
 
-describe('resolveNpcDialogue', () => {
+describe('resolveNpcInteraction', () => {
   it('leads with the main hook until the depth sigil is found', () => {
-    expect(resolveNpcDialogue('village-warden', createInitialGameState())).toBe(
-      'warden-main-lead',
-    );
     expect(
-      resolveNpcDialogue('village-warden', {
+      resolveNpcInteraction('village-warden', createInitialGameState()),
+    ).toEqual({ lineId: 'warden-main-lead' });
+    expect(
+      resolveNpcInteraction('village-warden', {
         ...createInitialGameState(),
         itemIds: ['tower-depth-sigil'],
       }),
-    ).toBe('warden-sigil-found');
+    ).toEqual({ lineId: 'warden-sigil-found' });
   });
 
   it('advances the artisan line as treasury facts are learned', () => {
     expect(
-      resolveNpcDialogue('village-artisan', createInitialGameState()),
-    ).toBe('artisan-find-workshop');
+      resolveNpcInteraction('village-artisan', createInitialGameState()),
+    ).toEqual({ lineId: 'artisan-find-workshop' });
     expect(
-      resolveNpcDialogue('village-artisan', {
+      resolveNpcInteraction('village-artisan', {
         ...createInitialGameState(),
         factIds: ['floor1-treasury-seen'],
       }),
-    ).toBe('artisan-workshop-seen');
+    ).toEqual({ lineId: 'artisan-workshop-seen' });
     expect(
-      resolveNpcDialogue('village-artisan', {
+      resolveNpcInteraction('village-artisan', {
         ...createInitialGameState(),
         factIds: ['floor1-treasury-sealed', 'optional-heirloom-lead'],
       }),
-    ).toBe('artisan-find-other-entrance');
+    ).toEqual({ lineId: 'artisan-find-other-entrance' });
   });
 
   it('advances the scout line once route marks are seen', () => {
-    expect(resolveNpcDialogue('village-scout', createInitialGameState())).toBe(
-      'scout-find-marks',
-    );
     expect(
-      resolveNpcDialogue('village-scout', {
+      resolveNpcInteraction('village-scout', createInitialGameState()),
+    ).toEqual({ lineId: 'scout-find-marks' });
+    expect(
+      resolveNpcInteraction('village-scout', {
         ...createInitialGameState(),
         factIds: ['floor1-route-mark-seen'],
       }),
-    ).toBe('scout-marks-seen');
+    ).toEqual({ lineId: 'scout-marks-seen' });
   });
 
   it('advances the scribe line once a ledger fragment is held', () => {
-    expect(resolveNpcDialogue('village-scribe', createInitialGameState())).toBe(
-      'scribe-find-ledger',
-    );
     expect(
-      resolveNpcDialogue('village-scribe', {
+      resolveNpcInteraction('village-scribe', createInitialGameState()),
+    ).toEqual({ lineId: 'scribe-find-ledger' });
+    expect(
+      resolveNpcInteraction('village-scribe', {
         ...createInitialGameState(),
         itemIds: ['ledger-fragment-1'],
         factIds: ['optional-ledger-lead'],
       }),
-    ).toBe('scribe-fragment-found');
+    ).toEqual({ lineId: 'scribe-fragment-found' });
   });
 
   it('acknowledges the returned subject before the sigil lead', () => {
     expect(
-      resolveNpcDialogue('village-warden', {
+      resolveNpcInteraction('village-warden', {
         ...createInitialGameState(),
         factIds: ['main-subject-returned'],
         itemIds: ['tower-depth-sigil'],
       }),
-    ).toBe('warden-subject-returned');
+    ).toEqual({ lineId: 'warden-subject-returned' });
   });
 
   it('acknowledges the treasury route and later the opened treasury reward', () => {
     expect(
-      resolveNpcDialogue('village-artisan', {
+      resolveNpcInteraction('village-artisan', {
         ...createInitialGameState(),
         factIds: ['floor1-treasury-return-used'],
       }),
-    ).toBe('artisan-treasury-route-found');
+    ).toEqual({ lineId: 'artisan-treasury-route-found' });
     expect(
-      resolveNpcDialogue('village-artisan', {
+      resolveNpcInteraction('village-artisan', {
         ...createInitialGameState(),
         factIds: ['floor1-treasury-return-used'],
         openedRewardIds: ['floor1-future-treasury'],
       }),
-    ).toBe('artisan-heirloom-recovered');
+    ).toEqual({ lineId: 'artisan-heirloom-recovered' });
   });
 
   it('resolves the lost-route thread once the return stair is used', () => {
     expect(
-      resolveNpcDialogue('village-scout', {
+      resolveNpcInteraction('village-scout', {
         ...createInitialGameState(),
         factIds: ['floor1-route-mark-seen', 'floor1-treasury-return-used'],
       }),
-    ).toBe('scout-route-verified');
+    ).toEqual({ lineId: 'scout-route-verified' });
   });
 
   it('advances the scribe line after the Floor 2 ledger evidence', () => {
     expect(
-      resolveNpcDialogue('village-scribe', {
+      resolveNpcInteraction('village-scribe', {
         ...createInitialGameState(),
         factIds: ['optional-ledger-lead', 'floor2-paired-release-ledger-read'],
         itemIds: ['ledger-fragment-1'],
       }),
-    ).toBe('scribe-floor2-ledger-read');
+    ).toEqual({ lineId: 'scribe-floor2-ledger-read' });
+  });
+
+  it('returns the restoration ending once the core is carried, recording the outcome fact', () => {
+    const coreState = {
+      ...createInitialGameState(),
+      itemIds: ['tower-restoration-core'],
+    };
+
+    expect(resolveNpcInteraction('village-warden', coreState)).toEqual({
+      lineId: 'warden-restoration-ending',
+      factId: 'main-village-restored',
+    });
+
+    expect(
+      resolveNpcInteraction('village-warden', {
+        ...coreState,
+        factIds: ['floor3-keeper-final-record-read'],
+      }),
+    ).toEqual({
+      lineId: 'warden-restoration-ending-ledger',
+      factId: 'main-village-restored',
+    });
+  });
+
+  it('reads the scribe final-ledger line once the final keeper record is known', () => {
+    expect(
+      resolveNpcInteraction('village-scribe', {
+        ...createInitialGameState(),
+        factIds: ['optional-ledger-lead', 'floor3-keeper-final-record-read'],
+        itemIds: ['ledger-fragment-1'],
+      }),
+    ).toEqual({ lineId: 'scribe-final-ledger-read' });
   });
 
   it('selects the subject lines by NPC id regardless of the return fact', () => {
     expect(
-      resolveNpcDialogue('floor2-missing-subject', createInitialGameState()),
-    ).toBe('subject-returning');
+      resolveNpcInteraction('floor2-missing-subject', createInitialGameState()),
+    ).toEqual({ lineId: 'subject-returning' });
     expect(
-      resolveNpcDialogue('floor2-missing-subject', {
+      resolveNpcInteraction('floor2-missing-subject', {
         ...createInitialGameState(),
         factIds: ['main-subject-returned'],
       }),
-    ).toBe('subject-returning');
+    ).toEqual({ lineId: 'subject-returning' });
     expect(
-      resolveNpcDialogue('village-returned-subject', createInitialGameState()),
-    ).toBe('subject-village');
+      resolveNpcInteraction(
+        'village-returned-subject',
+        createInitialGameState(),
+      ),
+    ).toEqual({ lineId: 'subject-village' });
     expect(
-      resolveNpcDialogue('village-returned-subject', {
+      resolveNpcInteraction('village-returned-subject', {
         ...createInitialGameState(),
         factIds: ['main-subject-returned'],
       }),
-    ).toBe('subject-village');
+    ).toEqual({ lineId: 'subject-village' });
   });
 });
