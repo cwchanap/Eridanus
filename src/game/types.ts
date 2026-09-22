@@ -68,11 +68,19 @@ export type EnemyEntity = BaseEntity &
 export type LatchEntity = BaseEntity &
   Readonly<{ kind: 'latch'; rearSide: Direction }>;
 export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
-export type PortalLock = Readonly<{
-  requiresItemId: string;
-  lockedText: string;
-  lockedFactId: string;
-}>;
+export type PortalLock =
+  | Readonly<{
+      kind: 'item';
+      requiresItemId: string;
+      lockedText: string;
+      lockedFactId: string;
+    }>
+  | Readonly<{
+      kind: 'fact';
+      requiresFactId: string;
+      lockedText: string;
+      lockedFactId: string;
+    }>;
 
 export type PortalEntity = BaseEntity &
   Readonly<{

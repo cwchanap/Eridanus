@@ -92,6 +92,18 @@ describe('attemptMove', () => {
     expect(result.state.itemIds).toEqual([]);
   });
 
+  it('authors the depth stair lock as an item gate', () => {
+    const portal = findEntityById('floor1-front-to-floor2');
+    if (!portal || portal.kind !== 'portal' || !portal.lock)
+      throw new Error('floor1-front-to-floor2 lock missing');
+    expect(portal.lock).toEqual({
+      kind: 'item',
+      requiresItemId: 'tower-depth-sigil',
+      lockedFactId: 'floor1-depth-seal-seen',
+      lockedText: 'A crest-shaped socket seals the lower stair.',
+    });
+  });
+
   it('carrying the sigil unlocks the depth stair and it stays carried', () => {
     const carrying = {
       ...base,
