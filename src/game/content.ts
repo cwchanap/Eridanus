@@ -1,5 +1,6 @@
 import { floor1 } from './content/floor1';
 import { floor2 } from './content/floor2';
+import { floor3 } from './content/floor3';
 import { village } from './content/village';
 import { hasFact } from './content/facts';
 import { createInitialGameState } from './state';
@@ -13,7 +14,12 @@ import type {
   Tile,
 } from './types';
 
-export const MAPS: Record<MapId, MapDefinition> = { village, floor1, floor2 };
+export const MAPS: Record<MapId, MapDefinition> = {
+  village,
+  floor1,
+  floor2,
+  floor3,
+};
 
 export function isInBounds(mapId: MapId, tile: Tile): boolean {
   const map = MAPS[mapId];

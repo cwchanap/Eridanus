@@ -1,4 +1,4 @@
-export type MapId = 'village' | 'floor1' | 'floor2';
+export type MapId = 'village' | 'floor1' | 'floor2' | 'floor3';
 export type Direction = 'north' | 'south' | 'east' | 'west';
 export type Stat = 'attack' | 'defense' | 'maxHp';
 export type Tile = Readonly<{ x: number; y: number }>;

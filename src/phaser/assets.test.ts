@@ -54,6 +54,10 @@ describe('asset seam', () => {
       floor: 'terrain-dungeon-floor',
       wall: 'terrain-dungeon-wall',
     });
+    expect(resolveTerrainAssets('floor3')).toEqual({
+      floor: 'terrain-dungeon-floor',
+      wall: 'terrain-dungeon-wall',
+    });
   });
 
   it('uses the open variant for an opened reward', () => {

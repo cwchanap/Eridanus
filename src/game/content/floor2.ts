@@ -42,6 +42,21 @@ export const floor2: MapDefinition = {
       factId: 'floor1-treasury-return-used',
     },
     {
+      kind: 'portal',
+      id: 'floor2-depth-to-floor3',
+      tile: { x: 8, y: 1 },
+      assetId: 'stairs-down',
+      target: { mapId: 'floor3', tile: { x: 10, y: 13 } },
+      factId: 'floor2-depth-stairs-used',
+      lock: {
+        kind: 'fact',
+        requiresFactId: 'main-subject-returned',
+        lockedFactId: 'floor2-depth-seal-seen',
+        lockedText:
+          'The lower keeper seal will not release until the missing subject returns with the warning from below.',
+      },
+    },
+    {
       kind: 'latch',
       id: 'floor2-west-release',
       tile: { x: 5, y: 6 },
