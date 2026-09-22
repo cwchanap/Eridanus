@@ -11,7 +11,7 @@ import {
   validateContent,
 } from './content';
 import { createInitialGameState } from './state';
-import { tileInDirection } from './geometry';
+import { directionFromTo, tileInDirection } from './geometry';
 import { village } from './content/village';
 import type {
   Entity,
@@ -132,7 +132,12 @@ describe('isEntityBlocking', () => {
 
 describe('authored content', () => {
   it('defines all current maps', () => {
-    expect(Object.keys(MAPS).sort()).toEqual(['floor1', 'floor2', 'village']);
+    expect(Object.keys(MAPS).sort()).toEqual([
+      'floor1',
+      'floor2',
+      'floor3',
+      'village',
+    ]);
   });
 
   it('has no validation errors', () => {
@@ -143,6 +148,11 @@ describe('authored content', () => {
     expect(findEntityById('floor1-power-core')?.kind).toBe('reward');
     expect(findEntityById('floor1-gatekeeper')?.kind).toBe('enemy');
     expect(findEntityById('floor1-rear-latch')?.kind).toBe('latch');
+    expect(findEntityById('floor3-core-guardian')?.kind).toBe('enemy');
+    expect(findEntityById('floor3-restoration-core')?.kind).toBe('reward');
+    expect(findEntityById('floor3-heart-shortcut')?.kind).toBe('latch');
+    expect(findEntityById('floor3-heart-waystone')?.kind).toBe('recovery');
+    expect(findEntityById('floor3-keeper-final-record')?.kind).toBe('clue');
   });
 
   it('resolves the progression lookups', () => {
@@ -245,6 +255,83 @@ describe('authored content', () => {
       hasAdjacentApproach(
         reachable,
         entity('floor2-paired-release-ledger').tile,
+      ),
+    ).toBe(true);
+  });
+
+  it('reaches the required floor three route through the runtime blocking rule', () => {
+    // Fresh required-state snapshot: shortcut closed, optional enemies
+    // undefeated, rewards unopened, story facts already recorded.
+    const freshFloor3 = {
+      ...createInitialGameState(),
+      mapId: 'floor3' as const,
+      factIds: ['main-subject-returned', 'floor2-depth-stairs-used'],
+    };
+    const reachable = floodFloor(
+      MAPS.floor3,
+      [portal('floor3-to-floor2').tile],
+      (tile) =>
+        MAPS.floor3.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(freshFloor3, tile),
+    );
+
+    expect(reachable.has(tileKey({ x: 6, y: 4 }))).toBe(true);
+    expect(reachable.has(tileKey({ x: 15, y: 4 }))).toBe(true);
+    expect(
+      hasAdjacentApproach(reachable, entity('floor3-keeper-final-record').tile),
+    ).toBe(true);
+    expect(
+      hasAdjacentApproach(reachable, entity('floor3-vault-route-mark').tile),
+    ).toBe(true);
+    const vault = findSectionById('floor3-hidden-vault');
+    const archive = findSectionById('floor3-keeper-archive');
+    expect(vault?.bounds.maxX).toBeLessThan(6);
+    expect(archive?.bounds.minX).toBeGreaterThan(15);
+    expect(entity('floor3-vault-route-mark').tile.x).toBeLessThan(6);
+    expect(entity('floor3-keeper-final-record').tile.x).toBeGreaterThan(15);
+    for (const id of [
+      'floor3-archive-sentry',
+      'floor3-vault-sentry',
+    ] as const) {
+      const sentry = entity(id);
+      expect(sentry.tile.x).not.toBe(6);
+      expect(sentry.tile.x).not.toBe(15);
+    }
+
+    const shortcut = latch('floor3-heart-shortcut');
+    expect(
+      reachable.has(tileKey(tileInDirection(shortcut.tile, shortcut.rearSide))),
+    ).toBe(true);
+    expect(
+      directionFromTo(entity('floor3-heart-waystone').tile, { x: 10, y: 3 }),
+    ).not.toBeNull();
+
+    expect(
+      hasAdjacentApproach(reachable, entity('floor3-core-guardian').tile),
+    ).toBe(true);
+    // Unopened rewards block by design, so only the boss can seal the Core.
+    expect(
+      hasAdjacentApproach(reachable, entity('floor3-restoration-core').tile),
+    ).toBe(false);
+
+    const afterBoss = {
+      ...freshFloor3,
+      defeatedEnemyIds: ['floor3-core-guardian'],
+    };
+    const reachableAfter = floodFloor(
+      MAPS.floor3,
+      [portal('floor3-to-floor2').tile],
+      (tile) =>
+        MAPS.floor3.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(afterBoss, tile),
+    );
+    expect(
+      reachableAfter.has(tileKey(entity('floor3-core-guardian').tile)),
+    ).toBe(true);
+    expect(
+      hasAdjacentApproach(
+        reachableAfter,
+        entity('floor3-restoration-core').tile,
       ),
     ).toBe(true);
   });

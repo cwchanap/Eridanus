@@ -31,6 +31,7 @@ const TERRAIN_BY_MAP: Record<MapId, TerrainAssets> = {
   village: { floor: 'terrain-village-floor', wall: 'terrain-village-wall' },
   floor1: { floor: 'terrain-dungeon-floor', wall: 'terrain-dungeon-wall' },
   floor2: { floor: 'terrain-dungeon-floor', wall: 'terrain-dungeon-wall' },
+  floor3: { floor: 'terrain-dungeon-floor', wall: 'terrain-dungeon-wall' },
 };
 
 const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {
