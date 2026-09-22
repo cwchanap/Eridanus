@@ -7,7 +7,16 @@ import {
 import { interactWithEntity } from './actions';
 import { tileInDirection } from './geometry';
 import { discoverCurrentSection, recordFact } from './progress';
-import type { ActionResult, Direction, GameState } from './types';
+import type { ActionResult, Direction, GameState, PortalLock } from './types';
+
+function isPortalLocked(lock: PortalLock, state: GameState): boolean {
+  switch (lock.kind) {
+    case 'item':
+      return !state.itemIds.includes(lock.requiresItemId);
+    case 'fact':
+      return !state.factIds.includes(lock.requiresFactId);
+  }
+}
 
 export function attemptMove(
   state: GameState,
@@ -21,7 +30,7 @@ export function attemptMove(
   const entity = getActiveEntityAt(state, target);
   if (entity) {
     if (entity.kind === 'portal') {
-      if (entity.lock && !state.itemIds.includes(entity.lock.requiresItemId)) {
+      if (entity.lock && isPortalLocked(entity.lock, state)) {
         const next = recordFact(state, entity.lock.lockedFactId);
         return {
           ok: true,

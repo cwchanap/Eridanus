@@ -507,6 +507,7 @@ describe('validateContent failure branches', () => {
         tile: { x: 11, y: 2 },
         target: { mapId: 'village', tile: { x: 4, y: 3 } },
         lock: {
+          kind: 'item',
           requiresItemId: 'no-such-item',
           lockedText: 'sealed',
           lockedFactId: 'main-missing-person-lead',
@@ -516,6 +517,32 @@ describe('validateContent failure branches', () => {
     expect(validateContent(maps)).toEqual([
       'village-to-floor1: unknown lock item id: no-such-item',
       'village-to-floor1: reciprocal portal missing',
+    ]);
+  });
+
+  it('flags an unknown lock fact id', () => {
+    const maps = villageWith([
+      {
+        kind: 'portal',
+        id: 'fact-locked-portal',
+        tile: { x: 4, y: 3 },
+        target: { mapId: 'village', tile: { x: 5, y: 3 } },
+        lock: {
+          kind: 'fact',
+          requiresFactId: 'not-a-fact',
+          lockedText: 'sealed',
+          lockedFactId: 'main-missing-person-lead',
+        },
+      },
+      {
+        kind: 'portal',
+        id: 'fact-locked-portal-back',
+        tile: { x: 5, y: 3 },
+        target: { mapId: 'village', tile: { x: 4, y: 3 } },
+      },
+    ]);
+    expect(validateContent(maps)).toEqual([
+      'fact-locked-portal: unknown lock fact id: not-a-fact',
     ]);
   });
 

@@ -230,10 +230,21 @@ export function validateContent(
             errors.push(
               `${entity.id}: unknown lock fact id: ${entity.lock.lockedFactId}`,
             );
-          if (!knownItemIds.has(entity.lock.requiresItemId))
-            errors.push(
-              `${entity.id}: unknown lock item id: ${entity.lock.requiresItemId}`,
-            );
+
+          switch (entity.lock.kind) {
+            case 'item':
+              if (!knownItemIds.has(entity.lock.requiresItemId))
+                errors.push(
+                  `${entity.id}: unknown lock item id: ${entity.lock.requiresItemId}`,
+                );
+              break;
+            case 'fact':
+              if (!hasFact(entity.lock.requiresFactId))
+                errors.push(
+                  `${entity.id}: unknown lock fact id: ${entity.lock.requiresFactId}`,
+                );
+              break;
+          }
         }
         if (!floorOn(maps[entity.target.mapId], entity.target.tile)) {
           errors.push(`${entity.id}: portal target must be floor`);

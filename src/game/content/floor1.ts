@@ -37,6 +37,7 @@ export const floor1: MapDefinition = {
       target: { mapId: 'floor2', tile: { x: 8, y: 10 } },
       factId: 'floor1-depth-stairs-used',
       lock: {
+        kind: 'item',
         requiresItemId: 'tower-depth-sigil',
         lockedFactId: 'floor1-depth-seal-seen',
         lockedText: 'A crest-shaped socket seals the lower stair.',
