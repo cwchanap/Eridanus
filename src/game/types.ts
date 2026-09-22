@@ -26,7 +26,15 @@ export type DialogueLineId =
   | 'artisan-treasury-route-found'
   | 'artisan-heirloom-recovered'
   | 'scout-route-verified'
-  | 'scribe-floor2-ledger-read';
+  | 'scribe-floor2-ledger-read'
+  | 'warden-restoration-ending'
+  | 'warden-restoration-ending-ledger'
+  | 'scribe-final-ledger-read';
+
+export type NpcInteractionResolution = Readonly<{
+  lineId: DialogueLineId;
+  factId?: string;
+}>;
 
 export type BaseEntity = Readonly<{ id: string; tile: Tile; assetId?: string }>;
 export type NpcId =

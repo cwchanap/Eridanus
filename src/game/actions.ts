@@ -1,5 +1,5 @@
 import { previewCombat } from './combat';
-import { resolveNpcDialogue } from './dialogue';
+import { resolveNpcInteraction } from './dialogue';
 import { directionFromTo } from './geometry';
 import { addItem, recordFact } from './progress';
 import type { ActionResult, Entity, GameState, Tile } from './types';
@@ -30,12 +30,20 @@ export function interactWithEntity(
       };
     }
     case 'npc': {
-      const next = recordFact(state, entity.introFactId);
-      const lineId = resolveNpcDialogue(entity.id, next);
+      const introduced = recordFact(state, entity.introFactId);
+      const interaction = resolveNpcInteraction(entity.id, introduced);
+      const next = interaction.factId
+        ? recordFact(introduced, interaction.factId)
+        : introduced;
+
       return {
         ok: true,
         state: next,
-        effect: { kind: 'dialogue', speaker: entity.name, lineId },
+        effect: {
+          kind: 'dialogue',
+          speaker: entity.name,
+          lineId: interaction.lineId,
+        },
       };
     }
     case 'reward': {

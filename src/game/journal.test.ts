@@ -2,6 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { createInitialGameState } from './state';
 import { attemptMove } from './movement';
 import { buildJournalView } from './journal';
+import type { GameState } from './types';
+import type { LeadId } from './journal';
+
+function main(
+  overrides: Partial<
+    Pick<
+      GameState,
+      'factIds' | 'itemIds' | 'defeatedEnemyIds' | 'openedRewardIds'
+    >
+  >,
+): LeadId {
+  return buildJournalView({ ...createInitialGameState(), ...overrides }).main
+    .lead;
+}
 
 describe('buildJournalView', () => {
   it('keeps optional quests hidden until context is learned', () => {
@@ -182,6 +196,52 @@ describe('buildJournalView', () => {
         (entry) => entry.id === 'heirloom',
       )?.lead,
     ).toBe('heirloom-resolved');
+  });
+
+  it('pins the final-story main precedence above the earlier leads', () => {
+    expect(main({ factIds: ['main-subject-returned'] })).toBe(
+      'investigate-deeper',
+    );
+    expect(
+      main({ factIds: ['main-subject-returned', 'floor2-depth-stairs-used'] }),
+    ).toBe('reach-heart-chamber');
+    expect(
+      main({
+        factIds: ['main-subject-returned', 'floor2-depth-stairs-used'],
+        defeatedEnemyIds: ['floor3-core-guardian'],
+      }),
+    ).toBe('claim-restoration-core');
+    expect(main({ itemIds: ['tower-restoration-core'] })).toBe(
+      'return-restoration-core',
+    );
+    expect(
+      main({
+        itemIds: ['tower-restoration-core'],
+        factIds: ['main-village-restored'],
+      }),
+    ).toBe('story-complete');
+  });
+
+  it('resolves the ledger lead from the final record regardless of evidence order', () => {
+    const early = {
+      ...createInitialGameState(),
+      factIds: [
+        'floor2-paired-release-ledger-read',
+        'floor3-keeper-final-record-read',
+        'optional-ledger-lead',
+      ],
+      itemIds: ['ledger-fragment-1'],
+    };
+    const late = {
+      ...createInitialGameState(),
+      factIds: ['optional-ledger-lead', 'floor3-keeper-final-record-read'],
+    };
+    expect(
+      buildJournalView(early).optional.find((c) => c.id === 'ledger')?.lead,
+    ).toBe('ledger-resolved');
+    expect(
+      buildJournalView(late).optional.find((c) => c.id === 'ledger')?.lead,
+    ).toBe('ledger-resolved');
   });
 
   it('advances optional leads even when discoveries precede their intro facts', () => {
