@@ -135,6 +135,22 @@ describe('resolveNpcInteraction', () => {
     ).toEqual({ lineId: 'scribe-final-ledger-read' });
   });
 
+  it('keeps the scribe final-ledger line when the deeper record precedes the scribe intro', () => {
+    const before = {
+      ...createInitialGameState(),
+      factIds: ['floor3-keeper-final-record-read'],
+    };
+    expect(resolveNpcInteraction('village-scribe', before)).toEqual({
+      lineId: 'scribe-final-ledger-read',
+    });
+    expect(
+      resolveNpcInteraction('village-scribe', {
+        ...before,
+        factIds: ['floor3-keeper-final-record-read', 'optional-ledger-lead'],
+      }),
+    ).toEqual({ lineId: 'scribe-final-ledger-read' });
+  });
+
   it('selects the subject lines by NPC id regardless of the return fact', () => {
     expect(
       resolveNpcInteraction('floor2-missing-subject', createInitialGameState()),
