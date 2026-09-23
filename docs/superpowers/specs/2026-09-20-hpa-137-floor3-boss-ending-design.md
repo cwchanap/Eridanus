@@ -58,7 +58,7 @@ Floor 3 must not be reachable before the missing subject has returned. The exist
 
 Replace PortalLock with a closed two-variant union:
 
-~~~ts
+```ts
 export type PortalLock =
   | Readonly<{
       kind: 'item';
@@ -72,7 +72,7 @@ export type PortalLock =
       lockedText: string;
       lockedFactId: string;
     }>;
-~~~
+```
 
 The existing Floor 1 depth stair becomes kind: 'item' with no behavior change.
 
@@ -131,7 +131,7 @@ The current NPC action always records introFactId and then resolves one dialogue
 
 Replace resolveNpcDialogue with a pure resolveNpcInteraction returning:
 
-~~~ts
+```ts
 export type NpcInteractionResolution = Readonly<{
   lineId: DialogueLineId;
   factId?: string;
@@ -141,7 +141,7 @@ export function resolveNpcInteraction(
   npcId: NpcId,
   state: GameState,
 ): NpcInteractionResolution;
-~~~
+```
 
 interactWithEntity keeps the same ownership:
 
