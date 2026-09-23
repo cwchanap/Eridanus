@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { findEntityById } from './content';
 import { createInitialGameState } from './state';
 import { attemptMove } from './movement';
+import { interactWithEntity } from './actions';
+import { loadGame } from './save';
 import { buildJournalView } from './journal';
 import type { GameState } from './types';
 import type { LeadId } from './journal';
@@ -16,6 +19,85 @@ function main(
   return buildJournalView({ ...createInitialGameState(), ...overrides }).main
     .lead;
 }
+
+const warden = findEntityById('village-warden');
+if (!warden || warden.kind !== 'npc') throw new Error('village-warden missing');
+
+describe('restoration ending', () => {
+  it('persists the ending fact and completes the main lead after a reload', () => {
+    const state = {
+      ...createInitialGameState(),
+      defeatedEnemyIds: ['floor3-core-guardian'],
+      openedRewardIds: ['floor3-restoration-core'],
+      itemIds: ['tower-restoration-core'],
+    };
+    const ending = interactWithEntity(state, warden, warden.tile);
+    expect(ending.ok).toBe(true);
+    if (!ending.ok) return;
+    expect(ending.effect).toEqual({
+      kind: 'dialogue',
+      speaker: warden.name,
+      lineId: 'warden-restoration-ending',
+    });
+    expect(
+      ending.state.factIds.filter((id) => id === 'main-village-restored'),
+    ).toHaveLength(1);
+
+    const storage: Storage = {
+      getItem: () => JSON.stringify(ending.state),
+      setItem() {},
+      removeItem() {},
+      clear() {},
+      key: () => null,
+      get length() {
+        return 0;
+      },
+    };
+    const reloaded = loadGame(storage);
+    expect(reloaded).toEqual({ kind: 'loaded', state: ending.state });
+    if (reloaded.kind !== 'loaded') return;
+    expect(reloaded.state.factIds).toContain('main-village-restored');
+    expect(buildJournalView(reloaded.state).main.lead).toBe('story-complete');
+  });
+
+  it('adds no second ending flag when the final record precedes the warden', () => {
+    const state = {
+      ...createInitialGameState(),
+      defeatedEnemyIds: ['floor3-core-guardian'],
+      openedRewardIds: ['floor3-restoration-core'],
+      itemIds: ['tower-restoration-core'],
+      factIds: ['floor3-keeper-final-record-read'],
+    };
+    const ending = interactWithEntity(state, warden, warden.tile);
+    expect(ending.ok).toBe(true);
+    if (!ending.ok) return;
+    expect(ending.effect).toMatchObject({
+      lineId: 'warden-restoration-ending-ledger',
+    });
+    expect(ending.state.factIds).toEqual([
+      'floor3-keeper-final-record-read',
+      'main-missing-person-lead',
+      'main-village-restored',
+    ]);
+  });
+
+  it('resolves the ledger lead when the final record is read before the scribe intro', () => {
+    const before = {
+      ...createInitialGameState(),
+      factIds: ['floor3-keeper-final-record-read'],
+    };
+    expect(buildJournalView(before).optional).toEqual([]);
+
+    const after = {
+      ...before,
+      factIds: ['floor3-keeper-final-record-read', 'optional-ledger-lead'],
+    };
+    expect(
+      buildJournalView(after).optional.find((entry) => entry.id === 'ledger')
+        ?.lead,
+    ).toBe('ledger-resolved');
+  });
+});
 
 describe('buildJournalView', () => {
   it('keeps optional quests hidden until context is learned', () => {

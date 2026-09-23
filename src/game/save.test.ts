@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { findEntityById } from './content';
 import { createInitialGameState } from './state';
 import { loadGame, resetGame, saveGame } from './save';
+import type { Tile } from './types';
 
 class MemoryStorage implements Storage {
   private map = new Map<string, string>();
@@ -382,6 +384,56 @@ describe('saveGame/loadGame', () => {
       kind: 'invalid',
       reason: 'invalid-shape',
     });
+  });
+});
+
+describe('floor three completion occupancy', () => {
+  const boss = findEntityById('floor3-core-guardian');
+  if (!boss || boss.kind !== 'enemy')
+    throw new Error('floor3-core-guardian missing');
+  const core = findEntityById('floor3-restoration-core');
+  if (!core || core.kind !== 'reward')
+    throw new Error('floor3-restoration-core missing');
+
+  const onFloor3 = (tile: Tile) => ({
+    ...createInitialGameState(),
+    mapId: 'floor3' as const,
+    tile,
+  });
+
+  it('rejects a save standing on the undefeated guardian', () => {
+    storage.setItem('eridanus.save', JSON.stringify(onFloor3(boss.tile)));
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('accepts a save standing on the defeated guardian', () => {
+    const state = {
+      ...onFloor3(boss.tile),
+      defeatedEnemyIds: ['floor3-core-guardian'],
+    };
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('rejects a save standing on the unopened restoration core', () => {
+    storage.setItem('eridanus.save', JSON.stringify(onFloor3(core.tile)));
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('accepts a save standing on the opened restoration core with the item carried', () => {
+    const state = {
+      ...onFloor3(core.tile),
+      openedRewardIds: ['floor3-restoration-core'],
+      itemIds: ['tower-restoration-core'],
+    };
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
   });
 });
 

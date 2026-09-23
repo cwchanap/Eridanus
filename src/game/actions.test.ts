@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { findEntityById, getActiveEntityAt, isEntityBlocking } from './content';
 import { interactWithEntity } from './actions';
+import { previewCombat, resolveCombat } from './combat';
+import { tileInDirection } from './geometry';
 import { attemptMove } from './movement';
 import { createInitialGameState } from './state';
 import type { NpcEntity } from './types';
@@ -27,6 +29,12 @@ if (!missingSubject || missingSubject.kind !== 'npc')
   throw new Error('floor2-missing-subject missing');
 if (!returnedSubject || returnedSubject.kind !== 'npc')
   throw new Error('village-returned-subject missing');
+const boss = findEntityById('floor3-core-guardian');
+if (!boss || boss.kind !== 'enemy')
+  throw new Error('floor3-core-guardian missing');
+const restorationCore = findEntityById('floor3-restoration-core');
+if (!restorationCore || restorationCore.kind !== 'reward')
+  throw new Error('floor3-restoration-core missing');
 
 describe('actions', () => {
   it('applies reward once', () => {
@@ -145,6 +153,62 @@ describe('actions', () => {
     expect(
       second.state.factIds.filter((id) => id === 'main-village-restored'),
     ).toHaveLength(1);
+  });
+
+  it('offers the floor three boss through the ordinary combat prompt and resolves it plainly', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor3' as const,
+      tile: tileInDirection(boss.tile, 'south'),
+    };
+    const preview = previewCombat(state.player, boss.stats);
+    expect(preview).toEqual({ winnable: true, hitsNeeded: 6, hpLoss: 25 });
+
+    expect(interactWithEntity(state, boss, state.tile)).toEqual({
+      ok: true,
+      state,
+      effect: { kind: 'combatPrompt', enemyId: boss.id, preview },
+    });
+
+    const fight = resolveCombat(state, boss);
+    expect(fight.ok).toBe(true);
+    if (!fight.ok) return;
+    expect(fight.state.player.hp).toBe(5);
+    expect(
+      fight.state.defeatedEnemyIds.filter((id) => id === boss.id),
+    ).toHaveLength(1);
+
+    // The ordinary second resolution: bumping the defeated boss again reports
+    // the outcome with no further state change (the session never re-issues a
+    // prompt for a defeated enemy).
+    expect(interactWithEntity(fight.state, boss, state.tile)).toEqual({
+      ok: true,
+      state: fight.state,
+      effect: { kind: 'enemyDefeated', enemyId: boss.id, hpLost: 0 },
+    });
+  });
+
+  it('grants the restoration core exactly once once the guardian is defeated', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor3' as const,
+      tile: boss.tile,
+      defeatedEnemyIds: ['floor3-core-guardian'],
+    };
+    const first = interactWithEntity(state, restorationCore, state.tile);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.effect).toEqual({
+      kind: 'itemReward',
+      itemId: 'tower-restoration-core',
+      label: 'Restoration Core',
+    });
+    expect(first.state.openedRewardIds).toContain('floor3-restoration-core');
+    expect(first.state.itemIds).toContain('tower-restoration-core');
+
+    expect(
+      interactWithEntity(first.state, restorationCore, state.tile),
+    ).toEqual({ ok: false, reason: 'reward-already-taken' });
   });
 
   it('bumping an opened latch changes nothing', () => {
