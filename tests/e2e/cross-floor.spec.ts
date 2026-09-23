@@ -252,13 +252,15 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
   await press(page, 'ArrowRight', 2);
   await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
 
-  // Up x3, Right x2, Up x2, Right x5, Down x5: around the rear gallery to
-  // (13,6), then Left x2: crossing the east release from its front side
-  // only works while it stays open
+  // Up x3: to (6,3). Right x5, Up x2, Right x2: reach row 1 via the
+  // x=11 column — the depth stair at (8,1) is now a live fact-gated
+  // portal, so the route to (13,1) must not step on it. Down x5: around
+  // the rear gallery to (13,6), then Left x2: crossing the east release
+  // from its front side only works while it stays open
   await press(page, 'ArrowUp', 3);
-  await press(page, 'ArrowRight', 2);
-  await press(page, 'ArrowUp', 2);
   await press(page, 'ArrowRight', 5);
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 2);
   await press(page, 'ArrowDown', 5);
   await press(page, 'ArrowLeft', 2);
   await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
@@ -332,4 +334,195 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
     'data-effect',
     'dialogue',
   );
+
+  // Village (6,8) -> village-to-floor1 (11,2) -> Floor 1 (2,14)
+  await press(page, 'ArrowRight', 1);
+  await press(page, 'ArrowUp', 3);
+  await press(page, 'ArrowRight', 2);
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 2);
+  await press(page, 'ArrowUp', 1);
+
+  // Floor 1 (2,14) -> front Floor-2 stair (9,2) -> Floor 2 (8,10). The
+  // 8th Up claims the uncollected floor1-ledger-fragment at (3,4) (a
+  // claim bump keeps the player at (3,5)), so the 9th steps onto the
+  // fragment tile before turning east
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 1);
+  await press(page, 'ArrowUp', 9);
+  await press(page, 'ArrowRight', 3);
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 3);
+
+  // Floor 2 central column -> depth stair (8,1) -> Floor 3 (10,13): the
+  // fact gate opens because main-subject-returned is already durable
+  await press(page, 'ArrowUp', 9);
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'floor3',
+  );
+  await expect(
+    page.locator('[data-section="floor3-entry-vestibule"]'),
+  ).toHaveCount(1);
+  await expect(page.locator('[data-lead="reach-heart-chamber"]')).toHaveCount(
+    1,
+  );
+
+  // Up: Entry Vestibule portal tile (10,13) -> Twin Galleries row (10,12)
+  await press(page, 'ArrowUp', 1);
+
+  // Left x4: move to the west spine at (6,12)
+  await press(page, 'ArrowLeft', 4);
+
+  // Up x8: follow the unobstructed west spine to Heart Approach (6,4).
+  // The route is intentionally independent of floor3-vault-sentry (2,6).
+  await press(page, 'ArrowUp', 8);
+  await expect(
+    page.locator('[data-section="floor3-heart-approach"]'),
+  ).toHaveCount(1);
+
+  // The heart clue at (9,3) blocks a straight row-3 crossing, so dogleg
+  // through (8,4) before returning to the center column:
+  // Up -> (6,3), Right x2 -> (8,3), Down -> (8,4),
+  // Right x2 -> (10,4), Down x3 -> (10,7)
+  await press(page, 'ArrowUp', 1);
+  await press(page, 'ArrowRight', 2);
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowRight', 2);
+  await press(page, 'ArrowDown', 3);
+
+  // Down: bump floor3-heart-shortcut (10,8) from rearSide=north
+  await press(page, 'ArrowDown', 1);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'latchOpened',
+  );
+
+  // Down x2 crosses the opened latch to (10,9); Up x2 proves it is now
+  // two-way
+  await press(page, 'ArrowDown', 2);
+  await press(page, 'ArrowUp', 2);
+  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+
+  // Up x4 -> sole boss approach (10,3)
+  await press(page, 'ArrowUp', 4);
+
+  // Right: bump floor3-heart-waystone (11,3), staying at (10,3)
+  await press(page, 'ArrowRight', 1);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'healed',
+  );
+  const healedHp = await page.locator('[data-stat="hp"]').textContent();
+  const maxHp = Number(healedHp?.split('/')[1]);
+  expect(healedHp).toBe(`HP ${maxHp}/${maxHp}`);
+
+  // Up: bump floor3-core-guardian (10,2) from the sole approach. The HP
+  // loss is computed from the journey's actual stats — the optional
+  // rewards collected earlier make it lower than the fresh baseline —
+  // never hardcoded.
+  await press(page, 'ArrowUp', 1);
+  const hud = await page.locator('[data-testid="hud"]').textContent();
+  const hp = Number(/HP (\d+)\//.exec(hud ?? '')?.[1]);
+  const atk = Number(/ATK (\d+)/.exec(hud ?? '')?.[1]);
+  const def = Number(/DEF (\d+)/.exec(hud ?? '')?.[1]);
+  // Guardian stats 36 HP / 7 ATK / 4 DEF; same math as previewCombat
+  const bossLoss = (Math.ceil(36 / (atk - 4)) - 1) * Math.max(0, 7 - def);
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText(
+    `HP loss: ${bossLoss}`,
+  );
+  await page.getByRole('button', { name: 'Fight' }).click();
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'enemyDefeated',
+  );
+  await expect(page.locator('[data-stat="hp"]')).toHaveText(
+    `HP ${hp - bossLoss}/${maxHp}`,
+  );
+
+  // Up: onto the former boss tile (10,2) without blocking
+  await press(page, 'ArrowUp', 1);
+  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+
+  // Up: bump floor3-restoration-core (10,1)
+  await press(page, 'ArrowUp', 1);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'itemReward',
+  );
+  await expect(page.getByTestId('effect')).toContainText('Restoration Core');
+  await expect(
+    page.locator('[data-lead="return-restoration-core"]'),
+  ).toHaveCount(1);
+
+  // HPA-137 persistence checkpoint: one reload proves the endgame state
+  // survived localStorage
+  await page.reload();
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'floor3',
+  );
+  // Down, Up x2: the defeated boss tile and the opened core chest both
+  // stay traversable; Down again re-arms (10,2) as the return start
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowDown', 1);
+  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+  await expect(
+    page.locator('[data-lead="return-restoration-core"]'),
+  ).toHaveCount(1);
+
+  // Floor 3 (10,2) -> opened center shortcut -> floor3-to-floor2 (10,13).
+  // The 7th Down recrosses the persisted-open shortcut; the 11th steps on
+  // the portal and arrives at Floor 2 (8,1).
+  await press(page, 'ArrowDown', 11);
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'floor2',
+  );
+
+  // Floor 2 Rear Gallery -> floor2-rear-to-floor1 (16,1) -> Floor 1 (21,3)
+  await press(page, 'ArrowRight', 8);
+
+  // Floor 1 rear wing -> opened rear latch -> village portal (2,14)
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowLeft', 8);
+  await press(page, 'ArrowDown', 4);
+  await press(page, 'ArrowLeft', 3);
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowLeft', 3);
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowLeft', 4);
+  await press(page, 'ArrowDown', 4);
+  await press(page, 'ArrowLeft', 1);
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'village',
+  );
+
+  // Village arrival is (11,2). Route around the standing NPCs to (4,7)
+  await press(page, 'ArrowDown', 3);
+  await press(page, 'ArrowLeft', 3);
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowLeft', 3);
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowLeft', 1);
+
+  // Left: bump village-warden at (3,7) — carrying the core ends the story
+  await press(page, 'ArrowLeft', 1);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'dialogue',
+  );
+  await expect(page.getByTestId('effect')).toContainText('Restoration Core');
+  await expect(page.locator('[data-lead="story-complete"]')).toHaveCount(1);
+
+  // Reload in the village: the ending fact persisted — story-complete
+  // still renders instead of being transient dialogue state
+  await page.reload();
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'village',
+  );
+  await expect(page.locator('[data-lead="story-complete"]')).toHaveCount(1);
 });
