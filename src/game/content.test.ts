@@ -176,13 +176,24 @@ describe('authored content', () => {
     canStand: (tile: Tile) => boolean = (tile) =>
       map.layout[tile.y]?.[tile.x] === '.',
   ): Set<string> => {
+    const startTiles = starts.filter((tile) => canStand(tile));
+    const startKeys = new Set(startTiles.map(tileKey));
+    const portals = new Set(
+      map.entities
+        .filter((entity) => entity.kind === 'portal')
+        .map((entity) => tileKey(entity.tile)),
+    );
     const reachable = new Set<string>();
-    const queue = starts.filter((tile) => canStand(tile));
+    const queue = [...startTiles];
     while (queue.length > 0) {
       const tile = queue.pop()!;
       const key = tileKey(tile);
       if (reachable.has(key)) continue;
       reachable.add(key);
+      // A portal is a destination, never a corridor: stepping on one
+      // leaves the map (locked or not), so the flood stops there. Arrival
+      // starts are the exception — the flood disembarks from them.
+      if (portals.has(key) && !startKeys.has(key)) continue;
       for (const next of [
         { x: tile.x - 1, y: tile.y },
         { x: tile.x + 1, y: tile.y },
@@ -302,8 +313,24 @@ describe('authored content', () => {
     expect(
       reachable.has(tileKey(tileInDirection(shortcut.tile, shortcut.rearSide))),
     ).toBe(true);
+    // The rear approach must sit inside the Heart Approach section: the
+    // shortcut opens from the reconnect point, not from the galleries.
+    const heartApproach = findSectionById('floor3-heart-approach');
+    expect(heartApproach).toBeDefined();
+    if (heartApproach) {
+      const rear = tileInDirection(shortcut.tile, shortcut.rearSide);
+      expect(
+        rear.x >= heartApproach.bounds.minX &&
+          rear.x <= heartApproach.bounds.maxX &&
+          rear.y >= heartApproach.bounds.minY &&
+          rear.y <= heartApproach.bounds.maxY,
+      ).toBe(true);
+    }
     expect(
-      directionFromTo(entity('floor3-heart-waystone').tile, { x: 10, y: 3 }),
+      directionFromTo(
+        entity('floor3-heart-waystone').tile,
+        tileInDirection(entity('floor3-core-guardian').tile, 'south'),
+      ),
     ).not.toBeNull();
 
     expect(
@@ -629,7 +656,7 @@ describe('validateContent failure branches', () => {
       },
     ]);
     expect(validateContent(maps)).toEqual([
-      'fact-locked-portal: unknown lock fact id: not-a-fact',
+      'fact-locked-portal: unknown lock requirement fact id: not-a-fact',
     ]);
   });
 

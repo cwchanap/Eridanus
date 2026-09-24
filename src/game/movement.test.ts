@@ -121,8 +121,8 @@ describe('attemptMove', () => {
   });
 
   it('the floor2 depth stair stays sealed until the subject returns', () => {
-    const sealed = { ...base, mapId: 'floor2' as const, tile: { x: 7, y: 1 } };
-    const result = attemptMove(sealed, 'east');
+    const sealed = { ...base, mapId: 'floor2' as const, tile: { x: 8, y: 1 } };
+    const result = attemptMove(sealed, 'north');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.effect).toEqual({
@@ -130,7 +130,7 @@ describe('attemptMove', () => {
       text: 'The lower keeper seal will not release until the missing subject returns with the warning from below.',
     });
     expect(result.state.mapId).toBe('floor2');
-    expect(result.state.tile).toEqual({ x: 7, y: 1 });
+    expect(result.state.tile).toEqual({ x: 8, y: 1 });
     expect(result.state.factIds).toContain('floor2-depth-seal-seen');
     expect(result.state.factIds).not.toContain('main-subject-returned');
   });
@@ -139,10 +139,10 @@ describe('attemptMove', () => {
     const released = {
       ...base,
       mapId: 'floor2' as const,
-      tile: { x: 7, y: 1 },
+      tile: { x: 8, y: 1 },
       factIds: ['main-subject-returned'],
     };
-    const result = attemptMove(released, 'east');
+    const result = attemptMove(released, 'north');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor3' });

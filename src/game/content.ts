@@ -234,7 +234,7 @@ export function validateContent(
         if (entity.lock) {
           if (!hasFact(entity.lock.lockedFactId))
             errors.push(
-              `${entity.id}: unknown lock fact id: ${entity.lock.lockedFactId}`,
+              `${entity.id}: unknown locked fact id: ${entity.lock.lockedFactId}`,
             );
 
           switch (entity.lock.kind) {
@@ -247,7 +247,7 @@ export function validateContent(
             case 'fact':
               if (!hasFact(entity.lock.requiresFactId))
                 errors.push(
-                  `${entity.id}: unknown lock fact id: ${entity.lock.requiresFactId}`,
+                  `${entity.id}: unknown lock requirement fact id: ${entity.lock.requiresFactId}`,
                 );
               break;
           }
