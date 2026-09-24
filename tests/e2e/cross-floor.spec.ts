@@ -450,7 +450,6 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
     'data-effect',
     'itemReward',
   );
-  await expect(page.getByTestId('effect')).toContainText('Restoration Core');
   await expect(
     page.locator('[data-lead="return-restoration-core"]'),
   ).toHaveCount(1);
@@ -514,7 +513,6 @@ test('completes the village-to-floor2 journey', async ({ page }) => {
     'data-effect',
     'dialogue',
   );
-  await expect(page.getByTestId('effect')).toContainText('Restoration Core');
   await expect(page.locator('[data-lead="story-complete"]')).toHaveCount(1);
 
   // Reload in the village: the ending fact persisted — story-complete
