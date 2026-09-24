@@ -4,7 +4,7 @@ export const floor2: MapDefinition = {
   id: 'floor2',
   name: 'Tower Floor 2',
   layout: [
-    '##################',
+    '########.#########',
     '#................#',
     '#.##.###.##.#.####',
     '#....#......#....#',
@@ -44,7 +44,7 @@ export const floor2: MapDefinition = {
     {
       kind: 'portal',
       id: 'floor2-depth-to-floor3',
-      tile: { x: 8, y: 1 },
+      tile: { x: 8, y: 0 },
       assetId: 'stairs-down',
       target: { mapId: 'floor3', tile: { x: 10, y: 13 } },
       factId: 'floor2-depth-stairs-used',
@@ -141,7 +141,7 @@ export const floor2: MapDefinition = {
     {
       id: 'floor2-rear-gallery',
       name: 'Rear Gallery',
-      bounds: { minX: 1, maxX: 16, minY: 1, maxY: 2 },
+      bounds: { minX: 1, maxX: 16, minY: 0, maxY: 2 },
     },
   ],
 };

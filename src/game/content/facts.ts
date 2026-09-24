@@ -32,7 +32,7 @@ export const FACTS = {
     note: 'The keeper paired two rear-release mechanisms: each passage opens only from its far side.',
   },
   'floor2-depth-seal-seen': {
-    note: 'A lower seal remains closed until the missing subject returns with the keeper warning.',
+    note: 'The lower seal would not release until the missing subject returned with the keeper warning.',
   },
   'floor2-depth-stairs-used': {
     note: 'The sealed lower stair reaches Floor 3.',
@@ -42,6 +42,8 @@ export const FACTS = {
   },
   'main-village-restored': {},
 } as const satisfies Record<string, { note?: string }>;
+
+export type FactId = keyof typeof FACTS;
 
 export function hasFact(id: string): boolean {
   return Object.hasOwn(FACTS, id);

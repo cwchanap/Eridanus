@@ -26,12 +26,12 @@ export const floor3: MapDefinition = {
       id: 'floor3-to-floor2',
       tile: { x: 10, y: 13 },
       assetId: 'stairs-up',
-      target: { mapId: 'floor2', tile: { x: 8, y: 1 } },
+      target: { mapId: 'floor2', tile: { x: 8, y: 0 } },
     },
     {
       kind: 'latch',
       id: 'floor3-heart-shortcut',
-      tile: { x: 10, y: 8 },
+      tile: { x: 10, y: 5 },
       rearSide: 'north',
     },
     {
@@ -64,7 +64,7 @@ export const floor3: MapDefinition = {
     {
       kind: 'enemy',
       id: 'floor3-archive-sentry',
-      tile: { x: 19, y: 6 },
+      tile: { x: 17, y: 7 },
       assetId: 'enemy-ruin-guard',
       stats: { hp: 24, attack: 7, defense: 4 },
     },
