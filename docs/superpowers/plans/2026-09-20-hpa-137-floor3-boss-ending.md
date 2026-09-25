@@ -1,6 +1,6 @@
 # HPA-137 Complete Floor 3, Boss, and MVP Story Implementation Plan
 
-> **Status:** Complete — verified at commit 77b7eea by the full CI-equivalent gate (typecheck, lint, format:check, build, 163 unit tests, 4 Playwright tests, all green). All tasks implemented on this PR; no follow-up implementation PR.
+> **Status:** Complete — verified at commit 435e50d by the full CI-equivalent gate (typecheck, lint, format:check, build, 163 unit tests, 4 Playwright tests, all green). All tasks implemented on this PR; no follow-up implementation PR. Post-implementation review reseated two gates off shared through-routes: the Floor 2 depth stair moved into a dead-end wall pocket at (8,0) and the Floor 3 heart shortcut to (10,5); the snippets and counted routes below reflect the shipped coordinates.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (\`- [ ]\`) syntax for tracking.
 
@@ -608,7 +608,7 @@ In floor2.ts add:
 {
   kind: 'portal',
   id: 'floor2-depth-to-floor3',
-  tile: { x: 8, y: 1 },
+  tile: { x: 8, y: 0 },
   assetId: 'stairs-down',
   target: { mapId: 'floor3', tile: { x: 10, y: 13 } },
   factId: 'floor2-depth-stairs-used',
@@ -629,7 +629,7 @@ In floor3.ts add:
   id: 'floor3-to-floor2',
   tile: { x: 10, y: 13 },
   assetId: 'stairs-up',
-  target: { mapId: 'floor2', tile: { x: 8, y: 1 } },
+  target: { mapId: 'floor2', tile: { x: 8, y: 0 } },
 },
 ```
 
@@ -648,7 +648,7 @@ Add these exact required entities:
 {
   kind: 'latch',
   id: 'floor3-heart-shortcut',
-  tile: { x: 10, y: 8 },
+  tile: { x: 10, y: 5 },
   rearSide: 'north',
 },
 {
@@ -681,7 +681,7 @@ Add these exact required entities:
 {
   kind: 'enemy',
   id: 'floor3-archive-sentry',
-  tile: { x: 19, y: 6 },
+  tile: { x: 17, y: 7 },
   assetId: 'enemy-ruin-guard',
   stats: { hp: 24, attack: 7, defense: 4 },
 },
@@ -924,16 +924,21 @@ await press(page, 'ArrowUp', 2);
 await press(page, 'ArrowRight', 2);
 await press(page, 'ArrowUp', 1);
 
-// Floor 1 (2,14) -> front Floor-2 stair (9,2) -> Floor 2 (8,10)
+// Floor 1 (2,14) -> front Floor-2 stair (9,2) -> Floor 2 (8,10). The
+// 8th Up claims the uncollected floor1-ledger-fragment at (3,4) (a
+// claim bump keeps the player at (3,5)), so the 9th steps onto the
+// fragment tile before turning east
 await press(page, 'ArrowUp', 2);
 await press(page, 'ArrowRight', 1);
-await press(page, 'ArrowUp', 8);
+await press(page, 'ArrowUp', 9);
 await press(page, 'ArrowRight', 3);
 await press(page, 'ArrowUp', 2);
 await press(page, 'ArrowRight', 3);
 
-// Floor 2 central column -> depth stair (8,1) -> Floor 3 (10,13)
-await press(page, 'ArrowUp', 9);
+// Floor 2 central column -> depth stair pocket (8,0) -> Floor 3
+// (10,13): the fact gate opens because main-subject-returned is
+// already durable
+await press(page, 'ArrowUp', 10);
 ```
 
 At floor2-depth-to-floor3:
@@ -962,25 +967,25 @@ await expect(
   page.locator('[data-section="floor3-heart-approach"]'),
 ).toHaveCount(1);
 
-// The heart clue at (9,3) blocks a straight row-3 crossing,
-// so dogleg through (8,4) before returning to the center column.
-// Up -> (6,3), Right x2 -> (8,3), Down -> (8,4),
-// Right x2 -> (10,4), Down x3 -> (10,7).
+// The heart clue at (9,3) blocks a straight row-3 crossing, so dogleg
+// through (8,4) before returning to the center column:
+// Up -> (6,3), Right x2 -> (8,3), Down -> (8,4), Right x2 -> (10,4)
 await press(page, 'ArrowUp', 1);
 await press(page, 'ArrowRight', 2);
 await press(page, 'ArrowDown', 1);
 await press(page, 'ArrowRight', 2);
-await press(page, 'ArrowDown', 3);
 
-// Down: bump floor3-heart-shortcut (10,8) from rearSide=north
+// Down: bump floor3-heart-shortcut (10,5) from rearSide=north — its
+// rear approach (10,4) sits inside the Heart Approach section
 await press(page, 'ArrowDown', 1);
 await expect(page.getByTestId('effect')).toHaveAttribute(
   'data-effect',
   'latchOpened',
 );
 
-// Down x2 crosses the opened latch to (10,9); Up x2 proves it is now two-way
-await press(page, 'ArrowDown', 2);
+// Down x5 crosses the opened latch to (10,9); Up x2 proves it is now
+// two-way
+await press(page, 'ArrowDown', 5);
 await press(page, 'ArrowUp', 2);
 await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
 ```
@@ -1024,7 +1029,7 @@ Do not hardcode 25 HP loss in Playwright because the existing journey already co
 
 - [x] **Step 5: Claim the Restoration Core and reload once**
 
-After stepping onto the defeated boss tile (10,2), press Up once to bump floor3-restoration-core at (10,1). Assert itemReward text contains Restoration Core.
+After stepping onto the defeated boss tile (10,2), press Up once to bump floor3-restoration-core at (10,1). Assert the effect element's data-effect attribute is itemReward — keep the check on the attribute, not authored text.
 
 Assert the main lead becomes return-restoration-core.
 
@@ -1043,11 +1048,15 @@ This is the HPA-137 persistence checkpoint.
 After the HPA-137 reload, the player is at (10,2). Return exactly:
 
 ```ts
-// Floor 3 (10,2) -> opened center shortcut -> floor3-to-floor2 (10,13)
-// The 11th Down steps on the portal and arrives at Floor 2 (8,1).
+// Floor 3 (10,2) -> opened center shortcut -> floor3-to-floor2 (10,13).
+// The third Down recrosses the persisted-open shortcut at (10,5); the
+// 11th steps on the portal and arrives at Floor 2 (8,0), on the stair
+// pocket itself
 await press(page, 'ArrowDown', 11);
 
-// Floor 2 Rear Gallery -> floor2-rear-to-floor1 (16,1) -> Floor 1 (21,3)
+// Down: step off the stair pocket to (8,1). Floor 2 Rear Gallery ->
+// floor2-rear-to-floor1 (16,1) -> Floor 1 (21,3)
+await press(page, 'ArrowDown', 1);
 await press(page, 'ArrowRight', 8);
 
 // Floor 1 rear wing -> opened rear latch -> village portal (2,14)
@@ -1077,7 +1086,6 @@ await press(page, 'ArrowLeft', 1);
 Assert:
 
 - effect data-effect=dialogue;
-- dialogue contains Restoration Core;
 - journal has data-lead=story-complete.
 
 Reload in the village and assert story-complete still renders. This proves the ending fact persisted rather than being transient dialogue state.
