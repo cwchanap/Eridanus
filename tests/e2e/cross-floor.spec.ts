@@ -518,7 +518,7 @@ test('completes the mvp story journey', async ({ page }) => {
   ).toHaveCount(1);
 
   // Floor 3 (10,2) -> opened center shortcut -> floor3-to-floor2 (10,13).
-  // The 7th Down recrosses the persisted-open shortcut; the 11th steps on
+  // The 3rd Down recrosses the persisted-open shortcut; the 11th steps on
   // the portal and arrives at Floor 2 (8,0), on the stair pocket itself
   await press(page, 'ArrowDown', 11);
   await expect(page.getByTestId('map-name')).toHaveAttribute(

@@ -2,7 +2,7 @@
 
 ## Status
 
-Planning-only draft for the single HPA-137 PR.
+Shipped design; implemented in the single HPA-137 PR.
 
 This design builds directly on the merged HPA-237, HPA-22, HPA-235, and HPA-146 foundation. It keeps the current fact-first authored-content architecture and adds no quest engine, second combat system, generic ending framework, save migration layer, procedural generation, or new art pipeline.
 

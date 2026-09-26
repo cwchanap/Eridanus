@@ -660,6 +660,32 @@ describe('validateContent failure branches', () => {
     ]);
   });
 
+  it('flags an unknown locked fact id', () => {
+    const maps = villageWith([
+      {
+        kind: 'portal',
+        id: 'fact-locked-portal',
+        tile: { x: 4, y: 3 },
+        target: { mapId: 'village', tile: { x: 5, y: 3 } },
+        lock: {
+          kind: 'fact',
+          requiresFactId: 'main-missing-person-lead',
+          lockedText: 'sealed',
+          lockedFactId: 'not-a-fact',
+        },
+      },
+      {
+        kind: 'portal',
+        id: 'fact-locked-portal-back',
+        tile: { x: 5, y: 3 },
+        target: { mapId: 'village', tile: { x: 4, y: 3 } },
+      },
+    ]);
+    expect(validateContent(maps)).toEqual([
+      'fact-locked-portal: unknown locked fact id: not-a-fact',
+    ]);
+  });
+
   it('flags an npc presence fact that does not exist', () => {
     const maps = {
       ...MAPS,

@@ -10,8 +10,6 @@ export type PlayerStats = Readonly<{
   defense: number;
 }>;
 
-import type { FactId } from './content/facts';
-
 export type DialogueLineId =
   | 'warden-main-lead'
   | 'warden-sigil-found'
@@ -35,7 +33,7 @@ export type DialogueLineId =
 
 export type NpcInteractionResolution = Readonly<{
   lineId: DialogueLineId;
-  factId?: FactId;
+  factId?: string;
 }>;
 
 export type BaseEntity = Readonly<{ id: string; tile: Tile; assetId?: string }>;
