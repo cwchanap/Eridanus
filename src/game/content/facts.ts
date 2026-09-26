@@ -31,7 +31,19 @@ export const FACTS = {
   'floor2-paired-release-ledger-read': {
     note: 'The keeper paired two rear-release mechanisms: each passage opens only from its far side.',
   },
+  'floor2-depth-seal-seen': {
+    note: 'The lower seal would not release until the missing subject returned with the keeper warning.',
+  },
+  'floor2-depth-stairs-used': {
+    note: 'The sealed lower stair reaches Floor 3.',
+  },
+  'floor3-keeper-final-record-read': {
+    note: 'The final keeper record says the paired releases isolated a failed guardian control state while the tower continued feeding the village system.',
+  },
+  'main-village-restored': {},
 } as const satisfies Record<string, { note?: string }>;
+
+export type FactId = keyof typeof FACTS;
 
 export function hasFact(id: string): boolean {
   return Object.hasOwn(FACTS, id);

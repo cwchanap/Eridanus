@@ -4,7 +4,7 @@ export const floor2: MapDefinition = {
   id: 'floor2',
   name: 'Tower Floor 2',
   layout: [
-    '##################',
+    '########.#########',
     '#................#',
     '#.##.###.##.#.####',
     '#....#......#....#',
@@ -40,6 +40,21 @@ export const floor2: MapDefinition = {
       assetId: 'stairs-up',
       target: { mapId: 'floor1', tile: { x: 17, y: 7 } },
       factId: 'floor1-treasury-return-used',
+    },
+    {
+      kind: 'portal',
+      id: 'floor2-depth-to-floor3',
+      tile: { x: 8, y: 0 },
+      assetId: 'stairs-down',
+      target: { mapId: 'floor3', tile: { x: 10, y: 13 } },
+      factId: 'floor2-depth-stairs-used',
+      lock: {
+        kind: 'fact',
+        requiresFactId: 'main-subject-returned',
+        lockedFactId: 'floor2-depth-seal-seen',
+        lockedText:
+          'The lower keeper seal will not release until the missing subject returns with the warning from below.',
+      },
     },
     {
       kind: 'latch',
@@ -126,7 +141,7 @@ export const floor2: MapDefinition = {
     {
       id: 'floor2-rear-gallery',
       name: 'Rear Gallery',
-      bounds: { minX: 1, maxX: 16, minY: 1, maxY: 2 },
+      bounds: { minX: 1, maxX: 16, minY: 0, maxY: 2 },
     },
   ],
 };

@@ -92,6 +92,18 @@ describe('attemptMove', () => {
     expect(result.state.itemIds).toEqual([]);
   });
 
+  it('authors the depth stair lock as an item gate', () => {
+    const portal = findEntityById('floor1-front-to-floor2');
+    if (!portal || portal.kind !== 'portal' || !portal.lock)
+      throw new Error('floor1-front-to-floor2 lock missing');
+    expect(portal.lock).toEqual({
+      kind: 'item',
+      requiresItemId: 'tower-depth-sigil',
+      lockedFactId: 'floor1-depth-seal-seen',
+      lockedText: 'A crest-shaped socket seals the lower stair.',
+    });
+  });
+
   it('carrying the sigil unlocks the depth stair and it stays carried', () => {
     const carrying = {
       ...base,
@@ -106,6 +118,37 @@ describe('attemptMove', () => {
       tile: { x: 8, y: 10 },
     });
     expect(result.state.itemIds).toEqual(['tower-depth-sigil']);
+  });
+
+  it('the floor2 depth stair stays sealed until the subject returns', () => {
+    const sealed = { ...base, mapId: 'floor2' as const, tile: { x: 8, y: 1 } };
+    const result = attemptMove(sealed, 'north');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({
+      kind: 'accessLocked',
+      text: 'The lower keeper seal will not release until the missing subject returns with the warning from below.',
+    });
+    expect(result.state.mapId).toBe('floor2');
+    expect(result.state.tile).toEqual({ x: 8, y: 1 });
+    expect(result.state.factIds).toContain('floor2-depth-seal-seen');
+    expect(result.state.factIds).not.toContain('main-subject-returned');
+  });
+
+  it('the released depth stair travels to floor three and records its fact', () => {
+    const released = {
+      ...base,
+      mapId: 'floor2' as const,
+      tile: { x: 8, y: 1 },
+      factIds: ['main-subject-returned'],
+    };
+    const result = attemptMove(released, 'north');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor3' });
+    expect(result.state.mapId).toBe('floor3');
+    expect(result.state.tile).toEqual({ x: 10, y: 13 });
+    expect(result.state.factIds).toContain('floor2-depth-stairs-used');
   });
 
   it('descending the rear floor2 stair records the rear stair fact', () => {

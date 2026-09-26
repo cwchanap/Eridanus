@@ -1,4 +1,4 @@
-export type MapId = 'village' | 'floor1' | 'floor2';
+export type MapId = 'village' | 'floor1' | 'floor2' | 'floor3';
 export type Direction = 'north' | 'south' | 'east' | 'west';
 export type Stat = 'attack' | 'defense' | 'maxHp';
 export type Tile = Readonly<{ x: number; y: number }>;
@@ -26,7 +26,15 @@ export type DialogueLineId =
   | 'artisan-treasury-route-found'
   | 'artisan-heirloom-recovered'
   | 'scout-route-verified'
-  | 'scribe-floor2-ledger-read';
+  | 'scribe-floor2-ledger-read'
+  | 'warden-restoration-ending'
+  | 'warden-restoration-ending-ledger'
+  | 'scribe-final-ledger-read';
+
+export type NpcInteractionResolution = Readonly<{
+  lineId: DialogueLineId;
+  factId?: string;
+}>;
 
 export type BaseEntity = Readonly<{ id: string; tile: Tile; assetId?: string }>;
 export type NpcId =
@@ -68,11 +76,19 @@ export type EnemyEntity = BaseEntity &
 export type LatchEntity = BaseEntity &
   Readonly<{ kind: 'latch'; rearSide: Direction }>;
 export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
-export type PortalLock = Readonly<{
-  requiresItemId: string;
-  lockedText: string;
-  lockedFactId: string;
-}>;
+export type PortalLock =
+  | Readonly<{
+      kind: 'item';
+      requiresItemId: string;
+      lockedText: string;
+      lockedFactId: string;
+    }>
+  | Readonly<{
+      kind: 'fact';
+      requiresFactId: string;
+      lockedText: string;
+      lockedFactId: string;
+    }>;
 
 export type PortalEntity = BaseEntity &
   Readonly<{

@@ -28,7 +28,7 @@ Single test runs:
 ```sh
 bunx vitest run src/game/combat.test.ts
 bunx vitest run -t 'blocks closed latch from front'
-bunx playwright test -g 'completes the village-to-floor2 journey'
+bunx playwright test -g 'completes the mvp story journey'
 bunx playwright install --with-deps chromium   # first e2e run only
 ```
 
@@ -49,20 +49,20 @@ keyboard (WorldScene) / button click (InteractionOverlay)
 ```
 
 - **`src/game/`** — pure TypeScript, zero Phaser imports. `types.ts` holds every closed union; `state.ts` the initial state; `movement.ts` → `actions.ts` → `combat.ts` the rule chain; `session.ts` the pending-interaction gate; `save.ts` the localStorage boundary.
-- **`src/game/content/`** — authored maps (`village`, `floor1`, `floor2`), re-exported through `content.ts` as `MAPS`.
+- **`src/game/content/`** — authored maps (`village`, `floor1`, `floor2`, `floor3`), re-exported through `content.ts` as `MAPS`.
 - **`src/phaser/`** — `WorldScene.refresh()` clears and redraws every child each input from `GameState` plus the transient `playerFacing` (which selects the player texture); `createGame.ts` boots Phaser; `assets.ts` is the art-replacement seam (`ASSET_PATHS` catalog, terrain/player/entity resolvers, `TILE_SIZE`).
 - **`src/ui/InteractionOverlay.ts`** — framework-free DOM, rendered by `innerHTML` + re-bound listeners. HUD, effect text, combat prompt, blocked reasons, invalid-save recovery.
 - **`src/main.ts`** — the only stateful module: holds `session`, `effect`, `blocked`, wires input, autosaves, re-renders.
 
 ### State model
 
-`GameState` (durable, persisted) is `mapId`, `tile`, `player` stats, and three id arrays: `openedRewardIds`, `defeatedEnemyIds`, `openedShortcutIds`. It is deeply `Readonly` — every rule returns a new object rather than mutating.
+`GameState` (durable, persisted) is `mapId`, `tile`, `player` stats, and six id arrays: `openedRewardIds`, `defeatedEnemyIds`, `openedShortcutIds`, `itemIds`, `factIds`, `discoveredSectionIds`. It is deeply `Readonly` — every rule returns a new object rather than mutating.
 
 `PendingInteraction` (transient, never persisted) exists only for the two-phase combat prompt. `SessionState = { game, pending }`. While `pending` is set, moves are rejected with `interaction-pending`; Fight resolves, Cancel clears.
 
 ### Closed contracts
 
-`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `recovery`, `portal`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `save.ts`'s `isTileOccupiedByBlockingEntity`, `InteractionOverlay`'s `REASON_TEXT`/`effectText`, and `content.ts`'s validator.
+`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `recovery`, `npc`, `portal`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `save.ts`'s `isTileOccupiedByBlockingEntity`, `InteractionOverlay`'s `REASON_TEXT`/`effectText`, and `content.ts`'s validator.
 
 ### Movement is interaction
 

@@ -1,5 +1,6 @@
 import { floor1 } from './content/floor1';
 import { floor2 } from './content/floor2';
+import { floor3 } from './content/floor3';
 import { village } from './content/village';
 import { hasFact } from './content/facts';
 import { createInitialGameState } from './state';
@@ -13,7 +14,12 @@ import type {
   Tile,
 } from './types';
 
-export const MAPS: Record<MapId, MapDefinition> = { village, floor1, floor2 };
+export const MAPS: Record<MapId, MapDefinition> = {
+  village,
+  floor1,
+  floor2,
+  floor3,
+};
 
 export function isInBounds(mapId: MapId, tile: Tile): boolean {
   const map = MAPS[mapId];
@@ -228,12 +234,27 @@ export function validateContent(
         if (entity.lock) {
           if (!hasFact(entity.lock.lockedFactId))
             errors.push(
-              `${entity.id}: unknown lock fact id: ${entity.lock.lockedFactId}`,
+              `${entity.id}: unknown locked fact id: ${entity.lock.lockedFactId}`,
             );
-          if (!knownItemIds.has(entity.lock.requiresItemId))
-            errors.push(
-              `${entity.id}: unknown lock item id: ${entity.lock.requiresItemId}`,
-            );
+
+          switch (entity.lock.kind) {
+            case 'item':
+              if (!knownItemIds.has(entity.lock.requiresItemId))
+                errors.push(
+                  `${entity.id}: unknown lock item id: ${entity.lock.requiresItemId}`,
+                );
+              break;
+            case 'fact':
+              if (!hasFact(entity.lock.requiresFactId))
+                errors.push(
+                  `${entity.id}: unknown lock requirement fact id: ${entity.lock.requiresFactId}`,
+                );
+              break;
+            default: {
+              const unmatched: never = entity.lock;
+              throw new Error(`unknown portal lock kind: ${unmatched}`);
+            }
+          }
         }
         if (!floorOn(maps[entity.target.mapId], entity.target.tile)) {
           errors.push(`${entity.id}: portal target must be floor`);
