@@ -86,7 +86,7 @@ const maps = villageWith([
 Both tiles are empty village floor. Assert the validator reports only:
 
 ```text
-fact-locked-portal: unknown lock fact id: not-a-fact
+fact-locked-portal: unknown locked fact id: not-a-fact
 ```
 
 When the union lands in Step 2, migrate **both** existing item-lock authoring sites in the same compile-safe edit:
@@ -171,13 +171,13 @@ Do not generalize this helper into a condition engine.
 
 - [x] **Step 4: Validate both lock variants exhaustively**
 
-In validateContent, keep the shared lockedFactId validation, then switch on lock.kind with no default:
+In validateContent, keep the shared lockedFactId validation, then switch on lock.kind with a `never` default so a new kind fails to compile:
 
 ```ts
 if (entity.lock) {
   if (!hasFact(entity.lock.lockedFactId))
     errors.push(
-      `${entity.id}: unknown lock fact id: ${entity.lock.lockedFactId}`,
+      `${entity.id}: unknown locked fact id: ${entity.lock.lockedFactId}`,
     );
 
   switch (entity.lock.kind) {
@@ -190,9 +190,13 @@ if (entity.lock) {
     case 'fact':
       if (!hasFact(entity.lock.requiresFactId))
         errors.push(
-          `${entity.id}: unknown lock fact id: ${entity.lock.requiresFactId}`,
+          `${entity.id}: unknown lock requirement fact id: ${entity.lock.requiresFactId}`,
         );
       break;
+    default: {
+      const unmatched: never = entity.lock;
+      throw new Error(`unknown portal lock kind: ${unmatched}`);
+    }
   }
 }
 ```
@@ -297,7 +301,7 @@ In src/game/content/facts.ts add:
 
 ```ts
 'floor2-depth-seal-seen': {
-  note: 'A lower seal remains closed until the missing subject returns with the keeper warning.',
+  note: 'The lower seal would not release until the missing subject returned with the keeper warning.',
 },
 'floor2-depth-stairs-used': {
   note: 'The sealed lower stair reaches Floor 3.',

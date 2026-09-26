@@ -250,6 +250,10 @@ export function validateContent(
                   `${entity.id}: unknown lock requirement fact id: ${entity.lock.requiresFactId}`,
                 );
               break;
+            default: {
+              const unmatched: never = entity.lock;
+              throw new Error(`unknown portal lock kind: ${unmatched}`);
+            }
           }
         }
         if (!floorOn(maps[entity.target.mapId], entity.target.tile)) {

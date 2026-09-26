@@ -56,13 +56,13 @@ keyboard (WorldScene) / button click (InteractionOverlay)
 
 ### State model
 
-`GameState` (durable, persisted) is `mapId`, `tile`, `player` stats, and three id arrays: `openedRewardIds`, `defeatedEnemyIds`, `openedShortcutIds`. It is deeply `Readonly` — every rule returns a new object rather than mutating.
+`GameState` (durable, persisted) is `mapId`, `tile`, `player` stats, and six id arrays: `openedRewardIds`, `defeatedEnemyIds`, `openedShortcutIds`, `itemIds`, `factIds`, `discoveredSectionIds`. It is deeply `Readonly` — every rule returns a new object rather than mutating.
 
 `PendingInteraction` (transient, never persisted) exists only for the two-phase combat prompt. `SessionState = { game, pending }`. While `pending` is set, moves are rejected with `interaction-pending`; Fight resolves, Cancel clears.
 
 ### Closed contracts
 
-`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `recovery`, `portal`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `save.ts`'s `isTileOccupiedByBlockingEntity`, `InteractionOverlay`'s `REASON_TEXT`/`effectText`, and `content.ts`'s validator.
+`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `recovery`, `npc`, `portal`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `save.ts`'s `isTileOccupiedByBlockingEntity`, `InteractionOverlay`'s `REASON_TEXT`/`effectText`, and `content.ts`'s validator.
 
 ### Movement is interaction
 
