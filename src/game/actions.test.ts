@@ -13,6 +13,7 @@ const recovery = findEntityById('village-recovery');
 const latch = findEntityById('floor1-rear-latch');
 const enemy = findEntityById('floor1-gatekeeper');
 const overlook = findEntityById('floor1-treasury-overlook');
+const finalRecord = findEntityById('floor3-keeper-final-record');
 if (!reward || reward.kind !== 'reward') throw new Error('reward missing');
 if (!sigil || sigil.kind !== 'reward' || sigil.grant !== 'item')
   throw new Error('sigil missing');
@@ -21,6 +22,8 @@ if (!recovery || recovery.kind !== 'recovery')
 if (!latch || latch.kind !== 'latch') throw new Error('latch missing');
 if (!enemy || enemy.kind !== 'enemy') throw new Error('enemy missing');
 if (!overlook || overlook.kind !== 'clue') throw new Error('clue missing');
+if (!finalRecord || finalRecord.kind !== 'clue')
+  throw new Error('final keeper record missing');
 const warden = findEntityById('village-warden');
 if (!warden || warden.kind !== 'npc') throw new Error('village-warden missing');
 const missingSubject = findEntityById('floor2-missing-subject');
@@ -131,6 +134,23 @@ describe('actions', () => {
     expect(result.state.factIds).toContain('floor1-treasury-sealed');
   });
 
+  it('reading the final keeper record records the ledger fact exactly once', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor3' as const,
+      tile: { x: 18, y: 6 },
+    };
+    const result = interactWithEntity(state, finalRecord, state.tile);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'clue', text: finalRecord.text });
+    expect(
+      result.state.factIds.filter(
+        (id) => id === 'floor3-keeper-final-record-read',
+      ),
+    ).toHaveLength(1);
+  });
+
   it('bumping the warden with the restoration core records the outcome fact exactly once', () => {
     const state = {
       ...createInitialGameState(),
@@ -178,9 +198,10 @@ describe('actions', () => {
       fight.state.defeatedEnemyIds.filter((id) => id === boss.id),
     ).toHaveLength(1);
 
-    // The ordinary second resolution: bumping the defeated boss again reports
-    // the outcome with no further state change (the session never re-issues a
-    // prompt for a defeated enemy).
+    // The ordinary second resolution: a real step never re-encounters a
+    // defeated enemy (getActiveEntityAt drops it, so the player walks onto
+    // the tile); resolving it directly is idempotent and reports the outcome
+    // with no further state change.
     expect(interactWithEntity(fight.state, boss, state.tile)).toEqual({
       ok: true,
       state: fight.state,

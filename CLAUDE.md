@@ -62,7 +62,7 @@ keyboard (WorldScene) / button click (InteractionOverlay)
 
 ### Closed contracts
 
-`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `recovery`, `npc`, `portal`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `save.ts`'s `isTileOccupiedByBlockingEntity`, `InteractionOverlay`'s `REASON_TEXT`/`effectText`, and `content.ts`'s validator.
+`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `recovery`, `npc`, `portal`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `content.ts`'s `isEntityBlocking`, `InteractionOverlay`'s `REASON_TEXT`/`effectText`, and `content.ts`'s validator.
 
 ### Movement is interaction
 

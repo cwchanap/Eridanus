@@ -190,9 +190,11 @@ describe('authored content', () => {
       const key = tileKey(tile);
       if (reachable.has(key)) continue;
       reachable.add(key);
-      // A portal is a destination, never a corridor: stepping on one
-      // leaves the map (locked or not), so the flood stops there. Arrival
-      // starts are the exception — the flood disembarks from them.
+      // A portal is a destination, never a corridor: an open portal carries
+      // the step off the map, and a locked one refuses the step outright
+      // (the player stays on the previous tile), so the flood stops there
+      // either way. Arrival starts are the exception — the flood disembarks
+      // from them.
       if (portals.has(key) && !startKeys.has(key)) continue;
       for (const next of [
         { x: tile.x - 1, y: tile.y },
