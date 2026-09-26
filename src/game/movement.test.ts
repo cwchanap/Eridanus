@@ -121,7 +121,13 @@ describe('attemptMove', () => {
   });
 
   it('the floor2 depth stair stays sealed until the subject returns', () => {
-    const sealed = { ...base, mapId: 'floor2' as const, tile: { x: 8, y: 1 } };
+    // The sigil must not matter here: this stair is a fact lock.
+    const sealed = {
+      ...base,
+      mapId: 'floor2' as const,
+      tile: { x: 8, y: 1 },
+      itemIds: ['tower-depth-sigil'],
+    };
     const result = attemptMove(sealed, 'north');
     expect(result.ok).toBe(true);
     if (!result.ok) return;

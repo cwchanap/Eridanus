@@ -249,6 +249,10 @@ export function validateContent(
                 errors.push(
                   `${entity.id}: unknown lock requirement fact id: ${entity.lock.requiresFactId}`,
                 );
+              if (entity.lock.requiresFactId === entity.lock.lockedFactId)
+                errors.push(
+                  `${entity.id}: lock requirement and locked fact are the same id`,
+                );
               break;
             default: {
               const unmatched: never = entity.lock;

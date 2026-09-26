@@ -103,6 +103,19 @@ describe('resolveNpcInteraction', () => {
     ).toEqual({ lineId: 'scribe-floor2-ledger-read' });
   });
 
+  it('keeps the final keeper record ahead of the Floor 2 ledger evidence', () => {
+    expect(
+      resolveNpcInteraction('village-scribe', {
+        ...createInitialGameState(),
+        factIds: [
+          'floor2-paired-release-ledger-read',
+          'floor3-keeper-final-record-read',
+        ],
+        itemIds: ['ledger-fragment-1'],
+      }),
+    ).toEqual({ lineId: 'scribe-final-ledger-read' });
+  });
+
   it('returns the restoration ending once the core is carried, recording the outcome fact', () => {
     const coreState = {
       ...createInitialGameState(),

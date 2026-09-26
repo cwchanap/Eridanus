@@ -1,3 +1,5 @@
+import type { FactId } from './content/facts';
+
 export type MapId = 'village' | 'floor1' | 'floor2' | 'floor3';
 export type Direction = 'north' | 'south' | 'east' | 'west';
 export type Stat = 'attack' | 'defense' | 'maxHp';
@@ -33,7 +35,7 @@ export type DialogueLineId =
 
 export type NpcInteractionResolution = Readonly<{
   lineId: DialogueLineId;
-  factId?: string;
+  factId?: FactId;
 }>;
 
 export type BaseEntity = Readonly<{ id: string; tile: Tile; assetId?: string }>;
