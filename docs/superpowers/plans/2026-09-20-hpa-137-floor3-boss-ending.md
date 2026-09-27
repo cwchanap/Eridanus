@@ -86,7 +86,7 @@ const maps = villageWith([
 Both tiles are empty village floor. Assert the validator reports only:
 
 ```text
-fact-locked-portal: unknown locked fact id: not-a-fact
+fact-locked-portal: unknown lock requirement fact id: not-a-fact
 ```
 
 When the union lands in Step 2, migrate **both** existing item-lock authoring sites in the same compile-safe edit:
