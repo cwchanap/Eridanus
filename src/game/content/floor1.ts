@@ -34,7 +34,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-front-to-floor2',
       tile: { x: 9, y: 2 },
       assetId: 'stairs-down',
-      target: { mapId: 'floor2', tile: { x: 8, y: 10 } },
+      target: { mapId: 'floor2', tile: { x: 8, y: 11 } },
       factId: 'floor1-depth-stairs-used',
       lock: {
         kind: 'item',
@@ -48,7 +48,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-rear-to-floor2',
       tile: { x: 21, y: 3 },
       assetId: 'stairs-down',
-      target: { mapId: 'floor2', tile: { x: 16, y: 1 } },
+      target: { mapId: 'floor2', tile: { x: 16, y: 2 } },
       factId: 'floor1-rear-stairs-used',
     },
     {
@@ -135,7 +135,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-treasury-to-floor2',
       tile: { x: 17, y: 7 },
       assetId: 'stairs-down',
-      target: { mapId: 'floor2', tile: { x: 4, y: 2 } },
+      target: { mapId: 'floor2', tile: { x: 4, y: 3 } },
     },
     {
       kind: 'reward',

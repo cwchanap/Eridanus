@@ -1,6 +1,6 @@
 # HPA-137 Complete Floor 3, Boss, and MVP Story Implementation Plan
 
-> **Status:** Complete — verified at commit 435e50d by the full CI-equivalent gate (typecheck, lint, format:check, build, 163 unit tests, 4 Playwright tests, all green). All tasks implemented on this PR; no follow-up implementation PR. Post-implementation review reseated two gates off shared through-routes: the Floor 2 depth stair moved into a dead-end wall pocket at (8,0) and the Floor 3 heart shortcut to (10,5); the snippets and counted routes below reflect the shipped coordinates.
+> **Status:** Complete — verified by the full CI-equivalent gate (typecheck, lint, format:check, build, 166 unit tests, 4 Playwright tests, all green). All tasks implemented on this PR; no follow-up implementation PR. Post-implementation review reseated two gates off shared through-routes: the Floor 2 depth stair moved into a dead-end wall pocket and the Floor 3 heart shortcut to (10,5). A later pass padded Floor 2 with a solid top row so that pocket sits at (8,1) — bottom-anchored 64px sprites clip above y=0 — keeping the pocket off the row-2 corridor while the full stair stays visible; the snippets and counted routes below reflect the shipped coordinates.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (\`- [ ]\`) syntax for tracking.
 
@@ -612,7 +612,7 @@ In floor2.ts add:
 {
   kind: 'portal',
   id: 'floor2-depth-to-floor3',
-  tile: { x: 8, y: 0 },
+  tile: { x: 8, y: 1 },
   assetId: 'stairs-down',
   target: { mapId: 'floor3', tile: { x: 10, y: 13 } },
   factId: 'floor2-depth-stairs-used',
@@ -633,7 +633,7 @@ In floor3.ts add:
   id: 'floor3-to-floor2',
   tile: { x: 10, y: 13 },
   assetId: 'stairs-up',
-  target: { mapId: 'floor2', tile: { x: 8, y: 0 } },
+  target: { mapId: 'floor2', tile: { x: 8, y: 1 } },
 },
 ```
 
@@ -928,7 +928,7 @@ await press(page, 'ArrowUp', 2);
 await press(page, 'ArrowRight', 2);
 await press(page, 'ArrowUp', 1);
 
-// Floor 1 (2,14) -> front Floor-2 stair (9,2) -> Floor 2 (8,10). The
+// Floor 1 (2,14) -> front Floor-2 stair (9,2) -> Floor 2 (8,11). The
 // 8th Up claims the uncollected floor1-ledger-fragment at (3,4) (a
 // claim bump keeps the player at (3,5)), so the 9th steps onto the
 // fragment tile before turning east
@@ -939,7 +939,7 @@ await press(page, 'ArrowRight', 3);
 await press(page, 'ArrowUp', 2);
 await press(page, 'ArrowRight', 3);
 
-// Floor 2 central column -> depth stair pocket (8,0) -> Floor 3
+// Floor 2 central column -> depth stair pocket (8,1) -> Floor 3
 // (10,13): the fact gate opens because main-subject-returned is
 // already durable
 await press(page, 'ArrowUp', 10);
@@ -1054,12 +1054,12 @@ After the HPA-137 reload, the player is at (10,2). Return exactly:
 ```ts
 // Floor 3 (10,2) -> opened center shortcut -> floor3-to-floor2 (10,13).
 // The third Down recrosses the persisted-open shortcut at (10,5); the
-// 11th steps on the portal and arrives at Floor 2 (8,0), on the stair
+// 11th steps on the portal and arrives at Floor 2 (8,1), on the stair
 // pocket itself
 await press(page, 'ArrowDown', 11);
 
-// Down: step off the stair pocket to (8,1). Floor 2 Rear Gallery ->
-// floor2-rear-to-floor1 (16,1) -> Floor 1 (21,3)
+// Down: step off the stair pocket to (8,2). Floor 2 Rear Gallery ->
+// floor2-rear-to-floor1 (16,2) -> Floor 1 (21,3)
 await press(page, 'ArrowDown', 1);
 await press(page, 'ArrowRight', 8);
 
