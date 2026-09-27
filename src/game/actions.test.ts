@@ -268,7 +268,7 @@ describe('actions', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor2' as const,
-      tile: { x: 11, y: 3 },
+      tile: { x: 11, y: 4 },
     };
     expect(getActiveEntityAt(state, missingSubject.tile)).toEqual(
       missingSubject,
@@ -291,7 +291,7 @@ describe('actions', () => {
     const returned = {
       ...createInitialGameState(),
       mapId: 'floor2' as const,
-      tile: { x: 11, y: 3 },
+      tile: { x: 11, y: 4 },
       factIds: ['main-subject-returned'],
     };
     expect(getActiveEntityAt(returned, missingSubject.tile)).toBeUndefined();
@@ -299,7 +299,7 @@ describe('actions', () => {
     const step = attemptMove(returned, 'north');
     expect(step.ok).toBe(true);
     if (!step.ok) return;
-    expect(step.state.tile).toEqual({ x: 11, y: 2 });
+    expect(step.state.tile).toEqual({ x: 11, y: 3 });
     expect(step.effect).toEqual({ kind: 'moved' });
   });
 

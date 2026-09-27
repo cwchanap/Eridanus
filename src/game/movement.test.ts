@@ -115,7 +115,7 @@ describe('attemptMove', () => {
     if (!result.ok) return;
     expect(result.state).toMatchObject({
       mapId: 'floor2',
-      tile: { x: 8, y: 10 },
+      tile: { x: 8, y: 11 },
     });
     expect(result.state.itemIds).toEqual(['tower-depth-sigil']);
   });
@@ -125,7 +125,7 @@ describe('attemptMove', () => {
     const sealed = {
       ...base,
       mapId: 'floor2' as const,
-      tile: { x: 8, y: 1 },
+      tile: { x: 8, y: 2 },
       itemIds: ['tower-depth-sigil'],
     };
     const result = attemptMove(sealed, 'north');
@@ -136,7 +136,7 @@ describe('attemptMove', () => {
       text: 'The lower keeper seal will not release until the missing subject returns with the warning from below.',
     });
     expect(result.state.mapId).toBe('floor2');
-    expect(result.state.tile).toEqual({ x: 8, y: 1 });
+    expect(result.state.tile).toEqual({ x: 8, y: 2 });
     expect(result.state.factIds).toContain('floor2-depth-seal-seen');
     expect(result.state.factIds).not.toContain('main-subject-returned');
   });
@@ -145,7 +145,7 @@ describe('attemptMove', () => {
     const released = {
       ...base,
       mapId: 'floor2' as const,
-      tile: { x: 8, y: 1 },
+      tile: { x: 8, y: 2 },
       factIds: ['main-subject-returned'],
     };
     const result = attemptMove(released, 'north');
@@ -158,7 +158,7 @@ describe('attemptMove', () => {
   });
 
   it('descending the rear floor2 stair records the rear stair fact', () => {
-    const state = { ...base, mapId: 'floor2' as const, tile: { x: 15, y: 1 } };
+    const state = { ...base, mapId: 'floor2' as const, tile: { x: 15, y: 2 } };
     const result = attemptMove(state, 'east');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -272,13 +272,13 @@ describe('attemptMove', () => {
 
   it('opens both floor2 releases in either order', () => {
     const westFirst = attemptMove(
-      { ...base, mapId: 'floor2' as const, tile: { x: 6, y: 6 } },
+      { ...base, mapId: 'floor2' as const, tile: { x: 6, y: 7 } },
       'west',
     );
     expect(westFirst.ok).toBe(true);
     if (!westFirst.ok) return;
     const thenEast = attemptMove(
-      { ...westFirst.state, tile: { x: 11, y: 6 } },
+      { ...westFirst.state, tile: { x: 11, y: 7 } },
       'east',
     );
     expect(thenEast.ok).toBe(true);
@@ -289,13 +289,13 @@ describe('attemptMove', () => {
     );
 
     const eastFirst = attemptMove(
-      { ...base, mapId: 'floor2' as const, tile: { x: 11, y: 6 } },
+      { ...base, mapId: 'floor2' as const, tile: { x: 11, y: 7 } },
       'east',
     );
     expect(eastFirst.ok).toBe(true);
     if (!eastFirst.ok) return;
     const thenWest = attemptMove(
-      { ...eastFirst.state, tile: { x: 6, y: 6 } },
+      { ...eastFirst.state, tile: { x: 6, y: 7 } },
       'west',
     );
     expect(thenWest.ok).toBe(true);
@@ -310,7 +310,7 @@ describe('attemptMove', () => {
     const onFloor2 = {
       ...base,
       mapId: 'floor2' as const,
-      tile: { x: 4, y: 3 },
+      tile: { x: 4, y: 4 },
     };
     const result = attemptMove(onFloor2, 'north');
     expect(result.ok).toBe(true);

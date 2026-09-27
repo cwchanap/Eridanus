@@ -355,7 +355,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor2',
-        tile: { x: 11, y: 2 },
+        tile: { x: 11, y: 3 },
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -368,7 +368,7 @@ describe('saveGame/loadGame', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor2',
-      tile: { x: 11, y: 2 },
+      tile: { x: 11, y: 3 },
       factIds: ['main-subject-returned'],
     };
     storage.setItem('eridanus.save', JSON.stringify(state));

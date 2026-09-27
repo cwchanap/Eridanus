@@ -142,7 +142,7 @@ test('completes the mvp story journey', async ({ page }) => {
   await press(page, 'ArrowUp', 1);
   await press(page, 'ArrowRight', 3);
 
-  // Up: sigil unlocks the front Floor-2 stair → Front Landing (8,10)
+  // Up: sigil unlocks the front Floor-2 stair → Front Landing (8,11)
   await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
@@ -152,16 +152,16 @@ test('completes the mvp story journey', async ({ page }) => {
     page.locator('[data-section="floor2-front-landing"]'),
   ).toHaveCount(1);
 
-  // Up x2: into the Central Hall (8,8)
+  // Up x2: into the Central Hall (8,9)
   await press(page, 'ArrowUp', 2);
   await expect(
     page.locator('[data-section="floor2-central-hall"]'),
   ).toHaveCount(1);
 
-  // Up x8: the first seven climb the x=8 column to (8,1), the eighth
-  // bumps the sealed Floor-3 stair (8,0). The fact lock still holds —
+  // Up x8: the first seven climb the x=8 column to (8,2), the eighth
+  // bumps the sealed Floor-3 stair (8,1). The fact lock still holds —
   // the missing subject has not returned yet — so the seal sighting is
-  // recorded and the player stays on (8,1)
+  // recorded and the player stays on (8,2)
   await press(page, 'ArrowUp', 8);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
@@ -170,10 +170,10 @@ test('completes the mvp story journey', async ({ page }) => {
   await expect(
     page.locator('[data-note="floor2-depth-seal-seen"]'),
   ).toHaveCount(1);
-  // Down x7: back to the Central Hall (8,8)
+  // Down x7: back to the Central Hall (8,9)
   await press(page, 'ArrowDown', 7);
 
-  // Up x2, Right x4: the last press bumps floor2-east-release (12,6) from
+  // Up x2, Right x4: the last press bumps floor2-east-release (12,7) from
   // its rear (west) side and opens it
   await press(page, 'ArrowUp', 2);
   await press(page, 'ArrowRight', 4);
@@ -188,13 +188,13 @@ test('completes the mvp story journey', async ({ page }) => {
     page.locator('[data-section="floor2-east-service"]'),
   ).toHaveCount(1);
 
-  // Up x5: the north column reaches the Rear Gallery (13,1)
+  // Up x5: the north column reaches the Rear Gallery (13,2)
   await press(page, 'ArrowUp', 5);
   await expect(
     page.locator('[data-section="floor2-rear-gallery"]'),
   ).toHaveCount(1);
 
-  // Left x2, Down: bump floor2-missing-subject (11,2) → it departs for the
+  // Left x2, Down: bump floor2-missing-subject (11,3) → it departs for the
   // village and the main lead advances
   await press(page, 'ArrowLeft', 2);
   await press(page, 'ArrowDown', 1);
@@ -209,7 +209,7 @@ test('completes the mvp story journey', async ({ page }) => {
   await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
   await expect(page.getByTestId('effect')).toHaveCount(0);
 
-  // Down x3, Left x6: the last press bumps floor2-west-release (5,6) from
+  // Down x3, Left x6: the last press bumps floor2-west-release (5,7) from
   // its rear (east) side and opens it
   await press(page, 'ArrowDown', 3);
   await press(page, 'ArrowLeft', 6);
@@ -218,13 +218,13 @@ test('completes the mvp story journey', async ({ page }) => {
     'latchOpened',
   );
 
-  // Left x2: through the open release into the West Archive (4,6)
+  // Left x2: through the open release into the West Archive (4,7)
   await press(page, 'ArrowLeft', 2);
   await expect(
     page.locator('[data-section="floor2-west-archive"]'),
   ).toHaveCount(1);
 
-  // Up x4: the new treasury stair (4,2) → Floor 1 workshop treasury (17,7)
+  // Up x4: the new treasury stair (4,3) → Floor 1 workshop treasury (17,7)
   await press(page, 'ArrowUp', 4);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
@@ -265,7 +265,7 @@ test('completes the mvp story journey', async ({ page }) => {
   await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
   await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 4');
 
-  // Right: back through the treasury stair → Floor 2 (4,2). Down x4,
+  // Right: back through the treasury stair → Floor 2 (4,3). Down x4,
   // Right x2: crossing the west release from its front side only works
   // while it stays open
   await press(page, 'ArrowRight', 1);
@@ -277,10 +277,10 @@ test('completes the mvp story journey', async ({ page }) => {
   await press(page, 'ArrowRight', 2);
   await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
 
-  // Up x3: to (6,3). Right x5, Up x2, Right x2: reach row 1 via the
+  // Up x3: to (6,4). Right x5, Up x2, Right x2: reach row 2 via the
   // x=11 column (the depth stair sits in its own dead-end pocket at
-  // (8,0) and no longer lies on the row-1 corridor). Down x5: around
-  // the rear gallery to (13,6), then Left x2: crossing the east release
+  // (8,1) and no longer lies on the row-2 corridor). Down x5: around
+  // the rear gallery to (13,7), then Left x2: crossing the east release
   // from its front side only works while it stays open
   await press(page, 'ArrowUp', 3);
   await press(page, 'ArrowRight', 5);
@@ -368,7 +368,7 @@ test('completes the mvp story journey', async ({ page }) => {
   await press(page, 'ArrowRight', 2);
   await press(page, 'ArrowUp', 1);
 
-  // Floor 1 (2,14) -> front Floor-2 stair (9,2) -> Floor 2 (8,10). The
+  // Floor 1 (2,14) -> front Floor-2 stair (9,2) -> Floor 2 (8,11). The
   // 8th Up claims the uncollected floor1-ledger-fragment at (3,4) (a
   // claim bump keeps the player at (3,5)), so the 9th steps onto the
   // fragment tile before turning east
@@ -379,7 +379,7 @@ test('completes the mvp story journey', async ({ page }) => {
   await press(page, 'ArrowUp', 2);
   await press(page, 'ArrowRight', 3);
 
-  // Floor 2 central column -> depth stair pocket (8,0) -> Floor 3
+  // Floor 2 central column -> depth stair pocket (8,1) -> Floor 3
   // (10,13): the fact gate opens because main-subject-returned is
   // already durable
   await press(page, 'ArrowUp', 10);
@@ -519,15 +519,15 @@ test('completes the mvp story journey', async ({ page }) => {
 
   // Floor 3 (10,2) -> opened center shortcut -> floor3-to-floor2 (10,13).
   // The 3rd Down recrosses the persisted-open shortcut; the 11th steps on
-  // the portal and arrives at Floor 2 (8,0), on the stair pocket itself
+  // the portal and arrives at Floor 2 (8,1), on the stair pocket itself
   await press(page, 'ArrowDown', 11);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
     'floor2',
   );
 
-  // Down: step off the stair pocket to (8,1). Floor 2 Rear Gallery ->
-  // floor2-rear-to-floor1 (16,1) -> Floor 1 (21,3)
+  // Down: step off the stair pocket to (8,2). Floor 2 Rear Gallery ->
+  // floor2-rear-to-floor1 (16,2) -> Floor 1 (21,3)
   await press(page, 'ArrowDown', 1);
   await press(page, 'ArrowRight', 8);
 

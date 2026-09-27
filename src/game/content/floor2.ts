@@ -4,6 +4,7 @@ export const floor2: MapDefinition = {
   id: 'floor2',
   name: 'Tower Floor 2',
   layout: [
+    '##################',
     '########.#########',
     '#................#',
     '#.##.###.##.#.####',
@@ -21,14 +22,14 @@ export const floor2: MapDefinition = {
     {
       kind: 'portal',
       id: 'floor2-front-to-floor1',
-      tile: { x: 8, y: 10 },
+      tile: { x: 8, y: 11 },
       assetId: 'stairs-up',
       target: { mapId: 'floor1', tile: { x: 9, y: 2 } },
     },
     {
       kind: 'portal',
       id: 'floor2-rear-to-floor1',
-      tile: { x: 16, y: 1 },
+      tile: { x: 16, y: 2 },
       assetId: 'stairs-up',
       target: { mapId: 'floor1', tile: { x: 21, y: 3 } },
       factId: 'floor1-rear-stairs-used',
@@ -36,7 +37,7 @@ export const floor2: MapDefinition = {
     {
       kind: 'portal',
       id: 'floor2-treasury-to-floor1',
-      tile: { x: 4, y: 2 },
+      tile: { x: 4, y: 3 },
       assetId: 'stairs-up',
       target: { mapId: 'floor1', tile: { x: 17, y: 7 } },
       factId: 'floor1-treasury-return-used',
@@ -44,7 +45,7 @@ export const floor2: MapDefinition = {
     {
       kind: 'portal',
       id: 'floor2-depth-to-floor3',
-      tile: { x: 8, y: 0 },
+      tile: { x: 8, y: 1 },
       assetId: 'stairs-down',
       target: { mapId: 'floor3', tile: { x: 10, y: 13 } },
       factId: 'floor2-depth-stairs-used',
@@ -59,19 +60,19 @@ export const floor2: MapDefinition = {
     {
       kind: 'latch',
       id: 'floor2-west-release',
-      tile: { x: 5, y: 6 },
+      tile: { x: 5, y: 7 },
       rearSide: 'east',
     },
     {
       kind: 'latch',
       id: 'floor2-east-release',
-      tile: { x: 12, y: 6 },
+      tile: { x: 12, y: 7 },
       rearSide: 'west',
     },
     {
       kind: 'npc',
       id: 'floor2-missing-subject',
-      tile: { x: 11, y: 2 },
+      tile: { x: 11, y: 3 },
       name: 'Missing Subject',
       introFactId: 'main-subject-returned',
       presence: { factId: 'main-subject-returned', when: 'unknown' },
@@ -79,7 +80,7 @@ export const floor2: MapDefinition = {
     {
       kind: 'clue',
       id: 'floor2-paired-release-ledger',
-      tile: { x: 2, y: 4 },
+      tile: { x: 2, y: 5 },
       assetId: 'clue-runes',
       text: 'A keeper\'s ledger lies open: "The rear releases are paired. Each gate yields only to a hand on its far side — open either first; both lead back."',
       factId: 'floor2-paired-release-ledger-read',
@@ -87,7 +88,7 @@ export const floor2: MapDefinition = {
     {
       kind: 'reward',
       id: 'floor2-service-cache',
-      tile: { x: 15, y: 9 },
+      tile: { x: 15, y: 10 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'attack',
@@ -96,7 +97,7 @@ export const floor2: MapDefinition = {
     {
       kind: 'reward',
       id: 'floor2-archive-cache',
-      tile: { x: 2, y: 8 },
+      tile: { x: 2, y: 9 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'maxHp',
@@ -105,14 +106,14 @@ export const floor2: MapDefinition = {
     {
       kind: 'enemy',
       id: 'floor2-east-sentry',
-      tile: { x: 14, y: 5 },
+      tile: { x: 14, y: 6 },
       assetId: 'enemy-ruin-guard',
       stats: { hp: 24, attack: 7, defense: 4 },
     },
     {
       kind: 'enemy',
       id: 'floor2-east-brute',
-      tile: { x: 14, y: 8 },
+      tile: { x: 14, y: 9 },
       assetId: 'enemy-ruin-guard',
       stats: { hp: 28, attack: 8, defense: 5 },
     },
@@ -121,27 +122,27 @@ export const floor2: MapDefinition = {
     {
       id: 'floor2-front-landing',
       name: 'Front Landing',
-      bounds: { minX: 7, maxX: 10, minY: 9, maxY: 10 },
+      bounds: { minX: 7, maxX: 10, minY: 10, maxY: 11 },
     },
     {
       id: 'floor2-central-hall',
       name: 'Central Hall',
-      bounds: { minX: 6, maxX: 11, minY: 3, maxY: 8 },
+      bounds: { minX: 6, maxX: 11, minY: 4, maxY: 9 },
     },
     {
       id: 'floor2-west-archive',
       name: 'West Archive',
-      bounds: { minX: 1, maxX: 5, minY: 3, maxY: 9 },
+      bounds: { minX: 1, maxX: 5, minY: 4, maxY: 10 },
     },
     {
       id: 'floor2-east-service',
       name: 'East Service Wing',
-      bounds: { minX: 12, maxX: 16, minY: 3, maxY: 9 },
+      bounds: { minX: 12, maxX: 16, minY: 4, maxY: 10 },
     },
     {
       id: 'floor2-rear-gallery',
       name: 'Rear Gallery',
-      bounds: { minX: 1, maxX: 16, minY: 0, maxY: 2 },
+      bounds: { minX: 1, maxX: 16, minY: 1, maxY: 3 },
     },
   ],
 };

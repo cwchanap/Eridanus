@@ -26,7 +26,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-to-floor2',
       tile: { x: 10, y: 13 },
       assetId: 'stairs-up',
-      target: { mapId: 'floor2', tile: { x: 8, y: 0 } },
+      target: { mapId: 'floor2', tile: { x: 8, y: 1 } },
     },
     {
       kind: 'latch',

@@ -256,7 +256,7 @@ describe('buildJournalView', () => {
     const start = {
       ...createInitialGameState(),
       mapId: 'floor2' as const,
-      tile: { x: 4, y: 3 },
+      tile: { x: 4, y: 4 },
       factIds: ['optional-heirloom-lead', 'optional-route-lead'],
     };
     const traveled = attemptMove(start, 'north');
