@@ -4,245 +4,208 @@
 
 Planning design for the final MVP release pass. The complete HPA-21 implementation stays on one PR.
 
-This design starts from the merged HPA-237, HPA-22, HPA-235, HPA-146, and HPA-137 foundation. It is intentionally a validation-and-correction pass, not a new feature phase.
+This is a validation-and-release pass over the merged village + three-floor game. It should remove uncertainty, not add systems.
 
 ## Goal
 
-Ship the existing village + three-floor Tower Maze as a cohesive browser MVP by proving four release scenarios, correcting only issues those scenarios expose, and deploying the static build through the simplest project-owned host path.
+Ship the existing Tower Maze as a cohesive static browser MVP by:
 
-Success means:
+- proving one required-only player journey and one explorer journey in the real UI;
+- reusing existing unit coverage for alternate ordering, idempotence, persistence, and boss math;
+- making the production build safe under a GitHub Pages project subpath;
+- deploying only after the existing CI jobs pass;
+- completing one live Desktop Chrome smoke after merge.
 
-- the mandatory story can be completed from a fresh save without optional quests or optional treasure;
-- an explorer can take the authored side content and receive the expanded ending context;
-- supported alternate ordering of mechanisms/evidence remains valid;
-- representative reload points preserve exact-once progression;
-- combat preview remains truthful after any final tuning;
-- the main route does not rely on repeated village healing;
-- all shipped art resolves in the production build;
-- the deployed site passes the critical Desktop Chrome journey.
+No new gameplay subsystem, save schema, progression system, recovery economy, route solver, analytics, or backend is introduced.
 
-## Current Foundation
+## Current Evidence
 
-Main already owns nearly every seam needed for the release pass:
+The repo already owns almost all release invariants:
 
-- `GameState` persists map/tile, player stats, rewards, defeated enemies, opened shortcuts, items, facts, and discovered sections.
-- `save.ts` validates current authored content directly and rejects invalid occupancy; there is no versioning or migration layer.
-- `content.ts` validates map shape, entity placement, reciprocal portals, authored IDs, sections, and runtime blocking relationships.
-- combat has one deterministic `previewCombat` / resolution contract.
-- quest/story progress is derived from facts/items/defeated/opened IDs rather than a quest-state object.
-- all four maps are authored `MapDefinition` values with explicit entities and sections.
-- `tests/e2e/cross-floor.spec.ts` already drives the real UI with Desktop Chrome, exact counted key presses, effect selectors, and reload checkpoints.
-- the current browser journey is an explorer-oriented run: it intentionally takes the Floor 1 treasury and power upgrade before finishing Floor 3. It therefore does **not** prove the HPA-21 required-only completion criterion.
-- runtime images are explicit in `src/phaser/assets.ts` and are already covered by served-file and catalog tests.
-- Vite already produces a static `dist/` build.
+- `src/game/combat.test.ts` pins the Floor 3 guardian at baseline stats to 25 HP loss out of 30 HP.
+- `src/game/movement.test.ts` already proves both Floor 2 release orders, front/rear behavior, two-way traversal, and no duplicate shortcut IDs.
+- `src/game/journal.test.ts` already proves evidence-before-acceptance behavior, main-story precedence, ending persistence through `loadGame`, and final ledger resolution.
+- `src/game/actions.test.ts` already proves exact-once stat rewards, item rewards, enemies, latches, the Restoration Core, and the ending fact.
+- `src/game/save.test.ts` already exercises generic content validation plus late-game, defeated-enemy, latch, guardian, and core states.
+- the existing Playwright journey already covers the treasury loop, the Floor 1 power-core payoff, representative reloads, and `story-complete` after reload.
 
-HPA-21 should reuse these seams rather than add a release engine, scenario DSL, solvability simulator, analytics, or new runtime state.
+HPA-21 should cite those tests instead of rebuilding them.
 
-## Approaches Considered
+## Release Scenarios
 
-### Chosen: two real browser journeys + focused authored-state regressions
+### 1. Required-only fresh run
 
-Keep one required-only browser journey and one explorer browser journey in the existing Playwright file. Use existing unit-test seams for alternate ordering, exact-once state transitions, save occupancy, and combat math.
+Add a second real Playwright journey in `tests/e2e/cross-floor.spec.ts`.
 
-This gives strong player-facing proof without multiplying runtime abstractions or building a general test simulator.
+The shortest authored required route is:
 
-### Rejected: general dungeon/release simulator
+1. talk to the village warden;
+2. enter Floor 1 and defeat `floor1-west-sentry`;
+3. collect `floor1-depth-sigil`;
+4. descend to Floor 2;
+5. bump `floor2-missing-subject` from the Central Hall to record `main-subject-returned`;
+6. take the depth stair directly to Floor 3 — the paired releases are not required;
+7. use the west-spine route to open `floor3-heart-shortcut` from its rear side;
+8. use `floor3-heart-waystone` immediately before the guardian;
+9. defeat `floor3-core-guardian`, claim `floor3-restoration-core`, and return to the warden;
+10. receive the standard restoration ending and reload to `story-complete`.
 
-A reusable route solver could enumerate map states and prove more combinations, but it would create exactly the generic test harness HPA-21 rules out. It would also test a model of the game rather than the same player-facing interaction path shipped to users.
+The run must avoid every optional progression reward that can change the baseline or optional evidence state:
 
-### Rejected: unit tests only
+- `floor1-ledger-fragment`;
+- `floor1-west-cache`;
+- `floor1-power-core`;
+- `floor1-future-treasury`;
+- `floor2-service-cache`;
+- `floor2-archive-cache`;
+- `floor3-hidden-vault-cache`;
+- `floor3-keeper-final-record`.
 
-Pure tests are ideal for deterministic combat, persistence, and alternate-order matrices, but they cannot prove that the actual rendered browser journey, runtime assets, keyboard flow, and release build work together. HPA-21 explicitly needs a desktop-browser release journey.
+It must also avoid accepting the artisan/scout/scribe optional village leads and must not use `village-recovery`.
 
-## Chosen Design
+Do not route through the returned village subject; it is not required for main progression.
 
-### 1. Make the release scenarios explicit without introducing a scenario framework
+Immediately before the guardian, assert the real HUD is still at the baseline progression values:
 
-Keep `tests/e2e/cross-floor.spec.ts` as the only browser-journey file.
+- `HP 30/30` after the heart waystone;
+- `ATK 10`;
+- `DEF 2`.
 
-Refactor only enough local test helpers to remove duplicated mechanics such as:
+This assertion makes accidental optional stat rewards visible instead of relying on route comments alone. The existing combat unit test remains the single owner of baseline guardian winnability.
 
-- clearing/reloading a fresh save;
-- counted key presses with per-press blocked checks;
-- combat Fight/Cancel actions;
-- stable map/section/effect assertions.
+The standard ending must be asserted by stable line identity, not prose.
 
-Do **not** add route search, test-only game APIs, map injection, a scenario registry, or a mini DSL.
+### 2. Explorer run
 
-The four HPA-21 scenarios map to proof as follows:
+Keep the existing long Playwright story journey and extend it rather than rewriting it.
 
-1. **Main-route fresh run** — one full Playwright journey from fresh save to `story-complete`, deliberately avoiding optional quest NPCs, optional locked treasure, the Floor 1 treasury reward, the Floor 1 power core, Floor 2 side caches, Floor 3 hidden vault, and final optional ledger record. It may use mandatory story items and mandatory story NPCs only. It must not use `village-recovery`.
-2. **Explorer run** — one full Playwright journey that accepts the optional village threads, takes the authored treasury/route/ledger side content, reads the final keeper record, and completes with the expanded restoration ending context. Optional rewards may make combat cheaper, but no optional reward becomes a prerequisite.
-3. **Alternate-order run** — focused existing-domain tests prove both Floor 2 release orders and evidence-before-quest-acceptance behavior. Keep this out of another full browser playthrough unless a browser-only bug is discovered.
-4. **Resume run** — focused save/action tests plus reload checkpoints in both browser journeys prove representative combat/reward/shortcut/floor/ending persistence. Do not create a separate save harness.
+Add only the missing explorer proof:
 
-### 2. Treat balance as evidence-driven authored-content edits
+- accept the artisan, scout, and scribe optional village leads;
+- keep the existing treasury loop and power-core preview payoff;
+- read the Floor 2 ledger evidence already on the optional route;
+- detour to `floor3-keeper-final-record` without making an optional combat mandatory;
+- finish the existing boss/core/return flow;
+- assert the expanded restoration ending by stable line identity;
+- retain the existing representative reload checkpoints.
 
-Do not pre-emptively redesign combat or add progression systems.
+No second route framework or scenario DSL is added.
 
-The required-only run is the balance baseline. It must finish with starting stats plus mandatory rewards only, and it must reach the Floor 3 waystone/boss without needing optional treasure or a village-heal loop.
+## Recovery and Balance Decision
 
-If the required-only run fails, correct the smallest authored seam in this order:
+The required route is already viable by construction, so HPA-21 does not need a speculative balance ladder.
 
-1. move or remove a filler mandatory encounter;
-2. tune that encounter's fixed stats;
-3. tune an existing mandatory stat reward;
-4. adjust shortcut/recovery placement;
-5. only then consider any broader rule change.
+At baseline stats:
 
-Any numerical or placement correction must be pinned by the failing release scenario plus a focused unit/content assertion. Do not add XP, equipment, consumable recovery, difficulty modes, or a new economy.
+- `floor1-west-sentry` costs 8 HP and is the only forced fight before the Floor 3 full heal;
+- Floor 2 requires no fight and no release latch to reach the missing subject and depth stair;
+- the Floor 3 west-spine route reaches the heart without another enemy;
+- `floor3-heart-waystone` restores to full immediately before the guardian;
+- the guardian costs 25 HP from the baseline 30 HP state.
 
-`previewCombat` and combat resolution remain unchanged unless the release proof discovers an actual correctness bug. Any enemy-stat change must continue to use the authored entity directly in tests so preview and resolution cannot drift.
+Therefore the required-only route does not need village-heal backtracking or optional upgrades.
 
-### 3. Use the main-route run as the recovery-pacing guardrail
+There is, however, an intentional release compromise on optional Floor 3 combat:
 
-The release criterion is not "free healing is impossible"; the village waystone is intentionally free. The criterion is that normal completion should not collapse into `fight -> walk home -> heal -> repeat`.
+- `floor3-heart-waystone` is a free, unlimited full heal;
+- `floor3-archive-sentry` costs 15 HP at baseline;
+- `floor3-vault-sentry` costs 25 HP at baseline;
+- with no clock, resource cost, or use limit, returning to the nearby waystone after an optional fight is always at least as good as not healing.
 
-Use a concrete release proxy instead of inventing a recovery economy:
+Accept that behavior for this MVP. It only trivializes optional side fights; it does not gate or distort the required route. Fixing it would require a recovery cost/limit or equivalent new mechanic, which is explicitly out of scope.
 
-- the main-route fresh Playwright run never bumps `village-recovery`;
-- it still completes the required story;
-- the Floor 3 heart waystone remains the deliberate pre-boss reset point already established by HPA-137.
+HPA-21 may still tighten confusing dialogue/clue copy if the two browser walks expose a usability issue. Do not change combat numbers or recovery rules without a newly demonstrated correctness defect.
 
-If that run cannot finish, change authored encounter/reward/shortcut pacing before changing recovery rules.
+## Ending Selector
 
-### 4. Tighten story/usability only at existing content/read-model seams
+`InteractionOverlay` currently renders all dialogue effects as only `data-effect="dialogue"`, so the standard and expanded endings cannot be distinguished without asserting authored prose.
 
-Use the two browser journeys and current journal/dialogue tests to verify:
+Add one presentation-only attribute for dialogue effects:
 
-- the mandatory lead remains understandable without talking to optional NPCs;
-- optional artisan/scout/scribe threads have distinct purposes;
-- evidence found before talking to the corresponding NPC still resolves correctly;
-- the explorer run reads the final keeper record and receives the expanded ending line;
-- the required-only run receives the standard ending line;
-- `story-complete` derives from the durable restoration fact after reload.
+```html
+data-line="${effect.lineId}"
+```
 
-If copy is too long or unclear, edit existing dialogue/clue strings. Do not add cutscenes, dialogue trees, route arrows, a minimap path, or new quest UI.
+The browser journeys use that attribute to distinguish `warden-restoration-ending` from `warden-restoration-ending-ledger`. Dialogue selection itself remains owned by the existing dialogue tests.
 
-### 5. Keep presentation polish inside existing effect/art seams
+## Documentation Ownership
 
-The release pass should inspect and, only if necessary, correct:
+`AGENTS.md` is a Git symlink (`120000`) to `CLAUDE.md`. Do not edit or replace the symlink.
 
-- combat prompt/result feedback;
-- opened chest/gate visual state;
-- route-opening feedback;
-- journal update visibility;
-- placeholder or missing runtime images on the main route.
+Update `CLAUDE.md` directly:
 
-Use the existing `ActionEffect`/DOM overlay and `resolveEntityAsset` paths. Do not add a VFX subsystem, animation state machine, toast service, or asset manager.
+- replace the stale focused Playwright command that names `completes the mvp story journey`;
+- update the Testing note so counted navigation explicitly mentions both release journeys.
 
-No new generated image scope belongs in HPA-21. Small integration fixes to the established asset kit are allowed; new art direction is not.
+## Static Hosting Design
 
-### 6. Strengthen persistence proof at representative real states
+Use GitHub Pages only.
 
-Keep the save shape unchanged.
+Keep the build host-agnostic:
 
-Extend existing save/action tests with representative real IDs rather than adding fixtures for every possible permutation. The release set should cover:
+- set Vite `base: './'`;
+- change `ASSET_PATHS` from `/assets/...` to `assets/...`;
+- keep `runtimeAssetFilePath()` mapping those values to `public/assets/...`;
+- keep one normal `bun run build` artifact.
 
-- post-treasure/reward state;
-- defeated enemy tile occupancy;
-- opened shortcut/mechanism state;
-- Floor 2 -> Floor 3 progression fact state;
-- defeated boss + claimed Restoration Core;
-- restored-village ending fact.
+Do not create a second deployment workflow that rebuilds independently of CI.
 
-For exact-once behavior, use existing idempotent action/reward/fact seams and assert duplicate interaction does not duplicate IDs or stats.
+Extend `.github/workflows/ci.yml` instead:
 
-Do not add save versions, migrations, backup slots, cloud save, or timing locks around presentation.
+- `build-lint` keeps its existing build and, only on a push to `main`, uploads that exact `dist/` directory as the Pages artifact;
+- add a `deploy` job that runs only on pushes to `main` and `needs: [build-lint, unit-test, playwright-test]`;
+- the deploy job uses the official Pages configure/deploy actions with job-scoped `pages: write` and `id-token: write` permissions;
+- checkout continues to use `persist-credentials: false` in jobs that check out source.
 
-### 7. Ship through GitHub Pages with host-agnostic static paths
+This guarantees a commit is never deployed when unit or Playwright CI fails, and the deployed artifact is exactly the build CI produced.
 
-Choose GitHub Pages for the MVP because the project is already on GitHub, the output is purely static, and it adds no account/backend/runtime service.
+GitHub Pages must be enabled once at repository level with **Source: GitHub Actions** before the first deployment. That is repository setup, not something the workflow should try to provision with its own `GITHUB_TOKEN`.
 
-Keep the build host-agnostic rather than hardcoding `/Eridanus/` throughout runtime code:
+## Pre-Merge Subpath Proof
 
-- configure Vite with `base: './'` so generated JS/CSS references work from a project subpath;
-- change runtime public asset URLs from root-absolute `/assets/...` to page-relative `assets/...`;
-- keep `runtimeAssetFilePath()` mapping those URLs back to `public/assets/...` for source-tree asset tests;
-- verify the normal `bun run build` output is the exact artifact deployed.
+The normal Playwright server runs at `/`, so it cannot prove project-subpath loading.
 
-Add one GitHub Pages workflow that:
+Before merge, exercise the built artifact under the same shape as GitHub Pages:
 
-- runs on pushes to `main` and manual dispatch;
-- installs Bun 1.4.2 with a frozen lockfile;
-- runs the normal build;
-- uploads `dist/` as the Pages artifact;
-- deploys with the official Pages actions and minimal `pages` / `id-token` permissions.
+1. run `bun run build`;
+2. copy `dist/` into a temporary `site/Eridanus/` directory;
+3. serve the temporary `site/` root with a simple static server;
+4. open `/Eridanus/` in Desktop Chrome;
+5. verify the HUD boots and the browser network shows no JS/CSS/PNG 404s;
+6. record PASS/FAIL in the PR release checklist.
 
-Do not add Netlify/Vercel/Cloudflare configuration in parallel.
+This is a one-time release proof, not a new committed test harness.
 
-The implementation PR can prove the production artifact and workflow shape before merge. After merge, HPA-21 is not complete until the Pages deployment succeeds and the live site passes the critical Desktop Chrome smoke journey.
+## Release Evidence
 
-### 8. Keep release evidence in tests/PR, not a new runtime/reporting system
+The PR checklist should cite existing tests for the already-owned scenarios instead of adding duplicates:
 
-Do not create a release database, telemetry, analytics, or a versioned playtest framework.
+- alternate Floor 2 release order: `src/game/movement.test.ts`;
+- evidence before optional quest acceptance and main lead independence: `src/game/journal.test.ts` / `src/game/dialogue.test.ts`;
+- exact-once rewards, enemies, latches, core, and ending fact: `src/game/actions.test.ts` / `src/game/movement.test.ts` / `src/game/journal.test.ts`;
+- persistence/occupancy across representative real states: `src/game/save.test.ts` plus browser reload checkpoints;
+- baseline guardian winnability: `src/game/combat.test.ts`.
 
-The durable evidence is:
-
-- regression tests committed with the fixes;
-- CI on the HPA-21 PR;
-- the GitHub Pages deployment run;
-- a concise PR checklist/result summary recording the required-only, explorer, alternate-order, resume, production-build, and deployed-smoke outcomes.
+The only new test coverage planned by HPA-21 is what is genuinely missing: the two explicit browser release journeys, the ending-line selector exercised by them, and relative production asset-path assertions.
 
 ## Expected File Shape
 
-Likely changes are limited to:
+Planned implementation changes are limited to:
 
-- `tests/e2e/cross-floor.spec.ts` — split current long journey into explicit required-only and explorer journeys; keep helpers local.
-- `src/game/content.test.ts`, `src/game/actions.test.ts`, `src/game/save.test.ts`, `src/game/journal.test.ts` — focused release regressions where existing coverage is missing.
-- `src/game/content/*.ts` — only evidence-backed balance/placement/copy changes discovered during the release walks.
-- `src/phaser/assets.ts` and `src/phaser/assets.test.ts` — relative runtime asset URLs for subpath hosting.
-- `vite.config.ts` — relative static base.
-- `.github/workflows/deploy-pages.yml` — production deployment.
-- `README.md` — published site/release instructions after the workflow is in place.
+- `tests/e2e/cross-floor.spec.ts` — required-only journey plus explorer additions;
+- `src/ui/InteractionOverlay.ts` — dialogue `data-line` selector;
+- `CLAUDE.md` — current focused E2E command/testing note;
+- `vite.config.ts` — `base: './'`;
+- `src/phaser/assets.ts` / `src/phaser/assets.test.ts` — relative runtime asset paths;
+- `.github/workflows/ci.yml` — upload the existing build artifact and deploy only after all CI jobs pass;
+- `README.md` — short deployment note;
+- existing content/dialogue files only if the browser walks expose a concrete copy/usability defect.
 
-No new runtime module is planned.
+No new runtime module, save schema, release harness, or deployment workflow file is planned.
 
-## Testing Strategy
+## Release Gate
 
-### Required-only browser journey
-
-From a fresh save:
-
-- speak only to mandatory story NPCs;
-- collect only mandatory story items;
-- avoid optional quest acceptance and optional stat caches;
-- do not touch `village-recovery`;
-- complete the returned-subject gate;
-- reach Floor 3;
-- use the existing heart waystone before the boss;
-- defeat the boss using the truthful preview;
-- claim the Restoration Core;
-- return to the village and receive the standard ending;
-- reload and still show `story-complete`.
-
-### Explorer browser journey
-
-From a fresh save:
-
-- accept the artisan/scout/scribe optional threads;
-- exercise the cross-floor treasury route and optional authored discoveries;
-- read the final keeper record;
-- include at least one optional combat/reward payoff that measurably changes a later preview;
-- complete the boss/core/return flow;
-- receive the expanded ending context;
-- reload representative optional progress once.
-
-### Focused unit/content coverage
-
-Pin:
-
-- both Floor 2 release orders remain supported;
-- evidence-before-acceptance still resolves optional quest read models;
-- main-story journal progression never depends on optional quest facts;
-- required-only authored stats keep the final boss winnable from a full heart-waystone heal;
-- real reward/enemy/shortcut/boss/core/ending states round-trip through save validation;
-- repeated reward/NPC/mechanism interaction remains idempotent;
-- every runtime asset path maps to a shipped file and works with relative static hosting.
-
-### Production/release gate
-
-Before merge:
+Before marking the PR ready:
 
 ```sh
 bun install --frozen-lockfile
@@ -254,20 +217,24 @@ bun run test:e2e
 bun run build
 ```
 
+Also complete the local `/Eridanus/` subpath smoke described above and confirm Pages is configured to use GitHub Actions.
+
 After merge:
 
-- GitHub Pages deployment succeeds from `main`;
-- load the production URL in Desktop Chrome;
-- verify boot, assets, fresh save, movement, one combat, save/reload, and the critical story journey;
+- all three existing CI jobs must pass on `main`;
+- the gated Pages deploy job must succeed;
+- load the live site in Desktop Chrome;
+- verify boot/assets, fresh movement, one combat, reload, and the critical required-only ending path;
 - only then mark HPA-21 Done.
 
 ## Non-Goals
 
 - New floors, towns, bosses, enemy AI, or combat commands.
-- XP, levels, equipment, skill trees, consumable recovery, or a new economy.
+- XP, levels, equipment, skill trees, consumable recovery, recovery costs/limits, or a new economy.
 - Quest engine, route solver, scenario DSL, generic dungeon simulator, or test-only game API.
 - New save schema, migration layer, cloud save, account system, backend, or analytics.
 - Mobile-specific UX work.
 - New generated art, audio, music, or voice production.
-- Parallel deployment providers or production infrastructure beyond static GitHub Pages.
-- Post-game content or multiple ending branches.
+- Parallel deployment providers or a separate deployment build pipeline.
+- Fixing the accepted optional Floor 3 fight → waystone heal optimization in this MVP.
+- Post-game content or additional ending branches.
