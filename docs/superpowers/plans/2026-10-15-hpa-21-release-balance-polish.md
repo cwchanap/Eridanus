@@ -37,7 +37,9 @@
 
 **Files:**
 
+- Verify: `src/game/combat.test.ts`
 - Modify: `tests/e2e/cross-floor.spec.ts`
+- Modify: `AGENTS.md`
 
 **Interfaces:**
 
@@ -45,7 +47,19 @@
 - Produces: two named release journeys in the existing Playwright file: `completes the required-only MVP route` and `completes the explorer MVP route with expanded ending context`.
 - Test helpers remain file-local and may only wrap repeated UI mechanics; they must not search maps or mutate game state directly.
 
-- [ ] **Step 1: Extract only mechanical local helpers from the current long test**
+- [ ] **Step 1: Claim the existing required-only boss invariant before authoring the long walk**
+
+The current `src/game/combat.test.ts` already owns the cheapest pure proof that the final guardian is beatable without optional upgrades: `createInitialGameState().player` previews `floor3-core-guardian` as 6 hits / 25 HP loss, which is survivable from 30 HP. `src/game/content.test.ts` separately pins the heart waystone beside the sole boss approach.
+
+Run:
+
+```sh
+bunx vitest run src/game/combat.test.ts -t 'previews the floor three boss as six hits and twenty-five HP at baseline'
+```
+
+Expected: PASS. Do not add a duplicate boss-winnability test or a speculative mandatory-enemy-chain model here; the required-only browser journey owns cumulative route attrition and actual pre-boss healing.
+
+- [ ] **Step 2: Extract only mechanical local helpers from the current long test**
 
 Keep `press()` unchanged. Add small helpers only where both journeys repeat an interaction primitive, for example:
 
@@ -58,7 +72,7 @@ async function expectMap(page: Page, mapId: MapId): Promise<void>;
 
 Do not add pathfinding, route tables, direct `GameState` injection, or a scenario DSL. Counted arrow presses remain explicit in each route section.
 
-- [ ] **Step 2: Rewrite the current journey as the explorer release scenario**
+- [ ] **Step 3: Rewrite the current journey as the explorer release scenario**
 
 Preserve the existing real route and add the missing explorer-specific proof:
 
@@ -73,7 +87,7 @@ Preserve the existing real route and add the missing explorer-specific proof:
 
 Use stable IDs/effect attributes rather than asserting full prose.
 
-- [ ] **Step 3: Add a separate required-only fresh-save journey**
+- [ ] **Step 4: Add a separate required-only fresh-save journey**
 
 Re-walk the authored maps and pin exact counted key presses in comments. The route must:
 
@@ -89,7 +103,17 @@ Re-walk the authored maps and pin exact counted key presses in comments. The rou
 
 If a mandatory path currently crosses an optional reward tile, re-route the counted walk first; do not claim the reward just to keep the test short.
 
-- [ ] **Step 4: Run only the two release journeys**
+- [ ] **Step 5: Update the documented focused Playwright command**
+
+In `AGENTS.md`, replace the stale example that targets `completes the mvp story journey` with the new required-only test title:
+
+```sh
+bunx playwright test -g 'completes the required-only MVP route'
+```
+
+Keep the rest of the command documentation unchanged.
+
+- [ ] **Step 6: Run only the two release journeys**
 
 ```sh
 bunx playwright test tests/e2e/cross-floor.spec.ts -g 'required-only|explorer'
@@ -97,10 +121,10 @@ bunx playwright test tests/e2e/cross-floor.spec.ts -g 'required-only|explorer'
 
 Expected: both journeys complete. If either exposes a balance/usability/content problem, record the exact failing encounter/tile/read-model state and fix it in Task 2 rather than weakening the release assertion.
 
-- [ ] **Step 5: Commit the release-scenario proof**
+- [ ] **Step 7: Commit the release-scenario proof**
 
 ```sh
-git add tests/e2e/cross-floor.spec.ts
+git add tests/e2e/cross-floor.spec.ts AGENTS.md
 git commit -m "test: prove mvp release journeys"
 ```
 
@@ -135,6 +159,8 @@ Examples of ownership:
 - unreachable/mandatory optional content -> `src/game/content.test.ts` using the existing flood/runtime-blocking helpers;
 - unclear/incorrect quest or ending precedence -> `src/game/dialogue.test.ts` / `src/game/journal.test.ts`;
 - a moved entity/layout row -> update the exact Playwright counted walk in the same change.
+
+Treat the existing baseline guardian case in `src/game/combat.test.ts` as the owner of required-only final-boss winnability; do not add a second boss viability test. If evidence-backed balancing changes the guardian stats, update that same owner test to the new required-only expectation.
 
 Do not add speculative regressions for behavior that already passes both release scenarios.
 
@@ -306,7 +332,7 @@ Create `.github/workflows/deploy-pages.yml` with:
 - trigger: push to `main` and `workflow_dispatch`;
 - `permissions.contents: read`, `permissions.pages: write`, `permissions.id-token: write`;
 - concurrency group `pages`, cancel-in-progress false;
-- checkout;
+- checkout with `persist-credentials: false`, matching the existing `ci.yml` checkout hygiene;
 - Bun 1.4.2 setup;
 - `bun install --frozen-lockfile`;
 - `bun run build`;
@@ -402,8 +428,8 @@ Only after this succeeds should HPA-21 move to Done.
 
 ## Self-Review
 
-- **Spec coverage:** all four Linear release scenarios map to explicit proof; production build/deploy and post-merge smoke are included.
-- **Step scan:** runtime changes are planned only where current evidence requires them; no speculative balance numbers are invented before the required-only playthrough exists.
+- **Spec coverage:** all four Linear release scenarios map to explicit proof; the existing baseline boss test now explicitly owns required-only final-boss winnability; production build/deploy and post-merge smoke are included.
+- **Step scan:** runtime changes are planned only where current evidence requires them; no speculative balance numbers or duplicate combat models are invented before the required-only playthrough exists.
 - **Type consistency:** the plan reuses current `GameState`, `MapId`, `ActionEffect`, `ASSET_PATHS`, and save/content APIs; it defines no parallel runtime contract.
 - **Review Focus:** required-only optional-content leakage, heal-loop pressure, alternate order, reload duplication, and Pages subpath assets each have an owning task/test.
 - **Proportion:** two browser journeys + focused existing-owner regressions + one static workflow are sufficient; no route solver, release service, second E2E harness, or backend is introduced.
