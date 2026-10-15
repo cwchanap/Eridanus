@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Prove the required-only and explorer playthroughs, correct only release-blocking balance/usability/persistence issues those proofs expose, and ship the static Eridanus MVP through GitHub Pages.
+**Goal:** Prove the required-only and explorer browser journeys, add the one missing ending selector, make the existing static build safe under a GitHub Pages subpath, and deploy exactly the artifact produced by green CI.
 
-**Architecture:** Keep the existing authored-content/fact-first runtime unchanged unless a release regression proves a defect. Release proof lives in the existing Playwright journey plus focused Vitest coverage; deployment is a host-agnostic Vite `dist/` artifact uploaded to GitHub Pages. No new runtime subsystem, save schema, scenario framework, or deployment provider is introduced.
+**Architecture:** Keep the authored-content/fact-first runtime unchanged. Browser proof stays in the existing Playwright file; existing Vitest coverage remains the owner of alternate ordering, exact-once behavior, persistence, and guardian math. Deployment extends the existing CI workflow instead of adding a parallel build/deploy pipeline.
 
 **Tech Stack:** Bun 1.4.2, TypeScript 5.9, Phaser 4.2, Vitest 5, Playwright 1.63, Vite 8, LocalStorage, GitHub Actions/Pages.
 
@@ -12,281 +12,237 @@
 
 ## Global Constraints
 
-- One ticket = one PR. Keep planning, release regressions, any evidence-backed content fixes, and deployment workflow on HPA-21.
-- No new major mechanic, floor, town, enemy AI mode, progression system, backend, analytics, or generic test harness.
-- Keep pure TypeScript as rules/state owner; Phaser remains rendering/input; DOM remains presentation.
-- Keep the current `GameState` shape and strict unversioned save policy; add no migration layer.
-- Keep `previewCombat` as the single combat truth unless a correctness bug is proven.
-- Main-story completion must not require optional quests, optional locked treasure, Floor 1 treasury/power upgrades, Floor 2 side caches, Floor 3 hidden vault, or final optional ledger evidence.
-- The required-only browser run must complete without bumping `village-recovery`; the existing Floor 3 heart waystone remains the deliberate pre-boss heal.
-- No new generated image/audio scope. If genuinely new art is required, split that into a separate ticket rather than mixing it into HPA-21.
-- Deploy one provider only: GitHub Pages.
+- One ticket = one PR.
+- No new gameplay subsystem, save schema, progression system, recovery economy, route solver, scenario DSL, analytics, backend, or test-only game API.
+- Keep `previewCombat` as the single combat truth; `src/game/combat.test.ts` remains the owner of baseline guardian winnability.
+- Accept the optional Floor 3 fight → heart-waystone heal optimization for this MVP; do not add a heal cost/limit.
+- Required completion must avoid optional quest acceptance and all optional stat/evidence rewards listed in the spec.
+- No new generated image/audio scope.
+- Deploy GitHub Pages only, from the build artifact produced by the existing CI workflow.
 - Do not mark HPA-21 Done until the post-merge Pages deployment and live Desktop Chrome smoke pass.
 
 ## Review Focus
 
-- **Required-only route accidentally consumes optional progression:** the fresh main-story journey must reach `story-complete` while avoiding optional NPC acceptance and optional stat/evidence rewards.
-- **Free-heal dominant loop:** required completion must not need `village-recovery`; if it does, fix authored encounter/reward/shortcut pacing rather than adding a recovery economy.
-- **Alternate-order state drift:** both Floor 2 release orders and evidence-before-NPC-intro paths must converge on the same valid durable progression.
-- **Reload duplication:** reward stats/items, defeated enemies, opened shortcuts, boss/core state, and the ending fact must remain exact-once across representative reloads.
-- **Subpath deployment breakage:** generated JS/CSS and every public PNG must load from the GitHub Pages project path, not assume web-root `/assets/...`.
+- **Required-only route accidentally consumes optional progression:** prove baseline `HP 30/30`, `ATK 10`, `DEF 2` immediately before the guardian.
+- **Ending variants become prose-coupled:** distinguish standard vs expanded ending with `data-line`, not text matching.
+- **Explorer regression from rewriting the current path:** extend the existing long journey rather than replacing working treasury/power/reload coverage.
+- **Project-subpath deployment:** exercise the built artifact under `/Eridanus/` before merge, not only Vite dev at `/`.
+- **Deploying a failing commit:** Pages deployment must depend on all three existing CI jobs and reuse `build-lint`'s `dist/` artifact.
 
 ---
 
-## Task 1: Turn the browser proof into explicit required-only and explorer journeys
+## Task 1: Make the two release journeys explicit
 
 **Files:**
 
-- Verify: `src/game/combat.test.ts`
 - Modify: `tests/e2e/cross-floor.spec.ts`
-- Modify: `AGENTS.md`
+- Modify: `src/ui/InteractionOverlay.ts`
+- Modify: `CLAUDE.md`
 
 **Interfaces:**
 
-- Consumes: the real keyboard/UI flow, existing `press()` helper, stable `data-*` selectors, real authored maps/entities.
-- Produces: two named release journeys in the existing Playwright file: `completes the required-only MVP route` and `completes the explorer MVP route with expanded ending context`.
-- Test helpers remain file-local and may only wrap repeated UI mechanics; they must not search maps or mutate game state directly.
+- Consumes: existing real keyboard/UI flow, `press()`, current `data-*` selectors, authored maps/entities, and the existing long story journey.
+- Produces: `completes the required-only MVP route`, `completes the explorer MVP route with expanded ending context`, and a stable `data-line` selector for dialogue effects.
+- Helpers stay file-local and mechanical only; no route search, scenario registry, or direct state injection.
 
-- [ ] **Step 1: Claim the existing required-only boss invariant before authoring the long walk**
-
-The current `src/game/combat.test.ts` already owns the cheapest pure proof that the final guardian is beatable without optional upgrades: `createInitialGameState().player` previews `floor3-core-guardian` as 6 hits / 25 HP loss, which is survivable from 30 HP. `src/game/content.test.ts` separately pins the heart waystone beside the sole boss approach.
+- [ ] **Step 1: Pin the existing boss-math owner before editing the long browser walk**
 
 Run:
 
 ```sh
-bunx vitest run src/game/combat.test.ts -t 'previews the floor three boss as six hits and twenty-five HP at baseline'
+bunx vitest run src/game/combat.test.ts
 ```
 
-Expected: PASS. Do not add a duplicate boss-winnability test or a speculative mandatory-enemy-chain model here; the required-only browser journey owns cumulative route attrition and actual pre-boss healing.
+Expected: PASS, including the existing baseline guardian preview of 25 HP loss from 30 HP.
 
-- [ ] **Step 2: Extract only mechanical local helpers from the current long test**
+Do not add a second guardian-winnability test.
 
-Keep `press()` unchanged. Add small helpers only where both journeys repeat an interaction primitive, for example:
+- [ ] **Step 2: Rename and extend the current journey as the explorer scenario**
+
+Keep the current counted route and all working assertions. Add only the missing explorer proof:
+
+- bump the artisan, scout, and scribe before leaving the village;
+- keep the existing treasury loop, power-core pickup, gatekeeper preview payoff, and reload checkpoints;
+- read the existing Floor 2 ledger evidence on the optional route;
+- detour to `floor3-keeper-final-record` without making an optional enemy mandatory;
+- finish the current boss/core/return path;
+- assert the expanded ending line by `data-line="warden-restoration-ending-ledger"`;
+- keep `story-complete` after reload.
+
+Use stable IDs/attributes only; do not assert full dialogue prose.
+
+- [ ] **Step 3: Add the required-only journey using the shortest authored route**
+
+Walk the real UI from a fresh save:
+
+1. warden;
+2. Floor 1 west sentry;
+3. Tower Sigil;
+4. Floor 2 Central Hall;
+5. `floor2-missing-subject` from its south-adjacent tile;
+6. depth stair directly — do not open either Floor 2 release;
+7. Floor 3 west-spine route;
+8. open `floor3-heart-shortcut` from its rear;
+9. heart waystone;
+10. guardian → Restoration Core → return to warden.
+
+Explicitly avoid:
+
+- `village-artisan`, `village-scout`, `village-scribe`;
+- `village-recovery`;
+- `floor1-ledger-fragment`;
+- `floor1-west-cache`;
+- `floor1-power-core`;
+- `floor1-future-treasury`;
+- `floor2-service-cache`;
+- `floor2-archive-cache`;
+- `floor3-hidden-vault-cache`;
+- `floor3-keeper-final-record`.
+
+Do not detour to the returned village subject; it is not required.
+
+Immediately after the heart waystone and before the guardian, assert:
 
 ```ts
-async function startFresh(page: Page): Promise<void>;
-async function fight(page: Page): Promise<void>;
-async function cancelFight(page: Page): Promise<void>;
-async function expectMap(page: Page, mapId: MapId): Promise<void>;
+await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30/30');
+await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 10');
+await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 2');
 ```
 
-Do not add pathfinding, route tables, direct `GameState` injection, or a scenario DSL. Counted arrow presses remain explicit in each route section.
+Finish by asserting `data-line="warden-restoration-ending"`, `story-complete`, then reload and confirm `story-complete` remains.
 
-- [ ] **Step 3: Rewrite the current journey as the explorer release scenario**
+- [ ] **Step 4: Add the missing dialogue-line selector when the new ending assertions fail**
 
-Preserve the existing real route and add the missing explorer-specific proof:
+In `src/ui/InteractionOverlay.ts`, keep `data-effect="dialogue"` and add `data-line` only for dialogue effects, using the existing `effect.lineId`.
 
-- accept the artisan, scout, and scribe optional leads before leaving the village;
-- keep the Floor 1 treasury return and at least one optional stat reward;
-- read `floor2-paired-release-ledger`;
-- on Floor 3, detour through `floor3-keeper-final-record` before the boss;
-- assert the ledger read model reaches its resolved state;
-- finish the existing boss/core/return route;
-- assert the warden renders the expanded restoration ending effect/line selector and `story-complete`;
-- retain one reload checkpoint that proves optional discoveries/rewards survive.
+Do not change dialogue selection or text ownership.
 
-Use stable IDs/effect attributes rather than asserting full prose.
-
-- [ ] **Step 4: Add a separate required-only fresh-save journey**
-
-Re-walk the authored maps and pin exact counted key presses in comments. The route must:
-
-- speak only to the warden and returned subject when required by the main story;
-- collect the Tower Sigil and Restoration Core because they are mandatory;
-- avoid `village-artisan`, `village-scout`, `village-scribe`;
-- avoid `floor1-future-treasury`, `floor1-power-core`, Floor 2 caches, `floor3-hidden-vault-cache`, and `floor3-keeper-final-record`;
-- never bump `village-recovery`;
-- use the Floor 3 heart waystone immediately before the guardian;
-- assert the guardian preview is winnable from the actual required-only stats before clicking Fight;
-- return the core to the warden and assert the standard ending path plus `story-complete`;
-- reload after completion and assert `story-complete` remains.
-
-If a mandatory path currently crosses an optional reward tile, re-route the counted walk first; do not claim the reward just to keep the test short.
-
-- [ ] **Step 5: Update the documented focused Playwright command**
-
-In `AGENTS.md`, replace the stale example that targets `completes the mvp story journey` with the new required-only test title:
-
-```sh
-bunx playwright test -g 'completes the required-only MVP route'
-```
-
-Keep the rest of the command documentation unchanged.
-
-- [ ] **Step 6: Run only the two release journeys**
+- [ ] **Step 5: Run the two focused release journeys**
 
 ```sh
 bunx playwright test tests/e2e/cross-floor.spec.ts -g 'required-only|explorer'
 ```
 
-Expected: both journeys complete. If either exposes a balance/usability/content problem, record the exact failing encounter/tile/read-model state and fix it in Task 2 rather than weakening the release assertion.
+Expected: both PASS.
 
-- [ ] **Step 7: Commit the release-scenario proof**
+If a counted route crosses an optional reward unexpectedly, re-walk the route. Do not change combat/recovery rules to make the test easier.
+
+- [ ] **Step 6: Update the canonical contributor instructions**
+
+Edit `CLAUDE.md` directly; `AGENTS.md` is a symlink and must remain one.
+
+- replace the stale example `bunx playwright test -g 'completes the mvp story journey'` with the new focused pattern;
+- update the Testing note so layout changes require re-walking both release journeys.
+
+- [ ] **Step 7: Commit**
 
 ```sh
-git add tests/e2e/cross-floor.spec.ts AGENTS.md
+git add tests/e2e/cross-floor.spec.ts src/ui/InteractionOverlay.ts CLAUDE.md
 git commit -m "test: prove mvp release journeys"
 ```
 
 ---
 
-## Task 2: Correct only release-blocking authored balance or usability failures
+## Task 2: Tighten only concrete story/usability copy exposed by the journeys
 
 **Files:**
 
-- Modify only as failures require: `src/game/content/village.ts`
-- Modify only as failures require: `src/game/content/floor1.ts`
-- Modify only as failures require: `src/game/content/floor2.ts`
-- Modify only as failures require: `src/game/content/floor3.ts`
-- Modify only as failures require: `src/game/content/dialogue.ts`
-- Modify only as failures require: `src/game/content/facts.ts`
-- Modify only as failures require: `src/game/content.test.ts`
-- Modify only as failures require: `src/game/combat.test.ts`
-- Modify only as failures require: `src/game/dialogue.test.ts`
-- Modify: `tests/e2e/cross-floor.spec.ts` only to update counted routes/assertions after an authored correction.
+- Modify only if required: `src/game/content/dialogue.ts`
+- Modify only if required: `src/game/content/village.ts`
+- Modify only if required: `src/game/content/floor1.ts`
+- Modify only if required: `src/game/content/floor2.ts`
+- Modify only if required: `src/game/content/floor3.ts`
+- Modify only if required: the existing owning dialogue/content test.
 
 **Interfaces:**
 
-- Consumes: concrete failures from Task 1 and existing authored entity/stat/copy seams.
-- Produces: the smallest content-level correction that makes both release scenarios truthful and readable.
-- No new runtime type or subsystem is planned.
+- Consumes: concrete readability/usability failures from Task 1 only.
+- Produces: the smallest authored-copy correction needed for release.
+- No combat tuning, recovery tuning, map-system work, or new runtime type is planned.
 
-- [ ] **Step 1: For each Task 1 failure, add one focused regression at the existing owner**
+- [ ] **Step 1: Decide whether Task 1 exposed a real copy/usability defect**
 
-Examples of ownership:
+If both journeys are understandable and pass, skip this task entirely.
 
-- enemy/reward numeric balance -> `src/game/combat.test.ts` or a focused authored-entity assertion in `src/game/content.test.ts`;
-- unreachable/mandatory optional content -> `src/game/content.test.ts` using the existing flood/runtime-blocking helpers;
-- unclear/incorrect quest or ending precedence -> `src/game/dialogue.test.ts` / `src/game/journal.test.ts`;
-- a moved entity/layout row -> update the exact Playwright counted walk in the same change.
+The following are already accepted and are **not** release defects:
 
-Treat the existing baseline guardian case in `src/game/combat.test.ts` as the owner of required-only final-boss winnability; do not add a second boss viability test. If evidence-backed balancing changes the guardian stats, update that same owner test to the new required-only expectation.
+- required-only progression needs only one pre-waystone fight (`floor1-west-sentry`, 8 HP);
+- Floor 2 releases are optional for the main route;
+- the free Floor 3 waystone makes optional side fights cheap to reset between;
+- the guardian remains a 25 HP baseline fight after the full heal.
 
-Do not add speculative regressions for behavior that already passes both release scenarios.
+- [ ] **Step 2: If needed, add one focused assertion at the existing owner and make the smallest copy edit**
 
-- [ ] **Step 2: Apply the smallest authored correction in this priority order**
+Examples:
 
-1. remove/move a filler mandatory encounter;
-2. tune that encounter's fixed stats;
-3. tune an existing mandatory reward;
-4. adjust an existing shortcut/recovery placement;
-5. tighten existing clue/dialogue copy.
+- wrong ending precedence → `src/game/dialogue.test.ts`;
+- wrong optional lead wording/state → `src/game/journal.test.ts`;
+- misleading authored clue → `src/game/content.test.ts` only if a structural/fact contract is affected.
 
-Only change a rule function such as `previewCombat`, `attemptMove`, or save validation if the focused regression proves the rule itself is wrong.
+Do not create a new test helper or subsystem for copy.
 
-- [ ] **Step 3: Re-run the focused owner test and both browser scenarios after every correction**
+- [ ] **Step 3: Re-run the owner test and both browser journeys**
 
 ```sh
 bunx vitest run <owning-test-file>
 bunx playwright test tests/e2e/cross-floor.spec.ts -g 'required-only|explorer'
 ```
 
-Expected: PASS with the original release assertion intact.
-
-- [ ] **Step 4: Commit each cohesive correction**
-
-Use the existing file owner and one behavior per commit, e.g.:
-
-```sh
-git commit -m "balance: keep required route viable"
-```
-
-If Task 1 passes with no gameplay/content changes, skip Task 2 rather than inventing polish.
-
----
-
-## Task 3: Pin alternate-order, exact-once, and representative resume behavior
-
-**Files:**
-
-- Modify: `src/game/actions.test.ts`
-- Modify: `src/game/movement.test.ts`
-- Modify: `src/game/journal.test.ts`
-- Modify: `src/game/save.test.ts`
-- Modify: `src/game/content.test.ts` only when a topology assertion is missing.
-
-**Interfaces:**
-
-- Consumes: existing action/movement/journal/save APIs and real authored IDs.
-- Produces: focused HPA-21 regression coverage for the alternate-order and resume scenarios without a new harness.
-
-- [ ] **Step 1: Add the alternate Floor 2 release-order matrix at the action/movement owner**
-
-Using real `floor2-west-release` and `floor2-east-release` entities, prove:
-
-- west then east yields both IDs exactly once;
-- east then west yields both IDs exactly once;
-- crossing either opened release from the front remains legal;
-- neither order changes the durable main-subject-returned/treasury route requirements.
-
-Reuse the existing movement/action helpers; do not simulate a whole dungeon.
-
-- [ ] **Step 2: Pin evidence-before-acceptance read models**
-
-In `src/game/journal.test.ts`, assert that the optional route/heirloom/ledger evidence facts resolve their correct leads even when the corresponding village intro fact is added later. Keep main-story lead assertions independent of every optional intro/evidence fact.
-
-- [ ] **Step 3: Replace the stale late-game save sample with release-representative checkpoints**
-
-In `src/game/save.test.ts`, keep the generic malformed/shape/content cases and add compact real-state round trips for:
-
-- opened stat/item reward + matching item invariant;
-- opened shortcut + defeated enemy occupancy;
-- Floor 3 entry facts/sections;
-- defeated `floor3-core-guardian` + opened `floor3-restoration-core` + carried `tower-restoration-core`;
-- `main-village-restored` ending state.
-
-Prefer a small table of explicit valid `GameState` values over another save fixture builder.
-
-- [ ] **Step 4: Pin exact-once release transitions at their action owner**
-
-Assert repeated interaction does not duplicate or reapply:
-
-- a stat reward amount;
-- an item reward/item ID;
-- an opened shortcut ID;
-- the final `main-village-restored` fact.
-
-Use existing real entities. Do not add presentation timing flags; exact-once ownership remains in durable state.
-
-- [ ] **Step 5: Run the focused release regression set**
-
-```sh
-bunx vitest run src/game/actions.test.ts src/game/movement.test.ts src/game/journal.test.ts src/game/save.test.ts src/game/content.test.ts
-```
-
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 4: Commit only if this task changed files**
 
 ```sh
-git add src/game/actions.test.ts src/game/movement.test.ts src/game/journal.test.ts src/game/save.test.ts src/game/content.test.ts
-git commit -m "test: pin release persistence and ordering"
+git commit -m "copy: tighten mvp release guidance"
 ```
 
 ---
 
-## Task 4: Make the production artifact subpath-safe and deploy it with GitHub Pages
+## Existing release coverage to cite, not rebuild
+
+Do not add the former Task 3 matrix. The repo already owns it:
+
+- Floor 2 release order and no duplicate shortcut IDs: `src/game/movement.test.ts`;
+- evidence-before-acceptance and optional lead convergence: `src/game/journal.test.ts` / `src/game/dialogue.test.ts`;
+- main lead independence from optional facts: `src/game/journal.ts` plus its tests;
+- exact-once stat/item rewards, enemies, latches, Restoration Core, and ending fact: `src/game/actions.test.ts`, `src/game/movement.test.ts`, `src/game/journal.test.ts`;
+- valid late-game/boss/core persistence and occupancy: `src/game/save.test.ts` plus browser reload checkpoints;
+- baseline guardian winnability: `src/game/combat.test.ts`.
+
+The release checklist in Task 4 cites these passing owners instead of duplicating their branches with more rows.
+
+---
+
+## Task 3: Make the CI artifact Pages-safe and deploy only after green CI
 
 **Files:**
 
 - Modify: `vite.config.ts`
 - Modify: `src/phaser/assets.ts`
 - Modify: `src/phaser/assets.test.ts`
-- Create: `.github/workflows/deploy-pages.yml`
+- Modify: `.github/workflows/ci.yml`
 - Modify: `README.md`
 
 **Interfaces:**
 
-- Consumes: existing `ASSET_PATHS`, `runtimeAssetFilePath()`, normal `bun run build` output.
-- Produces: one host-agnostic static `dist/` artifact and one GitHub Pages deployment workflow.
+- Consumes: existing `ASSET_PATHS`, `runtimeAssetFilePath()`, `bun run build`, and the three current CI jobs.
+- Produces: one relative `dist/` artifact, uploaded by `build-lint` on `main`, then deployed only after build/lint, unit, and Playwright jobs all pass.
 
-- [ ] **Step 1: Write the failing static-path asset tests**
+- [ ] **Step 1: Enable GitHub Pages once at repository level**
 
-In `src/phaser/assets.test.ts`, update/add assertions so every runtime URL:
+Before relying on the deployment job, set repository **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
 
-- does not begin with `/`;
-- begins with `assets/`;
-- maps through `runtimeAssetFilePath()` to an existing `public/assets/...` PNG.
+This is one-time repository setup. Do not make the workflow try to provision Pages with its own `GITHUB_TOKEN`.
+
+Record that setup is complete in the PR checklist.
+
+- [ ] **Step 2: Make the existing asset test fail on root-absolute URLs**
+
+In `src/phaser/assets.test.ts`, change the runtime-path expectation so catalog values must:
+
+- not begin with `/`;
+- begin with `assets/`;
+- still map through `runtimeAssetFilePath()` to existing `public/assets/...` PNGs.
 
 Run:
 
@@ -294,19 +250,17 @@ Run:
 bunx vitest run src/phaser/assets.test.ts
 ```
 
-Expected: FAIL because current `ASSET_PATHS` values are root-absolute `/assets/...`.
+Expected: FAIL on current `/assets/...` values.
 
-- [ ] **Step 2: Make Vite and public assets location-relative**
+- [ ] **Step 3: Make Vite and runtime public assets relative**
 
-In `vite.config.ts`:
+Set:
 
 ```ts
-import { defineConfig } from 'vite';
-
 export default defineConfig({ base: './' });
 ```
 
-In `src/phaser/assets.ts`, change catalog values from `/assets/...` to `assets/...` and change:
+Change `ASSET_PATHS` values from `/assets/...` to `assets/...` and keep:
 
 ```ts
 export function runtimeAssetFilePath(assetKey: AssetKey): string {
@@ -314,41 +268,61 @@ export function runtimeAssetFilePath(assetKey: AssetKey): string {
 }
 ```
 
-No environment-specific `/Eridanus/` constant is needed.
+Run:
 
-- [ ] **Step 3: Verify the normal build is the production artifact**
+```sh
+bunx vitest run src/phaser/assets.test.ts
+bun run build
+```
+
+Expected: PASS.
+
+- [ ] **Step 4: Extend the existing CI workflow instead of adding `deploy-pages.yml`**
+
+In `.github/workflows/ci.yml`:
+
+- keep the three existing jobs and their checkout `persist-credentials: false` behavior;
+- after `bun run build` in `build-lint`, upload `dist/` with `actions/upload-pages-artifact` only when `github.event_name == 'push' && github.ref == 'refs/heads/main'`;
+- add a `deploy` job with:
+  - the same push-to-`main` condition;
+  - `needs: [build-lint, unit-test, playwright-test]`;
+  - environment `github-pages` and URL from the deploy step;
+  - job-scoped `pages: write` and `id-token: write` permissions;
+  - official Pages configure/deploy actions;
+  - no checkout, install, or rebuild.
+
+The deploy job must consume the Pages artifact uploaded by `build-lint`; it must not produce a second build.
+
+- [ ] **Step 5: Exercise the built artifact under a project subpath before merge**
+
+Run:
 
 ```sh
 bun run build
-bunx vitest run src/phaser/assets.test.ts
+TMP_DIR="$(mktemp -d)"
+mkdir -p "$TMP_DIR/site/Eridanus"
+cp -R dist/. "$TMP_DIR/site/Eridanus/"
+python3 -m http.server 4174 --directory "$TMP_DIR/site"
 ```
 
-Expected: PASS; `dist/index.html` references generated assets relatively and copied public PNGs remain under `dist/assets/...`.
+Open `http://127.0.0.1:4174/Eridanus/` in Desktop Chrome and verify:
 
-- [ ] **Step 4: Add one GitHub Pages workflow**
+- the HUD boots;
+- generated JS/CSS load;
+- runtime PNGs load;
+- the Network panel has no 404s.
 
-Create `.github/workflows/deploy-pages.yml` with:
+Stop the server and record the result in the PR checklist. Do not add a committed subpath-smoke framework for this one release proof.
 
-- trigger: push to `main` and `workflow_dispatch`;
-- `permissions.contents: read`, `permissions.pages: write`, `permissions.id-token: write`;
-- concurrency group `pages`, cancel-in-progress false;
-- checkout with `persist-credentials: false`, matching the existing `ci.yml` checkout hygiene;
-- Bun 1.4.2 setup;
-- `bun install --frozen-lockfile`;
-- `bun run build`;
-- official Pages configuration/upload/deploy actions;
-- upload path `dist`;
-- environment `github-pages` using the deploy step's `page_url`.
+- [ ] **Step 6: Document deployment briefly**
 
-Do not add another hosting provider or a second production build command.
+Update `README.md` to state:
 
-- [ ] **Step 5: Document the published build path**
+- `main` deploys the normal CI-built `dist/` artifact to GitHub Pages after all CI jobs pass;
+- Pages source is GitHub Actions;
+- the existing local quality gates remain authoritative.
 
-Update `README.md` with a short `Deployment` section stating that `main` deploys the normal `dist/` build to GitHub Pages and that the same local quality gates remain authoritative.
-
-Do not document manual asset-copy steps or provider-specific local setup.
-
-- [ ] **Step 6: Run focused and production checks**
+- [ ] **Step 7: Run focused production checks**
 
 ```sh
 bun run typecheck
@@ -360,26 +334,26 @@ bun run build
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```sh
-git add vite.config.ts src/phaser/assets.ts src/phaser/assets.test.ts .github/workflows/deploy-pages.yml README.md
-git commit -m "ci: deploy mvp to github pages"
+git add vite.config.ts src/phaser/assets.ts src/phaser/assets.test.ts .github/workflows/ci.yml README.md
+git commit -m "ci: gate github pages deploy on ci"
 ```
 
 ---
 
-## Task 5: Run the complete release gate and capture ship evidence
+## Task 4: Run the release gate and capture ship evidence
 
 **Files:**
 
-- Modify: `docs/superpowers/plans/2026-10-15-hpa-21-release-balance-polish.md` only to check completed steps/status after execution.
-- No runtime file should change in this task unless verification exposes a regression; route that regression back to its owning earlier task.
+- Modify: this plan only for completed checkboxes/status after execution.
+- Update: PR body/checklist with evidence; no new release-report file.
 
 **Interfaces:**
 
-- Consumes: all HPA-21 implementation changes.
-- Produces: one green pre-merge gate, then one successful post-merge Pages deployment/live smoke before Linear completion.
+- Consumes: Tasks 1–3 plus existing unit coverage.
+- Produces: one green pre-merge gate and one successful post-merge Pages/live smoke before HPA-21 completion.
 
 - [ ] **Step 1: Run the full CI-equivalent gate**
 
@@ -393,43 +367,50 @@ bun run test:e2e
 bun run build
 ```
 
-Expected: all commands PASS.
+Expected: all PASS.
 
-- [ ] **Step 2: Verify the release matrix before marking the PR ready**
+- [ ] **Step 2: Record the release matrix in the PR**
 
-Record in the PR body:
+Record:
 
-- required-only fresh run: PASS;
-- explorer run + expanded ending: PASS;
-- alternate-order focused proof: PASS;
-- representative resume/exact-once proof: PASS;
-- production build/assets: PASS.
+- required-only fresh browser journey: PASS;
+- explorer browser journey + expanded ending: PASS;
+- baseline guardian owner `src/game/combat.test.ts`: PASS;
+- alternate Floor 2 release-order owner `src/game/movement.test.ts`: PASS;
+- evidence/order/main-lead owners `src/game/journal.test.ts` / `src/game/dialogue.test.ts`: PASS;
+- exact-once owners `src/game/actions.test.ts` / `src/game/movement.test.ts` / `src/game/journal.test.ts`: PASS;
+- persistence owners `src/game/save.test.ts` + browser reloads: PASS;
+- production asset/build checks: PASS;
+- local `/Eridanus/` subpath smoke: PASS;
+- Pages source configured to GitHub Actions: PASS.
 
-Do not create a separate release-report subsystem or artifact file for this checklist.
+Do not create a separate release-report subsystem or artifact file.
 
-- [ ] **Step 3: Commit plan bookkeeping if execution checks boxes**
+- [ ] **Step 3: Commit plan bookkeeping if checkboxes are updated**
 
 ```sh
 git add docs/superpowers/plans/2026-10-15-hpa-21-release-balance-polish.md
 git commit -m "docs: record hpa-21 release verification"
 ```
 
-- [ ] **Step 4: After merge, verify the Pages deployment and live Desktop Chrome smoke**
+- [ ] **Step 4: After merge, verify gated Pages deployment and live Desktop Chrome smoke**
 
-The deployment workflow from `main` must succeed. On the deployed URL verify:
+The `deploy` job on `main` must run only after all three existing CI jobs pass.
+
+On the live site verify:
 
 - app boot and all PNGs load;
 - fresh-save movement works;
 - one combat preview/Fight resolves correctly;
-- reload resumes the saved state;
+- reload resumes saved state;
 - the critical required-only journey remains playable through the ending.
 
 Only after this succeeds should HPA-21 move to Done.
 
 ## Self-Review
 
-- **Spec coverage:** all four Linear release scenarios map to explicit proof; the existing baseline boss test now explicitly owns required-only final-boss winnability; production build/deploy and post-merge smoke are included.
-- **Step scan:** runtime changes are planned only where current evidence requires them; no speculative balance numbers or duplicate combat models are invented before the required-only playthrough exists.
-- **Type consistency:** the plan reuses current `GameState`, `MapId`, `ActionEffect`, `ASSET_PATHS`, and save/content APIs; it defines no parallel runtime contract.
-- **Review Focus:** required-only optional-content leakage, heal-loop pressure, alternate order, reload duplication, and Pages subpath assets each have an owning task/test.
-- **Proportion:** two browser journeys + focused existing-owner regressions + one static workflow are sufficient; no route solver, release service, second E2E harness, or backend is introduced.
+- **Spec coverage:** both real browser journeys, ending identity, accepted recovery behavior, deployment, subpath proof, and post-merge smoke have an owning task.
+- **Step scan:** no task recreates alternate-order/save/idempotence coverage that already exists.
+- **Type consistency:** no new runtime type or persistence contract is introduced; `ActionEffect.lineId`, `ASSET_PATHS`, and current CI job names are reused.
+- **Review Focus:** optional-progression leakage, ending identity, explorer regression, project-subpath loading, and deploy-after-green-CI each have a direct assertion or verification step.
+- **Proportion:** four tasks modify only the browser proof, one presentation selector, static path/deployment plumbing, and optional copy. No release framework or speculative balance work remains.
