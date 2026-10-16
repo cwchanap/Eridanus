@@ -2,7 +2,7 @@
 
 ## Chosen visual treatment
 
-Use compact top-down fantasy sprites with a clear anime influence, simplified cel-shaded/painterly rendering, strong silhouettes, and restrained detail that survives at 32–64 px. The HPA-22 set uses warm tan/wood village materials and cool blue-gray ancient-ruin materials.
+Use compact top-down fantasy sprites with a clear anime influence, simplified cel-shaded/painterly rendering, strong silhouettes, and restrained detail that survives at 32 px. The HPA-22 set uses warm tan/wood village materials and cool blue-gray ancient-ruin materials.
 
 The selected sources were generated with `gpt-image-2` from one shared style reference, then cropped/downsampled into runtime PNGs. Keep future additions visually simple enough to remain readable without hover text.
 
@@ -10,13 +10,13 @@ The selected sources were generated with `gpt-image-2` from one shared style ref
 
 - Logical tile size remains 32×32.
 - Terrain textures are exported exactly 32×32.
-- Characters, enemies, and interactables use a transparent 64×64 canvas and remain within 64×64.
+- Characters, enemies, and interactables use a transparent 32×32 canvas: every sprite fits exactly one grid cell (HPA-442). Nothing may spill into a neighbouring tile.
 - Characters and stand-up props are bottom-center aligned. Do not add per-entity pixel offsets to compensate for poor source cropping.
 - Collision and interaction remain tile-based; visual canvas size never changes gameplay footprint.
 
 ## Texture filtering
 
-Decision: keep Phaser `pixelArt: true` in `src/phaser/createGame.ts`. Every runtime asset is pre-downsampled to its final resolution and renders 1:1 (terrain at exactly 32 px, sprites at natural ≤64 px with no scaling), so normal filtering offers no material sharpness gain, while nearest filtering plus Phaser's pixel-art rounding avoids sub-pixel shimmer as the camera follows the player. No per-texture filtering and no runtime toggle.
+Decision: keep Phaser `pixelArt: true` in `src/phaser/createGame.ts`. Every runtime asset is pre-downsampled to its final resolution and renders 1:1 (terrain and sprites at exactly 32 px with no scaling), so normal filtering offers no material sharpness gain, while nearest filtering plus Phaser's pixel-art rounding avoids sub-pixel shimmer as the camera follows the player. No per-texture filtering and no runtime toggle.
 
 ## Shared prompt language
 
@@ -57,15 +57,15 @@ Keep object identity, camera angle, line weight, and lighting consistent across 
 
 ## Transparency and crop
 
-Generated sprite sheets used transparent/checker-like backgrounds. Runtime sprites are isolated, background-cleared, trimmed, scaled to fit within 60×60, and composited on a transparent 64×64 canvas with the visible base near y=62.
+Generated sprite sheets used transparent/checker-like backgrounds. Runtime sprites are isolated, background-cleared, trimmed, scaled to fit within 60×60, and composited on a transparent 64×64 canvas with the visible base near y=62. HPA-442 then halved every sprite to 32×32 (premultiplied-alpha Lanczos), so the visible art sits within about 30×30 with its base near y=31. Export new sprites at 32×32 the same way.
 
 Terrain sources are cropped from the generated terrain sheet and resized to 32×32. The generated wall cells depicted small room frames, so the runtime wall textures intentionally use masonry-block sub-crops from those same generated cells to remain repeatable under the current non-autotiled renderer.
 
 HPA-442 removed a 1–3 px light crop border that the floor textures carried from their source cells (tiled, it drew a white grid over every map), and darkened both wall textures so walls read as solid mass against the floor. Keep any future terrain free of light edges and clearly darker than its floor.
 
-## Draw order
+## One cell per sprite
 
-Sprites are bottom-anchored and up to two tiles tall, so `WorldScene` depth-sorts by tile row: terrain behind everything, each entity at its row, the player half a row in front of its own row. Whatever stands lower on screen draws in front.
+Because every sprite stays inside its own tile, nothing overlaps and draw order between entities does not matter. `assets.test.ts` fails if any catalog file is not exactly 32×32.
 
 ## Recolor variants
 

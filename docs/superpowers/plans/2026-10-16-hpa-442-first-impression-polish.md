@@ -21,7 +21,7 @@
 - [x] Add the sentinel, guardian, warden, scout, scribe, and subject recolors to `ASSET_PATHS`.
 - [x] Bind them by `assetId` in content.
 - [x] Assert distinct villager art, shared subject art, and unique guardian art.
-- [x] Depth-sort terrain, entities, and player by tile row.
+- [x] Halve every sprite to exactly 32×32 so each fits one grid cell, and require one-tile dimensions for every catalog file.
 
 ## Task 3: Keyboard combat
 
