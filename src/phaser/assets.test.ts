@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { MAPS } from '../game/content';
+import { MAPS, findEntityById } from '../game/content';
 import { createInitialGameState } from '../game/state';
 import type { EnemyEntity, NpcEntity, RewardEntity } from '../game/types';
 import {
@@ -180,8 +180,37 @@ describe('asset seam', () => {
               ...state,
               defeatedEnemyIds: [entity.id],
             }),
-          ).toBe('enemy-ruin-guard');
+          ).toBe(closed);
         }
+      }
+    }
+  });
+
+  it('gives each npc identity and the floor three guardian distinct art', () => {
+    const state = createInitialGameState();
+    const art = (id: string) => {
+      const entity = findEntityById(id);
+      if (!entity) throw new Error(`missing ${id}`);
+      return resolveEntityAsset(entity, state);
+    };
+
+    const villagers = [
+      'village-warden',
+      'village-artisan',
+      'village-scout',
+      'village-scribe',
+      'village-returned-subject',
+    ].map(art);
+    expect(new Set(villagers).size).toBe(villagers.length);
+    // Same person before and after the rescue.
+    expect(art('floor2-missing-subject')).toBe(art('village-returned-subject'));
+
+    const guardian = art('floor3-core-guardian');
+    for (const map of Object.values(MAPS)) {
+      for (const entity of map.entities) {
+        if (entity.kind !== 'enemy' || entity.id === 'floor3-core-guardian')
+          continue;
+        expect(resolveEntityAsset(entity, state), entity.id).not.toBe(guardian);
       }
     }
   });

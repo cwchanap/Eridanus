@@ -61,6 +61,22 @@ Generated sprite sheets used transparent/checker-like backgrounds. Runtime sprit
 
 Terrain sources are cropped from the generated terrain sheet and resized to 32×32. The generated wall cells depicted small room frames, so the runtime wall textures intentionally use masonry-block sub-crops from those same generated cells to remain repeatable under the current non-autotiled renderer.
 
+HPA-442 removed a 1–3 px light crop border that the floor textures carried from their source cells (tiled, it drew a white grid over every map), and darkened both wall textures so walls read as solid mass against the floor. Keep any future terrain free of light edges and clearly darker than its floor.
+
+## Draw order
+
+Sprites are bottom-anchored and up to two tiles tall, so `WorldScene` depth-sorts by tile row: terrain behind everything, each entity at its row, the player half a row in front of its own row. Whatever stands lower on screen draws in front.
+
+## Recolor variants
+
+Until bespoke art exists, cast variety comes from recolors of the HPA-22 sprites, kept as separate catalog files so real art can replace them one-for-one:
+
+- `enemy-ruin-sentinel` — ruin guard with blue-steel armour and a crimson tabard (Floor 2–3 sentries).
+- `enemy-core-guardian` — ruin guard with gold armour, a dark tabard, and an ember outline (Floor 3 boss only).
+- `npc-warden` / `npc-scout` / `npc-scribe` / `npc-subject` — the village guide with a navy, maroon, purple, or slate-grey dress. The artisan keeps the original green `npc-village-guide`.
+
+Recolors shift only the clothing/armour hue bands; skin, eyes, and the shared hat/apron stay untouched so the set reads as one style.
+
 ## Rejected / corrected generation artifacts
 
 - Do not use whole-room wall-frame cells as one wall tile; repeating them creates tiny-room patterns. Use repeatable masonry crops.

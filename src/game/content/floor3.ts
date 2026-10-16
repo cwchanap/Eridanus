@@ -65,14 +65,14 @@ export const floor3: MapDefinition = {
       kind: 'enemy',
       id: 'floor3-archive-sentry',
       tile: { x: 17, y: 7 },
-      assetId: 'enemy-ruin-guard',
+      assetId: 'enemy-ruin-sentinel',
       stats: { hp: 24, attack: 7, defense: 4 },
     },
     {
       kind: 'enemy',
       id: 'floor3-vault-sentry',
       tile: { x: 2, y: 6 },
-      assetId: 'enemy-ruin-guard',
+      assetId: 'enemy-ruin-sentinel',
       stats: { hp: 28, attack: 7, defense: 5 },
     },
     {
@@ -88,7 +88,7 @@ export const floor3: MapDefinition = {
       kind: 'enemy',
       id: 'floor3-core-guardian',
       tile: { x: 10, y: 2 },
-      assetId: 'enemy-ruin-guard',
+      assetId: 'enemy-core-guardian',
       stats: { hp: 36, attack: 7, defense: 4 },
     },
     {
