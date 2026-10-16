@@ -193,9 +193,21 @@ describe('asset seam', () => {
     expect(resolvePlayerAsset('west')).toBe('player-west');
   });
 
-  it('keeps every catalog URL under /assets', () => {
-    for (const path of Object.values(ASSET_PATHS)) {
-      expect(path).toMatch(/^\/assets\//);
+  it('keeps every catalog URL relative under assets/', () => {
+    for (const key of Object.keys(
+      ASSET_PATHS,
+    ) as (keyof typeof ASSET_PATHS)[]) {
+      const path = ASSET_PATHS[key];
+      expect(path, `${key} must not be root-absolute`).not.toMatch(/^\//);
+      expect(path, `${key} must live under assets/`).toMatch(/^assets\//);
+
+      const runtimePath = runtimeAssetFilePath(key);
+      expect(runtimePath, `${key} runtime path off public/assets`).toMatch(
+        /^public\/assets\//,
+      );
+      expect(existsSync(resolve(runtimePath)), `${key} file missing`).toBe(
+        true,
+      );
     }
   });
 

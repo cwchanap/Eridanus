@@ -3,24 +3,24 @@ import type { Direction, Entity, GameState, MapId } from '../game/types';
 export const TILE_SIZE = 32;
 
 export const ASSET_PATHS = {
-  'terrain-village-floor': '/assets/terrain/village-floor.png',
-  'terrain-village-wall': '/assets/terrain/village-wall.png',
-  'terrain-dungeon-floor': '/assets/terrain/dungeon-floor.png',
-  'terrain-dungeon-wall': '/assets/terrain/dungeon-wall.png',
-  'player-north': '/assets/characters/player-north.png',
-  'player-south': '/assets/characters/player-south.png',
-  'player-east': '/assets/characters/player-east.png',
-  'player-west': '/assets/characters/player-west.png',
-  'npc-village-guide': '/assets/characters/npc-village-guide.png',
-  'enemy-ruin-guard': '/assets/enemies/ruin-guard.png',
-  'stairs-up': '/assets/interactables/stairs-up.png',
-  'stairs-down': '/assets/interactables/stairs-down.png',
-  'recovery-waystone': '/assets/interactables/recovery-waystone.png',
-  'clue-runes': '/assets/interactables/clue-runes.png',
-  'shortcut-gate-closed': '/assets/interactables/shortcut-gate-closed.png',
-  'shortcut-gate-open': '/assets/interactables/shortcut-gate-open.png',
-  'chest-relic-closed': '/assets/interactables/chest-relic-closed.png',
-  'chest-relic-open': '/assets/interactables/chest-relic-open.png',
+  'terrain-village-floor': 'assets/terrain/village-floor.png',
+  'terrain-village-wall': 'assets/terrain/village-wall.png',
+  'terrain-dungeon-floor': 'assets/terrain/dungeon-floor.png',
+  'terrain-dungeon-wall': 'assets/terrain/dungeon-wall.png',
+  'player-north': 'assets/characters/player-north.png',
+  'player-south': 'assets/characters/player-south.png',
+  'player-east': 'assets/characters/player-east.png',
+  'player-west': 'assets/characters/player-west.png',
+  'npc-village-guide': 'assets/characters/npc-village-guide.png',
+  'enemy-ruin-guard': 'assets/enemies/ruin-guard.png',
+  'stairs-up': 'assets/interactables/stairs-up.png',
+  'stairs-down': 'assets/interactables/stairs-down.png',
+  'recovery-waystone': 'assets/interactables/recovery-waystone.png',
+  'clue-runes': 'assets/interactables/clue-runes.png',
+  'shortcut-gate-closed': 'assets/interactables/shortcut-gate-closed.png',
+  'shortcut-gate-open': 'assets/interactables/shortcut-gate-open.png',
+  'chest-relic-closed': 'assets/interactables/chest-relic-closed.png',
+  'chest-relic-open': 'assets/interactables/chest-relic-open.png',
 } as const;
 
 export type AssetKey = keyof typeof ASSET_PATHS;
@@ -84,5 +84,5 @@ export function resolveEntityAsset(
 }
 
 export function runtimeAssetFilePath(assetKey: AssetKey): string {
-  return `public${ASSET_PATHS[assetKey]}`;
+  return `public/${ASSET_PATHS[assetKey]}`;
 }
