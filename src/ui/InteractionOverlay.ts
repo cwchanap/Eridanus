@@ -6,6 +6,7 @@ import type {
 } from '../game/types';
 import { DIALOGUE_LINES } from '../game/content/dialogue';
 import type { JournalView } from '../game/journal';
+import { renderHowToPlay } from './HowToPlay';
 import { renderJournal } from './JournalPanel';
 
 export type OverlayView = Readonly<{
@@ -73,8 +74,8 @@ export class InteractionOverlay {
       // or a failed input while pending soft-locks the interaction
       transient = `${blockedHtml}<section data-testid="combat-prompt">
         <span data-testid="combat-hp-loss">HP loss: ${pending.preview.hpLoss}</span>
-        <button type="button" data-action="fight">Fight</button>
-        <button type="button" data-action="cancel">Cancel</button>
+        <button type="button" data-action="fight" aria-keyshortcuts="Enter">Fight <kbd aria-hidden="true">Enter</kbd></button>
+        <button type="button" data-action="cancel" aria-keyshortcuts="Escape">Cancel <kbd aria-hidden="true">Esc</kbd></button>
       </section>`;
     } else if (blocked) {
       transient = blockedHtml;
@@ -92,6 +93,7 @@ export class InteractionOverlay {
         <span data-stat="attack">ATK ${state.player.attack}</span>
         <span data-stat="defense">DEF ${state.player.defense}</span>
         <div data-testid="interaction">${transient}</div>
+        ${renderHowToPlay(state)}
         ${renderJournal(journal)}
       </section>`;
     const journalElement = this.root.querySelector<HTMLDetailsElement>(

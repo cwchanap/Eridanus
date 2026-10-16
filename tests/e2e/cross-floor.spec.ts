@@ -238,6 +238,7 @@ test('completes the required-only MVP route', async ({ page }) => {
   // check needs more than the default 30s budget.
   test.slow();
   await startFreshRun(page);
+  await expect(page.getByTestId('how-to-play')).toBeVisible();
 
   // Right: step beside the warden (3,8); Up: bump village-warden
   await press(page, 'ArrowRight', 1);
@@ -250,6 +251,8 @@ test('completes the required-only MVP route', async ({ page }) => {
     'data-line',
     'warden-main-lead',
   );
+  // The first recorded fact retires the fresh-run controls hint.
+  await expect(page.getByTestId('how-to-play')).toHaveCount(0);
 
   // Right x5, Up x3, Right x3, Up x3: village portal → Floor 1 (2,14),
   // without bumping the artisan, scout, or scribe (the required route
@@ -465,17 +468,24 @@ test('completes the explorer MVP route with expanded ending context', async ({
     1,
   );
 
-  // Right, Up x3: bump floor1-west-sentry; Cancel clears the prompt, the
-  // re-bump re-opens it, Fight → HP 22/30
+  // Right, Up x3: bump floor1-west-sentry; Escape cancels the prompt, the
+  // re-bump re-opens it, Enter fights → HP 22/30 (the gatekeeper preview
+  // below and the required-only route keep the mouse buttons covered)
   await press(page, 'ArrowRight', 1);
   await press(page, 'ArrowUp', 3);
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
-  await page.getByRole('button', { name: 'Cancel' }).click();
+  await page.keyboard.press('Escape');
   await expect(page.getByTestId('combat-prompt')).toHaveCount(0);
   await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
-  await page.getByRole('button', { name: 'Fight' }).click();
+  await page.keyboard.press('Enter');
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 22/30');
+  // With no prompt open, Enter is ignored rather than clearing the result.
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'enemyDefeated',
+  );
 
   await claimDepthSigil(page);
   await climbToFloor2CentralHall(page);
