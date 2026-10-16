@@ -21,6 +21,11 @@ const KEY_DIRECTIONS = new Map<string, Direction>([
   ['ArrowRight', 'east'],
 ]);
 
+const PROMPT_KEYS = new Map<string, InputCommand>([
+  ['Enter', { kind: 'fight' }],
+  ['Escape', { kind: 'cancel' }],
+]);
+
 export class WorldScene extends Phaser.Scene {
   private readonly deps: WorldSceneDeps;
   private playerFacing: Direction = 'south';
@@ -28,10 +33,19 @@ export class WorldScene extends Phaser.Scene {
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
     const direction = KEY_DIRECTIONS.get(event.key);
-    if (direction === undefined) return;
+    if (direction !== undefined) {
+      event.preventDefault();
+      this.playerFacing = direction;
+      this.deps.onInput({ kind: 'move', direction });
+      return;
+    }
+    // Enter/Escape only answer an open combat prompt. Forwarding them
+    // otherwise would dispatch a no-op that clears the visible effect text,
+    // and preventDefault stops a focused button from also firing its click.
+    const command = PROMPT_KEYS.get(event.key);
+    if (command === undefined || !this.deps.getSession().pending) return;
     event.preventDefault();
-    this.playerFacing = direction;
-    this.deps.onInput({ kind: 'move', direction });
+    this.deps.onInput(command);
   };
 
   constructor(deps: WorldSceneDeps) {
@@ -76,10 +90,13 @@ export class WorldScene extends Phaser.Scene {
         this.add
           .image(x * TILE_SIZE, y * TILE_SIZE, texture)
           .setOrigin(0)
-          .setDisplaySize(TILE_SIZE, TILE_SIZE);
+          .setDisplaySize(TILE_SIZE, TILE_SIZE)
+          .setDepth(-1);
       }
     }
 
+    // Sprites are up to two tiles tall and bottom-anchored, so depth follows
+    // the tile row: whatever stands lower on screen is drawn in front.
     for (const entity of getActiveEntities(state)) {
       const assetKey = resolveEntityAsset(entity, state);
       if (!assetKey) continue;
@@ -90,7 +107,8 @@ export class WorldScene extends Phaser.Scene {
           (entity.tile.y + 1) * TILE_SIZE,
           assetKey,
         )
-        .setOrigin(0.5, 1);
+        .setOrigin(0.5, 1)
+        .setDepth(entity.tile.y);
     }
 
     const player = this.add
@@ -99,14 +117,17 @@ export class WorldScene extends Phaser.Scene {
         (state.tile.y + 1) * TILE_SIZE,
         resolvePlayerAsset(this.playerFacing),
       )
-      .setOrigin(0.5, 1);
+      .setOrigin(0.5, 1)
+      .setDepth(state.tile.y + 0.5);
 
-    this.cameras.main.startFollow(player, true);
-    this.cameras.main.setBounds(
-      0,
-      0,
-      map.layout[0]!.length * TILE_SIZE,
-      map.layout.length * TILE_SIZE,
-    );
+    const camera = this.cameras.main;
+    const mapWidth = map.layout[0]!.length * TILE_SIZE;
+    const mapHeight = map.layout.length * TILE_SIZE;
+    // A map smaller than the viewport is padded evenly so it sits centred
+    // instead of hugging the top-left corner of the canvas.
+    const padX = Math.max(0, (camera.width - mapWidth) / 2);
+    const padY = Math.max(0, (camera.height - mapHeight) / 2);
+    camera.startFollow(player, true);
+    camera.setBounds(-padX, -padY, mapWidth + 2 * padX, mapHeight + 2 * padY);
   }
 }
