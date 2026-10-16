@@ -28,7 +28,7 @@ Single test runs:
 ```sh
 bunx vitest run src/game/combat.test.ts
 bunx vitest run -t 'blocks closed latch from front'
-bunx playwright test -g 'completes the mvp story journey'
+bunx playwright test tests/e2e/cross-floor.spec.ts -g 'required-only|explorer'
 bunx playwright install --with-deps chromium   # first e2e run only
 ```
 
@@ -78,4 +78,4 @@ Maps are rectangular ASCII rows using only `#` (wall) and `.` (floor), plus a li
 
 ## Testing
 
-Unit tests sit beside their module (`src/game/combat.test.ts`) and drive pure functions with literal `GameState` objects. Playwright tests in `tests/e2e/` drive the **real player-facing UI** — arrow keys and HUD `data-testid`/`data-stat` selectors — never an internal test API. Keep e2e assertions on stable attributes (`data-effect="clue"`) rather than authored prose, so content edits don't break tests. E2E navigation is expressed as counted key presses against exact map coordinates, so moving an entity or changing a layout row requires re-walking `tests/e2e/cross-floor.spec.ts`.
+Unit tests sit beside their module (`src/game/combat.test.ts`) and drive pure functions with literal `GameState` objects. Playwright tests in `tests/e2e/` drive the **real player-facing UI** — arrow keys and HUD `data-testid`/`data-stat` selectors — never an internal test API. Keep e2e assertions on stable attributes (`data-effect="clue"`) rather than authored prose, so content edits don't break tests. E2E navigation is expressed as counted key presses against exact map coordinates, so moving an entity or changing a layout row requires re-walking both release journeys (the required-only and explorer MVP routes) in `tests/e2e/cross-floor.spec.ts`.
