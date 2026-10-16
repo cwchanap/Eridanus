@@ -45,7 +45,7 @@
 - Produces: `completes the required-only MVP route`, `completes the explorer MVP route with expanded ending context`, and a stable `data-line` selector for dialogue effects.
 - Helpers stay file-local and mechanical only; no route search, scenario registry, or direct state injection.
 
-- [ ] **Step 1: Pin the existing boss-math owner before editing the long browser walk**
+- [x] **Step 1: Pin the existing boss-math owner before editing the long browser walk**
 
 Run:
 
@@ -57,7 +57,7 @@ Expected: PASS, including the existing baseline guardian preview of 25 HP loss f
 
 Do not add a second guardian-winnability test.
 
-- [ ] **Step 2: Rename and extend the current journey as the explorer scenario**
+- [x] **Step 2: Rename and extend the current journey as the explorer scenario**
 
 Keep the current counted route and all working assertions. Add only the missing explorer proof:
 
@@ -71,7 +71,7 @@ Keep the current counted route and all working assertions. Add only the missing 
 
 Use stable IDs/attributes only; do not assert full dialogue prose.
 
-- [ ] **Step 3: Add the required-only journey using the shortest authored route**
+- [x] **Step 3: Add the required-only journey using the shortest authored route**
 
 Walk the real UI from a fresh save:
 
@@ -111,13 +111,13 @@ await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 2');
 
 Finish by asserting `data-line="warden-restoration-ending"`, `story-complete`, then reload and confirm `story-complete` remains.
 
-- [ ] **Step 4: Add the missing dialogue-line selector when the new ending assertions fail**
+- [x] **Step 4: Add the missing dialogue-line selector when the new ending assertions fail**
 
 In `src/ui/InteractionOverlay.ts`, keep `data-effect="dialogue"` and add `data-line` only for dialogue effects, using the existing `effect.lineId`.
 
 Do not change dialogue selection or text ownership.
 
-- [ ] **Step 5: Run the two focused release journeys**
+- [x] **Step 5: Run the two focused release journeys**
 
 ```sh
 bunx playwright test tests/e2e/cross-floor.spec.ts -g 'required-only|explorer'
@@ -127,14 +127,14 @@ Expected: both PASS.
 
 If a counted route crosses an optional reward unexpectedly, re-walk the route. Do not change combat/recovery rules to make the test easier.
 
-- [ ] **Step 6: Update the canonical contributor instructions**
+- [x] **Step 6: Update the canonical contributor instructions**
 
 Edit `CLAUDE.md` directly; `AGENTS.md` is a symlink and must remain one.
 
 - replace the stale example `bunx playwright test -g 'completes the mvp story journey'` with the new focused pattern;
 - update the Testing note so layout changes require re-walking both release journeys.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```sh
 git add tests/e2e/cross-floor.spec.ts src/ui/InteractionOverlay.ts CLAUDE.md
@@ -228,7 +228,7 @@ The release checklist in Task 4 cites these passing owners instead of duplicatin
 - Consumes: existing `ASSET_PATHS`, `runtimeAssetFilePath()`, `bun run build`, and the three current CI jobs.
 - Produces: one relative `dist/` artifact, uploaded by `build-lint` on `main`, then deployed only after build/lint, unit, and Playwright jobs all pass.
 
-- [ ] **Step 1: Enable GitHub Pages once at repository level**
+- [x] **Step 1: Enable GitHub Pages once at repository level**
 
 Before relying on the deployment job, set repository **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
 
@@ -236,7 +236,7 @@ This is one-time repository setup. Do not make the workflow try to provision Pag
 
 Record that setup is complete in the PR checklist.
 
-- [ ] **Step 2: Make the existing asset test fail on root-absolute URLs**
+- [x] **Step 2: Make the existing asset test fail on root-absolute URLs**
 
 In `src/phaser/assets.test.ts`, change the runtime-path expectation so catalog values must:
 
@@ -252,7 +252,7 @@ bunx vitest run src/phaser/assets.test.ts
 
 Expected: FAIL on current `/assets/...` values.
 
-- [ ] **Step 3: Make Vite and runtime public assets relative**
+- [x] **Step 3: Make Vite and runtime public assets relative**
 
 Set:
 
@@ -277,7 +277,7 @@ bun run build
 
 Expected: PASS.
 
-- [ ] **Step 4: Extend the existing CI workflow instead of adding `deploy-pages.yml`**
+- [x] **Step 4: Extend the existing CI workflow instead of adding `deploy-pages.yml`**
 
 In `.github/workflows/ci.yml`:
 
@@ -293,7 +293,7 @@ In `.github/workflows/ci.yml`:
 
 The deploy job must consume the Pages artifact uploaded by `build-lint`; it must not produce a second build.
 
-- [ ] **Step 5: Exercise the built artifact under a project subpath before merge**
+- [x] **Step 5: Exercise the built artifact under a project subpath before merge**
 
 Run:
 
@@ -314,7 +314,7 @@ Open `http://127.0.0.1:4174/Eridanus/` in Desktop Chrome and verify:
 
 Stop the server and record the result in the PR checklist. Do not add a committed subpath-smoke framework for this one release proof.
 
-- [ ] **Step 6: Document deployment briefly**
+- [x] **Step 6: Document deployment briefly**
 
 Update `README.md` to state:
 
@@ -322,7 +322,7 @@ Update `README.md` to state:
 - Pages source is GitHub Actions;
 - the existing local quality gates remain authoritative.
 
-- [ ] **Step 7: Run focused production checks**
+- [x] **Step 7: Run focused production checks**
 
 ```sh
 bun run typecheck
@@ -334,7 +334,7 @@ bun run build
 
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```sh
 git add vite.config.ts src/phaser/assets.ts src/phaser/assets.test.ts .github/workflows/ci.yml README.md
@@ -355,7 +355,7 @@ git commit -m "ci: gate github pages deploy on ci"
 - Consumes: Tasks 1–3 plus existing unit coverage.
 - Produces: one green pre-merge gate and one successful post-merge Pages/live smoke before HPA-21 completion.
 
-- [ ] **Step 1: Run the full CI-equivalent gate**
+- [x] **Step 1: Run the full CI-equivalent gate**
 
 ```sh
 bun install --frozen-lockfile
@@ -386,7 +386,7 @@ Record:
 
 Do not create a separate release-report subsystem or artifact file.
 
-- [ ] **Step 3: Commit plan bookkeeping if checkboxes are updated**
+- [x] **Step 3: Commit plan bookkeeping if checkboxes are updated**
 
 ```sh
 git add docs/superpowers/plans/2026-10-15-hpa-21-release-balance-polish.md
