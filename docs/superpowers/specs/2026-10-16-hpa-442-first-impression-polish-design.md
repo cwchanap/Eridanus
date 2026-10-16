@@ -19,7 +19,7 @@ Fix what a brand-new player hits in the first minute of the shipped MVP, without
 - Dungeon wall and floor tiles have similar hue and brightness, so wall runs do not read as walls.
 - The village (14×10) and Floor 2 (18×13) are smaller than the 640×480 canvas and render pinned to its top-left corner.
 - All eight enemies use `enemy-ruin-guard`; all NPCs fall back to `npc-village-guide`.
-- `WorldScene` draws entities in authored array order. On Floor 3 the Restoration Core chest (row 1) and the two heart props (row 3) are authored after the guardian (row 2), so they paint over most of it.
+- Sprites are 64×64, twice the tile size, and spill into neighbouring cells. Entities draw in authored array order, so on Floor 3 the Restoration Core chest (row 1) and the two heart props (row 3) paint over most of the guardian (row 2), and anywhere two entities sit close together it is unclear which cell each one occupies.
 - `WorldScene` only maps arrow keys; the combat prompt is click-only.
 
 ## Design
@@ -47,9 +47,9 @@ No new illustrated art is generated in this pass. New catalog entries are recolo
 | `npc-scribe`          | guide      | purple dress                            | Scribe                                             |
 | `npc-subject`         | guide      | slate-grey dress                        | Missing Subject and Returned Subject (same person) |
 
-### Draw order
+### One cell per sprite
 
-Sprites are up to two tiles tall and bottom-anchored, so depth follows the tile row: terrain at depth −1, each entity at its tile `y`, the player at `y + 0.5`. Whatever stands lower on screen draws in front. This replaces the authored-array-order note in the HPA-22 asset design.
+Every character, enemy, and prop sprite is halved from 64×64 to exactly 32×32 (premultiplied-alpha Lanczos) and still renders 1:1 under `pixelArt: true`. Each sprite now sits inside its own grid cell, so nothing overlaps, the guardian is fully visible, and draw order no longer matters. The asset-catalog test now requires every file to be exactly one tile, replacing the HPA-22 "at most 64×64" bound.
 
 ### Keyboard combat
 
@@ -63,7 +63,7 @@ The prompt buttons show their key (`<kbd aria-hidden="true">`) and declare `aria
 
 ## Testing
 
-- `assets.test.ts`: every villager resolves to distinct art, the missing and returned subject share art, and the guardian's art differs from every other enemy's. Defeated enemies keep their live art.
+- `assets.test.ts`: every catalog file is exactly 32×32; every villager resolves to distinct art, the missing and returned subject share art, and the guardian's art differs from every other enemy's. Defeated enemies keep their live art.
 - `HowToPlay.test.ts`: shown on a fresh state, empty once a fact exists.
 - Required-only journey: the card is visible on a fresh run and gone after the warden talk. Mouse buttons stay covered here.
 - Explorer journey: `Escape` cancels, `Enter` fights, and a stray `Enter` afterwards leaves the defeat result on screen.

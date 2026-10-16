@@ -232,7 +232,7 @@ describe('asset seam', () => {
     }
   });
 
-  it('ships catalog files at bounded runtime dimensions', () => {
+  it('ships every catalog file at exactly one tile', () => {
     const keys = Object.keys(ASSET_PATHS) as (keyof typeof ASSET_PATHS)[];
 
     for (const key of keys) {
@@ -243,14 +243,11 @@ describe('asset seam', () => {
       const width = png.readUInt32BE(16);
       const height = png.readUInt32BE(20);
 
-      if (key.startsWith('terrain-')) {
-        expect([width, height], `${key} must be exactly one tile`).toEqual([
-          32, 32,
-        ]);
-      } else {
-        expect(width, `${key} wider than two tiles`).toBeLessThanOrEqual(64);
-        expect(height, `${key} taller than two tiles`).toBeLessThanOrEqual(64);
-      }
+      // Sprites render 1:1 and must stay inside their own grid cell.
+      expect([width, height], `${key} must be exactly one tile`).toEqual([
+        TILE_SIZE,
+        TILE_SIZE,
+      ]);
     }
   });
 });

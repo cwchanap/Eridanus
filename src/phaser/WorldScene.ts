@@ -90,13 +90,10 @@ export class WorldScene extends Phaser.Scene {
         this.add
           .image(x * TILE_SIZE, y * TILE_SIZE, texture)
           .setOrigin(0)
-          .setDisplaySize(TILE_SIZE, TILE_SIZE)
-          .setDepth(-1);
+          .setDisplaySize(TILE_SIZE, TILE_SIZE);
       }
     }
 
-    // Sprites are up to two tiles tall and bottom-anchored, so depth follows
-    // the tile row: whatever stands lower on screen is drawn in front.
     for (const entity of getActiveEntities(state)) {
       const assetKey = resolveEntityAsset(entity, state);
       if (!assetKey) continue;
@@ -107,8 +104,7 @@ export class WorldScene extends Phaser.Scene {
           (entity.tile.y + 1) * TILE_SIZE,
           assetKey,
         )
-        .setOrigin(0.5, 1)
-        .setDepth(entity.tile.y);
+        .setOrigin(0.5, 1);
     }
 
     const player = this.add
@@ -117,8 +113,7 @@ export class WorldScene extends Phaser.Scene {
         (state.tile.y + 1) * TILE_SIZE,
         resolvePlayerAsset(this.playerFacing),
       )
-      .setOrigin(0.5, 1)
-      .setDepth(state.tile.y + 0.5);
+      .setOrigin(0.5, 1);
 
     const camera = this.cameras.main;
     const mapWidth = map.layout[0]!.length * TILE_SIZE;
