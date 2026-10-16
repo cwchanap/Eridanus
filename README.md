@@ -22,6 +22,10 @@ bun run test:e2e
 bun run build
 ```
 
+## Deployment
+
+Pushes to `main` deploy the normal CI-built `dist/` artifact to GitHub Pages (https://cwchanap.github.io/Eridanus/) after all CI jobs pass. The Pages source is GitHub Actions; the quality gates below remain authoritative for every change.
+
 ## Architecture
 
 - Pure TypeScript owns durable gameplay rules and save state.
