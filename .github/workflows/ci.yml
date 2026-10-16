@@ -58,6 +58,11 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [build-lint, unit-test, playwright-test]
     runs-on: ubuntu-latest
+    # Serialized deploys: without the group, two close pushes to main can
+    # finish deploying in the wrong order and leave the older commit live.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     permissions:
       pages: write
       id-token: write
@@ -65,8 +70,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
