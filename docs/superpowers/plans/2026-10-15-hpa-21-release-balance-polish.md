@@ -369,7 +369,7 @@ bun run build
 
 Expected: all PASS.
 
-- [ ] **Step 2: Record the release matrix in the PR**
+- [x] **Step 2: Record the release matrix in the PR**
 
 Record:
 
