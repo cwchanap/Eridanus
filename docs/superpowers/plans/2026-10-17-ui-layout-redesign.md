@@ -24,11 +24,12 @@
 
 ## Task 3: Location banner and message box
 
-**Files:** `src/game/content.ts`, `src/game/progress.ts`, `src/ui/InteractionOverlay.ts`
+**Files:** `src/game/content.ts`, `src/game/progress.ts`, `src/ui/InteractionOverlay.ts`, `src/styles.css`, `index.html`, `tests/e2e/cross-floor.spec.ts`
 
 - [x] Extract `findSectionsAt` and show the tightest section under the floor name.
 - [x] Render effects as tagged messages with speaker and defeated-enemy portraits.
 - [x] Turn the combat prompt into an encounter card without changing its test ids, text, or button names.
+- [x] Fix the message box height, move tags onto its border, and render a refused move inside the encounter card; assert in both journeys that the stage never moves.
 
 ## Task 4: Journal panel
 

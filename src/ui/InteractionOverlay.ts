@@ -136,9 +136,12 @@ function effectPortrait(effect: ActionEffect, state: GameState): string {
   return '';
 }
 
+// A refused input while the prompt is open (blockedHtml) renders inside the
+// card, so the message box keeps its height.
 function renderEncounter(
   pending: PendingInteraction,
   state: GameState,
+  blockedHtml: string,
 ): string {
   const enemy = findEntityById(pending.enemyId);
   const assetKey = entityAsset(enemy, state);
@@ -152,9 +155,9 @@ function renderEncounter(
   return `<section class="encounter" data-testid="combat-prompt" aria-label="Combat">
     ${portrait}
     <div class="encounter-info">
-      <span class="message-tag">${name}</span>
-      ${stats}
+      <div class="encounter-head"><span class="message-tag">${name}</span>${stats}</div>
       <p class="encounter-cost"><span data-testid="combat-hp-loss">HP loss: ${pending.preview.hpLoss}</span> <span class="encounter-after">leaves you at ${hpAfter}/${state.player.maxHp}</span></p>
+      ${blockedHtml}
     </div>
     <div class="encounter-actions">
       <button type="button" class="button button-fight" data-action="fight" aria-keyshortcuts="Enter">${ICONS.sword}Fight <kbd aria-hidden="true">Enter</kbd></button>
@@ -170,7 +173,7 @@ function renderMessage(view: OverlayView): string {
     : '';
   // prompt must stay reachable (Fight/Cancel clickable) even while blocked,
   // or a failed input while pending soft-locks the interaction
-  if (pending) return blockedHtml + renderEncounter(pending, state);
+  if (pending) return renderEncounter(pending, state, blockedHtml);
   if (blocked) return blockedHtml;
   const message = effect && effectMessage(effect);
   if (effect && message) {
@@ -204,7 +207,7 @@ export class InteractionOverlay {
         ${renderPlaces(journal)}
       </aside>
       ${renderLocation(state, mapName)}
-      <section class="panel log" data-testid="interaction" aria-label="Messages">${renderMessage(view)}</section>
+      <section class="panel log" data-testid="interaction" aria-label="Messages"><div class="log-body">${renderMessage(view)}</div></section>
       ${renderJournal(journal)}`;
     SCROLLING_PANELS.forEach((selector, index) => {
       const panel = this.root.querySelector(selector);

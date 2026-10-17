@@ -28,7 +28,7 @@ At desktop widths the page is a centred CSS grid:
 | Hero: portrait, HP bar, ATK/DEF tiles        | Framed 640×480 stage (the Phaser canvas) |                |
 | Items, how-to-play (fresh run), places found | Message box                              |                |
 
-`#ui` uses `display: contents`, so the overlay's panels are grid items beside `#game` while the overlay still renders into one root. The sidebar and journal use `contain: size` so the stage rows size the columns and long lists scroll inside their panels instead of stretching the page. Below 1260 px the side panels stack in a right column with the journal under the message box; below 990 px everything is one column and the canvas scales down to fit.
+`#ui` uses `display: contents`, so the overlay's panels are grid items beside `#game` while the overlay still renders into one root. The sidebar and journal use `contain: size` so the stage rows size the columns and long lists scroll inside their panels instead of stretching the page. The three-column screen has a fixed height and is centred vertically. Below 1260 px the side panels stack in a right column with the journal under the message box, and the page top-aligns so a growing journal never moves the stage; below 990 px everything is one column and the canvas scales down to fit.
 
 ### Panels and styling
 
@@ -50,10 +50,11 @@ The floor name (`data-testid="map-name"`, unchanged contract) plus the name of t
 
 ### Message box
 
-A fixed-minimum-height box under the stage, so the layout no longer jumps:
+A fixed-height box (116 px) under the stage, so no message can resize the stage row or move the map:
 
 - Effects render as a coloured tag plus text (Clue, Power up, Restored, Shortcut, Victory, Item, Sealed). Dialogue uses the speaker's name as the tag and shows their portrait, looked up by name among the current map's NPCs. A victory shows the defeated enemy's portrait greyed out.
-- Blocked reasons render as a short red line.
+- The tag sits on the box's top border as a nameplate. It is absolutely positioned against the panel, outside the inner `.log-body` scroller, so the text gets the whole box height. The longest authored line (the ledger ending, 237 characters) fits in four lines; anything longer scrolls inside `.log-body` (`justify-content: safe center` keeps its top reachable). Message animations use opacity only, since a transform would make the message the nameplate's containing block and clip it.
+- Blocked reasons render as a short red line. While a combat prompt is open, a refused move renders inside the encounter card, so the card and its buttons stay put.
 - The combat prompt becomes an encounter card: enemy portrait, its HP/ATK/DEF, `HP loss: n` (unchanged text) and the HP the player would have left, with Fight and Cancel buttons that keep their accessible names, key hints, and `aria-keyshortcuts`. Enemies have no authored names, so the card names them by their art (Ruin Guard, Ruin Sentinel, Core Guardian).
 - With nothing to show, the box holds a muted controls hint.
 
@@ -67,7 +68,7 @@ Always open: the main quest as a highlighted card, then side leads (resolved one
 
 - `StatusPanel.test.ts`: stat text contract, HP bar level thresholds, item labels and empty state.
 - `JournalPanel.test.ts`: lead, note and section markup contract; resolved leads marked; empty groups omitted.
-- E2E: the required-only journey asserts the journal stays visible across re-renders instead of toggling `<details>`. The asset-loading test waits for `domcontentloaded`, since the HUD portraits are `<img>` tags held by the same route and now delay the window `load` event.
+- E2E: the required-only journey asserts the journal stays visible across re-renders instead of toggling `<details>`. Both journeys assert the stage (`data-testid="stage"`) does not move: across a refused move during the first combat prompt, and across each ending dialogue (the longest authored lines). The asset-loading test waits for `domcontentloaded`, since the HUD portraits are `<img>` tags held by the same route and now delay the window `load` event.
 
 ## Non-Goals
 

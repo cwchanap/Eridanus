@@ -19,6 +19,11 @@ async function press(
   }
 }
 
+// The message box has a fixed height, so no message may move the map.
+async function stageBox(page: Page) {
+  return page.getByTestId('stage').boundingBox();
+}
+
 async function startFreshRun(page: Page): Promise<void> {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
@@ -170,7 +175,9 @@ async function handCoreToWarden(
   await press(page, 'ArrowDown', 1);
   await press(page, 'ArrowLeft', 1);
 
-  // Left: bump village-warden at (3,7) — carrying the core ends the story
+  // Left: bump village-warden at (3,7) — carrying the core ends the story.
+  // The ending lines are the longest authored dialogue.
+  const stage = await stageBox(page);
   await press(page, 'ArrowLeft', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
@@ -180,6 +187,7 @@ async function handCoreToWarden(
     'data-line',
     endingLineId,
   );
+  expect(await stageBox(page)).toEqual(stage);
   await expect(page.locator('[data-lead="story-complete"]')).toHaveCount(1);
 
   // Reload in the village: the ending fact persisted — story-complete
@@ -279,6 +287,16 @@ test('completes the required-only MVP route', async ({ page }) => {
   await press(page, 'ArrowRight', 1);
   await press(page, 'ArrowUp', 3);
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
+  // A move while the prompt is open is refused inside the encounter card,
+  // which stays usable and leaves the map where it was
+  const stage = await stageBox(page);
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
+    'data-reason',
+    'interaction-pending',
+  );
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
+  expect(await stageBox(page)).toEqual(stage);
   await page.getByRole('button', { name: 'Fight' }).click();
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 22/30');
 
