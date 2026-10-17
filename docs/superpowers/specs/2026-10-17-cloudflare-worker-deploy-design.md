@@ -14,7 +14,7 @@ Make the game available from a Cloudflare Worker without changing the game or th
 - GitHub Pages is not removed or altered; both hosts serve the same build.
 - No GitHub Actions deploy job and no Cloudflare credentials in this repo. The first version of this PR had one (a gated `wrangler deploy` job needing an API token and account ID); the owner preferred to wire the Worker in the Cloudflare dashboard, so it was dropped.
 - No custom domain or staging environment.
-- No new runtime dependency and no change to `package.json` or `bun.lock`.
+- No new runtime dependency. `wrangler` is added only as an exact-pinned devDependency (changing `package.json` and `bun.lock`) because Workers Builds takes its Wrangler version from `package.json` and Preview builds need 4.135.0 or later.
 
 ## Current Evidence
 
