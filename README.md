@@ -24,24 +24,21 @@ bun run build
 
 ## Deployment
 
-Pushes to `main` deploy the normal CI-built `dist/` artifact to two hosts after all CI jobs pass:
+Pushes to `main` deploy the normal CI-built `dist/` artifact to GitHub Pages (https://cwchanap.github.io/Eridanus/) after all CI jobs pass. The Pages source is GitHub Actions; the quality gates above remain authoritative for every change.
 
-- **GitHub Pages** (https://cwchanap.github.io/Eridanus/). The Pages source is GitHub Actions.
-- **Cloudflare Workers**, as the `eridanus` Worker serving `dist/` as static assets (`wrangler.jsonc`).
+### Cloudflare Workers
 
-Saves live in each host's own `localStorage`, so progress does not carry between the two URLs.
+`wrangler.jsonc` serves `dist/` as Workers static assets under the Worker name `eridanus`. The Worker is deployed by Cloudflare's own Git integration ([Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/)), configured in the dashboard rather than GitHub Actions, so no Cloudflare secrets live in this repo.
 
-The quality gates above remain authoritative for every change.
+One-time setup in the Cloudflare dashboard:
 
-### Cloudflare setup
+1. Workers & Pages → Create application → GitHub, and pick this repository. Name the Worker `eridanus`; it must match `name` in `wrangler.jsonc` or the build fails.
+2. Git branch `main`, build command `bun run build`, deploy command `npx wrangler deploy` (the default).
+3. Under the Worker's Settings → Build → Build variables, set `BUN_VERSION` to `1.4.2` to match the version pinned in `package.json`; Cloudflare's default is older.
 
-One-time, by a repository admin:
+Cloudflare builds and deploys on every push to `main` and only runs the build command, so typecheck, lint, and tests stay GitHub CI gates that do not block the Cloudflare deploy. Saves live in each host's own `localStorage`, so progress does not carry between the Pages and Worker URLs.
 
-1. Make sure the Cloudflare account has a `workers.dev` subdomain (Workers & Pages → Overview).
-2. Create an API token from the "Edit Cloudflare Workers" template and note the account ID.
-3. Add them as repository secrets named `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (Settings → Secrets and variables → Actions).
-
-The first successful deploy creates the Worker; the job log prints its `workers.dev` URL. To deploy from a local checkout instead, run `bun run build` then `bunx wrangler deploy` after `bunx wrangler login`.
+To deploy from a local checkout instead, run `bun run build` then `bunx wrangler deploy` after `bunx wrangler login`.
 
 ## Architecture
 
