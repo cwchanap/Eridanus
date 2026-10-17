@@ -21,6 +21,7 @@
 
 - [x] Upload `dist/` as a plain `dist` artifact from `build-lint` on pushes to `main`.
 - [x] Add `deploy-cloudflare`, needing all three check jobs, that downloads `dist` and runs the pinned `wrangler deploy` with the two secrets.
+- [x] Skip the deploy unless this run's commit is still the tip of `main`.
 
 ## Task 3: Docs
 
