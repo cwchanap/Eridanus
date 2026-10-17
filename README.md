@@ -38,6 +38,8 @@ One-time setup in the Cloudflare dashboard:
 
 Cloudflare builds and deploys on every push to `main` and only runs the build command, so typecheck, lint, and tests stay GitHub CI gates that do not block the Cloudflare deploy. Saves live in each host's own `localStorage`, so progress does not carry between the Pages and Worker URLs.
 
+Other branches get a Preview when Settings → Build → Branch control → Enable Preview Builds is on. That build runs `npx wrangler preview` (the default Preview command), which needs Wrangler 4.135.0 or later; Workers Builds uses the Wrangler version in `package.json`, so `wrangler` is a pinned devDependency and the empty `previews` block in `wrangler.jsonc` is where Preview-only settings would go. Untick Enable Preview Builds if PR branches should not build on Cloudflare at all.
+
 To deploy from a local checkout instead, run `bun run build` then `bunx wrangler deploy` after `bunx wrangler login`.
 
 ## Architecture
