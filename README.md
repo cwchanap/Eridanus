@@ -29,6 +29,8 @@ Pushes to `main` deploy the normal CI-built `dist/` artifact to two hosts after 
 - **GitHub Pages** (https://cwchanap.github.io/Eridanus/). The Pages source is GitHub Actions.
 - **Cloudflare Workers**, as the `eridanus` Worker serving `dist/` as static assets (`wrangler.jsonc`).
 
+Saves live in each host's own `localStorage`, so progress does not carry between the two URLs.
+
 The quality gates above remain authoritative for every change.
 
 ### Cloudflare setup

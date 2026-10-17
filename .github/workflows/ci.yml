@@ -101,8 +101,24 @@ jobs:
         with:
           name: dist
           path: dist
+      # The concurrency group serializes runs but does not order them, so a slow
+      # older run could deploy after a newer one. Only the run for the current
+      # tip of main deploys; a newer run ships its own build.
+      - name: Check this is the latest main commit
+        id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tip=$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)
+          if [ "$tip" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Skipping deploy: main has moved on to ${tip}"
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          fi
       # Pinned and run via bunx so local installs and the other jobs stay lean.
       - name: Deploy
+        if: steps.latest.outputs.current == 'true'
         run: bunx wrangler@4.151.1 deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

@@ -33,7 +33,7 @@ A `deploy-cloudflare` job beside the Pages `deploy` job in `.github/workflows/ci
 - runs only on pushes to `main` and `needs` the same three jobs (`build-lint`, `unit-test`, `playwright-test`);
 - ships the exact `dist/` the CI build produced: `build-lint` already uploads it for Pages, and now also uploads it as a plain `dist` artifact that this job downloads;
 - runs `bunx wrangler@<pinned> deploy`, pinned in the workflow so a new wrangler release cannot change a deploy;
-- serialized with its own concurrency group (`cancel-in-progress: false`) so two close pushes cannot finish out of order;
+- serialized with its own concurrency group (`cancel-in-progress: false`), and guarded so only the run for the current tip of `main` deploys: a group serializes runs but does not order them, so a slow older run would otherwise overwrite a newer deploy. A skipped run's build is superseded by the newer run, which deploys its own;
 - has no `permissions` beyond the workflow's `contents: read`.
 
 The Pages and Cloudflare jobs are independent: a failure in one does not block the other.
