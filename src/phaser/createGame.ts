@@ -15,6 +15,8 @@ export function createGame(
     height: 480,
     scene: [scene],
     pixelArt: true,
+    // The page frame paints the backdrop behind maps smaller than the view.
+    transparent: true,
   });
   return { game, scene };
 }

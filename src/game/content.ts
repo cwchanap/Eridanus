@@ -96,6 +96,19 @@ export function isTileBlockedByEntity(state: GameState, tile: Tile): boolean {
   return entity !== undefined && isEntityBlocking(entity, state);
 }
 
+export function findSectionsAt(
+  mapId: MapId,
+  tile: Tile,
+): readonly MapSection[] {
+  return MAPS[mapId].sections.filter(
+    ({ bounds }) =>
+      tile.x >= bounds.minX &&
+      tile.x <= bounds.maxX &&
+      tile.y >= bounds.minY &&
+      tile.y <= bounds.maxY,
+  );
+}
+
 export function findSectionById(id: string): MapSection | undefined {
   return Object.values(MAPS)
     .flatMap((map) => map.sections)
