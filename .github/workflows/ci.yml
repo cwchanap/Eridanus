@@ -27,6 +27,14 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           path: dist
+      # Same dist/ the Pages deploy ships, as a plain folder for the Worker deploy.
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          name: dist
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
 
   unit-test:
     name: Unit test
@@ -73,3 +81,29 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-cloudflare:
+    name: Deploy to Cloudflare Workers
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build-lint, unit-test, playwright-test]
+    runs-on: ubuntu-latest
+    # Serialized for the same reason as the Pages deploy.
+    concurrency:
+      group: cloudflare-workers
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.4.2 }
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      # Pinned and run via bunx so local installs and the other jobs stay lean.
+      - name: Deploy
+        run: bunx wrangler@4.151.1 deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
