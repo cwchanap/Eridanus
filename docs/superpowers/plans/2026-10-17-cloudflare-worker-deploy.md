@@ -1,8 +1,8 @@
 # Cloudflare Worker Deploy Implementation Plan
 
-**Goal:** Deploy the existing static build to a Cloudflare Worker from `main`, gated like the Pages deploy.
+**Goal:** Let Cloudflare's Git integration serve the existing static build from a Worker.
 
-**Architecture:** Configuration only. Workers static assets serve `dist/`; a CI job runs a pinned `wrangler deploy` on the artifact the build job already produced. No source, dependency, or lockfile change.
+**Architecture:** Configuration and docs only. `wrangler.jsonc` serves `dist/` as Workers static assets; the Worker is connected to the repository in the Cloudflare dashboard. No source, dependency, lockfile, or CI change.
 
 **Spec:** `docs/superpowers/specs/2026-10-17-cloudflare-worker-deploy-design.md`
 
@@ -15,20 +15,12 @@
 - [x] Confirm `wrangler deploy --dry-run` reads the built `dist/`.
 - [x] Confirm `wrangler dev` serves the real game from `/` with no failed requests or page errors.
 
-## Task 2: CI deploy job
-
-**Files:** `.github/workflows/ci.yml`
-
-- [x] Upload `dist/` as a plain `dist` artifact from `build-lint` on pushes to `main`.
-- [x] Add `deploy-cloudflare`, needing all three check jobs, that downloads `dist` and runs the pinned `wrangler deploy` with the two secrets.
-- [x] Skip the deploy unless this run's commit is still the tip of `main`.
-
-## Task 3: Docs
+## Task 2: Docs
 
 **Files:** `README.md`
 
-- [x] Document the Cloudflare deploy, the two secrets, the `workers.dev` prerequisite, and the manual deploy command.
+- [x] Document the dashboard setup (repository, Worker name, build and deploy commands, `BUN_VERSION`), that Cloudflare does not wait for GitHub CI, and that saves do not carry between hosts.
 
 ## After merge
 
-- [ ] With both secrets set, confirm the `Deploy to Cloudflare Workers` job is green on `main` and the Worker URL loads the game.
+- [ ] With the repository connected in the dashboard, confirm the Cloudflare build for `main` succeeds and the Worker URL loads the game.

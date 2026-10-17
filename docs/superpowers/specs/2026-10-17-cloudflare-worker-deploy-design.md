@@ -6,13 +6,14 @@ Design for serving the shipped MVP from a Cloudflare Worker. The complete change
 
 ## Goal
 
-Make the game available from a Cloudflare Worker, deployed automatically from `main` after the same checks that gate the GitHub Pages deploy, without changing the game or the Pages deploy.
+Make the game available from a Cloudflare Worker without changing the game or the GitHub Pages deploy.
 
 ## Non-Goals
 
 - No Worker script, bindings, backend, or server-side state. The game stays a static client with `localStorage` saves.
 - GitHub Pages is not removed or altered; both hosts serve the same build.
-- No custom domain, per-PR preview Workers, or staging environment.
+- No GitHub Actions deploy job and no Cloudflare credentials in this repo. The first version of this PR had one (a gated `wrangler deploy` job needing an API token and account ID); the owner preferred to wire the Worker in the Cloudflare dashboard, so it was dropped.
+- No custom domain or staging environment.
 - No new runtime dependency and no change to `package.json` or `bun.lock`.
 
 ## Current Evidence
@@ -26,29 +27,20 @@ Make the game available from a Cloudflare Worker, deployed automatically from `m
 
 A root `wrangler.jsonc` with `name: "eridanus"`, a `compatibility_date`, and `assets.directory: "./dist"`. There is no `main`, so Cloudflare serves the folder directly. The game has a single page and no client-side routing, so the default 404 behaviour stays.
 
-### Deploy job in CI
+### Deploy through Cloudflare's Git integration
 
-A `deploy-cloudflare` job beside the Pages `deploy` job in `.github/workflows/ci.yml`:
+The owner connects this repository to a Worker in the Cloudflare dashboard (Workers Builds). Cloudflare then builds and deploys on every push to `main`. The README holds the setup steps. Constraints from Cloudflare's docs:
 
-- runs only on pushes to `main` and `needs` the same three jobs (`build-lint`, `unit-test`, `playwright-test`);
-- ships the exact `dist/` the CI build produced: `build-lint` already uploads it for Pages, and now also uploads it as a plain `dist` artifact that this job downloads;
-- runs `bunx wrangler@<pinned> deploy`, pinned in the workflow so a new wrangler release cannot change a deploy;
-- serialized with its own concurrency group (`cancel-in-progress: false`), and guarded so only the run for the current tip of `main` deploys: a group serializes runs but does not order them, so a slow older run would otherwise overwrite a newer deploy. A skipped run's build is superseded by the newer run, which deploys its own;
-- has no `permissions` beyond the workflow's `contents: read`.
+- the dashboard Worker name must match `name` in `wrangler.jsonc` (`eridanus`), or the build fails;
+- the build command is `bun run build` and the deploy command is the default `npx wrangler deploy`;
+- the build image's default Bun is older than the `1.4.2` pinned in `package.json`, so set `BUN_VERSION=1.4.2` as a build variable.
 
-The Pages and Cloudflare jobs are independent: a failure in one does not block the other.
+### Trade-offs of this route
 
-### Credentials
-
-Two repository secrets, set once by the repo owner:
-
-- `CLOUDFLARE_API_TOKEN`: a token with the "Edit Cloudflare Workers" permission on the target account;
-- `CLOUDFLARE_ACCOUNT_ID`: the account the Worker is created in.
-
-The job runs only on `main`, after the gates, so pull requests (including forks) never see them. If either secret is missing the deploy step fails loudly rather than skipping, so a misconfiguration cannot look like a successful deploy.
-
-The first deploy creates the `eridanus` Worker. The account must already have a `workers.dev` subdomain; the README documents this.
+- Cloudflare runs only the build command. Typecheck, lint, unit, and Playwright stay in GitHub CI and do not gate the Cloudflare deploy, unlike the Pages deploy. This is accepted; the same checks already gate every PR into `main`.
+- Cloudflare may also build non-production branches for preview URLs; that is a dashboard setting (Settings → Build → Branch control).
+- Saves are per-origin `localStorage`, so progress does not carry between the Pages and Worker URLs.
 
 ## Verification
 
-Before merge: CI passes unchanged for pull requests (the new job does not run), and the local dry-run and `wrangler dev` smoke above. After merge, with secrets set: the `Deploy to Cloudflare Workers` job is green on `main` and the printed `workers.dev` URL loads the game.
+Before merge: CI is unchanged and green, and the local dry-run and `wrangler dev` smoke above. After the owner connects the repository and merges: the Cloudflare build for `main` succeeds and the `workers.dev` URL loads the game.
