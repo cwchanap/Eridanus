@@ -71,7 +71,6 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.setBackgroundColor('#111111');
     this.ready = true;
     this.refresh();
   }
