@@ -2,7 +2,7 @@ import type { JournalEntry, JournalView, LeadId } from '../game/journal';
 import { factNote } from '../game/journal';
 
 const ENTRY_TITLE: Record<JournalEntry['id'], string> = {
-  main: 'Main',
+  main: 'Main quest',
   heirloom: 'Heirloom',
   route: 'Lost Route',
   ledger: 'Keeper Ledger',
@@ -43,25 +43,49 @@ const LEAD_TEXT: Record<LeadId, string> = {
     'The final keeper record explains the guardian isolation failure.',
 };
 
+const RESOLVED_LEADS: ReadonlySet<LeadId> = new Set([
+  'heirloom-resolved',
+  'route-resolved',
+  'ledger-resolved',
+  'story-complete',
+]);
+
+function renderEntry(entry: JournalEntry): string {
+  const resolved = RESOLVED_LEADS.has(entry.lead) ? ' data-resolved' : '';
+  return `<li class="lead" data-lead="${entry.lead}"${resolved}>
+    <span class="lead-title">${ENTRY_TITLE[entry.id]}</span>
+    <span class="lead-text">${LEAD_TEXT[entry.lead]}</span>
+  </li>`;
+}
+
+function group(title: string, body: string): string {
+  return body
+    ? `<div class="journal-group"><h3>${title}</h3>${body}</div>`
+    : '';
+}
+
 export function renderJournal(view: JournalView): string {
-  const entries = [view.main, ...view.optional]
-    .map(
-      (entry) =>
-        `<p data-lead="${entry.lead}">${ENTRY_TITLE[entry.id]} — ${LEAD_TEXT[entry.lead]}</p>`,
-    )
-    .join('');
-  const sections = view.sections
-    .map(
-      (section) => `<span data-section="${section.id}">${section.name}</span>`,
-    )
-    .join('');
+  const optional = view.optional.map(renderEntry).join('');
   const notes = view.observationFactIds
     .map((id) => `<li data-note="${id}">${factNote(id) ?? ''}</li>`)
     .join('');
-  return `<details data-testid="journal" aria-label="Journal">
-    <summary>Journal</summary>
-    <div>${entries}</div>
-    <div>${sections}</div>
-    <ul>${notes}</ul>
-  </details>`;
+  return `<section class="panel journal" data-testid="journal" aria-label="Journal">
+    <h2 class="panel-title">Journal</h2>
+    <ul class="leads leads-main">${renderEntry(view.main)}</ul>
+    ${group('Side leads', optional && `<ul class="leads">${optional}</ul>`)}
+    ${group('Notes', notes && `<ul class="notes">${notes}</ul>`)}
+  </section>`;
+}
+
+export function renderPlaces(view: JournalView): string {
+  const sections = view.sections
+    .map(
+      (section) =>
+        `<span class="place" data-section="${section.id}">${section.name}</span>`,
+    )
+    .join('');
+  return `<section class="panel places" aria-label="Places found">
+    <h2 class="panel-title">Places found</h2>
+    <div class="place-list">${sections}</div>
+  </section>`;
 }

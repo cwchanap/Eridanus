@@ -51,7 +51,7 @@ keyboard (WorldScene) / button click (InteractionOverlay)
 - **`src/game/`** — pure TypeScript, zero Phaser imports. `types.ts` holds every closed union; `state.ts` the initial state; `movement.ts` → `actions.ts` → `combat.ts` the rule chain; `session.ts` the pending-interaction gate; `save.ts` the localStorage boundary.
 - **`src/game/content/`** — authored maps (`village`, `floor1`, `floor2`, `floor3`), re-exported through `content.ts` as `MAPS`.
 - **`src/phaser/`** — `WorldScene.refresh()` clears and redraws every child each input from `GameState` plus the transient `playerFacing` (which selects the player texture) and centring maps smaller than the viewport. Every asset is exactly one 32×32 tile, so sprites never overlap neighbouring cells. It maps arrow keys to moves and, only while a combat prompt is pending, `Enter`/`Escape` to Fight/Cancel. `createGame.ts` boots Phaser; `assets.ts` is the art-replacement seam (`ASSET_PATHS` catalog, terrain/player/entity resolvers, `TILE_SIZE`).
-- **`src/ui/InteractionOverlay.ts`** — framework-free DOM, rendered by `innerHTML` + re-bound listeners. HUD, effect text, combat prompt, blocked reasons, invalid-save recovery. `JournalPanel.ts` and `HowToPlay.ts` are pure string renderers it composes; the how-to-play card shows only while `factIds` is empty.
+- **`src/ui/InteractionOverlay.ts`** — framework-free DOM, rendered by `innerHTML` + re-bound listeners. Location banner, message box (effects, blocked reasons, the combat encounter card), invalid-save recovery. `StatusPanel.ts` (hero stats, items), `JournalPanel.ts` (journal, places found) and `HowToPlay.ts` are pure string renderers it composes; the how-to-play card shows only while `factIds` is empty. Layout is a CSS grid on `#app` in `styles.css`: `#ui` is `display: contents`, so the overlay's panels sit beside the `#game` stage. Keep each `data-stat` element's text exactly `HP x/y` / `ATK n` / `DEF n` — the e2e journeys read stats back from it. DOM portraits reuse the 32×32 sprites at 2×; the one-cell rule applies to the map grid.
 - **`src/main.ts`** — the only stateful module: holds `session`, `effect`, `blocked`, wires input, autosaves, re-renders.
 
 ### State model
@@ -62,7 +62,7 @@ keyboard (WorldScene) / button click (InteractionOverlay)
 
 ### Closed contracts
 
-`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `recovery`, `npc`, `portal`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `content.ts`'s `isEntityBlocking`, `InteractionOverlay`'s `REASON_TEXT`/`effectText`, and `content.ts`'s validator.
+`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `recovery`, `npc`, `portal`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `content.ts`'s `isEntityBlocking`, `InteractionOverlay`'s `REASON_TEXT`/`effectMessage`, and `content.ts`'s validator.
 
 ### Movement is interaction
 

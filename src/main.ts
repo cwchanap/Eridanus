@@ -1,3 +1,4 @@
+import '@fontsource/cinzel/latin-700.css';
 import './styles.css';
 import { MAPS } from './game/content';
 import { buildJournalView } from './game/journal';
