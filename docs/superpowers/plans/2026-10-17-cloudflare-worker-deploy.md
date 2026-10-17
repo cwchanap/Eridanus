@@ -1,10 +1,10 @@
-# HPA-182 Cloudflare Worker Deploy Implementation Plan
+# Cloudflare Worker Deploy Implementation Plan
 
 **Goal:** Deploy the existing static build to a Cloudflare Worker from `main`, gated like the Pages deploy.
 
 **Architecture:** Configuration only. Workers static assets serve `dist/`; a CI job runs a pinned `wrangler deploy` on the artifact the build job already produced. No source, dependency, or lockfile change.
 
-**Spec:** `docs/superpowers/specs/2026-10-17-hpa-182-cloudflare-worker-deploy-design.md`
+**Spec:** `docs/superpowers/specs/2026-10-17-cloudflare-worker-deploy-design.md`
 
 ## Task 1: Worker config
 

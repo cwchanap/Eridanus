@@ -1,8 +1,8 @@
-# HPA-182 Cloudflare Worker Deploy Design
+# Cloudflare Worker Deploy Design
 
 ## Status
 
-Design for serving the shipped MVP from a Cloudflare Worker. The complete HPA-182 change stays on one PR.
+Design for serving the shipped MVP from a Cloudflare Worker. The complete change stays on one PR.
 
 ## Goal
 
