@@ -4,4 +4,7 @@
   "assets": {
     "directory": "./dist",
   },
+  // Preview builds (non-main branches) read their settings from here. Empty
+  // because the game has no vars, secrets or bindings to separate.
+  "previews": {},
 }
