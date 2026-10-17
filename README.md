@@ -24,7 +24,22 @@ bun run build
 
 ## Deployment
 
-Pushes to `main` deploy the normal CI-built `dist/` artifact to GitHub Pages (https://cwchanap.github.io/Eridanus/) after all CI jobs pass. The Pages source is GitHub Actions; the quality gates above remain authoritative for every change.
+Pushes to `main` deploy the normal CI-built `dist/` artifact to two hosts after all CI jobs pass:
+
+- **GitHub Pages** (https://cwchanap.github.io/Eridanus/). The Pages source is GitHub Actions.
+- **Cloudflare Workers**, as the `eridanus` Worker serving `dist/` as static assets (`wrangler.jsonc`).
+
+The quality gates above remain authoritative for every change.
+
+### Cloudflare setup
+
+One-time, by a repository admin:
+
+1. Make sure the Cloudflare account has a `workers.dev` subdomain (Workers & Pages → Overview).
+2. Create an API token from the "Edit Cloudflare Workers" template and note the account ID.
+3. Add them as repository secrets named `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` (Settings → Secrets and variables → Actions).
+
+The first successful deploy creates the Worker; the job log prints its `workers.dev` URL. To deploy from a local checkout instead, run `bun run build` then `bunx wrangler deploy` after `bunx wrangler login`.
 
 ## Architecture
 
