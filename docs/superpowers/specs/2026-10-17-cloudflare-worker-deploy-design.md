@@ -14,7 +14,7 @@ Make the game available from a Cloudflare Worker without changing the game or th
 - GitHub Pages is not removed or altered; both hosts serve the same build.
 - No GitHub Actions deploy job and no Cloudflare credentials in this repo. The first version of this PR had one (a gated `wrangler deploy` job needing an API token and account ID); the owner preferred to wire the Worker in the Cloudflare dashboard, so it was dropped.
 - No custom domain or staging environment.
-- No new runtime dependency and no change to `package.json` or `bun.lock`.
+- No new runtime dependency. `wrangler` is added only as an exact-pinned devDependency (changing `package.json` and `bun.lock`) because Workers Builds takes its Wrangler version from `package.json` and Preview builds need 4.135.0 or later.
 
 ## Current Evidence
 
@@ -38,7 +38,7 @@ The owner connects this repository to a Worker in the Cloudflare dashboard (Work
 ### Trade-offs of this route
 
 - Cloudflare runs only the build command. Typecheck, lint, unit, and Playwright stay in GitHub CI and do not gate the Cloudflare deploy, unlike the Pages deploy. This is accepted; the same checks already gate every PR into `main`.
-- Cloudflare may also build non-production branches for preview URLs; that is a dashboard setting (Settings → Build → Branch control).
+- Cloudflare also builds non-production branches when Enable Preview Builds is on (Settings → Build → Branch control). Those builds run the Preview command, `npx wrangler preview` by default, instead of `wrangler deploy`. Worker Previews needs Wrangler 4.135.0 or later and Workers Builds uses the Wrangler version in `package.json`, so `wrangler` is a pinned devDependency and `wrangler.jsonc` carries an empty `previews` block. The first PR build after merge (PR 9) failed with no output while `main` succeeded; an unpinned Wrangler and the missing `previews` block were the differences found, and the build log was not readable from CI to confirm which one.
 - Saves are per-origin `localStorage`, so progress does not carry between the Pages and Worker URLs.
 
 ## Verification
