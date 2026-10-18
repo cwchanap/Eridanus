@@ -27,7 +27,7 @@ The Phaser canvas fills the window and the HUD floats over it, after the design 
 - Top right (320 px): the journal.
 - Bottom centre: the message box, up to 720 px wide and a fixed 116 px tall.
 
-Below 1024 px the side columns would crowd the banner, so the hero card and journal share one row under it, capped at 200 px with their contents scrolling, and the how-to-play card is hidden (the idle message and the fight buttons already show the keys). The message box drops the 720 px cap and spans the full width, and the fight buttons stack into a column. On short windows the shared row's cap shrinks — down to nothing — so the map keeps a whole zoomed tile clear (96 px: the village is the narrowest map and tops out at 3× zoom inside narrow widths), and the panels scroll inside whatever space remains.
+Below 1024 px the side columns would crowd the banner, so the hero card and journal share one row under it, capped at 200 px with their contents scrolling, and the how-to-play card is hidden (the idle message and the fight buttons already show the keys). The message box drops the 720 px cap and spans the full width, and the fight buttons stack into a column. On short windows the shared row's cap shrinks — down to nothing — so the map keeps a whole zoomed tile clear (96 px: the village is the narrowest map and tops out at 3× zoom inside narrow widths), and the panels scroll inside whatever space remains. Below 640 px each column is under about 300 px, so the hero card drops its portrait and tightens its stat chips, the journal's toggle hides its `J` hint, and the HP row, stat chips and journal header wrap rather than clip.
 
 ### Camera
 
@@ -77,7 +77,7 @@ Open by default: the main quest as a highlighted card, then side leads (resolved
 - `viewport.test.ts`: zoom choice, insets at the breakpoint and on short windows, padded bounds, and the hero's cell clear of the HUD on every floor tile of every map at ten window sizes.
 - `StatusPanel.test.ts`: stat text contract, HP bar level thresholds, fight cost preview, item labels and empty state.
 - `JournalPanel.test.ts`: lead, note and place markup contract; resolved leads marked; empty groups omitted; folded state.
-- E2E: the required-only journey asserts the journal stays visible across re-renders and that `J` folds and reopens it. Both journeys assert the message box (`data-testid="interaction"`) keeps its size and place: across a refused move during the first combat prompt — at a narrow, short window where the Fight and Cancel buttons' bounds are pinned too — and across each ending dialogue (the longest authored lines). The asset-loading test waits for `domcontentloaded`, since the HUD portraits are `<img>` tags held by the same route and now delay the window `load` event.
+- E2E: the required-only journey asserts the journal stays visible across re-renders and that `J` folds and reopens it. Both journeys assert the message box (`data-testid="interaction"`) keeps its size and place: across a refused move during the first combat prompt — at a narrow, short window where the Fight and Cancel buttons' bounds are pinned too — and across each ending dialogue (the longest authored lines). A phone-width test (400×844) checks every stat sits inside the hero card and the journal toggle inside the journal, and the required-only journey repeats that check at 400 px while the first combat prompt shows its HP cost. The asset-loading test waits for `domcontentloaded`, since the HUD portraits are `<img>` tags held by the same route and now delay the window `load` event.
 
 ## Non-Goals
 
