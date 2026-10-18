@@ -34,12 +34,25 @@ const NARROW_BOTTOM = 144;
 const NARROW_PANEL_CAP = 200;
 const NARROW_CLEAR = 96;
 
+// Short windows (a landscape phone, a small laptop at 200% zoom) leave that
+// row too little height to show the stats. Where they are at least this
+// wide, the hero card and journal flank the banner in its row instead
+// ("Short windows" in styles.css), so the top inset is the banner row alone.
+const SHORT_HEIGHT = 460;
+const FLANK_MIN_WIDTH = 640;
+
 export function hudInsets(view: Size): Insets {
   if (view.width >= NARROW_WIDTH) return WIDE_INSETS;
-  const cap = Math.min(
-    NARROW_PANEL_CAP,
-    Math.max(0, view.height - (NARROW_TOP_BASE + NARROW_BOTTOM + NARROW_CLEAR)),
-  );
+  const flanked = view.width >= FLANK_MIN_WIDTH && view.height < SHORT_HEIGHT;
+  const cap = flanked
+    ? 0
+    : Math.min(
+        NARROW_PANEL_CAP,
+        Math.max(
+          0,
+          view.height - (NARROW_TOP_BASE + NARROW_BOTTOM + NARROW_CLEAR),
+        ),
+      );
   return {
     top: NARROW_TOP_BASE + cap,
     right: 0,
