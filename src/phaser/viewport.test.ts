@@ -76,6 +76,16 @@ describe('hudInsets', () => {
     expect(narrow).toMatchObject({ left: 0, right: 0 });
     expect(narrow.top).toBeGreaterThan(wide.top);
   });
+
+  it('shrinks the narrow top band on short windows', () => {
+    const tall = hudInsets({ width: 800, height: 700 });
+    const short = hudInsets({ width: 800, height: 400 });
+    const tiny = hudInsets({ width: 800, height: 300 });
+    expect(short.top).toBeLessThan(tall.top);
+    expect(tiny.top).toBeLessThan(short.top);
+    // The capped row yields a full zoomed tile (3x max at narrow widths).
+    expect(400 - short.top - short.bottom).toBe(96);
+  });
 });
 
 describe('cameraBounds', () => {
@@ -110,7 +120,11 @@ describe('the hero on screen', () => {
     { width: 1366, height: 768 },
     { width: 1280, height: 720 },
     { width: 1024, height: 768 },
+    { width: 1024, height: 320 },
     { width: 800, height: 700 },
+    { width: 800, height: 460 },
+    { width: 800, height: 400 },
+    { width: 800, height: 320 },
   ];
 
   it.each(windows)(

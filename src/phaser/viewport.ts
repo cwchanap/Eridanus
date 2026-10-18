@@ -21,10 +21,31 @@ export const NARROW_WIDTH = 1024;
 // breathing room. Wide windows run the hero column and the journal down the
 // sides, so those insets are whole strips whatever the panels' heights.
 const WIDE_INSETS: Insets = { top: 96, right: 360, bottom: 168, left: 340 };
-const NARROW_INSETS: Insets = { top: 300, right: 0, bottom: 144, left: 0 };
+
+// Narrow mode stacks the hero card and journal in one capped row under the
+// banner: the top inset is the banner plus the row's cap, and the bottom
+// inset is the message box. On short windows the row's cap shrinks — down
+// to nothing — so the uncovered strip keeps one zoomed tile clear. The
+// village is the narrowest map and tops out at 3x zoom inside narrow
+// widths, so 96px covers every map. The DOM row is on the same clamp under
+// "Narrower screens" in styles.css: keep the two in step.
+const NARROW_TOP_BASE = 100;
+const NARROW_BOTTOM = 144;
+const NARROW_PANEL_CAP = 200;
+const NARROW_CLEAR = 96;
 
 export function hudInsets(view: Size): Insets {
-  return view.width < NARROW_WIDTH ? NARROW_INSETS : WIDE_INSETS;
+  if (view.width >= NARROW_WIDTH) return WIDE_INSETS;
+  const cap = Math.min(
+    NARROW_PANEL_CAP,
+    Math.max(0, view.height - (NARROW_TOP_BASE + NARROW_BOTTOM + NARROW_CLEAR)),
+  );
+  return {
+    top: NARROW_TOP_BASE + cap,
+    right: 0,
+    bottom: NARROW_BOTTOM,
+    left: 0,
+  };
 }
 
 // The smallest whole-number zoom at which the map spans the window in at

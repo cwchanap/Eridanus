@@ -27,15 +27,15 @@ The Phaser canvas fills the window and the HUD floats over it, after the design 
 - Top right (320 px): the journal.
 - Bottom centre: the message box, up to 720 px wide and a fixed 116 px tall.
 
-Below 1024 px the side columns would crowd the banner, so the hero card and journal share one row under it, capped at 200 px with their contents scrolling, and the how-to-play card is hidden (the idle message and the fight buttons already show the keys).
+Below 1024 px the side columns would crowd the banner, so the hero card and journal share one row under it, capped at 200 px with their contents scrolling, and the how-to-play card is hidden (the idle message and the fight buttons already show the keys). The message box drops the 720 px cap and spans the full width, and the fight buttons stack into a column. On short windows the shared row's cap shrinks — down to nothing — so the map keeps a whole zoomed tile clear (96 px: the village is the narrowest map and tops out at 3× zoom inside narrow widths), and the panels scroll inside whatever space remains.
 
 ### Camera
 
 `src/phaser/viewport.ts` holds the camera maths as pure functions with unit tests:
 
 - **Zoom.** `fitZoom` picks the smallest whole-number zoom at which the map spans the window in at least one direction (Floor 1 at 2× and the village at 3× on a 1440×900 window). Whole numbers keep every 32×32 tile pixel-crisp; the one-cell sprite rule is unchanged.
-- **HUD insets.** `hudInsets` gives the screen pixels the HUD covers along each window edge: whole strips down both sides on wide windows, a top band on narrow ones, plus the banner and message box.
-- **Bounds and follow.** `cameraBounds` pads the map by those insets, so the camera may scroll the map out from under any panel, and `followOffset` centres the hero in the uncovered area rather than the window. Together they keep the hero's cell clear of every panel on every floor tile; a unit test walks every floor tile of every map at six window sizes to check it. Maps smaller than the padded area sit centred in it.
+- **HUD insets.** `hudInsets` gives the screen pixels the HUD covers along each window edge: whole strips down both sides on wide windows, a top band on narrow ones, plus the banner and message box. The narrow top band follows the shared row's cap, so it shrinks on short windows.
+- **Bounds and follow.** `cameraBounds` pads the map by those insets, so the camera may scroll the map out from under any panel, and `followOffset` centres the hero in the uncovered area rather than the window. Together they keep the hero's cell clear of every panel on every floor tile; a unit test walks every floor tile of every map at ten window sizes, down to 400 px and 320 px tall, to check it. Maps smaller than the padded area sit centred in it.
 - The canvas is transparent, so the page's night sky shows wherever the map does not reach. The scene re-reads the window size on every resize.
 
 ### Panels and styling
@@ -62,8 +62,8 @@ A fixed-size box (up to 720 px wide, 116 px tall) floating at the bottom centre,
 
 - Effects render as a coloured tag plus text (Clue, Power up, Restored, Shortcut, Victory, Item, Sealed). Dialogue uses the speaker's name as the tag and shows their portrait, looked up by name among the current map's NPCs. A victory shows the defeated enemy's portrait greyed out.
 - The tag sits on the box's top border as a nameplate. It is absolutely positioned against the panel, outside the inner `.log-body` scroller, so the text gets the whole box height. The longest authored line (the ledger ending, 237 characters) fits in four lines; anything longer scrolls inside `.log-body` (`justify-content: safe center` keeps its top reachable). Message animations use opacity only, since a transform would make the message the nameplate's containing block and clip it.
-- Blocked reasons render as a short red line. While a combat prompt is open, a refused move renders inside the encounter card, so the card and its buttons stay put.
-- The combat prompt becomes an encounter card: enemy portrait, its HP/ATK/DEF, `HP loss: n` (unchanged text) and the HP the player would have left, with Fight and Cancel buttons side by side that keep their accessible names, key hints, and `aria-keyshortcuts`. Enemies have no authored names, so the card names them by their art (Ruin Guard, Ruin Sentinel, Core Guardian). On the map, the enemy being fought is outlined in red inside its own cell.
+- Blocked reasons render as a short red line. While a combat prompt is open, the box pins its contents to the top and a refused move renders below the encounter card, so the card and its buttons stay put.
+- The combat prompt becomes an encounter card: enemy portrait, its HP/ATK/DEF, `HP loss: n` (unchanged text) and the HP the player would have left, with Fight and Cancel buttons side by side (stacked below 1024 px) that keep their accessible names, key hints, and `aria-keyshortcuts`. Enemies have no authored names, so the card names them by their art (Ruin Guard, Ruin Sentinel, Core Guardian). On the map, the enemy being fought is outlined in red inside its own cell.
 - With nothing to show, the box holds a muted controls hint.
 
 Portraits are the existing 32×32 sprites drawn at 2× with `image-rendering: pixelated` inside DOM panels. The map grid and its one-cell sprite rule are unchanged.
@@ -74,10 +74,10 @@ Open by default: the main quest as a highlighted card, then side leads (resolved
 
 ## Testing
 
-- `viewport.test.ts`: zoom choice, insets at the breakpoint, padded bounds, and the hero's cell clear of the HUD on every floor tile of every map at six window sizes.
+- `viewport.test.ts`: zoom choice, insets at the breakpoint and on short windows, padded bounds, and the hero's cell clear of the HUD on every floor tile of every map at ten window sizes.
 - `StatusPanel.test.ts`: stat text contract, HP bar level thresholds, fight cost preview, item labels and empty state.
 - `JournalPanel.test.ts`: lead, note and place markup contract; resolved leads marked; empty groups omitted; folded state.
-- E2E: the required-only journey asserts the journal stays visible across re-renders and that `J` folds and reopens it. Both journeys assert the message box (`data-testid="interaction"`) keeps its size and place: across a refused move during the first combat prompt, and across each ending dialogue (the longest authored lines). The asset-loading test waits for `domcontentloaded`, since the HUD portraits are `<img>` tags held by the same route and now delay the window `load` event.
+- E2E: the required-only journey asserts the journal stays visible across re-renders and that `J` folds and reopens it. Both journeys assert the message box (`data-testid="interaction"`) keeps its size and place: across a refused move during the first combat prompt — at a narrow, short window where the Fight and Cancel buttons' bounds are pinned too — and across each ending dialogue (the longest authored lines). The asset-loading test waits for `domcontentloaded`, since the HUD portraits are `<img>` tags held by the same route and now delay the window `load` event.
 
 ## Non-Goals
 
