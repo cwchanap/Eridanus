@@ -266,6 +266,19 @@ test('completes the required-only MVP route', async ({ page }) => {
   // The first recorded fact retires the fresh-run controls hint.
   await expect(page.getByTestId('how-to-play')).toHaveCount(0);
 
+  // The journal panel stays on screen through overlay rerenders, and J
+  // folds it to its title bar and back without moving the hero
+  const journal = page.getByTestId('journal');
+  await expect(journal).toBeVisible();
+  await press(page, 'ArrowRight', 1);
+  await expect(journal).toBeVisible();
+  await page.keyboard.press('j');
+  await expect(journal).toHaveAttribute('data-open', 'false');
+  await expect(page.locator('[data-lead]')).toHaveCount(0);
+  await page.keyboard.press('j');
+  await expect(journal).toHaveAttribute('data-open', 'true');
+  await press(page, 'ArrowLeft', 1);
+
   // Right x5, Up x3, Right x3, Up x3: village portal → Floor 1 (2,14),
   // without bumping the artisan, scout, or scribe (the required route
   // skips every optional lead)
@@ -288,9 +301,15 @@ test('completes the required-only MVP route', async ({ page }) => {
   await press(page, 'ArrowRight', 1);
   await press(page, 'ArrowUp', 3);
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
-  // A move while the prompt is open is refused inside the encounter card,
-  // which stays usable and keeps its size and place
+  // A move while the prompt is open is refused below the encounter card.
+  // At a narrow, short window the message box and the Fight/Cancel
+  // buttons keep their size and place
+  await page.setViewportSize({ width: 800, height: 400 });
   const box = await messageBox(page);
+  const fight = page.getByRole('button', { name: 'Fight' });
+  const cancel = page.getByRole('button', { name: 'Cancel' });
+  const fightBox = await fight.boundingBox();
+  const cancelBox = await cancel.boundingBox();
   await page.keyboard.press('ArrowDown');
   await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
     'data-reason',
@@ -298,7 +317,10 @@ test('completes the required-only MVP route', async ({ page }) => {
   );
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
   expect(await messageBox(page)).toEqual(box);
-  await page.getByRole('button', { name: 'Fight' }).click();
+  expect(await fight.boundingBox()).toEqual(fightBox);
+  expect(await cancel.boundingBox()).toEqual(cancelBox);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await fight.click();
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 22/30');
 
   await claimDepthSigil(page);
@@ -424,25 +446,6 @@ test('completes the explorer MVP route with expanded ending context', async ({
     'dialogue',
   );
 
-  // The journal panel stays on screen through overlay rerenders
-  const journal = page.getByTestId('journal');
-  await expect(journal).toBeVisible();
-  await press(page, 'ArrowRight', 1);
-  await expect(journal).toBeVisible();
-  // J folds it to its title bar and back without moving the hero
-  await page.keyboard.press('j');
-  await expect(journal).toHaveAttribute('data-open', 'false');
-  await expect(page.locator('[data-lead]')).toHaveCount(0);
-  await page.keyboard.press('j');
-  await expect(journal).toHaveAttribute('data-open', 'true');
-  // Back to (3,8), then Up to talk to the warden again
-  await press(page, 'ArrowLeft', 1);
-  await press(page, 'ArrowUp', 1);
-  await expect(page.getByTestId('effect')).toHaveAttribute(
-    'data-effect',
-    'dialogue',
-  );
-
   // Right x3 to (6,8) — crossing the returned subject's future (5,8)
   // tile, still empty while the subject is missing; Up: bump
   // village-artisan (6,7) and stay put; Right x3 to (9,8); Up: bump
@@ -496,12 +499,29 @@ test('completes the explorer MVP route with expanded ending context', async ({
     1,
   );
 
-  // Right, Up x3: bump floor1-west-sentry; Escape cancels the prompt, the
-  // re-bump re-opens it, Enter fights → HP 22/30 (the gatekeeper preview
-  // below and the required-only route keep the mouse buttons covered)
+  // Right, Up x3: bump floor1-west-sentry; a refused move at a narrow,
+  // short window leaves the card and the Fight/Cancel buttons in place,
+  // then Escape cancels the prompt, the re-bump re-opens it, Enter fights
+  // → HP 22/30 (the gatekeeper preview below and the required-only route
+  // keep the button clicks covered)
   await press(page, 'ArrowRight', 1);
   await press(page, 'ArrowUp', 3);
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
+  await page.setViewportSize({ width: 800, height: 400 });
+  const box = await messageBox(page);
+  const fight = page.getByRole('button', { name: 'Fight' });
+  const cancel = page.getByRole('button', { name: 'Cancel' });
+  const fightBox = await fight.boundingBox();
+  const cancelBox = await cancel.boundingBox();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
+    'data-reason',
+    'interaction-pending',
+  );
+  expect(await messageBox(page)).toEqual(box);
+  expect(await fight.boundingBox()).toEqual(fightBox);
+  expect(await cancel.boundingBox()).toEqual(cancelBox);
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('combat-prompt')).toHaveCount(0);
   await press(page, 'ArrowUp', 1);

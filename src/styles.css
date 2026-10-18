@@ -307,11 +307,11 @@ kbd {
     var(--hp-high);
 }
 
-.hp-bar[data-level='mid'] > span {
+.hp-bar[data-level='mid'] > span:not(.hp-cost) {
   background-color: var(--hp-mid);
 }
 
-.hp-bar[data-level='low'] > span {
+.hp-bar[data-level='low'] > span:not(.hp-cost) {
   background-color: var(--hp-low);
 }
 
@@ -495,6 +495,13 @@ kbd {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--gold-deep) transparent;
+}
+
+/* While a fight prompt is open the contents pin to the top: a refused move
+   then appends its reason below the card without re-centring it, so the
+   Fight/Cancel buttons never move mid-prompt. */
+.log-body:has(.encounter) {
+  justify-content: flex-start;
 }
 
 .log-hint {
@@ -919,11 +926,15 @@ kbd {
 /* ---------- Narrower screens ---------- */
 
 /* Below NARROW_WIDTH in src/phaser/viewport.ts the side columns would
-   crowd the banner, so the hero card and journal share one capped row. */
+   crowd the banner, so the hero card and journal share one capped row.
+   On short windows the cap shrinks — down to nothing — so the map keeps a
+   zoomed tile clear; hudInsets() mirrors the same clamp. */
 @media (max-width: 1023px) {
   #ui {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 200px) minmax(0, 1fr) auto;
+    grid-template-rows:
+      auto minmax(0, clamp(0px, calc(100vh - 340px), 200px))
+      minmax(0, 1fr) auto;
     grid-template-areas:
       'location location'
       'left     journal'

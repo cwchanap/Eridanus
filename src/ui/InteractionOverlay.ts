@@ -136,12 +136,12 @@ function effectPortrait(effect: ActionEffect, state: GameState): string {
   return '';
 }
 
-// A refused input while the prompt is open (blockedHtml) renders inside the
-// card, so the message box keeps its height.
+// A refused input while the prompt is open renders below the card, not
+// inside it: the card's contents and height stay fixed, so .log-body's
+// top-pinning keeps Fight/Cancel from shifting mid-prompt.
 function renderEncounter(
   pending: PendingInteraction,
   state: GameState,
-  blockedHtml: string,
 ): string {
   const enemy = findEntityById(pending.enemyId);
   const assetKey = entityAsset(enemy, state);
@@ -157,7 +157,6 @@ function renderEncounter(
     <div class="encounter-info">
       <div class="encounter-head"><span class="message-tag">${name}</span>${stats}</div>
       <p class="encounter-cost"><span data-testid="combat-hp-loss">HP loss: ${pending.preview.hpLoss}</span> <span class="encounter-after">leaves you at ${hpAfter}/${state.player.maxHp}</span></p>
-      ${blockedHtml}
     </div>
     <div class="encounter-actions">
       <button type="button" class="button button-fight" data-action="fight" aria-keyshortcuts="Enter">${ICONS.sword}Fight <kbd aria-hidden="true">Enter</kbd></button>
@@ -173,7 +172,7 @@ function renderMessage(view: OverlayView): string {
     : '';
   // prompt must stay reachable (Fight/Cancel clickable) even while blocked,
   // or a failed input while pending soft-locks the interaction
-  if (pending) return renderEncounter(pending, state, blockedHtml);
+  if (pending) return renderEncounter(pending, state) + blockedHtml;
   if (blocked) return blockedHtml;
   const message = effect && effectMessage(effect);
   if (effect && message) {
@@ -191,6 +190,9 @@ export class InteractionOverlay {
   // it is never saved. The last view is kept so J can re-render on its own.
   private journalOpen = true;
   private view: OverlayView | null = null;
+  // Scroll positions outlive the DOM: a folded journal has no .journal-body
+  // to read on the next render, so they are kept here, not re-read each time.
+  private readonly scrollTops = new Map<string, number>();
 
   constructor(
     private readonly root: HTMLElement,
@@ -220,9 +222,10 @@ export class InteractionOverlay {
     const { state, mapName, pending, journal } = view;
     this.view = view;
     // Every render replaces the panels, so keep their scroll positions.
-    const scrollTops = SCROLLING_PANELS.map(
-      (selector) => this.root.querySelector(selector)?.scrollTop ?? 0,
-    );
+    for (const selector of SCROLLING_PANELS) {
+      const panel = this.root.querySelector(selector);
+      if (panel) this.scrollTops.set(selector, panel.scrollTop);
+    }
     this.root.innerHTML = `
       <div class="hud-left">
         ${renderStatus(state, pending?.preview.hpLoss ?? 0)}
@@ -231,10 +234,10 @@ export class InteractionOverlay {
       ${renderLocation(state, mapName)}
       ${renderJournal(journal, this.journalOpen)}
       <section class="panel log" data-testid="interaction" aria-label="Messages"><div class="log-body">${renderMessage(view)}</div></section>`;
-    SCROLLING_PANELS.forEach((selector, index) => {
+    for (const selector of SCROLLING_PANELS) {
       const panel = this.root.querySelector(selector);
-      if (panel) panel.scrollTop = scrollTops[index] ?? 0;
-    });
+      if (panel) panel.scrollTop = this.scrollTops.get(selector) ?? 0;
+    }
     this.root
       .querySelector<HTMLButtonElement>('[data-action="fight"]')
       ?.addEventListener('click', () => this.onFight());
