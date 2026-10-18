@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { MAPS, getActiveEntities } from '../game/content';
+import { MAPS, findEntityById, getActiveEntities } from '../game/content';
 import type { Direction, InputCommand, SessionState } from '../game/types';
 import {
   ASSET_PATHS,
@@ -8,6 +8,7 @@ import {
   resolvePlayerAsset,
   resolveTerrainAssets,
 } from './assets';
+import { cameraBounds, fitZoom, followOffset } from './viewport';
 
 export type WorldSceneDeps = {
   getSession: () => SessionState;
@@ -20,6 +21,9 @@ const KEY_DIRECTIONS = new Map<string, Direction>([
   ['ArrowLeft', 'west'],
   ['ArrowRight', 'east'],
 ]);
+
+// The enemy an open combat prompt is about, outlined inside its own cell.
+const TARGET_COLOR = 0xef6a5c;
 
 const PROMPT_KEYS = new Map<string, InputCommand>([
   ['Enter', { kind: 'fight' }],
@@ -72,12 +76,18 @@ export class WorldScene extends Phaser.Scene {
 
   create(): void {
     this.ready = true;
+    // The canvas tracks the window, so the zoom and camera bounds are
+    // recomputed whenever it resizes.
+    this.scale.on(Phaser.Scale.Events.RESIZE, (size: Phaser.Structs.Size) => {
+      this.cameras.main.setSize(size.width, size.height);
+      this.refresh();
+    });
     this.refresh();
   }
 
   refresh(): void {
     if (!this.ready) return;
-    const state = this.deps.getSession().game;
+    const { game: state, pending } = this.deps.getSession();
     const map = MAPS[state.mapId];
     this.children.removeAll(true);
 
@@ -91,6 +101,20 @@ export class WorldScene extends Phaser.Scene {
           .setOrigin(0)
           .setDisplaySize(TILE_SIZE, TILE_SIZE);
       }
+    }
+
+    const target = pending && findEntityById(pending.enemyId);
+    if (target) {
+      this.add
+        .rectangle(
+          (target.tile.x + 0.5) * TILE_SIZE,
+          (target.tile.y + 0.5) * TILE_SIZE,
+          TILE_SIZE - 2,
+          TILE_SIZE - 2,
+          TARGET_COLOR,
+          0.25,
+        )
+        .setStrokeStyle(2, TARGET_COLOR);
     }
 
     for (const entity of getActiveEntities(state)) {
@@ -115,13 +139,24 @@ export class WorldScene extends Phaser.Scene {
       .setOrigin(0.5, 1);
 
     const camera = this.cameras.main;
-    const mapWidth = map.layout[0]!.length * TILE_SIZE;
-    const mapHeight = map.layout.length * TILE_SIZE;
-    // A map smaller than the viewport is padded evenly so it sits centred
-    // instead of hugging the top-left corner of the canvas.
-    const padX = Math.max(0, (camera.width - mapWidth) / 2);
-    const padY = Math.max(0, (camera.height - mapHeight) / 2);
-    camera.startFollow(player, true);
-    camera.setBounds(-padX, -padY, mapWidth + 2 * padX, mapHeight + 2 * padY);
+    const view = { width: camera.width, height: camera.height };
+    const mapSize = {
+      width: map.layout[0]!.length * TILE_SIZE,
+      height: map.layout.length * TILE_SIZE,
+    };
+    const zoom = fitZoom(view, mapSize);
+    const bounds = cameraBounds(view, mapSize, zoom);
+    const offset = followOffset(view, zoom);
+    camera.setZoom(zoom);
+    camera.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
+    // Follow the centre of the hero's cell, not the sprite's bottom origin.
+    camera.startFollow(
+      { x: player.x, y: player.y - TILE_SIZE / 2 },
+      true,
+      1,
+      1,
+      offset.x,
+      offset.y,
+    );
   }
 }

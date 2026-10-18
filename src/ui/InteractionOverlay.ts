@@ -17,8 +17,8 @@ import {
 } from '../phaser/assets';
 import { renderHowToPlay } from './HowToPlay';
 import { ICONS } from './icons';
-import { renderJournal, renderPlaces } from './JournalPanel';
-import { renderItems, renderStatus } from './StatusPanel';
+import { renderJournal } from './JournalPanel';
+import { renderStatus } from './StatusPanel';
 
 export type OverlayView = Readonly<{
   state: GameState;
@@ -184,31 +184,53 @@ function renderMessage(view: OverlayView): string {
   return `<p class="log-hint"><span class="keys"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span> Explore. Walk into anything to interact with it.</p>`;
 }
 
-const SCROLLING_PANELS = ['[data-testid="journal"]', '.places'] as const;
+const SCROLLING_PANELS = ['.journal-body', '.hud-left'] as const;
 
 export class InteractionOverlay {
+  // Whether the journal is folded is a view preference, not game state, so
+  // it is never saved. The last view is kept so J can re-render on its own.
+  private journalOpen = true;
+  private view: OverlayView | null = null;
+
   constructor(
     private readonly root: HTMLElement,
     private readonly onFight: () => void,
     private readonly onCancel: () => void,
-  ) {}
+  ) {
+    window.addEventListener('keydown', (event) => {
+      if (event.key !== 'j' && event.key !== 'J') return;
+      if (event.repeat || event.ctrlKey || event.metaKey || event.altKey)
+        return;
+      this.toggleJournal();
+    });
+  }
+
+  private toggleJournal(): void {
+    // No view means the invalid-save screen, which has no journal.
+    if (!this.view) return;
+    const toggle = '[data-action="toggle-journal"]';
+    const hadFocus = document.activeElement?.matches(toggle) ?? false;
+    this.journalOpen = !this.journalOpen;
+    this.render(this.view);
+    // The render replaces the button, so hand focus to its replacement.
+    if (hadFocus) this.root.querySelector<HTMLElement>(toggle)?.focus();
+  }
 
   render(view: OverlayView): void {
-    const { state, mapName, journal } = view;
+    const { state, mapName, pending, journal } = view;
+    this.view = view;
     // Every render replaces the panels, so keep their scroll positions.
     const scrollTops = SCROLLING_PANELS.map(
       (selector) => this.root.querySelector(selector)?.scrollTop ?? 0,
     );
     this.root.innerHTML = `
-      <aside class="sidebar">
-        ${renderStatus(state)}
-        ${renderItems(state)}
+      <div class="hud-left">
+        ${renderStatus(state, pending?.preview.hpLoss ?? 0)}
         ${renderHowToPlay(state)}
-        ${renderPlaces(journal)}
-      </aside>
+      </div>
       ${renderLocation(state, mapName)}
-      <section class="panel log" data-testid="interaction" aria-label="Messages"><div class="log-body">${renderMessage(view)}</div></section>
-      ${renderJournal(journal)}`;
+      ${renderJournal(journal, this.journalOpen)}
+      <section class="panel log" data-testid="interaction" aria-label="Messages"><div class="log-body">${renderMessage(view)}</div></section>`;
     SCROLLING_PANELS.forEach((selector, index) => {
       const panel = this.root.querySelector(selector);
       if (panel) panel.scrollTop = scrollTops[index] ?? 0;
@@ -219,9 +241,13 @@ export class InteractionOverlay {
     this.root
       .querySelector<HTMLButtonElement>('[data-action="cancel"]')
       ?.addEventListener('click', () => this.onCancel());
+    this.root
+      .querySelector<HTMLButtonElement>('[data-action="toggle-journal"]')
+      ?.addEventListener('click', () => this.toggleJournal());
   }
 
   renderInvalidSave(onReset: () => void): void {
+    this.view = null;
     this.root.innerHTML = `
       <section class="panel invalid-save" data-testid="invalid-save" aria-label="Invalid save">
         <h2 class="panel-title">Save data is invalid.</h2>
