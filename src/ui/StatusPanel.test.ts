@@ -31,6 +31,14 @@ describe('renderStatus', () => {
     expect(at(20)).toContain('data-level="mid"');
     expect(at(10)).toContain('data-level="low"');
   });
+
+  it('previews a fight cost on the bar without changing the HP text', () => {
+    const html = renderStatus(createInitialGameState(), 8);
+    expect(statText(html, 'hp')).toBe('HP 30/30');
+    expect(html).toContain('<span class="hp-cost" style="width: 27%">');
+    expect(html).toContain('−8');
+    expect(renderStatus(createInitialGameState())).not.toContain('hp-cost');
+  });
 });
 
 describe('renderItems', () => {

@@ -1,8 +1,10 @@
 # UI Layout Redesign Implementation Plan
 
-**Goal:** Replace the bare text row under the canvas with a framed three-column game screen: hero sidebar, framed stage with a location banner and message box, and an always-open journal.
+**Goal:** Replace the bare text row under the canvas with a game screen: the map fills the window, with a hero card, location banner, journal, and message box floating over it.
 
-**Architecture:** Presentation-only. The overlay keeps rendering into `#ui` by `innerHTML`; `display: contents` lets its panels sit in the page grid beside `#game`. New pure string renderers sit beside `JournalPanel` and `HowToPlay`. No rule, state, content, or save change.
+**Architecture:** Presentation-only. The overlay keeps rendering into `#ui` by `innerHTML`; `#ui` is a pointer-transparent grid laid over the full-window `#game`. Camera maths live in pure functions in `src/phaser/viewport.ts`. New pure string renderers sit beside `JournalPanel` and `HowToPlay`. No rule, state, content, or save change.
+
+Tasks 1 to 5 first shipped a three-column frame around a fixed 640×480 stage; review moved to the full-screen map, and Task 6 rebuilt the layout on the same PR. The three-column frame never shipped.
 
 **Spec:** `docs/superpowers/specs/2026-10-17-ui-layout-redesign-design.md`
 
@@ -42,4 +44,17 @@
 ## Task 5: Docs and gate
 
 - [x] Update `CLAUDE.md` for the new UI modules.
+- [x] Run typecheck, lint, format:check, unit, e2e, and build.
+
+## Task 6: Full-screen map with a floating HUD
+
+**Files:** `index.html`, `src/styles.css`, `src/phaser/createGame.ts`, `src/phaser/WorldScene.ts`, `src/phaser/viewport.ts`, `src/phaser/viewport.test.ts`, `src/ui/InteractionOverlay.ts`, `src/ui/StatusPanel.ts`, `src/ui/StatusPanel.test.ts`, `src/ui/JournalPanel.ts`, `src/ui/JournalPanel.test.ts`, `tests/e2e/cross-floor.spec.ts`, `CLAUDE.md`
+
+- [x] Size the canvas to the window (`Scale.RESIZE`) and pick a whole-number zoom that fills it.
+- [x] Pad the camera bounds by the HUD's footprint and offset the follow, so the hero never sits under a panel; unit-test every floor tile at six window sizes.
+- [x] Float the hero card, banner, journal, and message box over the map; stack the side panels under the banner below 1024 px.
+- [x] Merge the hero, items, and places panels: one hero card, places move into the journal.
+- [x] Preview a fight's HP cost on the HP bar and outline the targeted enemy on the map.
+- [x] Let the journal fold to its title bar with a button or `J`, as overlay-only view state.
+- [x] Assert the message box keeps its size and place instead of the stage, and that `J` folds the journal.
 - [x] Run typecheck, lint, format:check, unit, e2e, and build.

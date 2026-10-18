@@ -19,9 +19,10 @@ async function press(
   }
 }
 
-// The message box has a fixed height, so no message may move the map.
-async function stageBox(page: Page) {
-  return page.getByTestId('stage').boundingBox();
+// The message box floats over the map at a fixed size, so no message may
+// resize or move it.
+async function messageBox(page: Page) {
+  return page.getByTestId('interaction').boundingBox();
 }
 
 async function startFreshRun(page: Page): Promise<void> {
@@ -177,7 +178,7 @@ async function handCoreToWarden(
 
   // Left: bump village-warden at (3,7) — carrying the core ends the story.
   // The ending lines are the longest authored dialogue.
-  const stage = await stageBox(page);
+  const box = await messageBox(page);
   await press(page, 'ArrowLeft', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
@@ -187,7 +188,7 @@ async function handCoreToWarden(
     'data-line',
     endingLineId,
   );
-  expect(await stageBox(page)).toEqual(stage);
+  expect(await messageBox(page)).toEqual(box);
   await expect(page.locator('[data-lead="story-complete"]')).toHaveCount(1);
 
   // Reload in the village: the ending fact persisted — story-complete
@@ -288,15 +289,15 @@ test('completes the required-only MVP route', async ({ page }) => {
   await press(page, 'ArrowUp', 3);
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
   // A move while the prompt is open is refused inside the encounter card,
-  // which stays usable and leaves the map where it was
-  const stage = await stageBox(page);
+  // which stays usable and keeps its size and place
+  const box = await messageBox(page);
   await page.keyboard.press('ArrowDown');
   await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
     'data-reason',
     'interaction-pending',
   );
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
-  expect(await stageBox(page)).toEqual(stage);
+  expect(await messageBox(page)).toEqual(box);
   await page.getByRole('button', { name: 'Fight' }).click();
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 22/30');
 
@@ -424,9 +425,16 @@ test('completes the explorer MVP route with expanded ending context', async ({
   );
 
   // The journal panel stays on screen through overlay rerenders
-  await expect(page.getByTestId('journal')).toBeVisible();
+  const journal = page.getByTestId('journal');
+  await expect(journal).toBeVisible();
   await press(page, 'ArrowRight', 1);
-  await expect(page.getByTestId('journal')).toBeVisible();
+  await expect(journal).toBeVisible();
+  // J folds it to its title bar and back without moving the hero
+  await page.keyboard.press('j');
+  await expect(journal).toHaveAttribute('data-open', 'false');
+  await expect(page.locator('[data-lead]')).toHaveCount(0);
+  await page.keyboard.press('j');
+  await expect(journal).toHaveAttribute('data-open', 'true');
   // Back to (3,8), then Up to talk to the warden again
   await press(page, 'ArrowLeft', 1);
   await press(page, 'ArrowUp', 1);

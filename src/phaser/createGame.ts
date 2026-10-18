@@ -11,11 +11,11 @@ export function createGame(
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
-    width: 640,
-    height: 480,
+    // The canvas fills the window; WorldScene zooms the map to fit it.
+    scale: { mode: Phaser.Scale.RESIZE, width: '100%', height: '100%' },
     scene: [scene],
     pixelArt: true,
-    // The page frame paints the backdrop behind maps smaller than the view.
+    // The page paints the backdrop around maps smaller than the window.
     transparent: true,
   });
   return { game, scene };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderJournal, renderPlaces } from './JournalPanel';
+import { renderJournal } from './JournalPanel';
 import type { JournalView } from '../game/journal';
 
 const view: JournalView = {
@@ -38,10 +38,18 @@ describe('renderJournal', () => {
     expect(html).not.toContain('Side leads');
     expect(html).not.toContain('Notes');
   });
-});
 
-describe('renderPlaces', () => {
-  it('lists every discovered section', () => {
-    expect(renderPlaces(view)).toContain('data-section="floor1-upper-gallery"');
+  it('lists every discovered section under places found', () => {
+    expect(renderJournal(view)).toContain(
+      'data-section="floor1-upper-gallery"',
+    );
+  });
+
+  it('folds down to its title bar and toggle when closed', () => {
+    const html = renderJournal(view, false);
+    expect(html).toContain('data-testid="journal"');
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).not.toContain('data-lead=');
+    expect(html).not.toContain('data-section=');
   });
 });

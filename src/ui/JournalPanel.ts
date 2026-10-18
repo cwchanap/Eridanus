@@ -64,28 +64,36 @@ function group(title: string, body: string): string {
     : '';
 }
 
-export function renderJournal(view: JournalView): string {
-  const optional = view.optional.map(renderEntry).join('');
-  const notes = view.observationFactIds
-    .map((id) => `<li data-note="${id}">${factNote(id) ?? ''}</li>`)
-    .join('');
-  return `<section class="panel journal" data-testid="journal" aria-label="Journal">
-    <h2 class="panel-title">Journal</h2>
-    <ul class="leads leads-main">${renderEntry(view.main)}</ul>
-    ${group('Side leads', optional && `<ul class="leads">${optional}</ul>`)}
-    ${group('Notes', notes && `<ul class="notes">${notes}</ul>`)}
-  </section>`;
-}
-
-export function renderPlaces(view: JournalView): string {
-  const sections = view.sections
+function renderPlaces(view: JournalView): string {
+  return view.sections
     .map(
       (section) =>
         `<span class="place" data-section="${section.id}">${section.name}</span>`,
     )
     .join('');
-  return `<section class="panel places" aria-label="Places found">
-    <h2 class="panel-title">Places found</h2>
-    <div class="place-list">${sections}</div>
+}
+
+// open is the overlay's own view preference (the J key or the toggle
+// button); a folded journal keeps only its title bar on screen.
+export function renderJournal(view: JournalView, open = true): string {
+  const optional = view.optional.map(renderEntry).join('');
+  const notes = view.observationFactIds
+    .map((id) => `<li data-note="${id}">${factNote(id) ?? ''}</li>`)
+    .join('');
+  const places = renderPlaces(view);
+  const body = open
+    ? `<div class="journal-body">
+      <ul class="leads leads-main">${renderEntry(view.main)}</ul>
+      ${group('Side leads', optional && `<ul class="leads">${optional}</ul>`)}
+      ${group('Notes', notes && `<ul class="notes">${notes}</ul>`)}
+      ${group('Places found', places && `<div class="place-list">${places}</div>`)}
+    </div>`
+    : '';
+  return `<section class="panel journal" data-testid="journal" aria-label="Journal" data-open="${open}">
+    <div class="journal-head">
+      <h2 class="panel-title">Journal</h2>
+      <button type="button" class="journal-toggle" data-action="toggle-journal" aria-expanded="${open}" aria-keyshortcuts="J">${open ? 'Hide' : 'Show'} <kbd aria-hidden="true">J</kbd></button>
+    </div>
+    ${body}
   </section>`;
 }

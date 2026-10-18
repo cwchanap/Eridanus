@@ -6,7 +6,7 @@ Design for the post-polish screen layout pass. The complete change stays on one 
 
 ## Goal
 
-Turn the page around the map from a bare text row into a game screen worth looking at, without touching rules, content, saves, or how the map itself is drawn.
+Turn the page around the map from a bare text row into a game screen worth looking at: the map fills the window and the HUD floats on top, without touching rules, content, or saves.
 
 ## Observed Defects
 
@@ -18,30 +18,38 @@ Turn the page around the map from a bare text row into a game screen worth looki
 
 ## Design
 
-### Three-column game frame
+### Full-screen map, floating HUD
 
-At desktop widths the page is a centred CSS grid:
+The Phaser canvas fills the window and the HUD floats over it, after the design canvas the redesign was reviewed on. `#game` and `#ui` are both absolutely positioned over the whole window; `#ui` is a CSS grid that ignores the pointer, so only its panels take clicks:
 
-| Left (240 px)                                | Centre (656 px)                          | Right (290 px) |
-| -------------------------------------------- | ---------------------------------------- | -------------- |
-| Wordmark                                     | Location banner (floor + current area)   | Journal        |
-| Hero: portrait, HP bar, ATK/DEF tiles        | Framed 640×480 stage (the Phaser canvas) |                |
-| Items, how-to-play (fresh run), places found | Message box                              |                |
+- Top left (300 px): the hero card, with the how-to-play card under it on a fresh run.
+- Top centre: the location banner (floor + current area).
+- Top right (320 px): the journal.
+- Bottom centre: the message box, up to 720 px wide and a fixed 116 px tall.
 
-`#ui` uses `display: contents`, so the overlay's panels are grid items beside `#game` while the overlay still renders into one root. The sidebar and journal use `contain: size` so the stage rows size the columns and long lists scroll inside their panels instead of stretching the page. The three-column screen has a fixed height and is centred vertically. Below 1260 px the side panels stack in a right column with the journal under the message box, and the page top-aligns so a growing journal never moves the stage; below 990 px everything is one column and the canvas scales down to fit.
+Below 1024 px the side columns would crowd the banner, so the hero card and journal share one row under it, capped at 200 px with their contents scrolling, and the how-to-play card is hidden (the idle message and the fight buttons already show the keys).
+
+### Camera
+
+`src/phaser/viewport.ts` holds the camera maths as pure functions with unit tests:
+
+- **Zoom.** `fitZoom` picks the smallest whole-number zoom at which the map spans the window in at least one direction (Floor 1 at 2× and the village at 3× on a 1440×900 window). Whole numbers keep every 32×32 tile pixel-crisp; the one-cell sprite rule is unchanged.
+- **HUD insets.** `hudInsets` gives the screen pixels the HUD covers along each window edge: whole strips down both sides on wide windows, a top band on narrow ones, plus the banner and message box.
+- **Bounds and follow.** `cameraBounds` pads the map by those insets, so the camera may scroll the map out from under any panel, and `followOffset` centres the hero in the uncovered area rather than the window. Together they keep the hero's cell clear of every panel on every floor tile; a unit test walks every floor tile of every map at six window sizes to check it. Maps smaller than the padded area sit centred in it.
+- The canvas is transparent, so the page's night sky shows wherever the map does not reach. The scene re-reads the window size on every resize.
 
 ### Panels and styling
 
 - Dark night-sky backdrop (tiled CSS star layers and a faint diagonal "river" of light, after the Eridanus constellation).
-- Panels share one treatment: bronze hairline border, gold Cinzel small-caps titles with a diamond marker.
-- Cinzel (OFL, self-hosted through `@fontsource/cinzel`, latin 700 only, about 15 kB) for the wordmark, titles, tags, and buttons; body text stays on the system font.
-- The stage frame glows warm in the village and cool cyan on the tower floors (`#app:has([data-map-id=…])`). The canvas is transparent so a CSS vignette fills the margin around maps smaller than the view.
+- Panels share one treatment: a translucent dark fill with a light backdrop blur, bronze hairline border, gold Cinzel small-caps titles with a diamond marker.
+- Cinzel (OFL, self-hosted through `@fontsource/cinzel`, latin 700 only, about 15 kB) for titles, tags, and buttons; body text stays on the system font. The page title is a visually hidden `<h1>`, since the map now owns the whole screen.
+- Portrait glows and the section name run warm in the village and cool cyan on the tower floors (`#app:has([data-map-id=…])`).
 
-### Hero and items
+### Hero card
 
-- HP shows as a value plus a bar coloured by remaining health (over 50 %, over 25 %, otherwise low).
-- ATK and DEF are tiles with sword and shield icons (inline SVG, `aria-hidden`).
-- The Items panel lists `itemIds` by their authored reward label, with an empty state.
+- One card: portrait, `Hero` nameplate, HP value with a heart, an HP bar coloured by remaining health (over 50 %, over 25 %, otherwise low), ATK and DEF chips with sword and shield icons (inline SVG, `aria-hidden`), then carried items.
+- While a combat prompt is open the bar previews the fight: the HP the fight would cost turns red at the end of the bar and `−n` follows the HP value. The HP text itself does not change until the fight resolves.
+- Items list `itemIds` by their authored reward label, with an empty state.
 - Every `data-stat` element's text stays exactly `HP x/y`, `ATK n`, `DEF n`, which the e2e journeys read back.
 
 ### Location banner
@@ -50,29 +58,30 @@ The floor name (`data-testid="map-name"`, unchanged contract) plus the name of t
 
 ### Message box
 
-A fixed-height box (116 px) under the stage, so no message can resize the stage row or move the map:
+A fixed-size box (up to 720 px wide, 116 px tall) floating at the bottom centre, so no message can resize or move it:
 
 - Effects render as a coloured tag plus text (Clue, Power up, Restored, Shortcut, Victory, Item, Sealed). Dialogue uses the speaker's name as the tag and shows their portrait, looked up by name among the current map's NPCs. A victory shows the defeated enemy's portrait greyed out.
 - The tag sits on the box's top border as a nameplate. It is absolutely positioned against the panel, outside the inner `.log-body` scroller, so the text gets the whole box height. The longest authored line (the ledger ending, 237 characters) fits in four lines; anything longer scrolls inside `.log-body` (`justify-content: safe center` keeps its top reachable). Message animations use opacity only, since a transform would make the message the nameplate's containing block and clip it.
 - Blocked reasons render as a short red line. While a combat prompt is open, a refused move renders inside the encounter card, so the card and its buttons stay put.
-- The combat prompt becomes an encounter card: enemy portrait, its HP/ATK/DEF, `HP loss: n` (unchanged text) and the HP the player would have left, with Fight and Cancel buttons that keep their accessible names, key hints, and `aria-keyshortcuts`. Enemies have no authored names, so the card names them by their art (Ruin Guard, Ruin Sentinel, Core Guardian).
+- The combat prompt becomes an encounter card: enemy portrait, its HP/ATK/DEF, `HP loss: n` (unchanged text) and the HP the player would have left, with Fight and Cancel buttons side by side that keep their accessible names, key hints, and `aria-keyshortcuts`. Enemies have no authored names, so the card names them by their art (Ruin Guard, Ruin Sentinel, Core Guardian). On the map, the enemy being fought is outlined in red inside its own cell.
 - With nothing to show, the box holds a muted controls hint.
 
 Portraits are the existing 32×32 sprites drawn at 2× with `image-rendering: pixelated` inside DOM panels. The map grid and its one-cell sprite rule are unchanged.
 
 ### Journal
 
-Always open: the main quest as a highlighted card, then side leads (resolved ones turn green with a check), then notes. Places found move to the left sidebar. The overlay keeps the journal's and places list's scroll positions across re-renders.
+Open by default: the main quest as a highlighted card, then side leads (resolved ones turn green with a check), then notes, then places found as chips. The header's Hide/Show button, or the `J` key, folds it to its title bar so more map shows. That open/closed flag is view state in the overlay only: it never reaches the game session or the save, and `J` never reaches the scene's input. The overlay keeps the journal's and hero column's scroll positions across re-renders.
 
 ## Testing
 
-- `StatusPanel.test.ts`: stat text contract, HP bar level thresholds, item labels and empty state.
-- `JournalPanel.test.ts`: lead, note and section markup contract; resolved leads marked; empty groups omitted.
-- E2E: the required-only journey asserts the journal stays visible across re-renders instead of toggling `<details>`. Both journeys assert the stage (`data-testid="stage"`) does not move: across a refused move during the first combat prompt, and across each ending dialogue (the longest authored lines). The asset-loading test waits for `domcontentloaded`, since the HUD portraits are `<img>` tags held by the same route and now delay the window `load` event.
+- `viewport.test.ts`: zoom choice, insets at the breakpoint, padded bounds, and the hero's cell clear of the HUD on every floor tile of every map at six window sizes.
+- `StatusPanel.test.ts`: stat text contract, HP bar level thresholds, fight cost preview, item labels and empty state.
+- `JournalPanel.test.ts`: lead, note and place markup contract; resolved leads marked; empty groups omitted; folded state.
+- E2E: the required-only journey asserts the journal stays visible across re-renders and that `J` folds and reopens it. Both journeys assert the message box (`data-testid="interaction"`) keeps its size and place: across a refused move during the first combat prompt, and across each ending dialogue (the longest authored lines). The asset-loading test waits for `domcontentloaded`, since the HUD portraits are `<img>` tags held by the same route and now delay the window `load` event.
 
 ## Non-Goals
 
 - Rules, combat numbers, content, or save changes.
-- Canvas zoom, renderer changes, or new sprite art.
+- Renderer changes, smooth camera motion, or new sprite art.
 - Touch controls, audio, animation beyond a short message fade, or a title screen.
 - A UI framework or a component system.

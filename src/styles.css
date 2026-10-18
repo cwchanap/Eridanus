@@ -2,9 +2,8 @@
   color-scheme: dark;
   --bg-deep: #05070d;
   --bg-night: #0b1122;
-  --stage: #070a12;
-  --panel-top: rgba(26, 32, 49, 0.94);
-  --panel-bottom: rgba(14, 18, 30, 0.94);
+  --panel-top: rgba(26, 32, 49, 0.88);
+  --panel-bottom: rgba(14, 18, 30, 0.88);
   --gold: #e6bd6a;
   --gold-bright: #f6dc9c;
   --gold-deep: #9b7438;
@@ -22,7 +21,6 @@
   --success: #6fd88a;
   --glow: rgba(116, 217, 234, 0.28);
   --display: 'Cinzel', 'Trajan Pro', Georgia, serif;
-  --gap: 16px;
 }
 
 /* The village glows warm; the tower floors keep the cool rune light. */
@@ -38,8 +36,10 @@
 
 html,
 body {
+  height: 100%;
   margin: 0;
-  min-height: 100%;
+  /* The game fills the window; panels scroll inside themselves. */
+  overflow: hidden;
 }
 
 body {
@@ -75,55 +75,57 @@ body {
 }
 
 #app {
-  display: grid;
-  grid-template-columns: 240px 656px 290px;
-  grid-template-areas:
-    'brand location journal'
-    'side  stage    journal'
-    'side  log      journal';
-  gap: 12px var(--gap);
-  justify-content: center;
-  align-content: center;
-  align-items: start;
-  min-height: 100vh;
-  padding: 16px;
+  position: fixed;
+  inset: 0;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- HUD layout ---------- */
+
+/* The HUD floats over the full-window map. #ui ignores the pointer so only
+   the panels themselves take clicks. Keep the panels' footprint in step
+   with hudInsets() in src/phaser/viewport.ts, which lets the camera scroll
+   the map out from under them. */
 #ui {
-  display: contents;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr) minmax(0, 320px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'left location journal'
+    'left .        journal'
+    'log  log      log';
+  gap: 16px 24px;
+  padding: 20px 24px 28px;
+  pointer-events: none;
 }
 
-/* ---------- Brand ---------- */
-
-.brand {
-  grid-area: brand;
-  align-self: center;
-  text-align: center;
+.hud-left {
+  grid-area: left;
+  align-self: start;
+  max-height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
-.brand h1 {
-  margin: 0;
-  font: 700 30px/1 var(--display);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  background: linear-gradient(
-    180deg,
-    var(--gold-bright) 10%,
-    var(--gold) 55%,
-    var(--gold-deep) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
-}
-
-.brand-stars {
-  margin: 4px 0 0;
-  font-size: 11px;
-  letter-spacing: 0.4em;
-  color: var(--cyan);
-  opacity: 0.75;
+.hud-left > *,
+.journal,
+.log,
+.invalid-save {
+  pointer-events: auto;
 }
 
 /* ---------- Panels ---------- */
@@ -138,6 +140,7 @@ body {
     inset 0 1px 0 rgba(255, 230, 170, 0.07),
     inset 0 0 0 1px rgba(0, 0, 0, 0.55),
     0 10px 28px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
 }
 
 .panel-title {
@@ -207,26 +210,7 @@ kbd {
   vertical-align: 1px;
 }
 
-/* ---------- Sidebar: hero, items, how to play ---------- */
-
-.sidebar {
-  grid-area: side;
-  align-self: stretch;
-  /* Like the journal: the stage rows size the column, and the places list
-     scrolls once a long run outgrows it. */
-  contain: size;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.places {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--gold-deep) transparent;
-}
+/* ---------- Hero card and how to play ---------- */
 
 .hero {
   display: flex;
@@ -238,8 +222,8 @@ kbd {
   flex: none;
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
+  width: 68px;
+  height: 68px;
   border: 1px solid var(--gold-line);
   border-radius: 8px;
   background: radial-gradient(circle at 50% 35%, #2a3550, #0c101b 75%);
@@ -257,11 +241,37 @@ kbd {
   min-width: 0;
 }
 
+.vital-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hud-name {
+  margin: 0;
+  font: 700 12px/1 var(--display);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
 .vital {
   display: flex;
   align-items: center;
   gap: 6px;
   color: var(--hp-low);
+}
+
+.vital .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.hp-cost-label {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--danger);
 }
 
 .stat-label {
@@ -273,12 +283,13 @@ kbd {
 
 .stat-value {
   color: var(--text);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .hp-bar {
+  display: flex;
   height: 10px;
   margin-top: 6px;
   border: 1px solid rgba(0, 0, 0, 0.8);
@@ -289,9 +300,8 @@ kbd {
 }
 
 .hp-bar > span {
-  display: block;
+  flex: none;
   height: 100%;
-  border-radius: inherit;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 60%),
     var(--hp-high);
@@ -305,41 +315,58 @@ kbd {
   background-color: var(--hp-low);
 }
 
-.stat-tiles {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 12px;
+/* The HP an open fight would cost, after what it leaves. */
+.hp-bar > .hp-cost {
+  background: var(--hp-low);
+  opacity: 0.55;
 }
 
-.stat-tile {
+.stat-chips {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.stat-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.3);
 }
 
-.stat-tile[data-tone='attack'] {
+.stat-chip[data-tone='attack'] {
   color: var(--attack);
 }
 
-.stat-tile[data-tone='defense'] {
+.stat-chip[data-tone='defense'] {
   color: var(--defense);
 }
 
-.stat-tile .icon {
-  width: 22px;
-  height: 22px;
+.stat-chip .icon {
+  width: 16px;
+  height: 16px;
   filter: drop-shadow(0 0 4px currentColor);
 }
 
-.stat-tile [data-stat] {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
+.stat-chip .stat-value {
+  font-size: 15px;
+}
+
+.items {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(230, 189, 106, 0.18);
+}
+
+.items h3 {
+  margin: 0 0 6px;
+  font: 700 11px/1 var(--display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
 }
 
 .items ul {
@@ -393,80 +420,66 @@ kbd {
 
 .location {
   grid-area: location;
-  align-self: end;
+  justify-self: center;
+  align-self: start;
+  padding: 8px 28px 9px;
+  border: 1px solid var(--gold-line);
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--panel-top), var(--panel-bottom));
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
   text-align: center;
 }
 
 .location h2 {
-  display: flex;
-  align-items: center;
-  gap: 14px;
   margin: 0;
-  font: 700 20px/1.1 var(--display);
+  font: 700 19px/1.1 var(--display);
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: var(--gold-bright);
   text-shadow: 0 0 18px rgba(230, 189, 106, 0.35);
 }
 
-.location h2::before,
-.location h2::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold-line));
-}
-
-.location h2::after {
-  background: linear-gradient(90deg, var(--gold-line), transparent);
-}
-
 .location-area {
   min-height: 1.3em;
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   font-size: 12px;
-  letter-spacing: 0.22em;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--cyan);
 }
 
+#app:has([data-map-id='village']) .location-area {
+  color: var(--gold);
+}
+
 /* ---------- Stage (the Phaser canvas) ---------- */
 
+/* The canvas is transparent, so the page's night sky shows around maps
+   smaller than the window. */
 #game {
-  grid-area: stage;
-  width: 656px;
-  height: 496px;
-  padding: 6px;
-  border: 2px solid var(--gold-deep);
-  border-radius: 10px;
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    #18203a 0%,
-    #0d1222 55%,
-    var(--stage) 100%
-  );
-  box-shadow:
-    0 0 0 1px #000,
-    0 0 0 5px rgba(155, 116, 56, 0.22),
-    0 0 46px var(--glow),
-    0 24px 60px rgba(0, 0, 0, 0.65);
+  position: absolute;
+  inset: 0;
 }
 
 #game canvas {
   display: block;
-  border-radius: 4px;
 }
 
 /* ---------- Message log ---------- */
 
 .log {
   grid-area: log;
+  justify-self: center;
+  width: min(720px, 100%);
   display: flex;
-  /* A fixed height, so no message (the longest authored dialogue, or a
-     refused move beside the encounter card) can resize the stage row.
+  /* A fixed size, so no message (the longest authored dialogue, or a
+     refused move beside the encounter card) grows over more of the map.
      Anything longer scrolls inside .log-body. */
   height: 116px;
-  padding-block: 0;
+  padding: 0 18px;
 }
 
 .log-body {
@@ -642,7 +655,6 @@ kbd {
 
 .encounter-actions {
   display: flex;
-  flex-direction: column;
   gap: 8px;
 }
 
@@ -701,10 +713,59 @@ kbd {
 
 .journal {
   grid-area: journal;
-  align-self: stretch;
-  /* Sized by the grid area, not its content, so a long journal scrolls
-     inside the column instead of stretching the stage rows. */
-  contain: size;
+  align-self: start;
+  max-height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.journal[data-open='false'] {
+  justify-self: end;
+}
+
+.journal-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.journal-head .panel-title {
+  flex: 1;
+  margin: 0;
+}
+
+.journal[data-open='false'] .panel-title::after {
+  display: none;
+}
+
+.journal-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid rgba(236, 229, 211, 0.22);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  font:
+    600 12px/1.4 system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+
+.journal-toggle:hover {
+  color: var(--text);
+}
+
+.journal-toggle:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.journal-body {
+  min-height: 0;
+  margin-top: 10px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--gold-deep) transparent;
@@ -817,10 +878,10 @@ kbd {
 /* ---------- Invalid save ---------- */
 
 .invalid-save {
-  grid-area: stage;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
   align-self: center;
   justify-self: center;
-  z-index: 1;
   max-width: 380px;
   padding: 18px 20px;
   text-align: center;
@@ -857,48 +918,35 @@ kbd {
 
 /* ---------- Narrower screens ---------- */
 
-@media (max-width: 1259px) {
-  #app {
-    /* Stacked layouts grow with the journal; top-aligned, that growth
-       never moves the stage. */
-    align-content: start;
-    grid-template-columns: 656px 280px;
+/* Below NARROW_WIDTH in src/phaser/viewport.ts the side columns would
+   crowd the banner, so the hero card and journal share one capped row. */
+@media (max-width: 1023px) {
+  #ui {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 200px) minmax(0, 1fr) auto;
     grid-template-areas:
-      'location brand'
-      'stage    side'
-      'log      side'
-      'journal  side';
+      'location location'
+      'left     journal'
+      '.        .'
+      'log      log';
+    gap: 10px;
+    padding: 12px;
   }
 
-  .sidebar,
-  .journal {
-    contain: none;
+  .log {
+    width: 100%;
   }
 
-  .places {
-    flex: none;
-  }
-}
-
-@media (max-width: 989px) {
-  #app {
-    grid-template-columns: minmax(0, 656px);
-    grid-template-areas:
-      'brand'
-      'location'
-      'stage'
-      'log'
-      'side'
-      'journal';
+  /* The idle message and the fight buttons already show the keys. */
+  .how-to-play {
+    display: none;
   }
 
-  #game {
-    width: auto;
-    height: auto;
+  .encounter-actions {
+    flex-direction: column;
   }
 
-  #game canvas {
-    max-width: 100%;
-    height: auto !important;
+  .button {
+    min-width: 0;
   }
 }
