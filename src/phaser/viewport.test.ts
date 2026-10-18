@@ -78,13 +78,24 @@ describe('hudInsets', () => {
   });
 
   it('shrinks the narrow top band on short windows', () => {
-    const tall = hudInsets({ width: 800, height: 700 });
-    const short = hudInsets({ width: 800, height: 400 });
-    const tiny = hudInsets({ width: 800, height: 300 });
+    const tall = hudInsets({ width: 600, height: 700 });
+    const short = hudInsets({ width: 600, height: 400 });
+    const tiny = hudInsets({ width: 600, height: 300 });
     expect(short.top).toBeLessThan(tall.top);
     expect(tiny.top).toBeLessThan(short.top);
     // The capped row yields a full zoomed tile (3x max at narrow widths).
     expect(400 - short.top - short.bottom).toBe(96);
+  });
+
+  it('drops the capped row on short windows wide enough to flank the banner', () => {
+    const flanked = hudInsets({ width: 800, height: 459 });
+    expect(hudInsets({ width: 640, height: 320 })).toEqual(flanked);
+    expect(flanked.top).toBeLessThan(
+      hudInsets({ width: 800, height: 460 }).top,
+    );
+    expect(flanked.top).toBeLessThan(
+      hudInsets({ width: 639, height: 459 }).top,
+    );
   });
 });
 
@@ -125,6 +136,10 @@ describe('the hero on screen', () => {
     { width: 800, height: 460 },
     { width: 800, height: 400 },
     { width: 800, height: 320 },
+    { width: 844, height: 340 },
+    { width: 683, height: 325 },
+    { width: 640, height: 300 },
+    { width: 600, height: 400 },
   ];
 
   it.each(windows)(

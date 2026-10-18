@@ -53,6 +53,7 @@ Tasks 1 to 5 first shipped a three-column frame around a fixed 640×480 stage; r
 - [x] Size the canvas to the window (`Scale.RESIZE`) and pick a whole-number zoom that fills it.
 - [x] Pad the camera bounds by the HUD's footprint and offset the follow, so the hero never sits under a panel; unit-test every floor tile at six window sizes.
 - [x] Float the hero card, banner, journal, and message box over the map; stack the side panels under the banner below 1024 px.
+- [x] On short windows at least 640 px wide, move the hero card and journal beside the banner, and cover small windows in unit and browser tests.
 - [x] Merge the hero, items, and places panels: one hero card, places move into the journal.
 - [x] Preview a fight's HP cost on the HP bar and outline the targeted enemy on the map.
 - [x] Let the journal fold to its title bar with a button or `J`, as overlay-only view state.

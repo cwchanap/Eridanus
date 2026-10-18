@@ -40,26 +40,35 @@ function expectWithin(inner: Box | null, outer: Box | null, what: string) {
   );
 }
 
-// On a phone-width window the hero card and journal share one row, so
-// anything spilling out of its panel is clipped: every stat must sit inside
-// the hero card, and the journal's toggle inside the journal.
+function expectApart(a: Box, b: Box, what: string) {
+  const apart =
+    a.x + a.width <= b.x + 0.5 ||
+    b.x + b.width <= a.x + 0.5 ||
+    a.y + a.height <= b.y + 0.5 ||
+    b.y + b.height <= a.y + 0.5;
+  expect(apart, `${what} overlap`).toBe(true);
+}
+
+// On a small window the hero card and journal share a row capped in height
+// (or, on a short one, flank the banner), so anything spilling out of its
+// panel is clipped: every stat must sit inside the hero card and show in
+// full, the journal's toggle likewise, and no two panels may overlap.
 async function expectHudFits(page: Page): Promise<void> {
   const hud = await page.getByTestId('hud').boundingBox();
+  const banner = await page.getByTestId('map-name').boundingBox();
   const journal = await page.getByTestId('journal').boundingBox();
-  if (!hud || !journal) throw new Error('HUD panels are not on screen');
-  expect(hud.x + hud.width).toBeLessThanOrEqual(journal.x);
+  if (!hud || !banner || !journal) throw new Error('HUD is not on screen');
+  expectApart(hud, banner, 'hero card and banner');
+  expectApart(hud, journal, 'hero card and journal');
+  expectApart(banner, journal, 'banner and journal');
   for (const stat of ['hp', 'attack', 'defense']) {
-    expectWithin(
-      await page.locator(`[data-stat="${stat}"]`).boundingBox(),
-      hud,
-      `${stat} stat`,
-    );
+    const locator = page.locator(`[data-stat="${stat}"]`);
+    expectWithin(await locator.boundingBox(), hud, `${stat} stat`);
+    await expect(locator).toBeInViewport({ ratio: 1 });
   }
-  expectWithin(
-    await page.locator('[data-action="toggle-journal"]').boundingBox(),
-    journal,
-    'journal toggle',
-  );
+  const toggle = page.locator('[data-action="toggle-journal"]');
+  expectWithin(await toggle.boundingBox(), journal, 'journal toggle');
+  await expect(toggle).toBeInViewport({ ratio: 1 });
 }
 
 async function startFreshRun(page: Page): Promise<void> {
@@ -254,12 +263,21 @@ test('boots the real game with persistent player stats', async ({ page }) => {
   await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 2');
 });
 
-test('keeps every stat readable on a phone-width screen', async ({ page }) => {
-  await page.setViewportSize({ width: 400, height: 844 });
-  await startFreshRun(page);
-  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30/30');
-  await expectHudFits(page);
-});
+// A phone held upright, then a short window: a phone on its side, or a
+// 1366x768 laptop zoomed to 200%.
+for (const view of [
+  { width: 400, height: 844 },
+  { width: 683, height: 325 },
+]) {
+  test(`keeps every stat readable at ${view.width}x${view.height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(view);
+    await startFreshRun(page);
+    await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30/30');
+    await expectHudFits(page);
+  });
+}
 
 test('accepts movement while assets are still loading', async ({ page }) => {
   let release: () => void = () => undefined;
@@ -363,7 +381,9 @@ test('completes the required-only MVP route', async ({ page }) => {
   expect(await messageBox(page)).toEqual(box);
   expect(await fight.boundingBox()).toEqual(fightBox);
   expect(await cancel.boundingBox()).toEqual(cancelBox);
-  // A phone-width window still shows every stat, the fight's cost included
+  // Short and phone-width windows still show every stat, the fight's cost
+  // included
+  await expectHudFits(page);
   await page.setViewportSize({ width: 400, height: 844 });
   await expectHudFits(page);
   await page.setViewportSize({ width: 1280, height: 720 });
