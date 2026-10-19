@@ -139,7 +139,11 @@ export class WorldScene extends Phaser.Scene {
       .setOrigin(0.5, 1);
 
     const camera = this.cameras.main;
-    const view = { width: camera.width, height: camera.height };
+    // The camera is in device pixels (createGame.ts) but the HUD insets
+    // are CSS pixels, so the viewport maths runs in CSS pixels and only
+    // the final zoom is scaled up by the pixel ratio.
+    const ratio = 1 / this.scale.zoom;
+    const view = { width: camera.width / ratio, height: camera.height / ratio };
     const mapSize = {
       width: map.layout[0]!.length * TILE_SIZE,
       height: map.layout.length * TILE_SIZE,
@@ -147,7 +151,7 @@ export class WorldScene extends Phaser.Scene {
     const zoom = fitZoom(view, mapSize);
     const bounds = cameraBounds(view, mapSize, zoom);
     const offset = followOffset(view, zoom);
-    camera.setZoom(zoom);
+    camera.setZoom(zoom * ratio);
     camera.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     // Follow the centre of the hero's cell, not the sprite's bottom origin.
     camera.startFollow(
