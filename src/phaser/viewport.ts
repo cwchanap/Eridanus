@@ -26,8 +26,8 @@ const WIDE_INSETS: Insets = { top: 96, right: 360, bottom: 168, left: 340 };
 // banner: the top inset is the banner plus the row's cap, and the bottom
 // inset is the message box. On short windows the row's cap shrinks — down
 // to nothing — so the uncovered strip keeps one zoomed tile clear. The
-// village is the narrowest map and tops out at 3x zoom inside narrow
-// widths, so 96px covers every map. The DOM row is on the same clamp under
+// village is the narrowest map (14 tiles), so inside narrow widths a
+// zoomed tile stays under 1024 / 14 ≈ 73px and 96px covers every map. The DOM row is on the same clamp under
 // "Narrower screens" in styles.css: keep the two in step.
 const NARROW_TOP_BASE = 100;
 const NARROW_BOTTOM = 144;
@@ -61,11 +61,20 @@ export function hudInsets(view: Size): Insets {
   };
 }
 
-// The smallest whole-number zoom at which the map spans the window in at
-// least one direction. Whole numbers keep every 32x32 tile pixel-crisp.
+// Below this a 32x32 tile is too small to read, so the map stops shrinking
+// and the camera scrolls it under the HUD instead.
+const MIN_ZOOM = 0.5;
+
+// The zoom at which the whole map fits the area the HUD leaves uncovered.
+// It is fractional; the canvas renders at device pixels (createGame.ts),
+// so nearest-neighbour scaling still keeps tiles sharp.
 export function fitZoom(view: Size, map: Size): number {
-  const scale = Math.min(view.width / map.width, view.height / map.height);
-  return Math.max(1, Math.ceil(scale));
+  const insets = hudInsets(view);
+  const scale = Math.min(
+    (view.width - insets.left - insets.right) / map.width,
+    (view.height - insets.top - insets.bottom) / map.height,
+  );
+  return Math.max(MIN_ZOOM, scale);
 }
 
 // How far the camera's centre sits from the hero in world pixels, so the

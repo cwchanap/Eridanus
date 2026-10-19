@@ -55,15 +55,17 @@ function heroOnScreen(
 }
 
 describe('fitZoom', () => {
-  it('picks the smallest whole zoom that spans the window one way', () => {
-    expect(fitZoom(desktop, floor1)).toBe(2);
-    expect(fitZoom(desktop, village)).toBe(3);
-    expect(fitZoom({ width: 1280, height: 720 }, village)).toBe(3);
+  it('fits the whole map inside the area the HUD leaves uncovered', () => {
+    // The desktop HUD leaves 1440-340-360 = 740 by 900-96-168 = 636 open.
+    expect(fitZoom(desktop, floor1)).toBe(740 / 768);
+    expect(fitZoom(desktop, village)).toBe(740 / 448);
+    // A phone leaves 390 by 844-300-144 = 400 under the stacked HUD.
+    expect(fitZoom({ width: 390, height: 844 }, floor1)).toBe(390 / 768);
   });
 
-  it('never zooms below 1x, even in a window smaller than the map', () => {
-    expect(fitZoom({ width: 390, height: 844 }, floor1)).toBe(1);
-    expect(fitZoom({ width: 0, height: 0 }, floor1)).toBe(1);
+  it('stops shrinking at half size, leaving the camera to scroll', () => {
+    expect(fitZoom({ width: 844, height: 340 }, floor1)).toBe(0.5);
+    expect(fitZoom({ width: 0, height: 0 }, floor1)).toBe(0.5);
   });
 });
 
@@ -83,7 +85,7 @@ describe('hudInsets', () => {
     const tiny = hudInsets({ width: 600, height: 300 });
     expect(short.top).toBeLessThan(tall.top);
     expect(tiny.top).toBeLessThan(short.top);
-    // The capped row yields a full zoomed tile (3x max at narrow widths).
+    // The capped row yields a full zoomed tile (under 3x at narrow widths).
     expect(400 - short.top - short.bottom).toBe(96);
   });
 
