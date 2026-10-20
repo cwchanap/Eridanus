@@ -26,7 +26,7 @@ const KEY_DIRECTIONS = new Map<string, Direction>([
 const TARGET_COLOR = 0xef6a5c;
 
 const PROMPT_KEYS = new Map<string, InputCommand>([
-  ['Enter', { kind: 'fight' }],
+  ['Enter', { kind: 'confirm' }],
   ['Escape', { kind: 'cancel' }],
 ]);
 
@@ -43,7 +43,7 @@ export class WorldScene extends Phaser.Scene {
       this.deps.onInput({ kind: 'move', direction });
       return;
     }
-    // Enter/Escape only answer an open combat prompt. Forwarding them
+    // Enter/Escape only answer an open combat or purchase prompt. Forwarding them
     // otherwise would dispatch a no-op that clears the visible effect text,
     // and preventDefault stops a focused button from also firing its click.
     const command = PROMPT_KEYS.get(event.key);
@@ -103,7 +103,8 @@ export class WorldScene extends Phaser.Scene {
       }
     }
 
-    const target = pending && findEntityById(pending.enemyId);
+    const target =
+      pending?.kind === 'combat' && findEntityById(pending.enemyId);
     if (target) {
       this.add
         .rectangle(
@@ -139,7 +140,7 @@ export class WorldScene extends Phaser.Scene {
       .setOrigin(0.5, 1);
 
     // Zoom so the whole map fits the window band above the message log,
-    // centred in it; the rest of the HUD floats over the map's edges.
+    // resting on it; the rest of the HUD floats over the map's edges.
     // Reserving the log's strip keeps the tower stairs' bottom-centre
     // arrival tiles — and the hero landing on them — visible. The zoom is
     // fractional, but the canvas is in device pixels (createGame.ts), so

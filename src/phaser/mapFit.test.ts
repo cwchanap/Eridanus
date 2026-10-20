@@ -16,7 +16,7 @@ function mapSize(mapId: keyof typeof MAPS): Size {
 }
 
 // The screen rect a tile projects to under the camera rule in
-// WorldScene.refresh: the map centred in the window band above the strip.
+// WorldScene.refresh: the map resting on the strip, centred horizontally.
 function tileRect(
   view: Size,
   mapId: keyof typeof MAPS,
@@ -87,6 +87,32 @@ describe('fitAboveStrip', () => {
     const fit = fitAboveStrip({ width: 640, height: 100 }, map, 128);
     expect(fit.zoom).toBeGreaterThan(0);
     expect(Number.isFinite(fit.centreShift)).toBe(true);
+  });
+
+  it('rests a width-limited map on the strip, leaving the slack on top', () => {
+    const map = mapSize('village');
+    const strip = logStrip(phone.width);
+    const origin = mapOrigin(phone, map, strip);
+    expect(origin.zoom).toBeCloseTo(phone.width / map.width, 6);
+    expect(origin.y + map.height * origin.zoom).toBeCloseTo(
+      phone.height - strip,
+      6,
+    );
+    // The phone's stacked banner, hero card and journal end near 290px.
+    expect(origin.y).toBeGreaterThan(290);
+  });
+
+  it('matches the camera shift to the projected origin', () => {
+    for (const view of [desktop, phone, { width: 683, height: 325 }]) {
+      const map = mapSize('village');
+      const strip = logStrip(view.width);
+      const { zoom, centreShift } = fitAboveStrip(view, map, strip);
+      const origin = mapOrigin(view, map, strip);
+      // The camera looks at world y = map centre + shift from the middle
+      // of the screen, so the map's top lands where mapOrigin says.
+      const top = view.height / 2 - (map.height / 2 + centreShift) * zoom;
+      expect(top).toBeCloseTo(origin.y, 6);
+    }
   });
 
   it('fits narrow screens to the narrower strip', () => {

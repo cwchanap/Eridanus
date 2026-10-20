@@ -10,6 +10,7 @@ export type PlayerStats = Readonly<{
   maxHp: number;
   attack: number;
   defense: number;
+  gold: number;
 }>;
 
 export type DialogueLineId =
@@ -31,7 +32,10 @@ export type DialogueLineId =
   | 'scribe-floor2-ledger-read'
   | 'warden-restoration-ending'
   | 'warden-restoration-ending-ledger'
-  | 'scribe-final-ledger-read';
+  | 'scribe-final-ledger-read'
+  | 'elder-sealed-crypt'
+  | 'guard-sealed-mine'
+  | 'child-gold-tip';
 
 export type NpcInteractionResolution = Readonly<{
   lineId: DialogueLineId;
@@ -45,7 +49,10 @@ export type NpcId =
   | 'village-scout'
   | 'village-scribe'
   | 'floor2-missing-subject'
-  | 'village-returned-subject';
+  | 'village-returned-subject'
+  | 'village-elder'
+  | 'village-guard'
+  | 'village-child';
 export type NpcPresence = Readonly<{
   factId: string;
   when: 'known' | 'unknown';
@@ -61,7 +68,8 @@ export type NpcEntity = BaseEntity &
     kind: 'npc';
     id: NpcId;
     name: string;
-    introFactId: string;
+    // Ambient villagers carry no lead, so talking to them records nothing.
+    introFactId?: string;
     presence?: NpcPresence;
   }>;
 export type RewardEntity = BaseEntity &
@@ -74,10 +82,27 @@ export type EnemyEntity = BaseEntity &
   Readonly<{
     kind: 'enemy';
     stats: Readonly<{ hp: number; attack: number; defense: number }>;
+    gold: number;
   }>;
 export type LatchEntity = BaseEntity &
   Readonly<{ kind: 'latch'; rearSide: Direction }>;
 export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
+// A maze entrance whose maze is not built yet: bumping it shows its text
+// and records nothing.
+export type SealedEntity = BaseEntity &
+  Readonly<{ kind: 'sealed'; text: string }>;
+// A one-time purchase: owning it is having its itemId, and buying it adds
+// amount to stat once, like a stat reward.
+export type ShopWare = Readonly<{
+  itemId: string;
+  label: string;
+  price: number;
+  stat: Stat;
+  amount: number;
+}>;
+// A shopkeeper sells their wares in order, one per visit to the counter.
+export type ShopEntity = BaseEntity &
+  Readonly<{ kind: 'shop'; name: string; wares: readonly ShopWare[] }>;
 export type PortalLock =
   | Readonly<{
       kind: 'item';
@@ -106,7 +131,9 @@ export type Entity =
   | LatchEntity
   | RecoveryEntity
   | NpcEntity
-  | PortalEntity;
+  | PortalEntity
+  | SealedEntity
+  | ShopEntity;
 export type MapSection = Readonly<{
   id: string;
   name: string;
@@ -158,7 +185,8 @@ export type BlockedReason =
   | 'latch-closed-front'
   | 'combat-unwinnable'
   | 'combat-lethal'
-  | 'reward-already-taken';
+  | 'reward-already-taken'
+  | 'not-enough-gold';
 
 export type ActionEffect =
   | { kind: 'moved' }
@@ -168,7 +196,10 @@ export type ActionEffect =
   | { kind: 'healed'; hp: number }
   | { kind: 'latchOpened'; id: string }
   | { kind: 'combatPrompt'; enemyId: string; preview: WinnableCombatPreview }
-  | { kind: 'enemyDefeated'; enemyId: string; hpLost: number }
+  | { kind: 'enemyDefeated'; enemyId: string; hpLost: number; gold: number }
+  | { kind: 'purchasePrompt'; shopId: string; ware: ShopWare }
+  | { kind: 'purchased'; ware: ShopWare }
+  | { kind: 'soldOut'; speaker: string }
   | { kind: 'dialogue'; speaker: string; lineId: DialogueLineId }
   | { kind: 'itemReward'; itemId: string; label: string }
   | { kind: 'accessLocked'; text: string };
@@ -177,11 +208,13 @@ export type ActionResult =
   | { ok: true; state: GameState; effect: ActionEffect }
   | { ok: false; reason: BlockedReason };
 
-export type PendingInteraction = Readonly<{
-  kind: 'combat';
-  enemyId: string;
-  preview: WinnableCombatPreview;
-}>;
+export type PendingInteraction =
+  | Readonly<{
+      kind: 'combat';
+      enemyId: string;
+      preview: WinnableCombatPreview;
+    }>
+  | Readonly<{ kind: 'purchase'; shopId: string; ware: ShopWare }>;
 
 export type SessionState = Readonly<{
   game: GameState;
@@ -190,7 +223,7 @@ export type SessionState = Readonly<{
 
 export type InputCommand =
   | Readonly<{ kind: 'move'; direction: Direction }>
-  | Readonly<{ kind: 'fight' }>
+  | Readonly<{ kind: 'confirm' }>
   | Readonly<{ kind: 'cancel' }>;
 
 export type SessionTransition =

@@ -30,20 +30,25 @@ export function resolveCombat(
     return {
       ok: true,
       state,
-      effect: { kind: 'enemyDefeated', enemyId: enemy.id, hpLost: 0 },
+      effect: { kind: 'enemyDefeated', enemyId: enemy.id, hpLost: 0, gold: 0 },
     };
   }
   return {
     ok: true,
     state: {
       ...state,
-      player: { ...state.player, hp: state.player.hp - preview.hpLoss },
+      player: {
+        ...state.player,
+        hp: state.player.hp - preview.hpLoss,
+        gold: state.player.gold + enemy.gold,
+      },
       defeatedEnemyIds: [...state.defeatedEnemyIds, enemy.id],
     },
     effect: {
       kind: 'enemyDefeated',
       enemyId: enemy.id,
       hpLost: preview.hpLoss,
+      gold: enemy.gold,
     },
   };
 }

@@ -6,7 +6,7 @@ const pending: SessionState = {
   game: {
     mapId: 'floor1',
     tile: { x: 12, y: 5 },
-    player: { hp: 30, maxHp: 30, attack: 12, defense: 2 },
+    player: { hp: 30, maxHp: 30, attack: 12, defense: 2, gold: 0 },
     openedRewardIds: ['floor1-power-core'],
     defeatedEnemyIds: [],
     openedShortcutIds: [],
@@ -37,7 +37,7 @@ describe('dispatchInput', () => {
   });
 
   it('fight resolves enemy and clears prompt', () => {
-    const result = dispatchInput(pending, { kind: 'fight' });
+    const result = dispatchInput(pending, { kind: 'confirm' });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.session.pending).toBeNull();

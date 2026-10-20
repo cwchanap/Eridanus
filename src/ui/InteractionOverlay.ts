@@ -30,6 +30,8 @@ export type OverlayView = Readonly<{
 }>;
 
 type Message = Readonly<{ tag: string; text: string }>;
+type CombatPending = Extract<PendingInteraction, { kind: 'combat' }>;
+type PurchasePending = Extract<PendingInteraction, { kind: 'purchase' }>;
 
 const REASON_TEXT: Record<BlockedReason, string> = {
   wall: 'A wall blocks the way.',
@@ -39,6 +41,7 @@ const REASON_TEXT: Record<BlockedReason, string> = {
   'combat-unwinnable': 'Your attack cannot damage this enemy.',
   'combat-lethal': 'This fight would defeat you.',
   'reward-already-taken': 'The reward has already been claimed.',
+  'not-enough-gold': 'You do not have enough gold for that yet.',
 };
 
 const STAT_LABEL: Record<Stat, string> = {
@@ -59,6 +62,7 @@ function effectMessage(effect: ActionEffect): Message | null {
     case 'moved':
     case 'traveled':
     case 'combatPrompt':
+    case 'purchasePrompt':
       return null;
     case 'clue':
       return { tag: 'Clue', text: effect.text };
@@ -77,7 +81,19 @@ function effectMessage(effect: ActionEffect): Message | null {
     case 'enemyDefeated':
       return {
         tag: 'Victory',
-        text: `Enemy defeated. HP lost: ${effect.hpLost}.`,
+        text: `Enemy defeated. HP lost: ${effect.hpLost}.${
+          effect.gold > 0 ? ` Gold found: ${effect.gold}.` : ''
+        }`,
+      };
+    case 'purchased':
+      return {
+        tag: 'Purchased',
+        text: `${effect.ware.label}: ${STAT_LABEL[effect.ware.stat]} increased by ${effect.ware.amount}.`,
+      };
+    case 'soldOut':
+      return {
+        tag: effect.speaker,
+        text: 'Sold out. You already own everything I make.',
       };
     case 'dialogue':
       return { tag: effect.speaker, text: DIALOGUE_LINES[effect.lineId] };
@@ -118,16 +134,19 @@ function entityAsset(
 }
 
 // Dialogue effects carry the speaker's name, so the portrait comes from the
-// NPC with that name on the current map.
+// NPC or shopkeeper with that name on the current map.
 function speakerPortrait(speaker: string, state: GameState): string {
   const npc = MAPS[state.mapId].entities.find(
-    (entity) => entity.kind === 'npc' && entity.name === speaker,
+    (entity) =>
+      (entity.kind === 'npc' || entity.kind === 'shop') &&
+      entity.name === speaker,
   );
   return renderPortrait(entityAsset(npc, state), 'npc');
 }
 
 function effectPortrait(effect: ActionEffect, state: GameState): string {
-  if (effect.kind === 'dialogue') return speakerPortrait(effect.speaker, state);
+  if (effect.kind === 'dialogue' || effect.kind === 'soldOut')
+    return speakerPortrait(effect.speaker, state);
   if (effect.kind === 'enemyDefeated')
     return renderPortrait(
       entityAsset(findEntityById(effect.enemyId), state),
@@ -139,10 +158,7 @@ function effectPortrait(effect: ActionEffect, state: GameState): string {
 // A refused input while the prompt is open renders below the card, not
 // inside it: the card's contents and height stay fixed, so .log-body's
 // top-pinning keeps Fight/Cancel from shifting mid-prompt.
-function renderEncounter(
-  pending: PendingInteraction,
-  state: GameState,
-): string {
+function renderEncounter(pending: CombatPending, state: GameState): string {
   const enemy = findEntityById(pending.enemyId);
   const assetKey = entityAsset(enemy, state);
   const portrait = renderPortrait(assetKey, 'enemy');
@@ -159,8 +175,41 @@ function renderEncounter(
       <p class="encounter-cost"><span data-testid="combat-hp-loss">HP loss: ${pending.preview.hpLoss}</span> <span class="encounter-after">leaves you at ${hpAfter}/${state.player.maxHp}</span></p>
     </div>
     <div class="encounter-actions">
-      <button type="button" class="button button-fight" data-action="fight" aria-keyshortcuts="Enter">${ICONS.sword}Fight <kbd aria-hidden="true">Enter</kbd></button>
-      <button type="button" class="button" data-action="cancel" aria-keyshortcuts="Escape">Cancel <kbd aria-hidden="true">Esc</kbd></button>
+      ${promptButtons(`${ICONS.sword}Fight`, 'Cancel')}
+    </div>
+  </section>`;
+}
+
+function promptButtons(confirm: string, cancel: string): string {
+  return `<button type="button" class="button button-fight" data-action="confirm" aria-keyshortcuts="Enter">${confirm} <kbd aria-hidden="true">Enter</kbd></button>
+      <button type="button" class="button" data-action="cancel" aria-keyshortcuts="Escape">${cancel} <kbd aria-hidden="true">Esc</kbd></button>`;
+}
+
+const STAT_SHORT: Record<Stat, string> = {
+  attack: 'ATK',
+  defense: 'DEF',
+  maxHp: 'Max HP',
+};
+
+// The shop counter shares the encounter card's frame, so the box keeps its
+// size and Buy/Leave sit where Fight/Cancel do.
+function renderPurchase(pending: PurchasePending, state: GameState): string {
+  const shop = findEntityById(pending.shopId);
+  const name = shop?.kind === 'shop' ? shop.name : 'Shop';
+  const { ware } = pending;
+  const short = state.player.gold < ware.price;
+  return `<section class="encounter" data-kind="shop" data-testid="purchase-prompt" aria-label="Shop">
+    ${renderPortrait(entityAsset(shop, state), 'npc')}
+    <div class="encounter-info">
+      <div class="encounter-head"><span class="message-tag">${name}</span><p class="encounter-stats"><span>${ware.label}</span><span>${STAT_SHORT[ware.stat]} +${ware.amount}</span></p></div>
+      <p class="encounter-cost"><span data-testid="purchase-price">Price: ${ware.price} gold</span> <span class="encounter-after">${
+        short
+          ? `you have ${state.player.gold}`
+          : `leaves you ${state.player.gold - ware.price}`
+      }</span></p>
+    </div>
+    <div class="encounter-actions">
+      ${promptButtons(`${ICONS.coin}Buy`, 'Leave')}
     </div>
   </section>`;
 }
@@ -172,7 +221,12 @@ function renderMessage(view: OverlayView): string {
     : '';
   // prompt must stay reachable (Fight/Cancel clickable) even while blocked,
   // or a failed input while pending soft-locks the interaction
-  if (pending) return renderEncounter(pending, state) + blockedHtml;
+  if (pending)
+    return (
+      (pending.kind === 'combat'
+        ? renderEncounter(pending, state)
+        : renderPurchase(pending, state)) + blockedHtml
+    );
   if (blocked) return blockedHtml;
   const message = effect && effectMessage(effect);
   if (effect && message) {
@@ -196,7 +250,7 @@ export class InteractionOverlay {
 
   constructor(
     private readonly root: HTMLElement,
-    private readonly onFight: () => void,
+    private readonly onConfirm: () => void,
     private readonly onCancel: () => void,
   ) {
     window.addEventListener('keydown', (event) => {
@@ -228,7 +282,7 @@ export class InteractionOverlay {
     }
     this.root.innerHTML = `
       <div class="hud-left">
-        ${renderStatus(state, pending?.preview.hpLoss ?? 0)}
+        ${renderStatus(state, pending?.kind === 'combat' ? pending.preview.hpLoss : 0)}
         ${renderHowToPlay(state)}
       </div>
       ${renderLocation(state, mapName)}
@@ -239,8 +293,8 @@ export class InteractionOverlay {
       if (panel) panel.scrollTop = this.scrollTops.get(selector) ?? 0;
     }
     this.root
-      .querySelector<HTMLButtonElement>('[data-action="fight"]')
-      ?.addEventListener('click', () => this.onFight());
+      .querySelector<HTMLButtonElement>('[data-action="confirm"]')
+      ?.addEventListener('click', () => this.onConfirm());
     this.root
       .querySelector<HTMLButtonElement>('[data-action="cancel"]')
       ?.addEventListener('click', () => this.onCancel());

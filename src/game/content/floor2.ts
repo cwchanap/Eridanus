@@ -110,6 +110,7 @@ export const floor2: MapDefinition = {
       tile: { x: 14, y: 6 },
       assetId: 'enemy-ruin-sentinel',
       stats: { hp: 24, attack: 7, defense: 4 },
+      gold: 12,
     },
     {
       kind: 'enemy',
@@ -117,6 +118,7 @@ export const floor2: MapDefinition = {
       tile: { x: 14, y: 9 },
       assetId: 'enemy-ruin-sentinel',
       stats: { hp: 28, attack: 8, defense: 5 },
+      gold: 15,
     },
   ],
   sections: [

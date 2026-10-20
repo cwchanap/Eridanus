@@ -7,7 +7,7 @@ import type { Direction, GameState } from './types';
 const base: GameState = {
   mapId: 'floor1',
   tile: { x: 10, y: 8 },
-  player: { hp: 30, maxHp: 30, attack: 10, defense: 2 },
+  player: { hp: 30, maxHp: 30, attack: 10, defense: 2, gold: 0 },
   openedRewardIds: [],
   defeatedEnemyIds: [],
   openedShortcutIds: [],
@@ -67,7 +67,7 @@ describe('attemptMove', () => {
   });
 
   it('steps on portal and travels', () => {
-    const state = { ...base, mapId: 'village' as const, tile: { x: 12, y: 2 } };
+    const state = { ...base, mapId: 'village' as const, tile: { x: 13, y: 3 } };
     const result = attemptMove(state, 'west');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -171,7 +171,7 @@ describe('attemptMove', () => {
   });
 
   it('arriving on floor one discovers the entry court and the treasury', () => {
-    const state = { ...base, mapId: 'village' as const, tile: { x: 12, y: 2 } };
+    const state = { ...base, mapId: 'village' as const, tile: { x: 13, y: 3 } };
     const result = attemptMove(state, 'west');
     expect(result.ok).toBe(true);
     if (!result.ok) return;

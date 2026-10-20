@@ -54,5 +54,14 @@ export function resolveNpcInteraction(
 
     case 'village-returned-subject':
       return { lineId: 'subject-village' };
+
+    case 'village-elder':
+      return { lineId: 'elder-sealed-crypt' };
+
+    case 'village-guard':
+      return { lineId: 'guard-sealed-mine' };
+
+    case 'village-child':
+      return { lineId: 'child-gold-tip' };
   }
 }
