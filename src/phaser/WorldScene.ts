@@ -8,6 +8,7 @@ import {
   resolvePlayerAsset,
   resolveTerrainAssets,
 } from './assets';
+import { fitAboveStrip, logStrip } from './mapFit';
 
 export type WorldSceneDeps = {
   getSession: () => SessionState;
@@ -137,13 +138,23 @@ export class WorldScene extends Phaser.Scene {
       )
       .setOrigin(0.5, 1);
 
-    // Zoom so the whole map fits the window, centred; the HUD floats over
-    // it. The zoom is fractional, but the canvas is in device pixels
-    // (createGame.ts), so nearest-neighbour scaling keeps tiles sharp.
+    // Zoom so the whole map fits the window band above the message log,
+    // centred in it; the rest of the HUD floats over the map's edges.
+    // Reserving the log's strip keeps the tower stairs' bottom-centre
+    // arrival tiles — and the hero landing on them — visible. The zoom is
+    // fractional, but the canvas is in device pixels (createGame.ts), so
+    // nearest-neighbour scaling keeps tiles sharp.
     const camera = this.cameras.main;
+    const ratio = window.devicePixelRatio;
+    const strip = logStrip(camera.width / ratio) * ratio;
     const width = map.layout[0]!.length * TILE_SIZE;
     const height = map.layout.length * TILE_SIZE;
-    camera.setZoom(Math.min(camera.width / width, camera.height / height));
-    camera.centerOn(width / 2, height / 2);
+    const fit = fitAboveStrip(
+      { width: camera.width, height: camera.height },
+      { width, height },
+      strip,
+    );
+    camera.setZoom(fit.zoom);
+    camera.centerOn(width / 2, height / 2 + fit.centreShift);
   }
 }
