@@ -146,7 +146,10 @@ export class WorldScene extends Phaser.Scene {
     // nearest-neighbour scaling keeps tiles sharp.
     const camera = this.cameras.main;
     const ratio = window.devicePixelRatio;
-    const strip = logStrip(camera.width / ratio) * ratio;
+    // The CSS breakpoint is on the window's CSS width; the camera's width
+    // is rounded to device pixels, so dividing it back can land a hair
+    // under 1024 and pick the narrower strip the layout doesn't use.
+    const strip = logStrip(window.innerWidth) * ratio;
     const width = map.layout[0]!.length * TILE_SIZE;
     const height = map.layout.length * TILE_SIZE;
     const fit = fitAboveStrip(

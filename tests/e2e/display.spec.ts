@@ -104,6 +104,37 @@ async function bootOnTile(
 // which the always-present message log used to cover whole at desktop
 // sizes. The camera now frames the map into the band above the log, so the
 // projected tile and the log's real bounding box must never meet.
+async function expectTileClearOfLog(
+  page: Page,
+  view: { width: number; height: number },
+  mapId: MapId,
+  tile: { x: number; y: number },
+): Promise<void> {
+  const layout = MAPS[mapId].layout;
+  const map = {
+    width: layout[0]!.length * TILE_SIZE,
+    height: layout.length * TILE_SIZE,
+  };
+  const strip = logStrip(view.width);
+  const origin = mapOrigin(view, map, strip);
+  const side = TILE_SIZE * origin.zoom;
+  const arrival = {
+    x: origin.x + tile.x * side,
+    y: origin.y + tile.y * side,
+    right: origin.x + (tile.x + 1) * side,
+    bottom: origin.y + (tile.y + 1) * side,
+  };
+
+  const log = await page.getByTestId('interaction').boundingBox();
+  if (!log) throw new Error('message log is not on screen');
+  expect(arrival.x, 'arrival tile left edge').toBeGreaterThanOrEqual(0);
+  expect(arrival.right, 'arrival tile right edge').toBeLessThanOrEqual(
+    view.width,
+  );
+  expect(arrival.y, 'arrival tile top edge').toBeGreaterThanOrEqual(0);
+  expect(arrival.bottom, 'arrival tile bottom edge').toBeLessThanOrEqual(log.y);
+}
+
 for (const view of [
   { width: 1440, height: 900 },
   { width: 1280, height: 720 },
@@ -117,32 +148,31 @@ for (const view of [
     }) => {
       await page.setViewportSize(view);
       await bootOnTile(page, mapId, tile);
-
-      const layout = MAPS[mapId].layout;
-      const map = {
-        width: layout[0]!.length * TILE_SIZE,
-        height: layout.length * TILE_SIZE,
-      };
-      const strip = logStrip(view.width);
-      const origin = mapOrigin(view, map, strip);
-      const side = TILE_SIZE * origin.zoom;
-      const arrival = {
-        x: origin.x + tile.x * side,
-        y: origin.y + tile.y * side,
-        right: origin.x + (tile.x + 1) * side,
-        bottom: origin.y + (tile.y + 1) * side,
-      };
-
-      const log = await page.getByTestId('interaction').boundingBox();
-      if (!log) throw new Error('message log is not on screen');
-      expect(arrival.x, 'arrival tile left edge').toBeGreaterThanOrEqual(0);
-      expect(arrival.right, 'arrival tile right edge').toBeLessThanOrEqual(
-        view.width,
-      );
-      expect(arrival.y, 'arrival tile top edge').toBeGreaterThanOrEqual(0);
-      expect(arrival.bottom, 'arrival tile bottom edge').toBeLessThanOrEqual(
-        log.y,
-      );
+      await expectTileClearOfLog(page, view, mapId, tile);
     });
   }
 }
+
+// A fractional pixel ratio lands the canvas backing store on an un-rounded
+// device width — at 1024 CSS px and 1.1 the canvas is 1126px wide, which
+// divides back to 1023.64, a hair under the layout's breakpoint. The strip
+// must come from the window's CSS width or the map's bottom edge ends up
+// under the log.
+test.describe('at a fractional device pixel ratio', () => {
+  test.use({ deviceScaleFactor: 1.1 });
+
+  test('keeps the floor3 arrival stair clear of the log at the 1024px breakpoint', async ({
+    page,
+  }) => {
+    const view = { width: 1024, height: 700 };
+    await page.setViewportSize(view);
+    await bootOnTile(page, 'floor3', { x: 10, y: 13 });
+
+    const metrics = await canvasMetrics(page);
+    if (!metrics) throw new Error('canvas is not on screen');
+    expect(metrics.ratio).toBeCloseTo(1.1, 4);
+    expect(metrics.width).toBe(Math.round(view.width * metrics.ratio));
+
+    await expectTileClearOfLog(page, view, 'floor3', { x: 10, y: 13 });
+  });
+});
