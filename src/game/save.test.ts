@@ -63,7 +63,7 @@ describe('saveGame/loadGame', () => {
   });
 
   it('round-trips ordinary movement position', () => {
-    const moved = { ...createInitialGameState(), tile: { x: 3, y: 5 } };
+    const moved = { ...createInitialGameState(), tile: { x: 10, y: 9 } };
     saveGame(storage, moved);
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state: moved });
   });
@@ -163,7 +163,7 @@ describe('saveGame/loadGame', () => {
       ...createInitialGameState(),
       mapId: 'floor1' as const,
       tile: { x: 14, y: 10 },
-      player: { hp: 12, maxHp: 30, attack: 12, defense: 2 },
+      player: { hp: 12, maxHp: 30, attack: 12, defense: 2, gold: 0 },
       openedRewardIds: [
         'floor1-depth-sigil',
         'floor1-power-core',
@@ -193,7 +193,7 @@ describe('saveGame/loadGame', () => {
       ],
       discoveredSectionIds: [
         'village-square',
-        'village-north-path',
+        'village-tower-road',
         'floor1-entry-court',
         'floor1-lower-loop',
         'floor1-upper-gallery',
@@ -326,7 +326,7 @@ describe('saveGame/loadGame', () => {
       'eridanus.save',
       JSON.stringify({
         ...createInitialGameState(),
-        tile: { x: 2, y: 2 },
+        tile: { x: 12, y: 6 },
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -340,12 +340,53 @@ describe('saveGame/loadGame', () => {
       'eridanus.save',
       JSON.stringify({
         ...createInitialGameState(),
-        tile: { x: 3, y: 7 },
+        tile: { x: 11, y: 7 },
       }),
     );
     expect(loadGame(storage)).toEqual({
       kind: 'invalid',
       reason: 'invalid-content',
+    });
+  });
+
+  it('rejects a save standing on a shop counter or a sealed entrance', () => {
+    for (const tile of [
+      { x: 4, y: 12 },
+      { x: 1, y: 9 },
+    ]) {
+      storage.setItem(
+        'eridanus.save',
+        JSON.stringify({ ...createInitialGameState(), tile }),
+      );
+      expect(loadGame(storage)).toEqual({
+        kind: 'invalid',
+        reason: 'invalid-content',
+      });
+    }
+  });
+
+  it('round-trips gold and bought wares without a matching reward', () => {
+    const state = {
+      ...createInitialGameState(),
+      player: { hp: 30, maxHp: 35, attack: 11, defense: 2, gold: 3 },
+      itemIds: ['iron-sword', 'vitality-charm'],
+    };
+    saveGame(storage, state);
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('rejects a save without gold', () => {
+    const player: Record<string, number> = {
+      ...createInitialGameState().player,
+    };
+    delete player['gold'];
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({ ...createInitialGameState(), player }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-shape',
     });
   });
 

@@ -27,7 +27,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-to-village',
       tile: { x: 2, y: 14 },
       assetId: 'stairs-up',
-      target: { mapId: 'village', tile: { x: 11, y: 2 } },
+      target: { mapId: 'village', tile: { x: 12, y: 3 } },
     },
     {
       kind: 'portal',
@@ -100,6 +100,7 @@ export const floor1: MapDefinition = {
       tile: { x: 3, y: 11 },
       assetId: 'enemy-ruin-guard',
       stats: { hp: 18, attack: 6, defense: 3 },
+      gold: 8,
     },
     {
       kind: 'enemy',
@@ -107,6 +108,7 @@ export const floor1: MapDefinition = {
       tile: { x: 9, y: 11 },
       assetId: 'enemy-ruin-guard',
       stats: { hp: 22, attack: 7, defense: 4 },
+      gold: 10,
     },
     {
       kind: 'latch',
@@ -129,6 +131,7 @@ export const floor1: MapDefinition = {
       tile: { x: 15, y: 10 },
       assetId: 'enemy-ruin-guard',
       stats: { hp: 20, attack: 7, defense: 4 },
+      gold: 10,
     },
     {
       kind: 'portal',

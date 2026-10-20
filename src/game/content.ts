@@ -11,6 +11,7 @@ import type {
   MapId,
   MapSection,
   RewardEntity,
+  ShopWare,
   Tile,
 } from './types';
 
@@ -85,6 +86,8 @@ export function isEntityBlocking(entity: Entity, state: GameState): boolean {
     case 'clue':
     case 'recovery':
     case 'npc':
+    case 'sealed':
+    case 'shop':
       return true;
     case 'portal':
       return false;
@@ -129,6 +132,20 @@ export function findItemRewardByItemId(
   return entity?.kind === 'reward' && entity.grant === 'item'
     ? entity
     : undefined;
+}
+
+export function findShopWareByItemId(itemId: string): ShopWare | undefined {
+  return Object.values(MAPS)
+    .flatMap((map) => map.entities)
+    .flatMap((entity) => (entity.kind === 'shop' ? entity.wares : []))
+    .find((ware) => ware.itemId === itemId);
+}
+
+// Owned items come from item rewards and shop wares alike.
+export function itemLabel(itemId: string): string {
+  const reward = findItemRewardByItemId(itemId);
+  if (reward?.grant === 'item') return reward.label;
+  return findShopWareByItemId(itemId)?.label ?? itemId;
 }
 
 export function validateContent(
@@ -228,7 +245,7 @@ export function validateContent(
           errors.push(
             `${entity.id}: unknown presence fact id: ${entity.presence.factId}`,
           );
-        if (!hasFact(entity.introFactId))
+        if (entity.introFactId && !hasFact(entity.introFactId))
           errors.push(
             `${entity.id}: unknown intro fact id: ${entity.introFactId}`,
           );
@@ -239,6 +256,17 @@ export function validateContent(
         if (itemIds.has(entity.itemId))
           errors.push(`duplicate item id: ${entity.itemId}`);
         itemIds.add(entity.itemId);
+      }
+      if (entity.kind === 'shop') {
+        if (entity.wares.length === 0)
+          errors.push(`${entity.id}: shop has no wares`);
+        for (const ware of entity.wares) {
+          if (itemIds.has(ware.itemId))
+            errors.push(`duplicate item id: ${ware.itemId}`);
+          itemIds.add(ware.itemId);
+          if (ware.price <= 0 || ware.amount <= 0)
+            errors.push(`${ware.itemId}: price and amount must be positive`);
+        }
       }
 
       if (entity.kind === 'portal') {

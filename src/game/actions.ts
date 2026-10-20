@@ -2,6 +2,7 @@ import { previewCombat } from './combat';
 import { resolveNpcInteraction } from './dialogue';
 import { directionFromTo } from './geometry';
 import { addItem, recordFact } from './progress';
+import { nextWare } from './shop';
 import type { ActionResult, Entity, GameState, Tile } from './types';
 
 export function interactWithEntity(
@@ -30,7 +31,9 @@ export function interactWithEntity(
       };
     }
     case 'npc': {
-      const introduced = recordFact(state, entity.introFactId);
+      const introduced = entity.introFactId
+        ? recordFact(state, entity.introFactId)
+        : state;
       const interaction = resolveNpcInteraction(entity.id, introduced);
       const next = interaction.factId
         ? recordFact(introduced, interaction.factId)
@@ -108,7 +111,12 @@ export function interactWithEntity(
         return {
           ok: true,
           state,
-          effect: { kind: 'enemyDefeated', enemyId: entity.id, hpLost: 0 },
+          effect: {
+            kind: 'enemyDefeated',
+            enemyId: entity.id,
+            hpLost: 0,
+            gold: 0,
+          },
         };
       const preview = previewCombat(state.player, entity.stats);
       if (!preview.winnable) return { ok: false, reason: preview.reason };
@@ -116,6 +124,26 @@ export function interactWithEntity(
         ok: true,
         state,
         effect: { kind: 'combatPrompt', enemyId: entity.id, preview },
+      };
+    }
+    case 'sealed':
+      return {
+        ok: true,
+        state,
+        effect: { kind: 'accessLocked', text: entity.text },
+      };
+    case 'shop': {
+      const ware = nextWare(entity, state);
+      if (!ware)
+        return {
+          ok: true,
+          state,
+          effect: { kind: 'soldOut', speaker: entity.name },
+        };
+      return {
+        ok: true,
+        state,
+        effect: { kind: 'purchasePrompt', shopId: entity.id, ware },
       };
     }
     case 'portal':

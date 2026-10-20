@@ -37,6 +37,7 @@ const testEnemy: EnemyEntity = {
   tile: { x: 1, y: 1 },
   assetId: 'enemy-ruin-guard',
   stats: { hp: 1, attack: 1, defense: 0 },
+  gold: 0,
 };
 
 describe('asset seam', () => {
@@ -200,6 +201,12 @@ describe('asset seam', () => {
       'village-scout',
       'village-scribe',
       'village-returned-subject',
+      'village-elder',
+      'village-guard',
+      'village-child',
+      'village-weapon-shop',
+      'village-armor-shop',
+      'village-item-shop',
     ].map(art);
     expect(new Set(villagers).size).toBe(villagers.length);
     // Same person before and after the rescue.

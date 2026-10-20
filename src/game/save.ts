@@ -2,6 +2,7 @@ import {
   findEntityById,
   findItemRewardByItemId,
   findSectionById,
+  findShopWareByItemId,
   isLayoutFloor,
   isTileBlockedByEntity,
   MAPS,
@@ -38,7 +39,7 @@ function hasValidShape(state: unknown): state is GameState {
   const player = record['player'];
   if (typeof player !== 'object' || player === null) return false;
   const playerRecord = player as Record<string, unknown>;
-  for (const stat of ['hp', 'maxHp', 'attack', 'defense'] as const) {
+  for (const stat of ['hp', 'maxHp', 'attack', 'defense', 'gold'] as const) {
     const value = playerRecord[stat];
     if (typeof value !== 'number' || !Number.isFinite(value)) return false;
   }
@@ -72,6 +73,7 @@ function hasValidContent(state: GameState): boolean {
     return false;
 
   for (const itemId of state.itemIds) {
+    if (findShopWareByItemId(itemId)) continue;
     const reward = findItemRewardByItemId(itemId);
     if (!reward || !state.openedRewardIds.includes(reward.id)) return false;
   }

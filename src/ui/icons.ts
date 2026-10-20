@@ -21,4 +21,8 @@ export const ICONS = {
     'icon-relic',
     '<path d="M7 3.5h10l4.2 5.6L12 20.7 2.8 9.1z"/><path class="icon-cut" d="M2.8 9.1h18.4L12 20.7z"/>',
   ),
+  coin: icon(
+    'icon-coin',
+    '<circle cx="12" cy="12" r="9"/><path class="icon-cut" d="M12 6.5l1.6 3.9 4.1.3-3.1 2.7 1 4-3.6-2.2-3.6 2.2 1-4-3.1-2.7 4.1-.3z"/>',
+  ),
 } as const;

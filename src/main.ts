@@ -25,7 +25,7 @@ let created: CreatedGame | null = null;
 
 const overlay = new InteractionOverlay(
   uiRoot,
-  () => handleInput({ kind: 'fight' }),
+  () => handleInput({ kind: 'confirm' }),
   () => handleInput({ kind: 'cancel' }),
 );
 

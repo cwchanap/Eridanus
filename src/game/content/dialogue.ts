@@ -39,4 +39,10 @@ export const DIALOGUE_LINES: Record<DialogueLineId, string> = {
     'The Restoration Core can restart the village supply. The keeper record explains the failure too: the paired releases isolated a guardian control fault, but the isolation was never cleared. We can restore the system with the truth intact.',
   'scribe-final-ledger-read':
     'That final record closes the ledger. The guardians were trapped in an emergency isolation state, and the village kept depending on the same system they were defending.',
+  'elder-sealed-crypt':
+    'The crypt under the east hill was sealed before I was born. One day someone will have to open it, but not today.',
+  'guard-sealed-mine':
+    'The old mine collapsed years ago. Nobody goes down there until the shafts are shored up.',
+  'child-gold-tip':
+    'The tower guards drop coins when you beat them! The shops on Market Row will trade you gear for them.',
 };

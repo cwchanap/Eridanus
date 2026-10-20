@@ -74,6 +74,9 @@ Until bespoke art exists, cast variety comes from recolors of the HPA-22 sprites
 - `enemy-ruin-sentinel` — ruin guard with blue-steel armour and a crimson tabard (Floor 2–3 sentries).
 - `enemy-core-guardian` — ruin guard with gold armour, a dark tabard, and an ember outline (Floor 3 boss only).
 - `npc-warden` / `npc-scout` / `npc-scribe` / `npc-subject` — the village guide with a navy, maroon, purple, or slate-grey dress. The artisan keeps the original green `npc-village-guide`.
+- `npc-smith` / `npc-armorer` / `npc-merchant` / `npc-elder` / `npc-guard` — the village guide with a terracotta, teal, gold, silver, or black dress (the three shopkeepers and two ambient villagers).
+- `npc-child` — the village guide with a pink dress, scaled to 24×24 and set at the bottom centre of its 32×32 cell so the child stands a head shorter.
+- `stairs-sealed` — `stairs-down` darkened and desaturated with a rust cast, for maze entrances that are not open yet.
 
 Recolors shift only the clothing/armour hue bands; skin, eyes, and the shared hat/apron stay untouched so the set reads as one style.
 

@@ -345,6 +345,10 @@ kbd {
   color: var(--defense);
 }
 
+.stat-chip[data-tone='gold'] {
+  color: var(--gold-bright);
+}
+
 .stat-chip .icon {
   width: 16px;
   height: 16px;
@@ -636,6 +640,10 @@ kbd {
 
 .encounter .message-tag {
   color: var(--danger);
+}
+
+.encounter[data-kind='shop'] .message-tag {
+  color: var(--gold);
 }
 
 .encounter-stats {
@@ -1050,8 +1058,15 @@ kbd {
     height: 13px;
   }
 
+  /* Three chips share one row here, so the icons alone label them; the
+     words stay in the text for screen readers and the e2e journeys. */
   .stat-chip .stat-label {
-    font-size: 11px;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .stat-chip .stat-value {

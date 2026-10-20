@@ -16,10 +16,13 @@ export function logStrip(cssWidth: number): number {
 }
 
 // The largest zoom that fits the map into the window band above the log
-// strip, and how far below the map's centre the camera must look to
-// centre the map inside that band. Every size shares one unit:
-// WorldScene works in device pixels, so it scales logStrip's CSS pixels
-// by the device pixel ratio first.
+// strip, and how far below the map's centre the camera must look to rest
+// the map's bottom edge on that band's bottom. A map that fills the band
+// is unaffected; one limited by the window's width (a phone held upright)
+// sits just above the log, leaving the slack at the top, where the hero
+// card and journal stack. Every size shares one unit: WorldScene works in
+// device pixels, so it scales logStrip's CSS pixels by the device pixel
+// ratio first.
 export function fitAboveStrip(
   view: Size,
   map: Size,
@@ -27,13 +30,16 @@ export function fitAboveStrip(
 ): Readonly<{ zoom: number; centreShift: number }> {
   const band = Math.max(1, view.height - strip);
   const zoom = Math.min(view.width / map.width, band / map.height);
-  return { zoom, centreShift: strip / (2 * zoom) };
+  return {
+    zoom,
+    centreShift: (strip + (map.height * zoom) / 2 - view.height / 2) / zoom,
+  };
 }
 
 // Where the map's top-left corner lands on screen: centred in the window
-// horizontally and inside the band above the strip vertically. The other
-// side of the camera math in WorldScene.refresh, kept here so tests can
-// project tiles without Phaser.
+// horizontally and resting on the strip vertically. The other side of the
+// camera math in WorldScene.refresh, kept here so tests can project tiles
+// without Phaser.
 export function mapOrigin(
   view: Size,
   map: Size,
@@ -42,7 +48,7 @@ export function mapOrigin(
   const { zoom } = fitAboveStrip(view, map, strip);
   return {
     x: (view.width - map.width * zoom) / 2,
-    y: (view.height - strip - map.height * zoom) / 2,
+    y: view.height - strip - map.height * zoom,
     zoom,
   };
 }

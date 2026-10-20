@@ -81,14 +81,14 @@ describe('actions', () => {
   it('heals without resetting dungeon progress', () => {
     const state = {
       ...createInitialGameState(),
-      player: { hp: 8, maxHp: 30, attack: 12, defense: 2 },
+      player: { hp: 8, maxHp: 30, attack: 12, defense: 2, gold: 0 },
       openedRewardIds: ['floor1-power-core'],
       defeatedEnemyIds: ['floor1-gatekeeper'],
       openedShortcutIds: ['floor1-rear-latch'],
     };
     const result = interactWithEntity(state, recovery, { x: 3, y: 2 });
     expect(result.ok && result.state).toMatchObject({
-      player: { hp: 30, maxHp: 30, attack: 12, defense: 2 },
+      player: { hp: 30, maxHp: 30, attack: 12, defense: 2, gold: 0 },
       openedRewardIds: ['floor1-power-core'],
       defeatedEnemyIds: ['floor1-gatekeeper'],
       openedShortcutIds: ['floor1-rear-latch'],
@@ -205,7 +205,7 @@ describe('actions', () => {
     expect(interactWithEntity(fight.state, boss, state.tile)).toEqual({
       ok: true,
       state: fight.state,
-      effect: { kind: 'enemyDefeated', enemyId: boss.id, hpLost: 0 },
+      effect: { kind: 'enemyDefeated', enemyId: boss.id, hpLost: 0, gold: 0 },
     });
   });
 
@@ -260,6 +260,7 @@ describe('actions', () => {
         kind: 'enemyDefeated',
         enemyId: 'floor1-gatekeeper',
         hpLost: 0,
+        gold: 0,
       },
     });
   });
@@ -304,11 +305,11 @@ describe('actions', () => {
   });
 
   it('activates the village subject only after the return and repeats the shared fact idempotently', () => {
-    const before = { ...createInitialGameState(), tile: { x: 5, y: 7 } };
+    const before = { ...createInitialGameState(), tile: { x: 13, y: 7 } };
     expect(getActiveEntityAt(before, returnedSubject.tile)).toBeUndefined();
     const passesThrough = attemptMove(before, 'south');
     expect(passesThrough.ok && passesThrough.state.tile).toEqual({
-      x: 5,
+      x: 13,
       y: 8,
     });
 

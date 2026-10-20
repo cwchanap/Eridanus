@@ -67,6 +67,7 @@ export const floor3: MapDefinition = {
       tile: { x: 17, y: 7 },
       assetId: 'enemy-ruin-sentinel',
       stats: { hp: 24, attack: 7, defense: 4 },
+      gold: 12,
     },
     {
       kind: 'enemy',
@@ -74,6 +75,7 @@ export const floor3: MapDefinition = {
       tile: { x: 2, y: 6 },
       assetId: 'enemy-ruin-sentinel',
       stats: { hp: 28, attack: 7, defense: 5 },
+      gold: 15,
     },
     {
       kind: 'reward',
@@ -90,6 +92,7 @@ export const floor3: MapDefinition = {
       tile: { x: 10, y: 2 },
       assetId: 'enemy-core-guardian',
       stats: { hp: 36, attack: 7, defense: 4 },
+      gold: 30,
     },
     {
       kind: 'reward',

@@ -14,18 +14,19 @@ describe('renderStatus', () => {
   it('keeps each stat readable as "LABEL value" text', () => {
     const html = renderStatus({
       ...createInitialGameState(),
-      player: { hp: 22, maxHp: 30, attack: 12, defense: 4 },
+      player: { hp: 22, maxHp: 30, attack: 12, defense: 4, gold: 17 },
     });
     expect(statText(html, 'hp')).toBe('HP 22/30');
     expect(statText(html, 'attack')).toBe('ATK 12');
     expect(statText(html, 'defense')).toBe('DEF 4');
+    expect(statText(html, 'gold')).toBe('Gold 17');
   });
 
   it('colors the HP bar by how much health is left', () => {
     const at = (hp: number) =>
       renderStatus({
         ...createInitialGameState(),
-        player: { hp, maxHp: 40, attack: 10, defense: 2 },
+        player: { hp, maxHp: 40, attack: 10, defense: 2, gold: 0 },
       });
     expect(at(40)).toContain('data-level="high"');
     expect(at(20)).toContain('data-level="mid"');
@@ -53,5 +54,14 @@ describe('renderItems', () => {
     });
     expect(html).toContain('data-item="tower-depth-sigil"');
     expect(html).toContain('Tower Sigil');
+  });
+
+  it('names bought wares by their shop label', () => {
+    const html = renderItems({
+      ...createInitialGameState(),
+      itemIds: ['iron-sword'],
+    });
+    expect(html).toContain('data-item="iron-sword"');
+    expect(html).toContain('Iron Sword');
   });
 });

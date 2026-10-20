@@ -1,4 +1,4 @@
-import { findItemRewardByItemId } from '../game/content';
+import { itemLabel } from '../game/content';
 import type { GameState } from '../game/types';
 import { ASSET_PATHS } from '../phaser/assets';
 import { ICONS } from './icons';
@@ -11,7 +11,8 @@ function hpLevel(hp: number, maxHp: number): HpLevel {
   return ratio > 0.25 ? 'mid' : 'low';
 }
 
-// Each data-stat element's text stays exactly "HP x/y", "ATK n" or "DEF n":
+// Each data-stat element's text stays exactly "HP x/y", "ATK n", "DEF n" or
+// "Gold n":
 // the e2e journeys read the player's stats back from it.
 function stat(id: string, label: string, value: string): string {
   return `<span data-stat="${id}"><span class="stat-label">${label}</span> <span class="stat-value">${value}</span></span>`;
@@ -19,7 +20,7 @@ function stat(id: string, label: string, value: string): string {
 
 // hpLoss previews an open combat prompt's cost on the bar; 0 shows none.
 export function renderStatus(state: GameState, hpLoss = 0): string {
-  const { hp, maxHp, attack, defense } = state.player;
+  const { hp, maxHp, attack, defense, gold } = state.player;
   const left = Math.max(0, hp - hpLoss);
   const percent = (value: number) => Math.round((value / maxHp) * 100);
   const cost =
@@ -40,16 +41,12 @@ export function renderStatus(state: GameState, hpLoss = 0): string {
         <div class="stat-chips">
           <span class="stat-chip" data-tone="attack">${ICONS.sword}${stat('attack', 'ATK', String(attack))}</span>
           <span class="stat-chip" data-tone="defense">${ICONS.shield}${stat('defense', 'DEF', String(defense))}</span>
+          <span class="stat-chip" data-tone="gold">${ICONS.coin}${stat('gold', 'Gold', String(gold))}</span>
         </div>
       </div>
     </div>
     ${renderItems(state)}
   </section>`;
-}
-
-function itemLabel(itemId: string): string {
-  const reward = findItemRewardByItemId(itemId);
-  return reward?.grant === 'item' ? reward.label : itemId;
 }
 
 export function renderItems(state: GameState): string {
