@@ -75,7 +75,7 @@ export class WorldScene extends Phaser.Scene {
 
   create(): void {
     this.ready = true;
-    // The canvas tracks the window, so the zoom and camera bounds are
+    // The canvas tracks the window, so the camera size and zoom are
     // recomputed whenever it resizes.
     this.scale.on(Phaser.Scale.Events.RESIZE, (size: Phaser.Structs.Size) => {
       this.cameras.main.setSize(size.width, size.height);
