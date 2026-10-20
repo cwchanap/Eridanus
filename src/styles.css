@@ -91,9 +91,7 @@ body {
 /* ---------- HUD layout ---------- */
 
 /* The HUD floats over the full-window map. #ui ignores the pointer so only
-   the panels themselves take clicks. Keep the panels' footprint in step
-   with hudInsets() in src/phaser/viewport.ts, which lets the camera scroll
-   the map out from under them. */
+   the panels themselves take clicks. */
 #ui {
   position: absolute;
   inset: 0;
@@ -929,10 +927,9 @@ kbd {
 
 /* ---------- Narrower screens ---------- */
 
-/* Below NARROW_WIDTH in src/phaser/viewport.ts the side columns would
-   crowd the banner, so the hero card and journal share one capped row.
-   On short windows the cap shrinks — down to nothing — so the map keeps a
-   zoomed tile clear; hudInsets() mirrors the same clamp. "Short windows"
+/* Below 1024px the side columns would crowd the banner, so the hero card
+   and journal share one capped row. On short windows the cap shrinks —
+   down to nothing — so the map keeps a strip clear. "Short windows"
    below moves the row beside the banner before the cap gets that small,
    wherever the window is wide enough. */
 @media (max-width: 1023px) {
@@ -1010,8 +1007,7 @@ kbd {
    the capped row no height at all, which would hide every stat. Where the
    window is wide enough, the hero card and journal flank the banner in its
    own row instead: the card keeps HP and the stat chips, the banner tightens
-   to give them room, and anything more scrolls inside its panel. hudInsets()
-   then covers the banner row alone: keep the two in step. */
+   to give them room, and anything more scrolls inside its panel. */
 @media (min-width: 640px) and (max-width: 1023px) and (max-height: 459px) {
   #ui {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
