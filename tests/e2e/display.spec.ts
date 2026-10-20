@@ -1,5 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { MAPS } from '../../src/game/content';
+import type { MapId } from '../../src/game/types';
+import { TILE_SIZE } from '../../src/phaser/assets';
+import { logStrip, mapOrigin } from '../../src/phaser/mapFit';
+
 // A 2× screen: the canvas must size itself in device pixels or the
 // browser stretches it and the art blurs.
 test.use({ viewport: { width: 900, height: 700 }, deviceScaleFactor: 2 });
@@ -63,3 +68,81 @@ test('canvas fills the window at device-pixel resolution', async ({ page }) => {
   expect(resized.cssWidth).toBe(resized.innerWidth);
   expect(resized.cssHeight).toBe(resized.innerHeight);
 });
+
+// Boot straight onto a stair tile by writing the save the player would
+// have after stepping through its portal — the same localStorage
+// boundary startFreshRun clears in cross-floor.spec.ts.
+async function bootOnTile(
+  page: Page,
+  mapId: MapId,
+  tile: { x: number; y: number },
+): Promise<void> {
+  await page.goto('/');
+  await page.evaluate(
+    (save) => localStorage.setItem('eridanus.save', JSON.stringify(save)),
+    {
+      mapId,
+      tile,
+      player: { hp: 30, maxHp: 30, attack: 10, defense: 2 },
+      openedRewardIds: [],
+      defeatedEnemyIds: [],
+      openedShortcutIds: [],
+      itemIds: [],
+      factIds: [],
+      discoveredSectionIds: [],
+    },
+  );
+  await page.reload();
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    mapId,
+  );
+}
+
+// The required tower stairs put the arriving hero on bottom-centre tiles —
+// Floor 2's front landing (8,11) and Floor 3's entry vestibule (10,13) —
+// which the always-present message log used to cover whole at desktop
+// sizes. The camera now frames the map into the band above the log, so the
+// projected tile and the log's real bounding box must never meet.
+for (const view of [
+  { width: 1440, height: 900 },
+  { width: 1280, height: 720 },
+]) {
+  for (const [mapId, tile] of [
+    ['floor2', { x: 8, y: 11 }],
+    ['floor3', { x: 10, y: 13 }],
+  ] as const) {
+    test(`keeps the ${mapId} arrival stair clear of the log at ${view.width}x${view.height}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(view);
+      await bootOnTile(page, mapId, tile);
+
+      const layout = MAPS[mapId].layout;
+      const map = {
+        width: layout[0]!.length * TILE_SIZE,
+        height: layout.length * TILE_SIZE,
+      };
+      const strip = logStrip(view.width);
+      const origin = mapOrigin(view, map, strip);
+      const side = TILE_SIZE * origin.zoom;
+      const arrival = {
+        x: origin.x + tile.x * side,
+        y: origin.y + tile.y * side,
+        right: origin.x + (tile.x + 1) * side,
+        bottom: origin.y + (tile.y + 1) * side,
+      };
+
+      const log = await page.getByTestId('interaction').boundingBox();
+      if (!log) throw new Error('message log is not on screen');
+      expect(arrival.x, 'arrival tile left edge').toBeGreaterThanOrEqual(0);
+      expect(arrival.right, 'arrival tile right edge').toBeLessThanOrEqual(
+        view.width,
+      );
+      expect(arrival.y, 'arrival tile top edge').toBeGreaterThanOrEqual(0);
+      expect(arrival.bottom, 'arrival tile bottom edge').toBeLessThanOrEqual(
+        log.y,
+      );
+    });
+  }
+}

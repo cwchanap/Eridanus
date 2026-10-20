@@ -477,7 +477,9 @@ kbd {
   display: flex;
   /* A fixed size, so no message (the longest authored dialogue, or a
      refused move beside the encounter card) grows over more of the map.
-     Anything longer scrolls inside .log-body. */
+     Anything longer scrolls inside .log-body. The camera frames the map
+     into the band above this panel — mapFit.ts's logStrip reserves its
+     height plus the grid's bottom padding: keep the two in step. */
   height: 116px;
   padding: 0 18px;
 }
