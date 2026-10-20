@@ -33,10 +33,14 @@ export function createGame(
   });
   // Browser zoom and moving between screens change the pixel ratio, and
   // both fire resize. Resize first: setZoom restyles the canvas from it.
-  window.addEventListener('resize', () => {
+  const onResize = () => {
     const { width, height, zoom } = deviceSize(parent);
     game.scale.resize(width, height);
     game.scale.setZoom(zoom);
+  };
+  window.addEventListener('resize', onResize);
+  game.events.once(Phaser.Core.Events.DESTROY, () => {
+    window.removeEventListener('resize', onResize);
   });
   return { game, scene };
 }
