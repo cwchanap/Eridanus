@@ -3,7 +3,7 @@ import type { GameState } from './types';
 export function createInitialGameState(): GameState {
   return {
     mapId: 'village',
-    tile: { x: 11, y: 8 },
+    tile: { x: 15, y: 10 },
     player: { hp: 30, maxHp: 30, attack: 10, defense: 2, gold: 0 },
     openedRewardIds: [],
     defeatedEnemyIds: [],

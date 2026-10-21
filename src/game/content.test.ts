@@ -122,10 +122,10 @@ describe('isEntityBlocking', () => {
 
   it('rejects a save tile standing on an active npc through the tile wrapper', () => {
     expect(
-      isTileBlockedByEntity(createInitialGameState(), { x: 11, y: 7 }),
+      isTileBlockedByEntity(createInitialGameState(), { x: 15, y: 9 }),
     ).toBe(true);
     expect(
-      isTileBlockedByEntity(createInitialGameState(), { x: 10, y: 7 }),
+      isTileBlockedByEntity(createInitialGameState(), { x: 14, y: 9 }),
     ).toBe(false);
   });
 });
@@ -465,7 +465,7 @@ describe('validateContent failure branches', () => {
       {
         kind: 'clue',
         id: 'village-recovery',
-        tile: { x: 5, y: 3 },
+        tile: { x: 9, y: 3 },
         text: 'duplicate id',
       },
     ]);
@@ -479,7 +479,7 @@ describe('validateContent failure branches', () => {
       {
         kind: 'clue',
         id: 'stacked-clue',
-        tile: { x: 12, y: 6 },
+        tile: { x: 16, y: 8 },
         text: 'shares a tile',
       },
     ]);
@@ -508,7 +508,7 @@ describe('validateContent failure branches', () => {
       {
         kind: 'portal',
         id: 'village-to-floor1',
-        tile: { x: 12, y: 3 },
+        tile: { x: 23, y: 1 },
         target: { mapId: 'village', tile: { x: 0, y: 0 } },
       },
     ]);
@@ -522,8 +522,8 @@ describe('validateContent failure branches', () => {
       {
         kind: 'portal',
         id: 'village-to-floor1',
-        tile: { x: 12, y: 3 },
-        target: { mapId: 'village', tile: { x: 4, y: 3 } },
+        tile: { x: 23, y: 1 },
+        target: { mapId: 'village', tile: { x: 9, y: 3 } },
       },
     ]);
     expect(validateContent(maps)).toEqual([
@@ -570,14 +570,14 @@ describe('validateContent failure branches', () => {
       village: {
         ...village,
         sections: village.sections.map((section) =>
-          section.id === 'village-mine-trail'
-            ? { ...section, bounds: { ...section.bounds, maxX: 2 } }
+          section.id === 'village-barrow-path'
+            ? { ...section, bounds: { ...section.bounds, minX: 2 } }
             : section,
         ),
       },
     };
     expect(validateContent(maps)).toEqual([
-      'village: floor tiles not covered by a section: 3,9',
+      'village: floor tiles not covered by a section: 1,17, 1,18, 1,19',
     ]);
   });
 
@@ -588,9 +588,9 @@ describe('validateContent failure branches', () => {
         ...village,
         sections: village.sections.map((section) => {
           if (section.id === 'village-square')
-            return { ...section, bounds: { ...section.bounds, maxY: 7 } };
-          if (section.id === 'village-market')
-            return { ...section, bounds: { ...section.bounds, minY: 8 } };
+            return { ...section, bounds: { ...section.bounds, maxX: 14 } };
+          if (section.id === 'village-crypt-lane')
+            return { ...section, bounds: { ...section.bounds, minX: 15 } };
           return section;
         }),
       },
@@ -605,7 +605,7 @@ describe('validateContent failure branches', () => {
       {
         kind: 'clue',
         id: 'typo-clue',
-        tile: { x: 5, y: 3 },
+        tile: { x: 9, y: 3 },
         text: 'points nowhere',
         factId: 'not-a-fact',
       },
@@ -620,8 +620,8 @@ describe('validateContent failure branches', () => {
       {
         kind: 'portal',
         id: 'village-to-floor1',
-        tile: { x: 12, y: 3 },
-        target: { mapId: 'village', tile: { x: 4, y: 3 } },
+        tile: { x: 23, y: 1 },
+        target: { mapId: 'village', tile: { x: 9, y: 3 } },
         lock: {
           kind: 'item',
           requiresItemId: 'no-such-item',
@@ -641,8 +641,8 @@ describe('validateContent failure branches', () => {
       {
         kind: 'portal',
         id: 'fact-locked-portal',
-        tile: { x: 4, y: 3 },
-        target: { mapId: 'village', tile: { x: 5, y: 3 } },
+        tile: { x: 8, y: 3 },
+        target: { mapId: 'village', tile: { x: 9, y: 3 } },
         lock: {
           kind: 'fact',
           requiresFactId: 'not-a-fact',
@@ -653,8 +653,8 @@ describe('validateContent failure branches', () => {
       {
         kind: 'portal',
         id: 'fact-locked-portal-back',
-        tile: { x: 5, y: 3 },
-        target: { mapId: 'village', tile: { x: 4, y: 3 } },
+        tile: { x: 9, y: 3 },
+        target: { mapId: 'village', tile: { x: 8, y: 3 } },
       },
     ]);
     expect(validateContent(maps)).toEqual([
@@ -667,8 +667,8 @@ describe('validateContent failure branches', () => {
       {
         kind: 'portal',
         id: 'fact-locked-portal',
-        tile: { x: 4, y: 3 },
-        target: { mapId: 'village', tile: { x: 5, y: 3 } },
+        tile: { x: 8, y: 3 },
+        target: { mapId: 'village', tile: { x: 9, y: 3 } },
         lock: {
           kind: 'fact',
           requiresFactId: 'main-missing-person-lead',
@@ -679,8 +679,8 @@ describe('validateContent failure branches', () => {
       {
         kind: 'portal',
         id: 'fact-locked-portal-back',
-        tile: { x: 5, y: 3 },
-        target: { mapId: 'village', tile: { x: 4, y: 3 } },
+        tile: { x: 9, y: 3 },
+        target: { mapId: 'village', tile: { x: 8, y: 3 } },
       },
     ]);
     expect(validateContent(maps)).toEqual([

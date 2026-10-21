@@ -27,7 +27,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-to-village',
       tile: { x: 2, y: 14 },
       assetId: 'stairs-up',
-      target: { mapId: 'village', tile: { x: 12, y: 3 } },
+      target: { mapId: 'village', tile: { x: 23, y: 1 } },
     },
     {
       kind: 'portal',

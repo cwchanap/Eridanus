@@ -3,32 +3,40 @@ import type { MapDefinition } from '../types';
 export const village: MapDefinition = {
   id: 'village',
   name: 'Starting Village',
-  // The tower's foot fills the top centre, cottages line both sides, and
-  // the three shops face Market Row along the bottom. The Mine Trail and
-  // Crypt Lane run out to the sealed side mazes on the west and east.
+  // An open village in the middle, walled, with a gate on each side. The
+  // outskirts around it are a winding maze whose dead-end branches hold the
+  // tower stair (north) and the sealed Mine (west), Crypt (east) and Barrow
+  // (south-west). The top corners stay solid: the hero card and journal
+  // float over them.
   layout: [
-    '########################',
-    '#######..#######..######',
-    '#######..#######..######',
-    '####................####',
-    '####................####',
-    '####.###........###.####',
-    '####.###........###.####',
-    '####................####',
-    '####.##..........##.####',
-    '#....##..........##....#',
-    '####................####',
-    '#......................#',
-    '####.#######.######.####',
-    '########################',
-    '########################',
+    '#################################',
+    '#######.....#########.#...#######',
+    '#########.###########.###.#######',
+    '#######...................#######',
+    '#######.#######.#########.#######',
+    '#######.#...............#.#######',
+    '#######.#.###.......###.#.#######',
+    '#.....#.#.###.......###.#.#.....#',
+    '#####.#.#...............#.###.#.#',
+    '#...#.#.................#...#.#.#',
+    '#.#.#.#.#.##.........##.###.###.#',
+    '#.#...#.#.##..............#.#...#',
+    '#.#.###.#...............#.#.#.###',
+    '#.#.....#.#.#..#.#..#.#.#...#...#',
+    '#.#.#.###.###..###..###.#.###.#.#',
+    '#.....#.#...............#...#.#.#',
+    '#######.#########.#######.#.#.#.#',
+    '#.....#.........#.......#.#...#.#',
+    '#.#.###.#####.###.#.#.#.#.#####.#',
+    '#.#...................#.........#',
+    '#################################',
   ],
   entities: [
-    { kind: 'recovery', id: 'village-recovery', tile: { x: 12, y: 6 } },
+    { kind: 'recovery', id: 'village-recovery', tile: { x: 16, y: 8 } },
     {
       kind: 'npc',
       id: 'village-warden',
-      tile: { x: 11, y: 7 },
+      tile: { x: 15, y: 9 },
       assetId: 'npc-warden',
       name: 'Warden',
       introFactId: 'main-missing-person-lead',
@@ -36,14 +44,14 @@ export const village: MapDefinition = {
     {
       kind: 'npc',
       id: 'village-artisan',
-      tile: { x: 8, y: 4 },
+      tile: { x: 11, y: 8 },
       name: 'Artisan',
       introFactId: 'optional-heirloom-lead',
     },
     {
       kind: 'npc',
       id: 'village-scout',
-      tile: { x: 8, y: 2 },
+      tile: { x: 14, y: 5 },
       assetId: 'npc-scout',
       name: 'Scout',
       introFactId: 'optional-route-lead',
@@ -51,7 +59,7 @@ export const village: MapDefinition = {
     {
       kind: 'npc',
       id: 'village-scribe',
-      tile: { x: 15, y: 9 },
+      tile: { x: 20, y: 11 },
       assetId: 'npc-scribe',
       name: 'Scribe',
       introFactId: 'optional-ledger-lead',
@@ -59,7 +67,7 @@ export const village: MapDefinition = {
     {
       kind: 'npc',
       id: 'village-returned-subject',
-      tile: { x: 13, y: 8 },
+      tile: { x: 17, y: 9 },
       assetId: 'npc-subject',
       name: 'Returned Subject',
       introFactId: 'main-subject-returned',
@@ -68,28 +76,28 @@ export const village: MapDefinition = {
     {
       kind: 'npc',
       id: 'village-elder',
-      tile: { x: 19, y: 10 },
+      tile: { x: 22, y: 12 },
       assetId: 'npc-elder',
       name: 'Elder',
     },
     {
       kind: 'npc',
       id: 'village-guard',
-      tile: { x: 4, y: 10 },
+      tile: { x: 10, y: 9 },
       assetId: 'npc-guard',
       name: 'Guard',
     },
     {
       kind: 'npc',
       id: 'village-child',
-      tile: { x: 17, y: 1 },
+      tile: { x: 7, y: 1 },
       assetId: 'npc-child',
       name: 'Child',
     },
     {
       kind: 'shop',
       id: 'village-weapon-shop',
-      tile: { x: 4, y: 12 },
+      tile: { x: 11, y: 13 },
       assetId: 'npc-smith',
       name: 'Smith',
       wares: [
@@ -112,7 +120,7 @@ export const village: MapDefinition = {
     {
       kind: 'shop',
       id: 'village-armor-shop',
-      tile: { x: 12, y: 12 },
+      tile: { x: 16, y: 13 },
       assetId: 'npc-armorer',
       name: 'Armorer',
       wares: [
@@ -135,7 +143,7 @@ export const village: MapDefinition = {
     {
       kind: 'shop',
       id: 'village-item-shop',
-      tile: { x: 19, y: 12 },
+      tile: { x: 21, y: 13 },
       assetId: 'npc-merchant',
       name: 'Merchant',
       wares: [
@@ -158,7 +166,7 @@ export const village: MapDefinition = {
     {
       kind: 'portal',
       id: 'village-to-floor1',
-      tile: { x: 12, y: 3 },
+      tile: { x: 23, y: 1 },
       assetId: 'stairs-down',
       target: { mapId: 'floor1', tile: { x: 2, y: 14 } },
       factId: 'village-tower-stairs-used',
@@ -166,43 +174,55 @@ export const village: MapDefinition = {
     {
       kind: 'sealed',
       id: 'village-mine-entrance',
-      tile: { x: 1, y: 9 },
+      tile: { x: 1, y: 7 },
       assetId: 'stairs-sealed',
       text: 'Fallen timbers choke the old mine shaft. The way in is sealed for now.',
     },
     {
       kind: 'sealed',
       id: 'village-crypt-entrance',
-      tile: { x: 22, y: 9 },
+      tile: { x: 29, y: 9 },
       assetId: 'stairs-sealed',
       text: 'An iron grate bars the crypt stair, its lock rusted shut. The way in is sealed for now.',
+    },
+    {
+      kind: 'sealed',
+      id: 'village-barrow-entrance',
+      tile: { x: 1, y: 19 },
+      assetId: 'stairs-sealed',
+      text: 'A great stone rolled across the barrow mouth will not budge. The way in is sealed for now.',
     },
   ],
   sections: [
     {
       id: 'village-square',
       name: 'Village Square',
-      bounds: { minX: 4, maxX: 19, minY: 4, maxY: 10 },
-    },
-    {
-      id: 'village-tower-road',
-      name: 'Tower Road',
-      bounds: { minX: 4, maxX: 19, minY: 1, maxY: 3 },
-    },
-    {
-      id: 'village-mine-trail',
-      name: 'Mine Trail',
-      bounds: { minX: 1, maxX: 3, minY: 4, maxY: 10 },
-    },
-    {
-      id: 'village-crypt-lane',
-      name: 'Crypt Lane',
-      bounds: { minX: 20, maxX: 22, minY: 4, maxY: 10 },
+      bounds: { minX: 8, maxX: 24, minY: 4, maxY: 16 },
     },
     {
       id: 'village-market',
       name: 'Market Row',
-      bounds: { minX: 1, maxX: 22, minY: 11, maxY: 12 },
+      bounds: { minX: 9, maxX: 23, minY: 12, maxY: 15 },
+    },
+    {
+      id: 'village-tower-road',
+      name: 'Tower Road',
+      bounds: { minX: 1, maxX: 31, minY: 1, maxY: 3 },
+    },
+    {
+      id: 'village-mine-trail',
+      name: 'Mine Trail',
+      bounds: { minX: 1, maxX: 7, minY: 4, maxY: 16 },
+    },
+    {
+      id: 'village-crypt-lane',
+      name: 'Crypt Lane',
+      bounds: { minX: 25, maxX: 31, minY: 4, maxY: 16 },
+    },
+    {
+      id: 'village-barrow-path',
+      name: 'Barrow Path',
+      bounds: { minX: 1, maxX: 31, minY: 17, maxY: 19 },
     },
   ],
 };

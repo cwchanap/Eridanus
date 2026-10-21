@@ -63,7 +63,7 @@ describe('saveGame/loadGame', () => {
   });
 
   it('round-trips ordinary movement position', () => {
-    const moved = { ...createInitialGameState(), tile: { x: 10, y: 9 } };
+    const moved = { ...createInitialGameState(), tile: { x: 14, y: 10 } };
     saveGame(storage, moved);
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state: moved });
   });
@@ -326,7 +326,7 @@ describe('saveGame/loadGame', () => {
       'eridanus.save',
       JSON.stringify({
         ...createInitialGameState(),
-        tile: { x: 12, y: 6 },
+        tile: { x: 16, y: 8 },
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -340,7 +340,7 @@ describe('saveGame/loadGame', () => {
       'eridanus.save',
       JSON.stringify({
         ...createInitialGameState(),
-        tile: { x: 11, y: 7 },
+        tile: { x: 15, y: 9 },
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -351,8 +351,8 @@ describe('saveGame/loadGame', () => {
 
   it('rejects a save standing on a shop counter or a sealed entrance', () => {
     for (const tile of [
-      { x: 4, y: 12 },
-      { x: 1, y: 9 },
+      { x: 11, y: 13 },
+      { x: 1, y: 7 },
     ]) {
       storage.setItem(
         'eridanus.save',

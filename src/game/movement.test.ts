@@ -67,7 +67,7 @@ describe('attemptMove', () => {
   });
 
   it('steps on portal and travels', () => {
-    const state = { ...base, mapId: 'village' as const, tile: { x: 13, y: 3 } };
+    const state = { ...base, mapId: 'village' as const, tile: { x: 24, y: 1 } };
     const result = attemptMove(state, 'west');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -171,7 +171,7 @@ describe('attemptMove', () => {
   });
 
   it('arriving on floor one discovers the entry court and the treasury', () => {
-    const state = { ...base, mapId: 'village' as const, tile: { x: 13, y: 3 } };
+    const state = { ...base, mapId: 'village' as const, tile: { x: 24, y: 1 } };
     const result = attemptMove(state, 'west');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
