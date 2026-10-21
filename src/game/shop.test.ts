@@ -15,10 +15,10 @@ function shop(id: string): ShopEntity {
 const smith = shop('village-weapon-shop');
 const merchant = shop('village-item-shop');
 
-// Standing on Market Row in front of the smith's counter (4,12).
+// Standing on Market Row in front of the smith's counter (11,13).
 const atSmith: GameState = {
   ...createInitialGameState(),
-  tile: { x: 4, y: 11 },
+  tile: { x: 11, y: 12 },
   player: { ...createInitialGameState().player, gold: 20 },
 };
 
@@ -120,8 +120,8 @@ describe('shops', () => {
 
 describe('sealed maze entrances', () => {
   it('show their text, keep the hero in place, and record nothing', () => {
-    // (2,9) is the Mine Trail tile beside the sealed mine at (1,9).
-    const state = { ...createInitialGameState(), tile: { x: 2, y: 9 } };
+    // (2,7) is the Mine Trail tile beside the sealed mine at (1,7).
+    const state = { ...createInitialGameState(), tile: { x: 2, y: 7 } };
     const result = attemptMove(state, 'west');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -132,8 +132,8 @@ describe('sealed maze entrances', () => {
 
 describe('ambient villagers', () => {
   it('talk without recording a fact', () => {
-    // The elder stands at (19,10); (18,10) is beside them.
-    const state = { ...createInitialGameState(), tile: { x: 18, y: 10 } };
+    // The elder stands at (22,12); (21,12) is beside them.
+    const state = { ...createInitialGameState(), tile: { x: 21, y: 12 } };
     const result = attemptMove(state, 'east');
     expect(result.ok && result.effect).toEqual({
       kind: 'dialogue',

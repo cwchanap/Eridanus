@@ -21,30 +21,39 @@ Hapadona asked for a richer village:
 
 ## Layout
 
-The village grows from 14×10 to 24×15, the same width as Floor 1 so its tiles render no smaller than the tower's.
+After a first 24×15 pass, Hapadona asked for a bigger village with more maze to it: a central village region, and an edge with a few branches out to the other mazes. The village is now 33×21.
 
 ```
-     012345678901234567890123
- 0   ########################
- 1   #######..#######.c######   the tower's foot fills the top centre
- 2   #######.k#######..######
- 3   ####........>.......####   Tower Road, tower stair at (12,3)
- 4   ####....a...........####
- 5   ####.###........###.####
- 6   ####.###....+...###.####   well (12,6)
- 7   ####.......W........####   Warden (11,7)
- 8   ####.##....@.r...##.####   start (11,8), returned subject (13,8)
- 9   #M...##........s.##...C#   sealed Mine (1,9) and Crypt (22,9)
-10   ####G..............E####
-11   #......................#   Market Row
-12   ####1#######2######3####   Smith, Armorer, Merchant counters
-13   ########################
-14   ########################
+     012345678901234567890123456789012
+ 0   #################################
+ 1   #######c....#########.#>..#######   tower stair (23,1)
+ 2   #########.###########.###.#######
+ 3   #######...................#######   Tower Road
+ 4   #######.#######.#########.#######   north gate (15,4)
+ 5   #######.#.....k.........#.#######
+ 6   #######.#.###.......###.#.#######
+ 7   #M....#.#.###.......###.#.#.....#   sealed Mine (1,7)
+ 8   #####.#.#..a....+.......#.###.#.#   well (16,8)
+ 9   #...#.#...G....W.r......#...#C#.#   west gate (8,9), sealed Crypt (29,9)
+10   #.#.#.#.#.##...@.....##.###.###.#   start (15,10)
+11   #.#...#.#.##........s.....#.#...#   east gate (24,11)
+12   #.#.###.#.............E.#.#.#.###
+13   #.#.....#.#1#..#2#..#3#.#...#...#   Smith, Armorer, Merchant counters
+14   #.#.#.###.###..###..###.#.###.#.#
+15   #.....#.#...............#...#.#.#
+16   #######.#########.#######.#.#.#.#   south gate (17,16)
+17   #.....#.........#.......#.#...#.#
+18   #.#.###.#####.###.#.#.#.#.#####.#
+19   #B#...................#.........#   sealed Barrow (1,19)
+20   #################################
 ```
 
-`k` scout, `c` child, `a` artisan, `s` scribe, `G` guard, `E` elder. Sections: Village Square (contains the start), Tower Road, Mine Trail, Crypt Lane, Market Row.
+`W` warden, `r` returned subject, `a` artisan, `k` scout, `s` scribe, `G` guard, `E` elder, `c` child.
 
-Key spots stay off the screen edges the floating HUD covers: the tower stair sits below the location banner, Tower Road stops short of the hero card and journal corners, and the shop counters face the bottom row, which is always clear of the message log.
+- **Centre:** the Village Square (x 9–23, y 5–15) is walled, with one gate per side. Inside are two cottages, two sheds, the well, the quest NPCs, and the three shops along Market Row (a section nested in the square, so the banner names it).
+- **Outskirts:** the ring between the square's wall and the map edge is a winding maze. It was generated once as a seeded maze with a few extra loops, then hand-tuned, and is authored as fixed rows like every other map. Its dead-end branches hold the tower stair (north), the sealed Mine (west), the sealed Crypt (east) and a new sealed Barrow (south-west). The Child hides in a north-west branch.
+- **Sections:** Village Square, Market Row, Tower Road (north band), Mine Trail (west band), Crypt Lane (east band), and Barrow Path (south band).
+- **Clear of the HUD:** at desktop sizes the top corners, under the hero card and the journal, are solid, and the outskirts' row 1 is walled under the location banner. The tower route therefore runs along row 3, below the banner. The how-to-play card covers part of the west outskirts, but only on a fresh run until the first word with the Warden, who stands directly above the start.
 
 ## Gold
 
@@ -68,7 +77,7 @@ Key spots stay off the screen edges the floating HUD covers: the tower stair sit
 
 ## NPCs
 
-- Three ambient villagers: Elder (by Crypt Lane), Guard (by the Mine Trail), and Child (in the nook east of the tower). Each has one static line, and the Child's line explains gold.
+- Three ambient villagers: Elder (by the east gate), Guard (by the west gate), and Child (in a north-west branch of the outskirts). Each has one static line, and the Child's line explains gold.
 - `NpcEntity.introFactId` becomes optional: ambient villagers carry no lead, so talking to them records nothing and does not retire the how-to-play card.
 - New sprites follow the HPA-442 recolor rule: the village guide with a terracotta (Smith), teal (Armorer), gold (Merchant), silver (Elder), or black (Guard) dress, and a pink, smaller Child, still inside one 32×32 cell. `stairs-sealed` is the down-stair darkened with a rust cast.
 
@@ -80,7 +89,7 @@ New entity kind `sealed` (`text`). It blocks like a clue and reuses the `accessL
 
 A wider village on a phone held upright is limited by the window's width, which leaves vertical slack. The camera used to centre the map in the band above the log, which put the top rows under the stacked banner, hero card, and journal. Now the map rests on the log strip and the slack goes to the top, where those panels are. Maps that fill the band, which covers every desktop and short-window case today, render exactly as before.
 
-At 683×325 the location banner still covers the village's top rows, as it already covers every tower floor's. That is a limit of the short-window HUD, not of this map.
+At 683×325 the 33×21 village renders at about 9 px per tile, and the location banner covers its top rows, as it already covers every tower floor's. That is a limit of the short-window HUD, not of this map.
 
 ## Testing
 

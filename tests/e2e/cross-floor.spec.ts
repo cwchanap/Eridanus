@@ -208,16 +208,40 @@ async function descendToFloor1RearWing(page: Page): Promise<void> {
   await press(page, 'ArrowRight', 8);
 }
 
+// The village's tower stair (23,1) sits at the end of a branch of the
+// north outskirts. From (15,5), just inside the north gate: Up x2 through
+// the gate to (15,3), Right x10 to (25,3), Up x2, Left x2: the stair →
+// Floor 1 (2,14).
+async function walkNorthGateToTower(page: Page): Promise<void> {
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 10);
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowLeft', 2);
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'floor1',
+  );
+}
+
+// The same branch walked back: from the tower stair arrival (23,1) to
+// (15,5), just inside the north gate.
+async function walkTowerToNorthGate(page: Page): Promise<void> {
+  await press(page, 'ArrowRight', 2);
+  await press(page, 'ArrowDown', 2);
+  await press(page, 'ArrowLeft', 10);
+  await press(page, 'ArrowDown', 2);
+}
+
 async function handCoreToWarden(
   page: Page,
   endingLineId: string,
 ): Promise<void> {
-  // Village arrival is the tower stair (12,3). Left, Down x3 to (11,6),
-  // passing west of the well (12,6) without drinking
-  await press(page, 'ArrowLeft', 1);
+  // Back through the north gate to (15,5), Down x3 to (15,8), passing
+  // west of the well (16,8) without drinking
+  await walkTowerToNorthGate(page);
   await press(page, 'ArrowDown', 3);
 
-  // Down: bump village-warden at (11,7) — carrying the core ends the
+  // Down: bump village-warden at (15,9) — carrying the core ends the
   // story. The ending lines are the longest authored dialogue.
   const box = await messageBox(page);
   await press(page, 'ArrowDown', 1);
@@ -308,7 +332,7 @@ test('completes the required-only MVP route', async ({ page }) => {
   await startFreshRun(page);
   await expect(page.getByTestId('how-to-play')).toBeVisible();
 
-  // Up: bump village-warden (11,7) from the start tile (11,8)
+  // Up: bump village-warden (15,9) from the start tile (15,10)
   await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
@@ -334,16 +358,15 @@ test('completes the required-only MVP route', async ({ page }) => {
   await expect(journal).toHaveAttribute('data-open', 'true');
   await press(page, 'ArrowLeft', 1);
 
-  // Right x2, Up x5, Left: up the east side of the square to the tower
-  // stair (12,3) → Floor 1 (2,14), without bumping the artisan, scout, or
-  // scribe (the required route skips every optional lead)
-  await press(page, 'ArrowRight', 2);
-  await press(page, 'ArrowUp', 5);
+  // Left, Up x2 to (14,8), Right to (15,8), Up x3 to (15,5) — passing
+  // the well and the scout without bumping them — then out through the
+  // north outskirts to the tower stair. The required route skips every
+  // optional lead.
   await press(page, 'ArrowLeft', 1);
-  await expect(page.getByTestId('map-name')).toHaveAttribute(
-    'data-map-id',
-    'floor1',
-  );
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 1);
+  await press(page, 'ArrowUp', 3);
+  await walkNorthGateToTower(page);
   await expect(page.locator('[data-section="floor1-entry-court"]')).toHaveCount(
     1,
   );
@@ -497,18 +520,18 @@ test('completes the explorer MVP route with expanded ending context', async ({
   test.slow();
   await startFreshRun(page);
 
-  // Up: bump village-warden (11,7) from the start tile (11,8)
+  // Up: bump village-warden (15,9) from the start tile (15,10)
   await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'dialogue',
   );
 
-  // Every optional lead before leaving. Left x3, Up x3 to (8,5); Up: bump
-  // village-artisan (8,4) and stay put
+  // Every optional lead before leaving. Left x3, Up x2 to (12,8); Left:
+  // bump village-artisan (11,8) and stay put
   await press(page, 'ArrowLeft', 3);
-  await press(page, 'ArrowUp', 3);
-  await press(page, 'ArrowUp', 1);
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowLeft', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'dialogue',
@@ -517,12 +540,11 @@ test('completes the explorer MVP route with expanded ending context', async ({
     'data-line',
     'artisan-find-workshop',
   );
-  // Right, Up x2, Left to (8,3); Up: bump village-scout in the tower-side
-  // nook (8,2)
+  // Right, Up x3 to (13,5); Right: bump village-scout (14,5) by the
+  // north gate
   await press(page, 'ArrowRight', 1);
-  await press(page, 'ArrowUp', 2);
-  await press(page, 'ArrowLeft', 1);
-  await press(page, 'ArrowUp', 1);
+  await press(page, 'ArrowUp', 3);
+  await press(page, 'ArrowRight', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'dialogue',
@@ -531,14 +553,11 @@ test('completes the explorer MVP route with expanded ending context', async ({
     'data-line',
     'scout-find-marks',
   );
-  // Right, Down, Right x6 to (15,4) — along row 4, clear of the tower
-  // stair (12,3); Down x4 to (15,8) — crossing the returned subject's
-  // row while it is still empty; Down: bump village-scribe (15,9)
-  await press(page, 'ArrowRight', 1);
-  await press(page, 'ArrowDown', 1);
+  // Down x6 to (13,11); Right x6 to (19,11); Right: bump village-scribe
+  // (20,11)
+  await press(page, 'ArrowDown', 6);
   await press(page, 'ArrowRight', 6);
-  await press(page, 'ArrowDown', 4);
-  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowRight', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'dialogue',
@@ -548,16 +567,11 @@ test('completes the explorer MVP route with expanded ending context', async ({
     'scribe-find-ledger',
   );
 
-  // Up x4 to (15,4), Left x2, Up to (13,3), Left: tower stair (12,3)
-  // → Floor 1 (2,14)
-  await press(page, 'ArrowUp', 4);
-  await press(page, 'ArrowLeft', 2);
-  await press(page, 'ArrowUp', 1);
-  await press(page, 'ArrowLeft', 1);
-  await expect(page.getByTestId('map-name')).toHaveAttribute(
-    'data-map-id',
-    'floor1',
-  );
+  // Up x6 to (19,5) — past the returned subject's (17,9) tile, still
+  // empty — Left x4 to (15,5), then out to the tower stair
+  await press(page, 'ArrowUp', 6);
+  await press(page, 'ArrowLeft', 4);
+  await walkNorthGateToTower(page);
   await expect(page.locator('[data-section="floor1-entry-court"]')).toHaveCount(
     1,
   );
@@ -796,7 +810,7 @@ test('completes the explorer MVP route with expanded ending context', async ({
   );
 
   // Left x2: cross the rear latch (10,8). Then through the defeated
-  // sentry's gap down to the village portal → village (12,3)
+  // sentry's gap down to the village portal → village (23,1)
   await press(page, 'ArrowLeft', 2);
   await press(page, 'ArrowDown', 2);
   await press(page, 'ArrowLeft', 1);
@@ -811,19 +825,22 @@ test('completes the explorer MVP route with expanded ending context', async ({
     'village',
   );
 
-  // Right, Down x4 to (13,7); Down: bump village-returned-subject (13,8)
-  await press(page, 'ArrowRight', 1);
-  await press(page, 'ArrowDown', 4);
+  // Back to (15,5), Right x2, Down x3 to (17,8); Down: bump
+  // village-returned-subject (17,9)
+  await walkTowerToNorthGate(page);
+  await press(page, 'ArrowRight', 2);
+  await press(page, 'ArrowDown', 3);
   await press(page, 'ArrowDown', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'dialogue',
   );
 
-  // Village (13,7) -> Up x4, Left: village-to-floor1 (12,3) -> Floor 1
-  // (2,14)
-  await press(page, 'ArrowUp', 4);
-  await press(page, 'ArrowLeft', 1);
+  // Village (17,8) -> Up x3, Left x2 to (15,5) -> village-to-floor1
+  // (23,1) -> Floor 1 (2,14)
+  await press(page, 'ArrowUp', 3);
+  await press(page, 'ArrowLeft', 2);
+  await walkNorthGateToTower(page);
 
   // Floor 1 (2,14) -> front Floor-2 stair (9,2) -> Floor 2 (8,11). The
   // 8th Up claims the uncollected floor1-ledger-fragment at (3,4) (a

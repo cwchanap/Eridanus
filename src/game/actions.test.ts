@@ -305,12 +305,12 @@ describe('actions', () => {
   });
 
   it('activates the village subject only after the return and repeats the shared fact idempotently', () => {
-    const before = { ...createInitialGameState(), tile: { x: 13, y: 7 } };
+    const before = { ...createInitialGameState(), tile: { x: 17, y: 8 } };
     expect(getActiveEntityAt(before, returnedSubject.tile)).toBeUndefined();
     const passesThrough = attemptMove(before, 'south');
     expect(passesThrough.ok && passesThrough.state.tile).toEqual({
-      x: 13,
-      y: 8,
+      x: 17,
+      y: 9,
     });
 
     const after = { ...before, factIds: ['main-subject-returned'] };

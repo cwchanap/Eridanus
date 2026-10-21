@@ -30,8 +30,8 @@ async function press(
 }
 
 test('the smith sells wares in order for gold', async ({ page }) => {
-  // (4,11) is Market Row in front of the smith's counter (4,12).
-  await bootInVillage(page, { x: 4, y: 11 }, 20);
+  // (11,12) is Market Row in front of the smith's counter (11,13).
+  await bootInVillage(page, { x: 11, y: 12 }, 20);
   await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 20');
 
   // Down: the counter offers the first ware; Escape leaves without buying.
@@ -72,8 +72,8 @@ test('the smith sells wares in order for gold', async ({ page }) => {
 test('a sealed maze entrance turns the hero back and saves nothing', async ({
   page,
 }) => {
-  // (2,9) is the Mine Trail beside the sealed mine (1,9).
-  await bootInVillage(page, { x: 2, y: 9 }, 0);
+  // (2,7) is the Mine Trail beside the sealed mine (1,7).
+  await bootInVillage(page, { x: 2, y: 7 }, 0);
   const before = await page.evaluate(() =>
     localStorage.getItem('eridanus.save'),
   );

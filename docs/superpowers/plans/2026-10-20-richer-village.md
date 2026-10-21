@@ -38,7 +38,8 @@
 
 **Files:** `src/game/content/village.ts`, `src/game/content/floor1.ts`, `src/game/state.ts`, `src/phaser/assets.ts`, `public/assets/{characters,interactables}/*.png`, `docs/art/style-guide.md`
 
-- [x] Author the 24×15 village, its five sections, and the moved tower stair (Floor 1's return portal follows it).
+- [x] Author the 33×21 village: a walled square with four gates, a maze of outskirts around it (seeded once, hand-tuned, then fixed in content), its six sections, and the moved tower stair (Floor 1's return portal follows it).
+- [x] Put the tower stair and the sealed Mine, Crypt, and Barrow at the ends of outskirt branches; keep the top corners solid and row 1 walled under the banner.
 - [x] Move the start tile below the Warden.
 - [x] Add the six villager recolors and `stairs-sealed`, each exactly 32×32.
 
