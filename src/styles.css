@@ -630,6 +630,22 @@ kbd {
   filter: grayscale(1) brightness(0.65);
 }
 
+/* The message log shows the 64px busts at 1.5x, filling the box's height:
+   98px plus 8px above and below meets the log's 114px inside. */
+.log-body:has(.portrait) {
+  padding-block: 8px;
+}
+
+.log .portrait {
+  width: 98px;
+  height: 98px;
+}
+
+.log .portrait img {
+  width: 96px;
+  height: 96px;
+}
+
 .encounter-info {
   flex: 1;
   min-width: 0;
@@ -1004,6 +1020,17 @@ kbd {
 
   .hero .portrait {
     display: none;
+  }
+
+  /* The log's bust drops to 1x to leave the text and buttons room. */
+  .log .portrait {
+    width: 66px;
+    height: 66px;
+  }
+
+  .log .portrait img {
+    width: 64px;
+    height: 64px;
   }
 
   .stat-chips {

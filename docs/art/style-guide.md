@@ -80,6 +80,20 @@ Until bespoke art exists, cast variety comes from recolors of the HPA-22 sprites
 
 Recolors shift only the clothing/armour hue bands; skin, eyes, and the shared hat/apron stay untouched so the set reads as one style.
 
+## Panel portraits
+
+The hero card and the dialogue, shop and fight cards show 64×64 busts from `public/assets/portraits/`, keyed in `PORTRAIT_PATHS` by the sprite they stand in for. They are DOM-only, so the one-cell rule does not apply; a sprite without a bust falls back to itself. Each character keeps its sprite's colour identity.
+
+The set was generated with the Codex CLI's built-in image tool (gpt-image), one run per character, all from this prompt with only the key colour and the character line changing:
+
+> Image: a character portrait for a retro fantasy RPG dialogue panel, in crisp 16-bit SNES-era JRPG pixel-art style. Square 1:1 image. Front-facing head-and-shoulders bust, centered, the head and shoulders fill the frame and the shoulders run off the bottom edge. Chunky, clearly visible square pixels on a coarse grid (as if drawn at 64x64 and scaled up with nearest-neighbour), limited palette of about 16-24 colours, a dark 1-pixel outline around the figure, simple cel shading with light coming from the upper left. No anti-aliasing, no gradients, no dithering noise, no text, no frame, no border, no drop shadow.
+> Background: a completely flat, solid, uniform #FF00FF colour filling everything behind the character, with no texture, vignette, or shadow, and that colour must not appear anywhere on the character.
+> Character: (one line, e.g. "stern older village warden, short grey beard, teal cloak with gold clasps")
+
+Use a #00FF00 key when the character wears magenta (the child). Ask for glowing eyes and visors to be "big, bright, clearly visible", or they vanish at 64 px.
+
+Post-processing: key the background out to full transparency (including key colour blended into the outline), crop square to the figure, reduce to a 48-colour palette without dithering (reserve a few slots for small glowing accents), then downscale to 64×64 by majority colour per block, letting outlines and glow colours win. Alpha is strictly 0 or 255. `assets.test.ts` fails if a bust is missing or not 64×64.
+
 ## Rejected / corrected generation artifacts
 
 - Do not use whole-room wall-frame cells as one wall tile; repeating them creates tiny-room patterns. Use repeatable masonry crops.

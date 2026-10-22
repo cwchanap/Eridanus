@@ -1,6 +1,6 @@
 import { itemLabel } from '../game/content';
 import type { GameState } from '../game/types';
-import { ASSET_PATHS } from '../phaser/assets';
+import { PORTRAIT_SIZE, resolvePortraitPath } from '../phaser/assets';
 import { ICONS } from './icons';
 
 type HpLevel = 'high' | 'mid' | 'low';
@@ -31,7 +31,7 @@ export function renderStatus(state: GameState, hpLoss = 0): string {
     hpLoss > 0 ? ` <span class="hp-cost-label">−${hpLoss}</span>` : '';
   return `<section class="panel hud" data-testid="hud" aria-label="Player status">
     <div class="hero">
-      <div class="portrait"><img src="${ASSET_PATHS['player-south']}" alt="" width="64" height="64"></div>
+      <div class="portrait"><img src="${resolvePortraitPath('player-south')}" alt="" width="${PORTRAIT_SIZE}" height="${PORTRAIT_SIZE}"></div>
       <div class="vitals">
         <div class="vital-row">
           <h2 class="hud-name">Hero</h2>

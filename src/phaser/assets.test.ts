@@ -6,9 +6,12 @@ import { createInitialGameState } from '../game/state';
 import type { EnemyEntity, NpcEntity, RewardEntity } from '../game/types';
 import {
   ASSET_PATHS,
+  PORTRAIT_PATHS,
+  PORTRAIT_SIZE,
   TILE_SIZE,
   resolveEntityAsset,
   resolvePlayerAsset,
+  resolvePortraitPath,
   resolveTerrainAssets,
   runtimeAssetFilePath,
 } from './assets';
@@ -255,6 +258,40 @@ describe('asset seam', () => {
         TILE_SIZE,
         TILE_SIZE,
       ]);
+    }
+  });
+
+  it('gives the hero and every npc, shopkeeper and enemy a portrait', () => {
+    expect(resolvePortraitPath('player-south')).toBe(
+      PORTRAIT_PATHS['player-south'],
+    );
+    for (const map of Object.values(MAPS)) {
+      const state = { ...createInitialGameState(), mapId: map.id };
+      for (const entity of map.entities) {
+        if (!['npc', 'shop', 'enemy'].includes(entity.kind)) continue;
+        const sprite = resolveEntityAsset(entity, state);
+        expect(sprite && PORTRAIT_PATHS[sprite], entity.id).toBeTruthy();
+      }
+    }
+  });
+
+  it('falls back to the sprite where no portrait exists', () => {
+    expect(resolvePortraitPath('stairs-up')).toBe(ASSET_PATHS['stairs-up']);
+  });
+
+  it('ships every portrait as a square panel image', () => {
+    for (const [key, path] of Object.entries(PORTRAIT_PATHS)) {
+      expect(path, `${key} must live under assets/portraits/`).toMatch(
+        /^assets\/portraits\//,
+      );
+      const file = resolve(`public/${path}`);
+      expect(existsSync(file), `${key} portrait missing`).toBe(true);
+
+      const png = readFileSync(file);
+      expect(
+        [png.readUInt32BE(16), png.readUInt32BE(20)],
+        `${key} portrait size`,
+      ).toEqual([PORTRAIT_SIZE, PORTRAIT_SIZE]);
     }
   });
 });

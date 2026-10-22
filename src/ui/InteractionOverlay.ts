@@ -11,8 +11,9 @@ import { findEntityById, findSectionsAt, MAPS } from '../game/content';
 import { DIALOGUE_LINES } from '../game/content/dialogue';
 import type { JournalView } from '../game/journal';
 import {
-  ASSET_PATHS,
+  PORTRAIT_SIZE,
   resolveEntityAsset,
+  resolvePortraitPath,
   type AssetKey,
 } from '../phaser/assets';
 import { renderHowToPlay } from './HowToPlay';
@@ -122,7 +123,7 @@ function renderLocation(state: GameState, mapName: string): string {
 
 function renderPortrait(assetKey: AssetKey | null, tone: string): string {
   return assetKey
-    ? `<div class="portrait" data-tone="${tone}"><img src="${ASSET_PATHS[assetKey]}" alt="" width="64" height="64"></div>`
+    ? `<div class="portrait" data-tone="${tone}"><img src="${resolvePortraitPath(assetKey)}" alt="" width="${PORTRAIT_SIZE}" height="${PORTRAIT_SIZE}"></div>`
     : '';
 }
 
