@@ -22,7 +22,25 @@ export type SfxCue =
   | 'locked';
 
 // Cues with a recorded file. Add a cue here once its .wav is in place.
-export const SFX_FILES: ReadonlySet<SfxCue> = new Set<SfxCue>([]);
+export const SFX_FILES: ReadonlySet<SfxCue> = new Set<SfxCue>([
+  'move',
+  'bump',
+  'stair',
+  'clue',
+  'pickup',
+  'heal',
+  'latch',
+  'encounter',
+  'hit',
+  'win',
+  'lose',
+  'buy',
+  'deny',
+  'dialogue',
+  'confirm',
+  'cancel',
+  'locked',
+]);
 
 // One oscillator blip: starts `at` seconds into the cue, optionally sliding
 // to `to` Hz over its duration.
