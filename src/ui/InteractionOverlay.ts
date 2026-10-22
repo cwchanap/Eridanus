@@ -239,6 +239,8 @@ function renderMessage(view: OverlayView): string {
 
 const SCROLLING_PANELS = ['.journal-body', '.hud-left'] as const;
 
+export type SoundToggle = { readonly muted: boolean; toggleMuted(): void };
+
 export class InteractionOverlay {
   // Whether the journal is folded is a view preference, not game state, so
   // it is never saved. The last view is kept so J can re-render on its own.
@@ -252,13 +254,24 @@ export class InteractionOverlay {
     private readonly root: HTMLElement,
     private readonly onConfirm: () => void,
     private readonly onCancel: () => void,
+    private readonly sound: SoundToggle,
   ) {
     window.addEventListener('keydown', (event) => {
-      if (event.key !== 'j' && event.key !== 'J') return;
       if (event.repeat || event.ctrlKey || event.metaKey || event.altKey)
         return;
-      this.toggleJournal();
+      const key = event.key.toLowerCase();
+      if (key === 'j') this.toggleJournal();
+      if (key === 'm') this.toggleSound();
     });
+  }
+
+  private toggleSound(): void {
+    if (!this.view) return;
+    const toggle = '[data-action="toggle-sound"]';
+    const hadFocus = document.activeElement?.matches(toggle) ?? false;
+    this.sound.toggleMuted();
+    this.render(this.view);
+    if (hadFocus) this.root.querySelector<HTMLElement>(toggle)?.focus();
   }
 
   private toggleJournal(): void {
@@ -286,7 +299,7 @@ export class InteractionOverlay {
         ${renderHowToPlay(state)}
       </div>
       ${renderLocation(state, mapName)}
-      ${renderJournal(journal, this.journalOpen)}
+      ${renderJournal(journal, this.journalOpen, this.sound.muted)}
       <section class="panel log" data-testid="interaction" aria-label="Messages"><div class="log-body">${renderMessage(view)}</div></section>`;
     for (const selector of SCROLLING_PANELS) {
       const panel = this.root.querySelector(selector);
@@ -301,6 +314,9 @@ export class InteractionOverlay {
     this.root
       .querySelector<HTMLButtonElement>('[data-action="toggle-journal"]')
       ?.addEventListener('click', () => this.toggleJournal());
+    this.root
+      .querySelector<HTMLButtonElement>('[data-action="toggle-sound"]')
+      ?.addEventListener('click', () => this.toggleSound());
   }
 
   renderInvalidSave(onReset: () => void): void {
