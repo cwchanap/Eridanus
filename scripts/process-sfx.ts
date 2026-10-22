@@ -5,8 +5,8 @@
 //   bun run sfx <cue> <take.mp3> [out.wav]
 //
 // To redo a cue: generate new takes in ElevenLabs (model
-// eleven_text_to_sound_v2) from the prompt and duration below, pick one, and
-// run this on it. Needs ffmpeg on PATH.
+// eleven_text_to_sound_v2, prompt influence 0.7) from the prompt and duration
+// below, pick one, and run this on it. Needs ffmpeg on PATH.
 
 import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -26,96 +26,94 @@ type CueSpec = Readonly<{
 const CUES: Record<string, CueSpec> = {
   move: {
     prompt:
-      'Single soft footstep on stone floor, short dry tap, retro fantasy RPG game sound',
+      'Tiny soft footstep blip on stone, short 16-bit retro JRPG chiptune tick',
     duration: 0.5,
     maxLength: 0.2,
     level: -8, // plays on every step
   },
   bump: {
     prompt:
-      'Dull low thud of bumping into a stone wall, short muffled impact, retro fantasy RPG game sound',
+      'Short dull low bump against a wall, muffled 16-bit retro JRPG chiptune thud',
     duration: 0.5,
     maxLength: 0.3,
   },
   stair: {
     prompt:
-      'Quick footsteps climbing stone stairs with a rising magical whoosh, retro fantasy RPG floor transition sound',
+      'Stairway warp to the next tower floor, quick rising 16-bit retro JRPG chiptune arpeggio with starry sparkle',
     duration: 1,
   },
   clue: {
     prompt:
-      'Mysterious soft chime of glowing ancient runes, shimmering bell tone, fantasy RPG discovery sound',
+      'Secret discovered chime, mysterious twinkling starlight bell arpeggio, 16-bit retro JRPG chiptune',
     duration: 1,
   },
   pickup: {
     prompt:
-      'Wooden treasure chest creaking open with a bright sparkling item pickup jingle, fantasy RPG game sound',
+      'Treasure chest item get jingle, bright short sparkling 16-bit retro JRPG chiptune fanfare',
     duration: 0.8,
   },
   heal: {
     prompt:
-      'Warm rising healing magic shimmer, gentle sparkling harp-like swell, fantasy RPG restore health sound',
+      'Healing spell, gentle rising celestial sparkle shimmer, 16-bit retro JRPG chiptune',
     duration: 1.2,
   },
   latch: {
     prompt:
-      'Heavy iron gate latch clicking open followed by a short metal creak, close-mic, dungeon game sound',
+      'Gate unlock, short metallic click then door opening, 16-bit retro JRPG chiptune',
     duration: 0.8,
   },
   encounter: {
     prompt:
-      'Tense sword being drawn from a scabbard with a low ominous stinger, fantasy RPG enemy encounter sound',
+      'Monster encounter sting, quick tense swoosh and low ominous hit, 16-bit retro JRPG chiptune',
     duration: 0.8,
   },
   hit: {
     prompt:
-      'Single sharp sword slash hitting armor, punchy impact, fantasy RPG combat hit sound',
+      'Sword attack hit, short crunchy impact, 16-bit retro JRPG chiptune',
     duration: 0.5,
     maxLength: 0.35,
   },
   win: {
     prompt:
-      'Short triumphant brass fanfare sting, victory after defeating a monster, fantasy RPG game sound',
+      'Battle victory fanfare sting, short triumphant 16-bit retro JRPG chiptune melody',
     duration: 1.5,
   },
   lose: {
     prompt:
-      'Short descending ominous low tone, failure warning, too dangerous to fight, fantasy RPG game sound',
+      'Failure warning, short descending sad tones, 16-bit retro JRPG chiptune',
     duration: 1,
   },
   buy: {
     prompt:
-      'Handful of gold coins dropped on a wooden shop counter, bright clinking, fantasy RPG purchase sound',
+      'Shop purchase, bright coin clink ka-ching, 16-bit retro JRPG chiptune',
     duration: 0.8,
   },
   deny: {
     prompt:
-      'Short low error buzz, two quick dull blips, action not allowed, retro RPG menu sound',
+      'Menu error buzzer, short low double beep, 16-bit retro JRPG chiptune',
     duration: 0.5,
     maxLength: 0.3,
   },
   dialogue: {
-    prompt:
-      'Short soft text dialogue blip, quick wooden tick, retro RPG speech box sound',
+    prompt: 'Text box blip, single short soft beep, 16-bit retro JRPG chiptune',
     duration: 0.5,
     maxLength: 0.2,
     level: -3,
   },
   confirm: {
     prompt:
-      'Short bright upward menu select click, clean UI confirm tone, fantasy RPG interface sound',
+      'Menu confirm, short bright rising blip, 16-bit retro JRPG chiptune',
     duration: 0.5,
     maxLength: 0.3,
   },
   cancel: {
-    prompt:
-      'Short soft downward menu back click, UI cancel tone, fantasy RPG interface sound',
+    prompt: 'Menu cancel, short soft falling blip, 16-bit retro JRPG chiptune',
     duration: 0.5,
     maxLength: 0.3,
   },
   locked: {
     prompt:
-      'Two dull knocks on a heavy sealed stone door, rattling locked handle, dungeon game sound',
+      'Locked door, two dull knocks and a low denied tone, 16-bit retro JRPG chiptune',
     duration: 0.8,
   },
 };
