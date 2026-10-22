@@ -327,8 +327,9 @@ test('accepts movement while assets are still loading', async ({ page }) => {
 
 test('completes the required-only MVP route', async ({ page }) => {
   // The full village -> Floor 3 -> ending walk plus a per-press blocked
-  // check needs more than the default 30s budget.
-  test.slow();
+  // check runs past a minute on a software-rendered CI browser, where the
+  // 3x camera fills the whole canvas with tiles every frame.
+  test.setTimeout(180_000);
   await startFreshRun(page);
   await expect(page.getByTestId('how-to-play')).toBeVisible();
 
@@ -516,8 +517,9 @@ test('completes the explorer MVP route with expanded ending context', async ({
   page,
 }) => {
   // The full village -> Floor 3 -> ending walk plus a per-press blocked
-  // check needs more than the default 30s budget.
-  test.slow();
+  // check runs past a minute on a software-rendered CI browser, where the
+  // 3x camera fills the whole canvas with tiles every frame.
+  test.setTimeout(180_000);
   await startFreshRun(page);
 
   // Up: bump village-warden (15,9) from the start tile (15,10)
