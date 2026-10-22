@@ -115,8 +115,9 @@ async function expectHeroClearOfHud(
   tile: { x: number; y: number },
 ): Promise<void> {
   const strip = logStrip(view.width);
-  const zoom = followZoom(view, strip);
-  const centre = cameraCentre(hudTop(view.width, view.height), strip, zoom, {
+  const top = hudTop(view.width, view.height);
+  const zoom = followZoom(view, top, strip);
+  const centre = cameraCentre(top, strip, zoom, {
     x: (tile.x + 0.5) * TILE_SIZE,
     y: (tile.y + 0.5) * TILE_SIZE,
   });

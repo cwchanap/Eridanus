@@ -103,7 +103,7 @@ export class WorldScene extends Phaser.Scene {
     const strip = logStrip(window.innerWidth) * ratio;
     const top = hudTop(window.innerWidth, window.innerHeight) * ratio;
     const view = { width: camera.width, height: camera.height };
-    const zoom = followZoom(view, strip, ratio);
+    const zoom = followZoom(view, top, strip, ratio);
     const centre = cameraCentre(top, strip, zoom, {
       x: (state.tile.x + 0.5) * TILE_SIZE,
       y: (state.tile.y + 0.5) * TILE_SIZE,

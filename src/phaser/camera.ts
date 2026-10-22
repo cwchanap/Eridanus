@@ -39,18 +39,24 @@ export function hudTop(cssWidth: number, cssHeight: number): number {
 // Three screen pixels per art pixel: a 32px tile is 96 CSS px wide.
 export const FOLLOW_ZOOM = 3;
 
-// The fewest whole tiles the band above the log shows across and down.
-// A small window (a phone, a short laptop) zooms out from 3x until they
-// fit, so the hero never peers at the maze through a keyhole.
+// The fewest whole tiles the free band (between the top panels and the
+// log) shows across and down. A small window (a phone, a short laptop)
+// zooms out from 3x until they fit, so the hero never peers at the maze
+// through a keyhole.
 const MIN_COLS = 9;
 const MIN_ROWS = 7;
 
-// The camera's zoom: FOLLOW_ZOOM, or less where the band can't hold
+// The camera's zoom: FOLLOW_ZOOM, or less where the free band can't hold
 // MIN_COLS × MIN_ROWS tiles at it. Every size shares one unit — WorldScene
 // works in device pixels, so it passes the device pixel ratio and scales
-// logStrip's CSS pixels by it first.
-export function followZoom(view: Size, strip: number, pixelRatio = 1): number {
-  const band = Math.max(1, view.height - strip);
+// logStrip's and hudTop's CSS pixels by it first.
+export function followZoom(
+  view: Size,
+  top: number,
+  strip: number,
+  pixelRatio = 1,
+): number {
+  const band = Math.max(1, view.height - top - strip);
   return Math.min(
     FOLLOW_ZOOM * pixelRatio,
     view.width / (MIN_COLS * TILE_SIZE),
