@@ -91,10 +91,16 @@ export class Sfx {
   // browser's autoplay policy lets it run.
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
-  private readonly buffers = new Map<SfxCue, Promise<AudioBuffer | null>>();
+  // Decoded recordings. Loading starts with the context; until a cue's file
+  // is ready (or if it never loads) the cue plays its synth placeholder, so
+  // playback never waits and cues always sound in the order asked.
+  private readonly buffers = new Map<SfxCue, AudioBuffer>();
   private mutedFlag: boolean;
 
-  constructor(private readonly storage: Storage) {
+  constructor(
+    private readonly storage: Storage,
+    private readonly files: ReadonlySet<SfxCue> = SFX_FILES,
+  ) {
     try {
       this.mutedFlag = storage.getItem(MUTE_KEY) === '1';
     } catch {
@@ -132,19 +138,12 @@ export class Sfx {
     if (context.state === 'suspended') void context.resume();
     cues.forEach((cue, index) => {
       const start = context.currentTime + index * CUE_GAP;
-      if (!SFX_FILES.has(cue)) {
-        playSynth(context, master, SYNTH[cue], start);
-        return;
-      }
-      void this.buffer(context, cue).then((buffer) => {
-        // A slow first fetch can finish after the cue's slot has passed.
-        const at = Math.max(start, context.currentTime);
-        if (!buffer) return playSynth(context, master, SYNTH[cue], at);
-        const source = context.createBufferSource();
-        source.buffer = buffer;
-        source.connect(master);
-        source.start(at);
-      });
+      const buffer = this.buffers.get(cue);
+      if (!buffer) return playSynth(context, master, SYNTH[cue], start);
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(master);
+      source.start(start);
     });
   }
 
@@ -154,24 +153,20 @@ export class Sfx {
       this.master = this.context.createGain();
       this.master.gain.value = MASTER_GAIN;
       this.master.connect(this.context.destination);
+      this.preload(this.context);
     }
     return { context: this.context, master: this.master };
   }
 
-  // A missing or undecodable file falls back to the synth placeholder.
-  private buffer(
-    context: AudioContext,
-    cue: SfxCue,
-  ): Promise<AudioBuffer | null> {
-    let pending = this.buffers.get(cue);
-    if (!pending) {
-      pending = fetch(`assets/sfx/${cue}.wav`)
+  // A missing or undecodable file keeps its synth placeholder.
+  private preload(context: AudioContext): void {
+    for (const cue of this.files) {
+      void fetch(`assets/sfx/${cue}.wav`)
         .then((response) => (response.ok ? response.arrayBuffer() : null))
         .then((data) => (data ? context.decodeAudioData(data) : null))
-        .catch(() => null);
-      this.buffers.set(cue, pending);
+        .then((buffer) => buffer && this.buffers.set(cue, buffer))
+        .catch(() => undefined);
     }
-    return pending;
   }
 }
 
