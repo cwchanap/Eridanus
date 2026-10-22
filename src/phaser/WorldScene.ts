@@ -25,6 +25,13 @@ const KEY_DIRECTIONS = new Map<string, Direction>([
 // The enemy an open combat prompt is about, outlined inside its own cell.
 const TARGET_COLOR = 0xef6a5c;
 
+// Wall outlines (coloured per terrain, see assets.ts) and the shadow a wall
+// casts on the floor below, in map units (TILE_SIZE is one tile).
+const WALL_EDGE = 1.5;
+const WALL_SHADOW = 6;
+const WALL_SHADOW_ALPHA = 0.4;
+const WALL_BEVEL_ALPHA = 0.3;
+
 const PROMPT_KEYS = new Map<string, InputCommand>([
   ['Enter', { kind: 'confirm' }],
   ['Escape', { kind: 'cancel' }],
@@ -112,16 +119,50 @@ export class WorldScene extends Phaser.Scene {
     camera.centerOn(centre.x, centre.y);
 
     const terrain = resolveTerrainAssets(state.mapId);
+    // Off the map counts as wall, so the map's rim gets no edge.
+    const isWall = (x: number, y: number) =>
+      (map.layout[y]?.[x] ?? '#') === '#';
+    const edges = this.add.graphics();
     for (let y = 0; y < map.layout.length; y++) {
       for (let x = 0; x < map.layout[y]!.length; x++) {
-        const isWall = map.layout[y]![x] === '#';
-        const texture = isWall ? terrain.wall : terrain.floor;
+        const wall = isWall(x, y);
         this.add
-          .image(x * TILE_SIZE, y * TILE_SIZE, texture)
+          .image(
+            x * TILE_SIZE,
+            y * TILE_SIZE,
+            wall ? terrain.wall : terrain.floor,
+          )
           .setOrigin(0)
           .setDisplaySize(TILE_SIZE, TILE_SIZE);
+
+        // The tiles are seamless, so outline walls where they meet floor
+        // and shade the floor just below them; otherwise a wall reads as
+        // more paving.
+        const left = x * TILE_SIZE;
+        const top = y * TILE_SIZE;
+        if (wall) {
+          // A pale bevel just inside the dark edge, so the edge still reads
+          // on the near-black tower walls.
+          const sides = [
+            [0, -1, left, top, TILE_SIZE, WALL_EDGE],
+            [0, 1, left, top + TILE_SIZE - WALL_EDGE, TILE_SIZE, WALL_EDGE],
+            [-1, 0, left, top, WALL_EDGE, TILE_SIZE],
+            [1, 0, left + TILE_SIZE - WALL_EDGE, top, WALL_EDGE, TILE_SIZE],
+          ] as const;
+          for (const [dx, dy, rx, ry, w, h] of sides) {
+            if (isWall(x + dx, y + dy)) continue;
+            edges.fillStyle(terrain.edge, 1);
+            edges.fillRect(rx, ry, w, h);
+            edges.fillStyle(0xffffff, WALL_BEVEL_ALPHA);
+            edges.fillRect(rx - dx * WALL_EDGE, ry - dy * WALL_EDGE, w, h);
+          }
+        } else if (isWall(x, y - 1)) {
+          edges.fillStyle(terrain.edge, WALL_SHADOW_ALPHA);
+          edges.fillRect(left, top, TILE_SIZE, WALL_SHADOW);
+        }
       }
     }
+    this.children.bringToTop(edges);
 
     const target =
       pending?.kind === 'combat' && findEntityById(pending.enemyId);
@@ -148,7 +189,8 @@ export class WorldScene extends Phaser.Scene {
           (entity.tile.y + 1) * TILE_SIZE,
           assetKey,
         )
-        .setOrigin(0.5, 1);
+        .setOrigin(0.5, 1)
+        .setDisplaySize(TILE_SIZE, TILE_SIZE);
     }
 
     this.add
@@ -157,6 +199,7 @@ export class WorldScene extends Phaser.Scene {
         (state.tile.y + 1) * TILE_SIZE,
         resolvePlayerAsset(this.playerFacing),
       )
-      .setOrigin(0.5, 1);
+      .setOrigin(0.5, 1)
+      .setDisplaySize(TILE_SIZE, TILE_SIZE);
   }
 }

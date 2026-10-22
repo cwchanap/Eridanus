@@ -5,6 +5,7 @@ import { MAPS, findEntityById } from '../game/content';
 import { createInitialGameState } from '../game/state';
 import type { EnemyEntity, NpcEntity, RewardEntity } from '../game/types';
 import {
+  ART_SIZE,
   ASSET_PATHS,
   PORTRAIT_PATHS,
   PORTRAIT_SIZE,
@@ -49,18 +50,22 @@ describe('asset seam', () => {
     expect(resolveTerrainAssets('village')).toEqual({
       floor: 'terrain-village-floor',
       wall: 'terrain-village-wall',
+      edge: 0x4a3520,
     });
     expect(resolveTerrainAssets('floor1')).toEqual({
       floor: 'terrain-dungeon-floor',
       wall: 'terrain-dungeon-wall',
+      edge: 0x07080d,
     });
     expect(resolveTerrainAssets('floor2')).toEqual({
       floor: 'terrain-dungeon-floor',
       wall: 'terrain-dungeon-wall',
+      edge: 0x07080d,
     });
     expect(resolveTerrainAssets('floor3')).toEqual({
       floor: 'terrain-dungeon-floor',
       wall: 'terrain-dungeon-wall',
+      edge: 0x07080d,
     });
   });
 
@@ -253,10 +258,10 @@ describe('asset seam', () => {
       const width = png.readUInt32BE(16);
       const height = png.readUInt32BE(20);
 
-      // Sprites render 1:1 and must stay inside their own grid cell.
-      expect([width, height], `${key} must be exactly one tile`).toEqual([
-        TILE_SIZE,
-        TILE_SIZE,
+      // A square source drawn at TILE_SIZE fills exactly its own grid cell.
+      expect([width, height], `${key} must be ${ART_SIZE}px square`).toEqual([
+        ART_SIZE,
+        ART_SIZE,
       ]);
     }
   });
