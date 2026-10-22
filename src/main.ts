@@ -1,5 +1,7 @@
 import '@fontsource/cinzel/latin-700.css';
 import './styles.css';
+import { cuesFor } from './audio/cues';
+import { Sfx } from './audio/sfx';
 import { MAPS } from './game/content';
 import { buildJournalView } from './game/journal';
 import { dispatchInput } from './game/session';
@@ -22,11 +24,13 @@ let session: SessionState = { game: createInitialGameState(), pending: null };
 let effect: ActionEffect | null = null;
 let blocked: BlockedReason | null = null;
 let created: CreatedGame | null = null;
+const sfx = new Sfx(window.localStorage);
 
 const overlay = new InteractionOverlay(
   uiRoot,
   () => handleInput({ kind: 'confirm' }),
   () => handleInput({ kind: 'cancel' }),
+  sfx,
 );
 
 function renderOverlay(): void {
@@ -53,6 +57,7 @@ function handleInput(input: InputCommand): void {
   } else {
     blocked = transition.reason;
   }
+  sfx.play(cuesFor(input, transition));
   created.scene.refresh();
   renderOverlay();
 }

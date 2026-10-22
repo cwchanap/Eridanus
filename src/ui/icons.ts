@@ -25,4 +25,12 @@ export const ICONS = {
     'icon-coin',
     '<circle cx="12" cy="12" r="9"/><path class="icon-cut" d="M12 6.5l1.6 3.9 4.1.3-3.1 2.7 1 4-3.6-2.2-3.6 2.2 1-4-3.1-2.7 4.1-.3z"/>',
   ),
+  sound: icon(
+    'icon-sound',
+    '<path d="M3 9h4l5-4.5v15L7 15H3z"/><path class="icon-line" d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/>',
+  ),
+  muted: icon(
+    'icon-sound',
+    '<path d="M3 9h4l5-4.5v15L7 15H3z"/><path class="icon-line" d="M16 9l6 6M22 9l-6 6"/>',
+  ),
 } as const;

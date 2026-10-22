@@ -183,6 +183,13 @@ body {
   fill: currentColor;
 }
 
+.icon-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
 .icon-cut {
   fill: rgba(0, 0, 0, 0.28);
 }
@@ -757,9 +764,14 @@ kbd {
   display: none;
 }
 
+.journal-actions {
+  display: flex;
+  margin-left: auto;
+  gap: 6px;
+}
+
 .journal-toggle {
   display: inline-flex;
-  margin-left: auto;
   align-items: center;
   gap: 6px;
   padding: 3px 8px;
@@ -771,6 +783,11 @@ kbd {
     600 12px/1.4 system-ui,
     sans-serif;
   cursor: pointer;
+}
+
+.journal-toggle .icon-sound {
+  width: 16px;
+  height: 16px;
 }
 
 .journal-toggle:hover {
@@ -1011,6 +1028,23 @@ kbd {
   .journal-toggle kbd {
     display: none;
   }
+
+  /* Tighten the head so the title and both buttons share one row. */
+  .journal-head {
+    column-gap: 8px;
+  }
+
+  .journal-head .panel-title::after {
+    display: none;
+  }
+
+  .journal-actions {
+    gap: 4px;
+  }
+
+  .journal-toggle {
+    padding: 3px 6px;
+  }
 }
 
 /* Short windows (a landscape phone, or a small laptop zoomed to 200%) leave
@@ -1087,5 +1121,22 @@ kbd {
 
   .journal-toggle kbd {
     display: none;
+  }
+
+  /* Tighten the head so the title and both buttons share one row. */
+  .journal-head {
+    column-gap: 8px;
+  }
+
+  .journal-head .panel-title::after {
+    display: none;
+  }
+
+  .journal-actions {
+    gap: 4px;
+  }
+
+  .journal-toggle {
+    padding: 3px 6px;
   }
 }

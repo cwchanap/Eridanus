@@ -52,4 +52,9 @@ describe('renderJournal', () => {
     expect(html).not.toContain('data-lead=');
     expect(html).not.toContain('data-section=');
   });
+
+  it('labels the sound toggle from the mute preference', () => {
+    expect(renderJournal(view)).toContain('data-muted="false"');
+    expect(renderJournal(view, false, true)).toContain('data-muted="true"');
+  });
 });
