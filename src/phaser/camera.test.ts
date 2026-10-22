@@ -4,6 +4,7 @@ import {
   FOLLOW_ZOOM,
   cameraCentre,
   followZoom,
+  hudTop,
   logStrip,
   toScreen,
   type Size,
@@ -13,7 +14,15 @@ const desktop = { width: 1440, height: 900 };
 const laptop = { width: 1280, height: 720 };
 const phone = { width: 400, height: 844 };
 const short = { width: 683, height: 325 };
-const VIEWS = [desktop, laptop, phone, short, { width: 390, height: 844 }];
+const VIEWS = [
+  desktop,
+  laptop,
+  phone,
+  short,
+  { width: 390, height: 844 },
+  { width: 400, height: 600 },
+  { width: 900, height: 500 },
+];
 // Map corners, the far corner of the largest map (the village), and the
 // tower stairs' bottom-centre arrival tiles.
 const TILES = [
@@ -28,7 +37,7 @@ const TILES = [
 function heroRect(view: Size, tile: { x: number; y: number }) {
   const strip = logStrip(view.width);
   const zoom = followZoom(view, strip);
-  const centre = cameraCentre(strip, zoom, {
+  const centre = cameraCentre(hudTop(view.width, view.height), strip, zoom, {
     x: (tile.x + 0.5) * TILE_SIZE,
     y: (tile.y + 0.5) * TILE_SIZE,
   });
@@ -51,6 +60,25 @@ describe('logStrip', () => {
     expect(logStrip(1440)).toBe(144);
     expect(logStrip(1023)).toBe(128);
     expect(logStrip(390)).toBe(128);
+  });
+});
+
+describe('hudTop', () => {
+  it('clears the banner on wide windows', () => {
+    expect(hudTop(1440, 900)).toBe(81);
+    expect(hudTop(1024, 500)).toBe(81);
+  });
+
+  it('clears the stacked row below 1024px, shrinking on short windows', () => {
+    expect(hudTop(400, 844)).toBe(283);
+    expect(hudTop(1023, 600)).toBe(283);
+    expect(hudTop(400, 440)).toBe(183);
+    expect(hudTop(400, 300)).toBe(83);
+  });
+
+  it('clears the single flanking row on short windows 640px and wider', () => {
+    expect(hudTop(683, 325)).toBe(84);
+    expect(hudTop(639, 325)).toBe(83);
   });
 });
 
@@ -84,9 +112,10 @@ describe('followZoom', () => {
 });
 
 describe('cameraCentre', () => {
-  it('holds the hero mid-band wherever they stand', () => {
+  it('holds the hero between the top panels and the log', () => {
     for (const view of VIEWS) {
       const strip = logStrip(view.width);
+      const top = hudTop(view.width, view.height);
       for (const tile of TILES) {
         const rect = heroRect(view, tile);
         const label = `${tile.x},${tile.y} at ${view.width}x${view.height}`;
@@ -95,9 +124,10 @@ describe('cameraCentre', () => {
           6,
         );
         expect((rect.top + rect.bottom) / 2, label).toBeCloseTo(
-          (view.height - strip) / 2,
+          (top + view.height - strip) / 2,
           6,
         );
+        expect(rect.top, label).toBeGreaterThanOrEqual(top);
         expect(rect.bottom, label).toBeLessThanOrEqual(view.height - strip);
       }
     }

@@ -8,7 +8,7 @@ import {
   resolvePlayerAsset,
   resolveTerrainAssets,
 } from './assets';
-import { cameraCentre, followZoom, logStrip } from './camera';
+import { cameraCentre, followZoom, hudTop, logStrip } from './camera';
 
 export type WorldSceneDeps = {
   getSession: () => SessionState;
@@ -91,9 +91,8 @@ export class WorldScene extends Phaser.Scene {
     const map = MAPS[state.mapId];
     this.children.removeAll(true);
 
-    // Zoom to 3x (less on small windows) and centre the hero in the band
-    // above the message log, so neither the log nor a floating panel covers
-    // them (camera.ts). The zoom may be fractional, but the canvas is in
+    // Zoom to 3x (less on small windows) and centre the hero between the
+    // top panels and the message log, so no panel covers them (camera.ts). The zoom may be fractional, but the canvas is in
     // device pixels (createGame.ts), so nearest-neighbour scaling keeps
     // tiles sharp.
     const camera = this.cameras.main;
@@ -102,9 +101,10 @@ export class WorldScene extends Phaser.Scene {
     // is rounded to device pixels, so dividing it back can land a hair
     // under 1024 and pick the narrower strip the layout doesn't use.
     const strip = logStrip(window.innerWidth) * ratio;
+    const top = hudTop(window.innerWidth, window.innerHeight) * ratio;
     const view = { width: camera.width, height: camera.height };
     const zoom = followZoom(view, strip, ratio);
-    const centre = cameraCentre(strip, zoom, {
+    const centre = cameraCentre(top, strip, zoom, {
       x: (state.tile.x + 0.5) * TILE_SIZE,
       y: (state.tile.y + 0.5) * TILE_SIZE,
     });
