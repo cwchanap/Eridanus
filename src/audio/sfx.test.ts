@@ -30,4 +30,10 @@ describe('Sfx', () => {
     const sfx = new Sfx(memoryStorage({ 'eridanus.muted': '1' }));
     expect(() => sfx.play(['win'])).not.toThrow();
   });
+
+  it('keeps the game running when audio is unavailable', () => {
+    // Node has no AudioContext, standing in for a browser that refuses one.
+    const sfx = new Sfx(memoryStorage());
+    expect(() => sfx.play(['win'])).not.toThrow();
+  });
 });
