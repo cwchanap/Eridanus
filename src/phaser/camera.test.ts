@@ -36,8 +36,9 @@ const TILES = [
 // WorldScene.refresh.
 function heroRect(view: Size, tile: { x: number; y: number }) {
   const strip = logStrip(view.width);
-  const zoom = followZoom(view, strip);
-  const centre = cameraCentre(hudTop(view.width, view.height), strip, zoom, {
+  const top = hudTop(view.width, view.height);
+  const zoom = followZoom(view, top, strip);
+  const centre = cameraCentre(top, strip, zoom, {
     x: (tile.x + 0.5) * TILE_SIZE,
     y: (tile.y + 0.5) * TILE_SIZE,
   });
@@ -84,30 +85,37 @@ describe('hudTop', () => {
 
 describe('followZoom', () => {
   it('plays at 3x on a desktop window', () => {
-    expect(followZoom(desktop, logStrip(desktop.width))).toBe(FOLLOW_ZOOM);
+    expect(followZoom(desktop, hudTop(1440, 900), logStrip(1440))).toBe(
+      FOLLOW_ZOOM,
+    );
   });
 
   it('scales 3x by the device pixel ratio', () => {
     const device = { width: desktop.width * 2, height: desktop.height * 2 };
-    expect(followZoom(device, logStrip(desktop.width) * 2, 2)).toBe(
-      FOLLOW_ZOOM * 2,
-    );
+    expect(
+      followZoom(device, hudTop(1440, 900) * 2, logStrip(1440) * 2, 2),
+    ).toBe(FOLLOW_ZOOM * 2);
   });
 
-  it('zooms out on small windows to keep 9x7 tiles in view', () => {
-    for (const view of [laptop, phone, short]) {
+  it('zooms out on small windows to keep 9x7 tiles clear of every panel', () => {
+    for (const view of VIEWS.filter((v) => v !== desktop)) {
+      const top = hudTop(view.width, view.height);
       const strip = logStrip(view.width);
-      const zoom = followZoom(view, strip);
-      expect(zoom).toBeLessThan(FOLLOW_ZOOM);
-      expect(view.width / (TILE_SIZE * zoom)).toBeGreaterThanOrEqual(9 - 1e-9);
-      expect((view.height - strip) / (TILE_SIZE * zoom)).toBeGreaterThanOrEqual(
-        7 - 1e-9,
+      const zoom = followZoom(view, top, strip);
+      const label = `${view.width}x${view.height}`;
+      expect(zoom, label).toBeLessThan(FOLLOW_ZOOM);
+      expect(view.width / (TILE_SIZE * zoom), label).toBeGreaterThanOrEqual(
+        9 - 1e-9,
       );
+      expect(
+        (view.height - top - strip) / (TILE_SIZE * zoom),
+        label,
+      ).toBeGreaterThanOrEqual(7 - 1e-9);
     }
   });
 
   it('never produces a non-positive zoom on a sliver of a window', () => {
-    expect(followZoom({ width: 640, height: 100 }, 128)).toBeGreaterThan(0);
+    expect(followZoom({ width: 640, height: 100 }, 84, 128)).toBeGreaterThan(0);
   });
 });
 
