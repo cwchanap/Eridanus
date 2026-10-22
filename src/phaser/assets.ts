@@ -38,6 +38,30 @@ export const ASSET_PATHS = {
 
 export type AssetKey = keyof typeof ASSET_PATHS;
 
+export const PORTRAIT_SIZE = 64;
+
+// Panel-only busts for the hero card and the dialogue, shop and fight cards,
+// keyed by the map sprite they stand in for. They never reach the map grid,
+// so they are larger than a tile; a sprite without one shows itself.
+// docs/art/style-guide.md has the prompt that generated them.
+export const PORTRAIT_PATHS: Partial<Record<AssetKey, string>> = {
+  'player-south': 'assets/portraits/hero.png',
+  'npc-village-guide': 'assets/portraits/npc-village-guide.png',
+  'npc-warden': 'assets/portraits/npc-warden.png',
+  'npc-scout': 'assets/portraits/npc-scout.png',
+  'npc-scribe': 'assets/portraits/npc-scribe.png',
+  'npc-subject': 'assets/portraits/npc-subject.png',
+  'npc-elder': 'assets/portraits/npc-elder.png',
+  'npc-guard': 'assets/portraits/npc-guard.png',
+  'npc-child': 'assets/portraits/npc-child.png',
+  'npc-smith': 'assets/portraits/npc-smith.png',
+  'npc-armorer': 'assets/portraits/npc-armorer.png',
+  'npc-merchant': 'assets/portraits/npc-merchant.png',
+  'enemy-ruin-guard': 'assets/portraits/enemy-ruin-guard.png',
+  'enemy-ruin-sentinel': 'assets/portraits/enemy-ruin-sentinel.png',
+  'enemy-core-guardian': 'assets/portraits/enemy-core-guardian.png',
+};
+
 type TerrainAssets = Readonly<{ floor: AssetKey; wall: AssetKey }>;
 
 const TERRAIN_BY_MAP: Record<MapId, TerrainAssets> = {
@@ -94,6 +118,10 @@ export function resolveEntityAsset(
     (entity.kind === 'latch' && state.openedShortcutIds.includes(entity.id));
 
   return opened ? (OPEN_VARIANT[base] ?? base) : base;
+}
+
+export function resolvePortraitPath(assetKey: AssetKey): string {
+  return PORTRAIT_PATHS[assetKey] ?? ASSET_PATHS[assetKey];
 }
 
 export function runtimeAssetFilePath(assetKey: AssetKey): string {
