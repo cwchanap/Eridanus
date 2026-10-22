@@ -1,6 +1,9 @@
 import type { Direction, Entity, GameState, MapId } from '../game/types';
 
 export const TILE_SIZE = 32;
+// Every PNG is drawn at 3x so it stays sharp under camera zoom; WorldScene
+// still draws each one at TILE_SIZE, inside its own cell.
+export const ART_SIZE = TILE_SIZE * 3;
 
 export const ASSET_PATHS = {
   'terrain-village-floor': 'assets/terrain/village-floor.png',
@@ -62,13 +65,30 @@ export const PORTRAIT_PATHS: Partial<Record<AssetKey, string>> = {
   'enemy-core-guardian': 'assets/portraits/enemy-core-guardian.png',
 };
 
-type TerrainAssets = Readonly<{ floor: AssetKey; wall: AssetKey }>;
+// `edge` is the colour WorldScene outlines walls with, matched to each wall
+// tile's own mortar so the outline reads as part of the art.
+type TerrainAssets = Readonly<{
+  floor: AssetKey;
+  wall: AssetKey;
+  edge: number;
+}>;
+
+const VILLAGE: TerrainAssets = {
+  floor: 'terrain-village-floor',
+  wall: 'terrain-village-wall',
+  edge: 0x4a3520,
+};
+const DUNGEON: TerrainAssets = {
+  floor: 'terrain-dungeon-floor',
+  wall: 'terrain-dungeon-wall',
+  edge: 0x07080d,
+};
 
 const TERRAIN_BY_MAP: Record<MapId, TerrainAssets> = {
-  village: { floor: 'terrain-village-floor', wall: 'terrain-village-wall' },
-  floor1: { floor: 'terrain-dungeon-floor', wall: 'terrain-dungeon-wall' },
-  floor2: { floor: 'terrain-dungeon-floor', wall: 'terrain-dungeon-wall' },
-  floor3: { floor: 'terrain-dungeon-floor', wall: 'terrain-dungeon-wall' },
+  village: VILLAGE,
+  floor1: DUNGEON,
+  floor2: DUNGEON,
+  floor3: DUNGEON,
 };
 
 const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {

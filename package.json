@@ -13,6 +13,7 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "sfx": "bun scripts/process-sfx.ts",
+    "sprite": "bun scripts/process-sprite.ts",
     "prepare": "husky"
   },
   "devDependencies": {

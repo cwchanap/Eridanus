@@ -12,6 +12,6 @@ export function renderHowToPlay(state: GameState): string {
       <li>Fights show their exact HP cost first: <kbd>Enter</kbd> to fight, <kbd>Esc</kbd> to back off.</li>
       <li>Progress saves automatically.</li>
     </ul>
-    <p class="how-to-play-tip">Start by talking to the Warden in blue.</p>
+    <p class="how-to-play-tip">Start by talking to the Warden in the teal cloak.</p>
   </section>`;
 }
