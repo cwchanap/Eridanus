@@ -21,7 +21,7 @@ bun run format:check        # prettier --check . (CI gate; `bun run format` to f
 bun run test:unit           # vitest run over src/**/*.test.ts
 bun run test:e2e            # playwright; auto-starts dev server on :4173
 bun run build
-bun run sfx                 # regenerate public/assets/sfx/*.wav from scripts/generate-sfx.ts
+bun run sfx <cue> <take>    # turn an ElevenLabs take into public/assets/sfx/<cue>.wav (needs ffmpeg)
 ```
 
 Single test runs:
