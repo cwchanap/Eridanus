@@ -121,7 +121,14 @@ export class Sfx {
 
   play(cues: readonly SfxCue[]): void {
     if (this.mutedFlag || cues.length === 0) return;
-    const { context, master } = this.ensureContext();
+    let audio: { context: AudioContext; master: GainNode };
+    try {
+      audio = this.ensureContext();
+    } catch {
+      // No audio in this browser (or its context limit is hit): play on silently.
+      return;
+    }
+    const { context, master } = audio;
     if (context.state === 'suspended') void context.resume();
     cues.forEach((cue, index) => {
       const start = context.currentTime + index * CUE_GAP;
@@ -130,11 +137,13 @@ export class Sfx {
         return;
       }
       void this.buffer(context, cue).then((buffer) => {
-        if (!buffer) return playSynth(context, master, SYNTH[cue], start);
+        // A slow first fetch can finish after the cue's slot has passed.
+        const at = Math.max(start, context.currentTime);
+        if (!buffer) return playSynth(context, master, SYNTH[cue], at);
         const source = context.createBufferSource();
         source.buffer = buffer;
         source.connect(master);
-        source.start(Math.max(start, context.currentTime));
+        source.start(at);
       });
     });
   }
