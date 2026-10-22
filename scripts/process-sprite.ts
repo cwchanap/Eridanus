@@ -147,6 +147,9 @@ const source = decode(input);
 const terrain = assetKey.startsWith('terrain-');
 let window;
 if (terrain) {
+  // Terrain tiles the floor seamlessly, so any transparency in the source
+  // would show the page through the map: drop it.
+  for (let i = 3; i < source.data.length; i += 4) source.data[i] = 255;
   const side = Math.min(source.width, source.height);
   window = {
     x: Math.floor((source.width - side) / 2),
