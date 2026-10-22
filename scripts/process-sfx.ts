@@ -4,9 +4,7 @@
 //
 //   bun run sfx <cue> <take.mp3> [out.wav]
 //
-// To redo a cue: generate new takes in ElevenLabs (model
-// eleven_text_to_sound_v2, prompt influence 0.7) from the prompt and duration
-// below, pick one, and run this on it. Needs ffmpeg on PATH.
+// Needs ffmpeg on PATH.
 
 import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -17,105 +15,28 @@ const TARGET_DB = -18; // loudest 50 ms window, before `level`
 const PEAK_LIMIT = 0.95;
 
 type CueSpec = Readonly<{
-  prompt: string;
-  duration: number; // seconds requested from ElevenLabs
   maxLength?: number; // seconds kept after the onset
   level?: number; // dB relative to TARGET_DB
 }>;
 
 const CUES: Record<string, CueSpec> = {
-  move: {
-    prompt:
-      'Tiny soft footstep blip on stone, short 16-bit retro JRPG chiptune tick',
-    duration: 0.5,
-    maxLength: 0.2,
-    level: -8, // plays on every step
-  },
-  bump: {
-    prompt:
-      'Short dull low bump against a wall, muffled 16-bit retro JRPG chiptune thud',
-    duration: 0.5,
-    maxLength: 0.3,
-  },
-  stair: {
-    prompt:
-      'Stairway warp to the next tower floor, quick rising 16-bit retro JRPG chiptune arpeggio with starry sparkle',
-    duration: 1,
-  },
-  clue: {
-    prompt:
-      'Secret discovered chime, mysterious twinkling starlight bell arpeggio, 16-bit retro JRPG chiptune',
-    duration: 1,
-  },
-  pickup: {
-    prompt:
-      'Treasure chest item get jingle, bright short sparkling 16-bit retro JRPG chiptune fanfare',
-    duration: 0.8,
-  },
-  heal: {
-    prompt:
-      'Healing spell, gentle rising celestial sparkle shimmer, 16-bit retro JRPG chiptune',
-    duration: 1.2,
-  },
-  latch: {
-    prompt:
-      'Gate unlock, short metallic click then door opening, 16-bit retro JRPG chiptune',
-    duration: 0.8,
-  },
-  encounter: {
-    prompt:
-      'Monster encounter sting, quick tense swoosh and low ominous hit, 16-bit retro JRPG chiptune',
-    duration: 0.8,
-  },
-  hit: {
-    prompt:
-      'Sword attack hit, short crunchy impact, 16-bit retro JRPG chiptune',
-    duration: 0.5,
-    maxLength: 0.35,
-  },
-  win: {
-    prompt:
-      'Battle victory fanfare sting, short triumphant 16-bit retro JRPG chiptune melody',
-    duration: 1.5,
-  },
-  lose: {
-    prompt:
-      'Failure warning, short descending sad tones, 16-bit retro JRPG chiptune',
-    duration: 1,
-  },
-  buy: {
-    prompt:
-      'Shop purchase, bright coin clink ka-ching, 16-bit retro JRPG chiptune',
-    duration: 0.8,
-  },
-  deny: {
-    prompt:
-      'Menu error buzzer, short low double beep, 16-bit retro JRPG chiptune',
-    duration: 0.5,
-    maxLength: 0.3,
-  },
-  dialogue: {
-    prompt: 'Text box blip, single short soft beep, 16-bit retro JRPG chiptune',
-    duration: 0.5,
-    maxLength: 0.2,
-    level: -3,
-  },
-  confirm: {
-    prompt:
-      'Menu confirm, short bright rising blip, 16-bit retro JRPG chiptune',
-    duration: 0.5,
-    maxLength: 0.3,
-  },
-  cancel: {
-    prompt: 'Menu cancel, short soft falling blip, 16-bit retro JRPG chiptune',
-    duration: 0.5,
-    maxLength: 0.3,
-  },
-  locked: {
-    prompt:
-      'Locked door, two dull knocks and a low denied tone, 16-bit retro JRPG chiptune',
-    duration: 0.8,
-  },
+  move: { maxLength: 0.2, level: -8 }, // plays on every step
+  bump: { maxLength: 0.3 },
+  stair: {},
+  clue: {},
+  pickup: {},
+  heal: {},
+  latch: {},
+  encounter: {},
+  hit: { maxLength: 0.35 },
+  win: {},
+  lose: {},
+  buy: {},
+  deny: { maxLength: 0.3 },
+  dialogue: { maxLength: 0.2, level: -3 },
+  confirm: { maxLength: 0.3 },
+  cancel: { maxLength: 0.3 },
+  locked: {},
 };
 
 function decode(path: string): Float32Array {
