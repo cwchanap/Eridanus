@@ -1,5 +1,6 @@
 import type { JournalEntry, JournalView, LeadId } from '../game/journal';
 import { factNote } from '../game/journal';
+import { ICONS } from './icons';
 
 const ENTRY_TITLE: Record<JournalEntry['id'], string> = {
   main: 'Main quest',
@@ -73,9 +74,13 @@ function renderPlaces(view: JournalView): string {
     .join('');
 }
 
-// open is the overlay's own view preference (the J key or the toggle
-// button); a folded journal keeps only its title bar on screen.
-export function renderJournal(view: JournalView, open = true): string {
+// open and muted are the overlay's own view preferences (the J and M keys or
+// the head's buttons); a folded journal keeps only its title bar on screen.
+export function renderJournal(
+  view: JournalView,
+  open = true,
+  muted = false,
+): string {
   const optional = view.optional.map(renderEntry).join('');
   const notes = view.observationFactIds
     .map((id) => `<li data-note="${id}">${factNote(id) ?? ''}</li>`)
@@ -92,7 +97,10 @@ export function renderJournal(view: JournalView, open = true): string {
   return `<section class="panel journal" data-testid="journal" aria-label="Journal" data-open="${open}">
     <div class="journal-head">
       <h2 class="panel-title">Journal</h2>
+      <div class="journal-actions">
+      <button type="button" class="journal-toggle" data-action="toggle-sound" data-muted="${muted}" aria-label="${muted ? 'Unmute' : 'Mute'} sound" title="${muted ? 'Unmute' : 'Mute'} sound" aria-keyshortcuts="M">${muted ? ICONS.muted : ICONS.sound}<kbd aria-hidden="true">M</kbd></button>
       <button type="button" class="journal-toggle" data-action="toggle-journal" aria-expanded="${open}" aria-keyshortcuts="J">${open ? 'Hide' : 'Show'} <kbd aria-hidden="true">J</kbd></button>
+      </div>
     </div>
     ${body}
   </section>`;
