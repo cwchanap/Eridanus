@@ -8,7 +8,7 @@ import {
   resolvePlayerAsset,
   resolveTerrainAssets,
 } from './assets';
-import { fitAboveStrip, logStrip } from './mapFit';
+import { cameraCentre, followZoom, logStrip } from './camera';
 
 export type WorldSceneDeps = {
   getSession: () => SessionState;
@@ -91,6 +91,26 @@ export class WorldScene extends Phaser.Scene {
     const map = MAPS[state.mapId];
     this.children.removeAll(true);
 
+    // Zoom to 3x (less on small windows) and centre the hero in the band
+    // above the message log, so neither the log nor a floating panel covers
+    // them (camera.ts). The zoom may be fractional, but the canvas is in
+    // device pixels (createGame.ts), so nearest-neighbour scaling keeps
+    // tiles sharp.
+    const camera = this.cameras.main;
+    const ratio = window.devicePixelRatio;
+    // The CSS breakpoint is on the window's CSS width; the camera's width
+    // is rounded to device pixels, so dividing it back can land a hair
+    // under 1024 and pick the narrower strip the layout doesn't use.
+    const strip = logStrip(window.innerWidth) * ratio;
+    const view = { width: camera.width, height: camera.height };
+    const zoom = followZoom(view, strip, ratio);
+    const centre = cameraCentre(strip, zoom, {
+      x: (state.tile.x + 0.5) * TILE_SIZE,
+      y: (state.tile.y + 0.5) * TILE_SIZE,
+    });
+    camera.setZoom(zoom);
+    camera.centerOn(centre.x, centre.y);
+
     const terrain = resolveTerrainAssets(state.mapId);
     for (let y = 0; y < map.layout.length; y++) {
       for (let x = 0; x < map.layout[y]!.length; x++) {
@@ -138,27 +158,5 @@ export class WorldScene extends Phaser.Scene {
         resolvePlayerAsset(this.playerFacing),
       )
       .setOrigin(0.5, 1);
-
-    // Zoom so the whole map fits the window band above the message log,
-    // resting on it; the rest of the HUD floats over the map's edges.
-    // Reserving the log's strip keeps the tower stairs' bottom-centre
-    // arrival tiles — and the hero landing on them — visible. The zoom is
-    // fractional, but the canvas is in device pixels (createGame.ts), so
-    // nearest-neighbour scaling keeps tiles sharp.
-    const camera = this.cameras.main;
-    const ratio = window.devicePixelRatio;
-    // The CSS breakpoint is on the window's CSS width; the camera's width
-    // is rounded to device pixels, so dividing it back can land a hair
-    // under 1024 and pick the narrower strip the layout doesn't use.
-    const strip = logStrip(window.innerWidth) * ratio;
-    const width = map.layout[0]!.length * TILE_SIZE;
-    const height = map.layout.length * TILE_SIZE;
-    const fit = fitAboveStrip(
-      { width: camera.width, height: camera.height },
-      { width, height },
-      strip,
-    );
-    camera.setZoom(fit.zoom);
-    camera.centerOn(width / 2, height / 2 + fit.centreShift);
   }
 }

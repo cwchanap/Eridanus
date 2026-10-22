@@ -1,9 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { MAPS } from '../../src/game/content';
 import type { MapId } from '../../src/game/types';
 import { TILE_SIZE } from '../../src/phaser/assets';
-import { logStrip, mapOrigin } from '../../src/phaser/mapFit';
+import {
+  cameraCentre,
+  followZoom,
+  logStrip,
+  toScreen,
+} from '../../src/phaser/camera';
 
 // A 2× screen: the canvas must size itself in device pixels or the
 // browser stretches it and the art blurs.
@@ -99,56 +103,74 @@ async function bootOnTile(
   );
 }
 
-// The required tower stairs put the arriving hero on bottom-centre tiles —
-// Floor 2's front landing (8,11) and Floor 3's entry vestibule (10,13) —
-// which the always-present message log used to cover whole at desktop
-// sizes. The camera now frames the map into the band above the log, so the
-// projected tile and the log's real bounding box must never meet.
-async function expectTileClearOfLog(
+// The camera holds the hero mid-band above the message log, so their cell
+// must clear the log and every floating panel. The hero's tile projects
+// through the same pure camera math WorldScene uses, against the real
+// bounding boxes of the HUD.
+async function expectHeroClearOfHud(
   page: Page,
   view: { width: number; height: number },
-  mapId: MapId,
   tile: { x: number; y: number },
 ): Promise<void> {
-  const layout = MAPS[mapId].layout;
-  const map = {
-    width: layout[0]!.length * TILE_SIZE,
-    height: layout.length * TILE_SIZE,
-  };
   const strip = logStrip(view.width);
-  const origin = mapOrigin(view, map, strip);
-  const side = TILE_SIZE * origin.zoom;
-  const arrival = {
-    x: origin.x + tile.x * side,
-    y: origin.y + tile.y * side,
-    right: origin.x + (tile.x + 1) * side,
-    bottom: origin.y + (tile.y + 1) * side,
+  const zoom = followZoom(view, strip);
+  const centre = cameraCentre(strip, zoom, {
+    x: (tile.x + 0.5) * TILE_SIZE,
+    y: (tile.y + 0.5) * TILE_SIZE,
+  });
+  const topLeft = toScreen(view, centre, zoom, {
+    x: tile.x * TILE_SIZE,
+    y: tile.y * TILE_SIZE,
+  });
+  const side = TILE_SIZE * zoom;
+  const hero = {
+    x: topLeft.x,
+    y: topLeft.y,
+    right: topLeft.x + side,
+    bottom: topLeft.y + side,
   };
+  expect(hero.x, 'hero left edge').toBeGreaterThanOrEqual(0);
+  expect(hero.right, 'hero right edge').toBeLessThanOrEqual(view.width);
+  expect(hero.y, 'hero top edge').toBeGreaterThanOrEqual(0);
 
-  const log = await page.getByTestId('interaction').boundingBox();
-  if (!log) throw new Error('message log is not on screen');
-  expect(arrival.x, 'arrival tile left edge').toBeGreaterThanOrEqual(0);
-  expect(arrival.right, 'arrival tile right edge').toBeLessThanOrEqual(
-    view.width,
-  );
-  expect(arrival.y, 'arrival tile top edge').toBeGreaterThanOrEqual(0);
-  expect(arrival.bottom, 'arrival tile bottom edge').toBeLessThanOrEqual(log.y);
+  for (const panel of [
+    page.getByTestId('interaction'),
+    page.getByTestId('hud'),
+    page.getByTestId('journal'),
+    page.locator('.location'),
+    page.getByTestId('how-to-play'),
+  ]) {
+    if (!(await panel.isVisible())) continue;
+    const box = await panel.boundingBox();
+    if (!box) continue;
+    const overlaps =
+      hero.x < box.x + box.width &&
+      box.x < hero.right &&
+      hero.y < box.y + box.height &&
+      box.y < hero.bottom;
+    expect(overlaps, `hero overlaps ${await panel.getAttribute('class')}`).toBe(
+      false,
+    );
+  }
 }
 
 for (const view of [
   { width: 1440, height: 900 },
   { width: 1280, height: 720 },
+  { width: 400, height: 844 },
+  { width: 683, height: 325 },
 ]) {
   for (const [mapId, tile] of [
+    ['village', { x: 8, y: 1 }],
     ['floor2', { x: 8, y: 11 }],
     ['floor3', { x: 10, y: 13 }],
   ] as const) {
-    test(`keeps the ${mapId} arrival stair clear of the log at ${view.width}x${view.height}`, async ({
+    test(`keeps the hero clear of the HUD on ${mapId} at ${view.width}x${view.height}`, async ({
       page,
     }) => {
       await page.setViewportSize(view);
       await bootOnTile(page, mapId, tile);
-      await expectTileClearOfLog(page, view, mapId, tile);
+      await expectHeroClearOfHud(page, view, tile);
     });
   }
 }
@@ -156,12 +178,11 @@ for (const view of [
 // A fractional pixel ratio lands the canvas backing store on an un-rounded
 // device width — at 1024 CSS px and 1.1 the canvas is 1126px wide, which
 // divides back to 1023.64, a hair under the layout's breakpoint. The strip
-// must come from the window's CSS width or the map's bottom edge ends up
-// under the log.
+// must come from the window's CSS width or the hero ends up under the log.
 test.describe('at a fractional device pixel ratio', () => {
   test.use({ deviceScaleFactor: 1.1 });
 
-  test('keeps the floor3 arrival stair clear of the log at the 1024px breakpoint', async ({
+  test('keeps the hero clear of the HUD at the 1024px breakpoint', async ({
     page,
   }) => {
     const view = { width: 1024, height: 700 };
@@ -173,6 +194,6 @@ test.describe('at a fractional device pixel ratio', () => {
     expect(metrics.ratio).toBeCloseTo(1.1, 4);
     expect(metrics.width).toBe(Math.round(view.width * metrics.ratio));
 
-    await expectTileClearOfLog(page, view, 'floor3', { x: 10, y: 13 });
+    await expectHeroClearOfHud(page, view, { x: 10, y: 13 });
   });
 });
