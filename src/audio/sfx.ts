@@ -114,6 +114,8 @@ export class Sfx {
     } catch {
       // Unsaved preference: the toggle still applies for this visit.
     }
+    // Cues already scheduled (a win's later notes) fall silent too.
+    if (this.master) this.master.gain.value = this.mutedFlag ? 0 : MASTER_GAIN;
     if (!this.mutedFlag) this.play(['confirm']);
   }
 
