@@ -12,7 +12,7 @@
     "format:check": "prettier --check .",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "sfx": "bun scripts/generate-sfx.ts",
+    "sfx": "bun scripts/process-sfx.ts",
     "prepare": "husky"
   },
   "devDependencies": {
