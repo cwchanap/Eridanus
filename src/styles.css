@@ -958,7 +958,8 @@ kbd {
    and journal share one capped row. On short windows the cap shrinks —
    down to nothing — so the map keeps a strip clear. "Short windows"
    below moves the row beside the banner before the cap gets that small,
-   wherever the window is wide enough. */
+   wherever the window is wide enough. camera.ts's hudTop mirrors these
+   rows to keep the hero below them: keep the two in step. */
 @media (max-width: 1023px) {
   #ui {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

@@ -5,6 +5,7 @@ import { TILE_SIZE } from '../../src/phaser/assets';
 import {
   cameraCentre,
   followZoom,
+  hudTop,
   logStrip,
   toScreen,
 } from '../../src/phaser/camera';
@@ -80,6 +81,7 @@ async function bootOnTile(
   page: Page,
   mapId: MapId,
   tile: { x: number; y: number },
+  factIds: readonly string[] = [],
 ): Promise<void> {
   await page.goto('/');
   await page.evaluate(
@@ -92,7 +94,7 @@ async function bootOnTile(
       defeatedEnemyIds: [],
       openedShortcutIds: [],
       itemIds: [],
-      factIds: [],
+      factIds,
       discoveredSectionIds: [],
     },
   );
@@ -103,8 +105,8 @@ async function bootOnTile(
   );
 }
 
-// The camera holds the hero mid-band above the message log, so their cell
-// must clear the log and every floating panel. The hero's tile projects
+// The camera holds the hero between the top panels and the message log, so
+// their cell must clear every floating panel. The hero's tile projects
 // through the same pure camera math WorldScene uses, against the real
 // bounding boxes of the HUD.
 async function expectHeroClearOfHud(
@@ -114,7 +116,7 @@ async function expectHeroClearOfHud(
 ): Promise<void> {
   const strip = logStrip(view.width);
   const zoom = followZoom(view, strip);
-  const centre = cameraCentre(strip, zoom, {
+  const centre = cameraCentre(hudTop(view.width, view.height), strip, zoom, {
     x: (tile.x + 0.5) * TILE_SIZE,
     y: (tile.y + 0.5) * TILE_SIZE,
   });
@@ -135,7 +137,8 @@ async function expectHeroClearOfHud(
 
   for (const panel of [
     page.getByTestId('interaction'),
-    page.getByTestId('hud'),
+    // The hero card's column, which caps it and scrolls what overflows.
+    page.locator('.hud-left'),
     page.getByTestId('journal'),
     page.locator('.location'),
     page.getByTestId('how-to-play'),
@@ -173,6 +176,32 @@ for (const view of [
       await expectHeroClearOfHud(page, view, tile);
     });
   }
+}
+
+// Below 1024px the hero card and journal stack in a row under the banner;
+// a journal full of notes must still stop above the hero on a short phone.
+for (const view of [
+  { width: 400, height: 600 },
+  { width: 900, height: 500 },
+]) {
+  test(`keeps the hero clear of a full journal at ${view.width}x${view.height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(view);
+    await bootOnTile(page, 'floor2', { x: 8, y: 11 }, [
+      'village-tower-stairs-used',
+      'floor1-route-mark-seen',
+      'floor1-treasury-sealed',
+      'floor1-depth-stairs-used',
+      'floor2-depth-stairs-used',
+      'floor2-paired-release-ledger-read',
+    ]);
+    await expect(page.getByTestId('journal')).toHaveAttribute(
+      'data-open',
+      'true',
+    );
+    await expectHeroClearOfHud(page, view, { x: 8, y: 11 });
+  });
 }
 
 // A fractional pixel ratio lands the canvas backing store on an un-rounded

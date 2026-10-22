@@ -6,14 +6,34 @@ export type Point = Readonly<{ x: number; y: number }>;
 // Screen pixels the DOM message log covers along the window's bottom
 // edge: the 116px .log panel plus #ui's bottom padding — 28px at 1024px
 // and wider, 12px below (styles.css, "Message log" and "#ui"; keep the
-// two in step). The camera frames the hero in the band above it, so the
-// log never covers them. Side and top panels float over the band's edges.
+// two in step).
 const WIDE_MIN_WIDTH = 1024;
 const WIDE_STRIP = 144;
 const NARROW_STRIP = 128;
 
 export function logStrip(cssWidth: number): number {
   return cssWidth >= WIDE_MIN_WIDTH ? WIDE_STRIP : NARROW_STRIP;
+}
+
+// Screen pixels the top panels cover down the middle of the window, where
+// the hero stands (styles.css "#ui" and its 1023px/639px/short-window
+// rules; keep them in step). Wide windows put only the location banner
+// there, under #ui's 20px padding; the hero card and journal sit in side
+// columns. Below 1024px those two share a row under the banner, capped at
+// 200px and shrinking on short windows; short windows at least 640px wide
+// move them beside the banner into one 72px row instead. Panels scroll
+// inside their caps, so these are fixed for a window size.
+const BANNER = 61;
+const SHORT_MIN_WIDTH = 640;
+const SHORT_MAX_HEIGHT = 460;
+
+export function hudTop(cssWidth: number, cssHeight: number): number {
+  if (cssWidth >= WIDE_MIN_WIDTH) return 20 + BANNER;
+  if (cssWidth >= SHORT_MIN_WIDTH && cssHeight < SHORT_MAX_HEIGHT) {
+    return 12 + 72;
+  }
+  const row = Math.min(Math.max(cssHeight - 340, 0), 200);
+  return 12 + BANNER + 10 + row;
 }
 
 // Three screen pixels per art pixel: a 32px tile is 96 CSS px wide.
@@ -38,12 +58,17 @@ export function followZoom(view: Size, strip: number, pixelRatio = 1): number {
   );
 }
 
-// The world point the camera centres on: the hero (`focus`), held in the
-// middle of the band above the log however close they stand to the map's
-// edge, so neither the log nor a floating panel covers them. Past the edge
-// the page's backdrop shows.
-export function cameraCentre(strip: number, zoom: number, focus: Point): Point {
-  return { x: focus.x, y: focus.y + strip / 2 / zoom };
+// The world point the camera centres on: the hero (`focus`), held midway
+// between the top panels (`top`) and the log strip however close they
+// stand to the map's edge, so no panel covers them. Past the edge the
+// page's backdrop shows.
+export function cameraCentre(
+  top: number,
+  strip: number,
+  zoom: number,
+  focus: Point,
+): Point {
+  return { x: focus.x, y: focus.y + (strip - top) / 2 / zoom };
 }
 
 // Where a world point lands on screen with the camera centred on `centre`
