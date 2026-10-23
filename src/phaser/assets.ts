@@ -50,7 +50,12 @@ export type Motion = 'idle' | 'walk';
 // with WorldScene's code-only breath and hop (animation.ts).
 export const SPRITE_FRAMES: Partial<
   Record<AssetKey, Partial<Record<Motion, number>>>
-> = {};
+> = {
+  'player-north': { walk: 4 },
+  'player-south': { walk: 4 },
+  'player-east': { walk: 4 },
+  'player-west': { walk: 4 },
+};
 
 export type SpriteFrame = Readonly<{ key: string; path: string }>;
 
