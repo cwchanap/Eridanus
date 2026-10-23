@@ -9,12 +9,16 @@ import {
   ASSET_PATHS,
   PORTRAIT_PATHS,
   PORTRAIT_SIZE,
+  SPRITE_FRAMES,
   TILE_SIZE,
+  isCharacter,
   resolveEntityAsset,
   resolvePlayerAsset,
   resolvePortraitPath,
   resolveTerrainAssets,
   runtimeAssetFilePath,
+  spriteFrames,
+  type AssetKey,
 } from './assets';
 
 const testReward: RewardEntity = {
@@ -297,6 +301,66 @@ describe('asset seam', () => {
         [png.readUInt32BE(16), png.readUInt32BE(20)],
         `${key} portrait size`,
       ).toEqual([PORTRAIT_SIZE, PORTRAIT_SIZE]);
+    }
+  });
+
+  it('names animation frames beside their sprite', () => {
+    expect(spriteFrames('player-south', 'walk')).toEqual([]);
+    const original = SPRITE_FRAMES['player-south'];
+    SPRITE_FRAMES['player-south'] = { walk: 2 };
+    try {
+      expect(spriteFrames('player-south', 'walk')).toEqual([
+        {
+          key: 'player-south-walk-1',
+          path: 'assets/characters/player-south-walk-1.png',
+        },
+        {
+          key: 'player-south-walk-2',
+          path: 'assets/characters/player-south-walk-2.png',
+        },
+      ]);
+      expect(spriteFrames('player-south', 'idle')).toEqual([]);
+    } finally {
+      SPRITE_FRAMES['player-south'] = original;
+    }
+  });
+
+  it('animates the hero, every npc, shopkeeper and enemy, and nothing else', () => {
+    expect(isCharacter('player-north')).toBe(true);
+    expect(isCharacter('stairs-up')).toBe(false);
+    expect(isCharacter('chest-relic-closed')).toBe(false);
+    for (const map of Object.values(MAPS)) {
+      const state = { ...createInitialGameState(), mapId: map.id };
+      for (const entity of map.entities) {
+        const sprite = resolveEntityAsset(entity, state);
+        if (!sprite) continue;
+        expect(isCharacter(sprite), entity.id).toBe(
+          ['npc', 'shop', 'enemy'].includes(entity.kind),
+        );
+      }
+    }
+  });
+
+  it('ships every animation frame at exactly one tile', () => {
+    for (const key of Object.keys(SPRITE_FRAMES) as AssetKey[]) {
+      expect(isCharacter(key), `${key} is not a character`).toBe(true);
+      for (const motion of ['idle', 'walk'] as const) {
+        if (motion === 'walk') {
+          expect(
+            key.startsWith('player-') || !SPRITE_FRAMES[key]?.walk,
+            `${key}: only the hero walks`,
+          ).toBe(true);
+        }
+        for (const frame of spriteFrames(key, motion)) {
+          const file = resolve(`public/${frame.path}`);
+          expect(existsSync(file), `${frame.key} file missing`).toBe(true);
+          const png = readFileSync(file);
+          expect(
+            [png.readUInt32BE(16), png.readUInt32BE(20)],
+            `${frame.key} must be ${ART_SIZE}px square`,
+          ).toEqual([ART_SIZE, ART_SIZE]);
+        }
+      }
     }
   });
 });

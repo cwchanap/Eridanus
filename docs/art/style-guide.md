@@ -47,9 +47,27 @@ Keep object identity, camera angle, line weight, and lighting consistent across 
 
 - Same top-down three-quarter perspective across the set.
 - Feet/base aligned to bottom center.
-- Four player stills only: north, south, east, west.
-- No walk/attack frames until a later gameplay ticket consumes animation.
+- Four player facings: north, south, east, west, each optionally with walk and idle frames (see "Animation frames").
+- No attack frames.
 - Name directional files from the rendered facing, not requested sheet position; HPA-22 corrected north/south after visual inspection.
+
+## Animation frames
+
+Characters (`player-*`, `npc-*`, `enemy-*`) animate on the map; interactables and terrain hold still. Extra frames are optional, listed by count in `SPRITE_FRAMES` (`src/phaser/assets.ts`) and shipped beside the sprite:
+
+```
+<sprite file stem>-<motion>-<n>.png      n counts from 1
+assets/characters/player-south-walk-1.png
+assets/characters/player-south-walk-2.png
+assets/characters/npc-warden-idle-1.png
+assets/enemies/ruin-guard-idle-1.png
+```
+
+- `idle`: the loop is the sprite itself, then its idle frames, each held for an equal share of 1.8 s. One idle frame (a breath, a blink, a cape sway) is enough. Every character has its own offset so a room doesn't move in step.
+- `walk`: the hero only, per facing. Each step (120 ms slide into the next tile) shows the facing's next walk frame, so two frames alternate left and right foot. The sprite itself shows again at rest.
+- Without frames, code covers it: idle sprites breathe (squash up to 5% toward their feet, so they never leave their cell) and the hero hops 2 map units at mid-step.
+- Frames are drawn exactly like their sprite: 96×96, same figure size, feet on the same bottom-centre spot, same palette and outline. Only the pose changes, or the loop jitters.
+- Make one with `bun run sprite <sprite-key> <raw.png> <frame path>`, e.g. `bun run sprite player-south raw.png public/assets/characters/player-south-walk-1.png`, then add its count to `SPRITE_FRAMES`. `assets.test.ts` fails if a listed frame is missing or not 96×96, or if anything but the hero has walk frames. Generate a character's frames in one sheet with its sprite as the reference so they match.
 
 ## Interactables
 
