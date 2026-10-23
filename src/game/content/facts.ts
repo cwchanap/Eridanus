@@ -29,7 +29,7 @@ export const FACTS = {
     note: 'A hidden stair behind the treasury reaches Floor 2 — the sealed treasury can be entered from behind.',
   },
   'floor2-paired-release-ledger-read': {
-    note: 'The keeper paired two rear-release mechanisms: each passage opens only from its far side.',
+    note: 'The keeper paired two hall releases: both stay shut until the service wing sentry falls.',
   },
   'floor2-depth-seal-seen': {
     note: 'The lower seal would not release until the missing subject returned with the keeper warning.',

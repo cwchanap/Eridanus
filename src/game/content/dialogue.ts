@@ -32,7 +32,7 @@ export const DIALOGUE_LINES: Record<DialogueLineId, string> = {
   'scout-route-verified':
     'So the return connection is real. The old plan was accurate after all — the lost route is verified.',
   'scribe-floor2-ledger-read':
-    "Paired rear-release mechanisms — so that is what the fragment meant. The keeper's final record must lie deeper in the tower.",
+    "Paired guarded releases — so that is what the fragment meant. The keeper's final record must lie deeper in the tower.",
   'warden-restoration-ending':
     'The Restoration Core can restart the tower flow that keeps our village supplied. The guardian lock is broken; we can restore the system at last.',
   'warden-restoration-ending-ledger':
