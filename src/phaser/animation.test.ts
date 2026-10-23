@@ -1,0 +1,58 @@
+import { describe, expect, it } from 'vitest';
+import {
+  IDLE_MS,
+  STEP_MS,
+  breath,
+  hop,
+  idleFrame,
+  idleOffset,
+  lerp,
+  stepProgress,
+} from './animation';
+
+describe('character animation timing', () => {
+  it('holds each image of an idle loop for an equal share', () => {
+    // The sprite plus one idle frame: half the loop each.
+    expect(idleFrame(0, 0, 1)).toBe(0);
+    expect(idleFrame(IDLE_MS / 2 - 1, 0, 1)).toBe(0);
+    expect(idleFrame(IDLE_MS / 2, 0, 1)).toBe(1);
+    expect(idleFrame(IDLE_MS, 0, 1)).toBe(0);
+    expect(idleFrame((IDLE_MS * 2) / 3, 0, 2)).toBe(2);
+  });
+
+  it('breathes toward the feet, never past full size', () => {
+    expect(breath(0, 0)).toBe(1);
+    expect(breath(IDLE_MS / 2, 0)).toBeCloseTo(0.95);
+    for (let t = 0; t < IDLE_MS; t += 50) {
+      expect(breath(t, 0)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('spreads neighbours over the idle loop', () => {
+    const offsets = [0, 1, 2, 3].map((x) => idleOffset({ x, y: 4 }));
+    expect(new Set(offsets).size).toBe(offsets.length);
+    for (const offset of offsets) {
+      expect(offset).toBeGreaterThanOrEqual(0);
+      expect(offset).toBeLessThan(IDLE_MS);
+    }
+  });
+
+  it('runs a step from 0 to 1 and lands it flat', () => {
+    expect(stepProgress(100, 100)).toBe(0);
+    expect(stepProgress(100 + STEP_MS / 2, 100)).toBe(0.5);
+    expect(stepProgress(100 + STEP_MS * 3, 100)).toBe(1);
+    // A hero who has never stepped is at rest.
+    expect(stepProgress(0, -Infinity)).toBe(1);
+    expect(hop(0)).toBe(0);
+    expect(hop(1)).toBeCloseTo(0);
+    expect(hop(0.5)).toBeGreaterThan(0);
+  });
+
+  it('slides along the step', () => {
+    const from = { x: 0, y: 32 };
+    const to = { x: 32, y: 32 };
+    expect(lerp(from, to, 0)).toEqual(from);
+    expect(lerp(from, to, 0.25)).toEqual({ x: 8, y: 32 });
+    expect(lerp(from, to, 1)).toEqual(to);
+  });
+});

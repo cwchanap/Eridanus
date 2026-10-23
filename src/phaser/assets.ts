@@ -41,6 +41,32 @@ export const ASSET_PATHS = {
 
 export type AssetKey = keyof typeof ASSET_PATHS;
 
+export type Motion = 'idle' | 'walk';
+
+// Extra animation frames for a character sprite, counted here and shipped
+// beside it as <sprite>-<motion>-<n>.png from 1 (player-south-walk-1.png).
+// The idle loop is the sprite itself then its idle frames; each hero step
+// shows the facing's next walk frame. A sprite with no entry still moves,
+// with WorldScene's code-only breath and hop (animation.ts).
+export const SPRITE_FRAMES: Partial<
+  Record<AssetKey, Partial<Record<Motion, number>>>
+> = {};
+
+export type SpriteFrame = Readonly<{ key: string; path: string }>;
+
+export function spriteFrames(key: AssetKey, motion: Motion): SpriteFrame[] {
+  const count = SPRITE_FRAMES[key]?.[motion] ?? 0;
+  return Array.from({ length: count }, (_, i) => ({
+    key: `${key}-${motion}-${i + 1}`,
+    path: ASSET_PATHS[key].replace(/\.png$/, `-${motion}-${i + 1}.png`),
+  }));
+}
+
+// The hero, villagers and enemies; everything else on the map holds still.
+export function isCharacter(key: AssetKey): boolean {
+  return /^(player|npc|enemy)-/.test(key);
+}
+
 export const PORTRAIT_SIZE = 64;
 
 // Panel-only busts for the hero card and the dialogue, shop and fight cards,
