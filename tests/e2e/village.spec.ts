@@ -41,9 +41,17 @@ test('the smith sells wares in order for gold', async ({ page }) => {
   await expect(page.getByTestId('purchase-prompt')).toHaveCount(0);
   await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 20');
 
-  // Down, Enter: buy the Iron Sword (+1 ATK for 15 gold).
+  // Down, Enter: buy the Iron Sword (+1 ATK for 15 gold). Enter is held:
+  // its auto-repeat (a second keydown before keyup) must not close the
+  // receipt the first keydown produced.
   await press(page, 'ArrowDown');
-  await page.keyboard.press('Enter');
+  await page.keyboard.down('Enter');
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'purchased',
+  );
+  await page.keyboard.down('Enter');
+  await page.keyboard.up('Enter');
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'purchased',
