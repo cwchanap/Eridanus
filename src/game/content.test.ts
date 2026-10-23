@@ -385,7 +385,9 @@ describe('authored content', () => {
     };
     for (const map of Object.values(MAPS)) {
       for (const candidate of map.entities) {
-        if (candidate.kind !== 'latch' || !('rearSide' in candidate)) continue;
+        if (candidate.kind !== 'latch') continue;
+        const { rearSide } = candidate;
+        if (!rearSide) continue;
         const front = frontStair[map.id];
         expect(front, `${map.id} front stair`).toBeDefined();
         if (!front) continue;
@@ -402,9 +404,7 @@ describe('authored content', () => {
             ),
         );
         expect(
-          reachable.has(
-            tileKey(tileInDirection(candidate.tile, candidate.rearSide)),
-          ),
+          reachable.has(tileKey(tileInDirection(candidate.tile, rearSide))),
           candidate.id,
         ).toBe(false);
       }
