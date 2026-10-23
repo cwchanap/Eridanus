@@ -32,12 +32,12 @@ if (!missingSubject || missingSubject.kind !== 'npc')
   throw new Error('floor2-missing-subject missing');
 if (!returnedSubject || returnedSubject.kind !== 'npc')
   throw new Error('village-returned-subject missing');
-const boss = findEntityById('floor3-core-guardian');
+const boss = findEntityById('floor5-core-guardian');
 if (!boss || boss.kind !== 'enemy')
-  throw new Error('floor3-core-guardian missing');
-const restorationCore = findEntityById('floor3-restoration-core');
+  throw new Error('floor5-core-guardian missing');
+const restorationCore = findEntityById('floor5-restoration-core');
 if (!restorationCore || restorationCore.kind !== 'reward')
-  throw new Error('floor3-restoration-core missing');
+  throw new Error('floor5-restoration-core missing');
 
 describe('actions', () => {
   it('applies reward once', () => {
@@ -175,14 +175,17 @@ describe('actions', () => {
     ).toHaveLength(1);
   });
 
-  it('offers the floor three boss through the ordinary combat prompt and resolves it plainly', () => {
+  it('offers the floor five boss through the ordinary combat prompt and resolves it plainly', () => {
+    // The required route reaches the guardian with the two chests it
+    // passes on floors 4 and 5 (ATK +2, DEF +2).
     const state = {
       ...createInitialGameState(),
-      mapId: 'floor3' as const,
+      mapId: 'floor5' as const,
       tile: tileInDirection(boss.tile, 'south'),
+      player: { hp: 30, maxHp: 30, attack: 12, defense: 4, gold: 0 },
     };
     const preview = previewCombat(state.player, boss.stats);
-    expect(preview).toEqual({ winnable: true, hitsNeeded: 6, hpLoss: 25 });
+    expect(preview).toEqual({ winnable: true, hitsNeeded: 5, hpLoss: 24 });
 
     expect(interactWithEntity(state, boss, state.tile)).toEqual({
       ok: true,
@@ -193,7 +196,7 @@ describe('actions', () => {
     const fight = resolveCombat(state, boss);
     expect(fight.ok).toBe(true);
     if (!fight.ok) return;
-    expect(fight.state.player.hp).toBe(5);
+    expect(fight.state.player.hp).toBe(6);
     expect(
       fight.state.defeatedEnemyIds.filter((id) => id === boss.id),
     ).toHaveLength(1);
@@ -212,9 +215,9 @@ describe('actions', () => {
   it('grants the restoration core exactly once once the guardian is defeated', () => {
     const state = {
       ...createInitialGameState(),
-      mapId: 'floor3' as const,
+      mapId: 'floor5' as const,
       tile: boss.tile,
-      defeatedEnemyIds: ['floor3-core-guardian'],
+      defeatedEnemyIds: ['floor5-core-guardian'],
     };
     const first = interactWithEntity(state, restorationCore, state.tile);
     expect(first.ok).toBe(true);
@@ -224,7 +227,7 @@ describe('actions', () => {
       itemId: 'tower-restoration-core',
       label: 'Restoration Core',
     });
-    expect(first.state.openedRewardIds).toContain('floor3-restoration-core');
+    expect(first.state.openedRewardIds).toContain('floor5-restoration-core');
     expect(first.state.itemIds).toContain('tower-restoration-core');
 
     expect(

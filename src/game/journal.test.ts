@@ -27,8 +27,8 @@ describe('restoration ending', () => {
   it('persists the ending fact and completes the main lead after a reload', () => {
     const state = {
       ...createInitialGameState(),
-      defeatedEnemyIds: ['floor3-core-guardian'],
-      openedRewardIds: ['floor3-restoration-core'],
+      defeatedEnemyIds: ['floor5-core-guardian'],
+      openedRewardIds: ['floor5-restoration-core'],
       itemIds: ['tower-restoration-core'],
     };
     const ending = interactWithEntity(state, warden, warden.tile);
@@ -63,8 +63,8 @@ describe('restoration ending', () => {
   it('adds no second ending flag when the final record precedes the warden', () => {
     const state = {
       ...createInitialGameState(),
-      defeatedEnemyIds: ['floor3-core-guardian'],
-      openedRewardIds: ['floor3-restoration-core'],
+      defeatedEnemyIds: ['floor5-core-guardian'],
+      openedRewardIds: ['floor5-restoration-core'],
       itemIds: ['tower-restoration-core'],
       factIds: ['floor3-keeper-final-record-read'],
     };
@@ -290,7 +290,7 @@ describe('buildJournalView', () => {
     expect(
       main({
         factIds: ['main-subject-returned', 'floor2-depth-stairs-used'],
-        defeatedEnemyIds: ['floor3-core-guardian'],
+        defeatedEnemyIds: ['floor5-core-guardian'],
       }),
     ).toBe('claim-restoration-core');
     expect(main({ itemIds: ['tower-restoration-core'] })).toBe(

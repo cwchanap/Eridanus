@@ -89,6 +89,8 @@ const TERRAIN_BY_MAP: Record<MapId, TerrainAssets> = {
   floor1: DUNGEON,
   floor2: DUNGEON,
   floor3: DUNGEON,
+  floor4: DUNGEON,
+  floor5: DUNGEON,
 };
 
 const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {

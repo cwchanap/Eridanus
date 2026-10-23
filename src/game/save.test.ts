@@ -429,22 +429,22 @@ describe('saveGame/loadGame', () => {
   });
 });
 
-describe('floor three completion occupancy', () => {
-  const boss = findEntityById('floor3-core-guardian');
+describe('floor five completion occupancy', () => {
+  const boss = findEntityById('floor5-core-guardian');
   if (!boss || boss.kind !== 'enemy')
-    throw new Error('floor3-core-guardian missing');
-  const core = findEntityById('floor3-restoration-core');
+    throw new Error('floor5-core-guardian missing');
+  const core = findEntityById('floor5-restoration-core');
   if (!core || core.kind !== 'reward')
-    throw new Error('floor3-restoration-core missing');
+    throw new Error('floor5-restoration-core missing');
 
-  const onFloor3 = (tile: Tile) => ({
+  const onFloor5 = (tile: Tile) => ({
     ...createInitialGameState(),
-    mapId: 'floor3' as const,
+    mapId: 'floor5' as const,
     tile,
   });
 
   it('rejects a save standing on the undefeated guardian', () => {
-    storage.setItem('eridanus.save', JSON.stringify(onFloor3(boss.tile)));
+    storage.setItem('eridanus.save', JSON.stringify(onFloor5(boss.tile)));
     expect(loadGame(storage)).toEqual({
       kind: 'invalid',
       reason: 'invalid-content',
@@ -454,7 +454,11 @@ describe('floor three completion occupancy', () => {
   it('lets a run saved in the Heart Approach before the hatch was guarded out', () => {
     // Before the hatch was guarded, side passages reached the heart, so a
     // save may sit north of the shut hatch with its guard still standing.
-    const state = onFloor3({ x: 10, y: 4 });
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor3' as const,
+      tile: { x: 10, y: 4 },
+    };
     storage.setItem('eridanus.save', JSON.stringify(state));
     const loaded = loadGame(storage);
     expect(loaded).toEqual({ kind: 'loaded', state });
@@ -467,15 +471,15 @@ describe('floor three completion occupancy', () => {
 
   it('accepts a save standing on the defeated guardian', () => {
     const state = {
-      ...onFloor3(boss.tile),
-      defeatedEnemyIds: ['floor3-core-guardian'],
+      ...onFloor5(boss.tile),
+      defeatedEnemyIds: ['floor5-core-guardian'],
     };
     storage.setItem('eridanus.save', JSON.stringify(state));
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
   });
 
   it('rejects a save standing on the unopened restoration core', () => {
-    storage.setItem('eridanus.save', JSON.stringify(onFloor3(core.tile)));
+    storage.setItem('eridanus.save', JSON.stringify(onFloor5(core.tile)));
     expect(loadGame(storage)).toEqual({
       kind: 'invalid',
       reason: 'invalid-content',
@@ -484,8 +488,8 @@ describe('floor three completion occupancy', () => {
 
   it('accepts a save standing on the opened restoration core with the item carried', () => {
     const state = {
-      ...onFloor3(core.tile),
-      openedRewardIds: ['floor3-restoration-core'],
+      ...onFloor5(core.tile),
+      openedRewardIds: ['floor5-restoration-core'],
       itemIds: ['tower-restoration-core'],
     };
     storage.setItem('eridanus.save', JSON.stringify(state));

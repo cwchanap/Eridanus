@@ -40,6 +40,15 @@ export const FACTS = {
   'floor3-keeper-final-record-read': {
     note: 'The final keeper record says the paired releases isolated a failed guardian control state while the tower continued feeding the village system.',
   },
+  'floor3-depth-stairs-used': {
+    note: 'The stair behind the heart sentinel reaches Floor 4.',
+  },
+  'floor4-depth-stairs-used': {
+    note: 'The foundry stair reaches Floor 5, the tower heart.',
+  },
+  'tower-lift-seen': {
+    note: 'A dead lift cage links the village to the tower heart. Its socket is shaped for a power core.',
+  },
   'main-village-restored': {},
 } as const satisfies Record<string, { note?: string }>;
 

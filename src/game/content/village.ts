@@ -6,7 +6,7 @@ export const village: MapDefinition = {
   // An open village in the middle, walled, with a gate on each side. The
   // outskirts around it are a winding maze whose dead-end branches hold the
   // tower stair (north) and the sealed Mine (west), Crypt (east) and Barrow
-  // (south-west). The top corners stay solid: the hero card and journal
+  // (south-west), with the tower lift beside the stair. The top corners stay solid: the hero card and journal
   // float over them.
   layout: [
     '#################################',
@@ -115,6 +115,13 @@ export const village: MapDefinition = {
           stat: 'attack',
           amount: 2,
         },
+        {
+          itemId: 'runed-blade',
+          label: 'Runed Blade',
+          price: 90,
+          stat: 'attack',
+          amount: 4,
+        },
       ],
     },
     {
@@ -137,6 +144,13 @@ export const village: MapDefinition = {
           price: 40,
           stat: 'defense',
           amount: 2,
+        },
+        {
+          itemId: 'plate-armor',
+          label: 'Plate Armor',
+          price: 90,
+          stat: 'defense',
+          amount: 4,
         },
       ],
     },
@@ -161,6 +175,13 @@ export const village: MapDefinition = {
           stat: 'maxHp',
           amount: 10,
         },
+        {
+          itemId: 'life-crystal',
+          label: 'Life Crystal',
+          price: 70,
+          stat: 'maxHp',
+          amount: 20,
+        },
       ],
     },
     {
@@ -170,6 +191,20 @@ export const village: MapDefinition = {
       assetId: 'stairs-down',
       target: { mapId: 'floor1', tile: { x: 2, y: 14 } },
       factId: 'village-tower-stairs-used',
+    },
+    {
+      kind: 'portal',
+      id: 'village-lift-to-floor5',
+      tile: { x: 21, y: 1 },
+      assetId: 'stairs-down',
+      target: { mapId: 'floor5', tile: { x: 12, y: 7 } },
+      lock: {
+        kind: 'item',
+        requiresItemId: 'tower-restoration-core',
+        lockedFactId: 'tower-lift-seen',
+        lockedText:
+          'A lift cage hangs dead in its shaft. Its socket is shaped for a power core.',
+      },
     },
     {
       kind: 'sealed',
