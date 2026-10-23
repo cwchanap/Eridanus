@@ -31,7 +31,7 @@ const LEAD_TEXT: Record<LeadId, string> = {
   'ledger-find-fragment': 'Search for a surviving keeper ledger fragment.',
   'ledger-find-later-pages': 'Look deeper in the tower for later ledger pages.',
   'ledger-follow-deeper-record':
-    'The paired rear-release mechanisms explain the fragment. Seek the final record deeper in the tower.',
+    'The paired guarded releases explain the fragment. Seek the final record deeper in the tower.',
   'reach-heart-chamber':
     'Floor 3 is open. Defeat the hatch guard in the galleries to reach the tower heart.',
   'claim-restoration-core':
