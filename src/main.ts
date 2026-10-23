@@ -14,7 +14,7 @@ import type {
   SessionState,
 } from './game/types';
 import { createGame, type CreatedGame } from './phaser/createGame';
-import { InteractionOverlay } from './ui/InteractionOverlay';
+import { InteractionOverlay, showsMessage } from './ui/InteractionOverlay';
 
 const gameRoot = document.querySelector<HTMLElement>('#game');
 const uiRoot = document.querySelector<HTMLElement>('#ui');
@@ -72,6 +72,7 @@ function startRuntime(
     // Scene create() performs the first refresh once Phaser boots.
     created = createGame(gameRoot!, {
       getSession: () => session,
+      hasMessage: () => showsMessage(effect, blocked),
       onInput: handleInput,
     });
   } else {

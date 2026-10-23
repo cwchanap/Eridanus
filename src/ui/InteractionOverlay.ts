@@ -105,6 +105,20 @@ function effectMessage(effect: ActionEffect): Message | null {
   }
 }
 
+// Whether the message box shows a message rather than the explore hint, so
+// Enter/Escape (or its close button) has something to close.
+export function showsMessage(
+  effect: ActionEffect | null,
+  blocked: BlockedReason | null,
+): boolean {
+  return (
+    blocked !== null || (effect !== null && effectMessage(effect) !== null)
+  );
+}
+
+// Sits on the box's top-right border, opposite the nameplate tag.
+const CLOSE_BUTTON = `<button type="button" class="message-close" data-action="dismiss" aria-label="Close message" aria-keyshortcuts="Escape Enter"><kbd aria-hidden="true">Esc</kbd></button>`;
+
 function boundsArea({ bounds }: MapSection): number {
   return (bounds.maxX - bounds.minX + 1) * (bounds.maxY - bounds.minY + 1);
 }
@@ -228,12 +242,12 @@ function renderMessage(view: OverlayView): string {
         ? renderEncounter(pending, state)
         : renderPurchase(pending, state)) + blockedHtml
     );
-  if (blocked) return blockedHtml;
+  if (blocked) return blockedHtml + CLOSE_BUTTON;
   const message = effect && effectMessage(effect);
   if (effect && message) {
     return `<div class="message" data-testid="effect" data-effect="${effect.kind}"${
       effect.kind === 'dialogue' ? ` data-line="${effect.lineId}"` : ''
-    }>${effectPortrait(effect, state)}<div class="message-body"><span class="message-tag">${message.tag}</span><p class="message-text">${message.text}</p></div></div>`;
+    }>${effectPortrait(effect, state)}<div class="message-body"><span class="message-tag">${message.tag}</span><p class="message-text">${message.text}</p></div></div>${CLOSE_BUTTON}`;
   }
   return `<p class="log-hint"><span class="keys"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span> Explore. Walk into anything to interact with it.</p>`;
 }
@@ -309,9 +323,11 @@ export class InteractionOverlay {
     this.root
       .querySelector<HTMLButtonElement>('[data-action="confirm"]')
       ?.addEventListener('click', () => this.onConfirm());
-    this.root
-      .querySelector<HTMLButtonElement>('[data-action="cancel"]')
-      ?.addEventListener('click', () => this.onCancel());
+    // Closing a message is a cancel with nothing pending, like Escape.
+    for (const action of ['cancel', 'dismiss'])
+      this.root
+        .querySelector<HTMLButtonElement>(`[data-action="${action}"]`)
+        ?.addEventListener('click', () => this.onCancel());
     this.root
       .querySelector<HTMLButtonElement>('[data-action="toggle-journal"]')
       ?.addEventListener('click', () => this.toggleJournal());

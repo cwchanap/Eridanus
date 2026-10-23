@@ -12,6 +12,8 @@ import { cameraCentre, followZoom, hudTop, logStrip } from './camera';
 
 export type WorldSceneDeps = {
   getSession: () => SessionState;
+  // Whether the message box shows something Enter/Escape can close.
+  hasMessage: () => boolean;
   onInput: (input: InputCommand) => void;
 };
 
@@ -50,13 +52,20 @@ export class WorldScene extends Phaser.Scene {
       this.deps.onInput({ kind: 'move', direction });
       return;
     }
-    // Enter/Escape only answer an open combat or purchase prompt. Forwarding them
-    // otherwise would dispatch a no-op that clears the visible effect text,
-    // and preventDefault stops a focused button from also firing its click.
+    // Enter/Escape answer an open combat or purchase prompt; with none open,
+    // either one closes the shown message (a cancel with nothing pending is
+    // a no-op that clears it). With nothing to answer or close they are left
+    // alone, and preventDefault stops a focused button from also firing its
+    // click.
     const command = PROMPT_KEYS.get(event.key);
-    if (command === undefined || !this.deps.getSession().pending) return;
-    event.preventDefault();
-    this.deps.onInput(command);
+    if (command === undefined) return;
+    if (this.deps.getSession().pending) {
+      event.preventDefault();
+      this.deps.onInput(command);
+    } else if (this.deps.hasMessage()) {
+      event.preventDefault();
+      this.deps.onInput({ kind: 'cancel' });
+    }
   };
 
   constructor(deps: WorldSceneDeps) {
