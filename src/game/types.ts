@@ -85,12 +85,13 @@ export type EnemyEntity = BaseEntity &
     gold: number;
   }>;
 // A latch opens from its rearSide, which only another floor reaches, or,
-// when guarded, from either side once every guard is defeated.
+// when guarded, from either side once every guard is defeated. A guarded
+// latch may also keep a rearSide, opening from there regardless of guards.
 export type LatchEntity = BaseEntity &
   Readonly<{ kind: 'latch' }> &
   (
     | Readonly<{ rearSide: Direction }>
-    | Readonly<{ guardIds: readonly string[] }>
+    | Readonly<{ guardIds: readonly string[]; rearSide?: Direction }>
   );
 export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
 // A maze entrance whose maze is not built yet: bumping it shows its text

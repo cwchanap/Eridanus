@@ -95,7 +95,12 @@ export function interactWithEntity(
           state,
           effect: { kind: 'latchOpened', id: entity.id },
         };
-      if ('guardIds' in entity) {
+      const fromRear =
+        entity.rearSide !== undefined &&
+        directionFromTo(entity.tile, fromTile) === entity.rearSide;
+      if (!fromRear) {
+        if (!('guardIds' in entity))
+          return { ok: false, reason: 'latch-closed-front' };
         const remaining = entity.guardIds.filter(
           (id) => !state.defeatedEnemyIds.includes(id),
         ).length;
@@ -105,8 +110,7 @@ export function interactWithEntity(
             state,
             effect: { kind: 'latchGuarded', id: entity.id, remaining },
           };
-      } else if (directionFromTo(entity.tile, fromTile) !== entity.rearSide)
-        return { ok: false, reason: 'latch-closed-front' };
+      }
       return {
         ok: true,
         state: {

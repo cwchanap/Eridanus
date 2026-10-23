@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { findEntityById } from './content';
 import { createInitialGameState } from './state';
+import { attemptMove } from './movement';
 import { loadGame, resetGame, saveGame } from './save';
 import type { Tile } from './types';
 
@@ -447,6 +448,20 @@ describe('floor three completion occupancy', () => {
     expect(loadGame(storage)).toEqual({
       kind: 'invalid',
       reason: 'invalid-content',
+    });
+  });
+
+  it('lets a run saved in the Heart Approach before the hatch was guarded out', () => {
+    // Before the hatch was guarded, side passages reached the heart, so a
+    // save may sit north of the shut hatch with its guard still standing.
+    const state = onFloor3({ x: 10, y: 4 });
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    const loaded = loadGame(storage);
+    expect(loaded).toEqual({ kind: 'loaded', state });
+    const result = attemptMove(state, 'south');
+    expect(result.ok && result.effect).toEqual({
+      kind: 'latchOpened',
+      id: 'floor3-heart-shortcut',
     });
   });
 

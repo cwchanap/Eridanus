@@ -33,6 +33,9 @@ export const floor3: MapDefinition = {
       id: 'floor3-heart-shortcut',
       tile: { x: 10, y: 5 },
       guardIds: ['floor3-archive-sentry'],
+      // Only the hatch leads to the heart, so this side opens it only for a
+      // run saved there before the hatch was guarded, which would be stuck.
+      rearSide: 'north',
     },
     {
       kind: 'recovery',

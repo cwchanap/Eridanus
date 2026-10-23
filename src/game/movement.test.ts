@@ -18,11 +18,7 @@ const base: GameState = {
 
 describe('attemptMove', () => {
   const latchEntity = findEntityById('floor1-rear-latch');
-  if (
-    !latchEntity ||
-    latchEntity.kind !== 'latch' ||
-    !('rearSide' in latchEntity)
-  )
+  if (!latchEntity || latchEntity.kind !== 'latch' || !latchEntity.rearSide)
     throw new Error('floor1-rear-latch missing');
   const rearTile = tileInDirection(latchEntity.tile, latchEntity.rearSide);
   const westRelease = findEntityById('floor2-west-release');
