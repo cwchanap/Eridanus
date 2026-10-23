@@ -610,12 +610,14 @@ test('completes the explorer MVP route with expanded ending context', async ({
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 8');
   await page.keyboard.press('Enter');
   await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 22/30');
-  // With no prompt open, Enter is ignored rather than clearing the result.
-  await page.keyboard.press('Enter');
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'enemyDefeated',
   );
+  // With no prompt open, Enter closes the result back to the explore hint.
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('effect')).toHaveCount(0);
+  await expect(page.locator('.log-hint')).toBeVisible();
 
   await claimDepthSigil(page);
   await climbToFloor2CentralHall(page);

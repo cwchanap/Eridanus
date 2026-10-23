@@ -51,6 +51,9 @@ test('the smith sells wares in order for gold', async ({ page }) => {
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 11');
   await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 5');
   await expect(page.locator('[data-item="iron-sword"]')).toHaveCount(1);
+  // Escape closes the receipt, like any message.
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('effect')).toHaveCount(0);
 
   // Down again: the next ware costs more than the purse, so Buy is refused
   // and the prompt stays open until Leave.
@@ -89,4 +92,7 @@ test('a sealed maze entrance turns the hero back and saves nothing', async ({
   expect(await page.evaluate(() => localStorage.getItem('eridanus.save'))).toBe(
     before,
   );
+  // The message's close button dismisses it too.
+  await page.getByRole('button', { name: 'Close message' }).click();
+  await expect(page.getByTestId('effect')).toHaveCount(0);
 });
