@@ -8,6 +8,7 @@ import {
   idleOffset,
   lerp,
   stepProgress,
+  walkFrame,
 } from './animation';
 
 describe('character animation timing', () => {
@@ -54,5 +55,16 @@ describe('character animation timing', () => {
     expect(lerp(from, to, 0)).toEqual(from);
     expect(lerp(from, to, 0.25)).toEqual({ x: 8, y: 32 });
     expect(lerp(from, to, 1)).toEqual(to);
+  });
+
+  it('plays half a walk cycle per step, carrying it on across steps', () => {
+    // Four frames: two per step, each for half the step.
+    expect([0, 0.49, 0.5, 0.99, 1].map((p) => walkFrame(1, p, 4))).toEqual([
+      2, 2, 3, 3, 3,
+    ]);
+    expect([0, 0.5].map((p) => walkFrame(2, p, 4))).toEqual([0, 1]);
+    expect([0, 0.5].map((p) => walkFrame(3, p, 4))).toEqual([2, 3]);
+    // Two frames: one per step, alternating feet.
+    expect([1, 2, 3].map((n) => walkFrame(n, 0.5, 2))).toEqual([1, 0, 1]);
   });
 });

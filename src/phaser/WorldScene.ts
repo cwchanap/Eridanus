@@ -14,6 +14,7 @@ import {
   idleOffset,
   lerp,
   stepProgress,
+  walkFrame,
 } from './animation';
 import {
   ART_SIZE,
@@ -339,7 +340,9 @@ export class WorldScene extends Phaser.Scene {
       const walk = this.heroWalk;
       image.setScale(SPRITE_SCALE);
       if (walk.length > 0) {
-        image.setTexture(walk[this.step.count % walk.length]!);
+        image.setTexture(
+          walk[walkFrame(this.step.count, progress, walk.length)]!,
+        );
       } else {
         image.setTexture(loop[0]!);
         lift = hop(progress);

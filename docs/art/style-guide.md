@@ -64,10 +64,10 @@ assets/enemies/ruin-guard-idle-1.png
 ```
 
 - `idle`: the loop is the sprite itself, then its idle frames, each held for an equal share of 1.8 s. One idle frame (a breath, a blink, a cape sway) is enough. Every character has its own offset so a room doesn't move in step.
-- `walk`: the hero only, per facing. Each step (120 ms slide into the next tile) shows the facing's next walk frame, so two frames alternate left and right foot. The sprite itself shows again at rest.
+- `walk`: the hero only, per facing, ideally a 4-frame cycle: right foot forward, passing, left foot forward, passing. A cycle spans two steps, so each 160 ms step (the slide into the next tile) plays half of it, and held keys carry it on rather than restarting it. With 2 frames each step shows one, alternating feet. The sprite itself shows again at rest.
 - Without frames, code covers it: idle sprites breathe (squash up to 5% toward their feet, so they never leave their cell) and the hero hops 2 map units at mid-step.
 - Frames are drawn exactly like their sprite: 96×96, same figure size, feet on the same bottom-centre spot, same palette and outline. Only the pose changes, or the loop jitters.
-- Make one with `bun run sprite <sprite-key> <raw.png> <frame path>`, e.g. `bun run sprite player-south raw.png public/assets/characters/player-south-walk-1.png`, then add its count to `SPRITE_FRAMES`. `assets.test.ts` fails if a listed frame is missing or not 96×96, or if anything but the hero has walk frames. Generate a character's frames in one sheet with its sprite as the reference so they match.
+- Generate a whole cycle as one sheet with the sprite itself as the reference, the figures side by side in equal columns on flat #FF00FF, then cut it with `bun run sprite <sprite-key> <sheet.png> --frames <idle|walk> <count>` (e.g. `bun run sprite player-south sheet.png --frames walk 4`). It writes every frame beside the sprite at one shared scale (fitting the largest figure), each centred on the bottom edge, so the cycle never swells or drifts. A single frame can also go through `bun run sprite <sprite-key> <raw.png> <frame path>`. Then add the count to `SPRITE_FRAMES`. `assets.test.ts` fails if a listed frame is missing or not 96×96, or if anything but the hero has walk frames. `player-west` frames are the `player-east` sheet mirrored, like the sprite.
 
 ## Interactables
 

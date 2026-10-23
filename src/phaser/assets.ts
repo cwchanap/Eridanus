@@ -54,11 +54,16 @@ export const SPRITE_FRAMES: Partial<
 
 export type SpriteFrame = Readonly<{ key: string; path: string }>;
 
+// The URL of a sprite's nth frame of a motion, counting from 1.
+export function framePath(key: AssetKey, motion: Motion, n: number): string {
+  return ASSET_PATHS[key].replace(/\.png$/, `-${motion}-${n}.png`);
+}
+
 export function spriteFrames(key: AssetKey, motion: Motion): SpriteFrame[] {
   const count = SPRITE_FRAMES[key]?.[motion] ?? 0;
   return Array.from({ length: count }, (_, i) => ({
     key: `${key}-${motion}-${i + 1}`,
-    path: ASSET_PATHS[key].replace(/\.png$/, `-${motion}-${i + 1}.png`),
+    path: framePath(key, motion, i + 1),
   }));
 }
 
