@@ -305,24 +305,25 @@ describe('asset seam', () => {
   });
 
   it('names animation frames beside their sprite', () => {
-    expect(spriteFrames('player-south', 'walk')).toEqual([]);
-    const original = SPRITE_FRAMES['player-south'];
-    SPRITE_FRAMES['player-south'] = { walk: 2 };
+    const original = SPRITE_FRAMES['npc-warden'];
+    SPRITE_FRAMES['npc-warden'] = { idle: 2 };
     try {
-      expect(spriteFrames('player-south', 'walk')).toEqual([
+      expect(spriteFrames('npc-warden', 'idle')).toEqual([
         {
-          key: 'player-south-walk-1',
-          path: 'assets/characters/player-south-walk-1.png',
+          key: 'npc-warden-idle-1',
+          path: 'assets/characters/npc-warden-idle-1.png',
         },
         {
-          key: 'player-south-walk-2',
-          path: 'assets/characters/player-south-walk-2.png',
+          key: 'npc-warden-idle-2',
+          path: 'assets/characters/npc-warden-idle-2.png',
         },
       ]);
-      expect(spriteFrames('player-south', 'idle')).toEqual([]);
+      expect(spriteFrames('npc-warden', 'walk')).toEqual([]);
     } finally {
-      SPRITE_FRAMES['player-south'] = original;
+      SPRITE_FRAMES['npc-warden'] = original;
     }
+    // A sprite with no entry has no frames.
+    expect(spriteFrames('stairs-up', 'idle')).toEqual([]);
   });
 
   it('animates the hero, every npc, shopkeeper and enemy, and nothing else', () => {
