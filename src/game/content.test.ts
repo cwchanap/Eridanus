@@ -255,12 +255,10 @@ describe('authored content', () => {
     expect(
       reachable.has(tileKey(portal('floor2-treasury-to-floor1').tile)),
     ).toBe(true);
-    for (const id of ['floor2-west-release', 'floor2-east-release'] as const) {
-      const release = latch(id);
-      expect(
-        reachable.has(tileKey(tileInDirection(release.tile, release.rearSide))),
-      ).toBe(true);
-    }
+    // Both releases answer to the east sentry, reachable around them.
+    expect(
+      hasAdjacentApproach(reachable, entity('floor2-east-sentry').tile),
+    ).toBe(true);
     expect(
       hasAdjacentApproach(reachable, entity('floor2-missing-subject').tile),
     ).toBe(true);
@@ -288,8 +286,15 @@ describe('authored content', () => {
         !isTileBlockedByEntity(freshFloor3, tile),
     );
 
-    expect(reachable.has(tileKey({ x: 6, y: 4 }))).toBe(true);
-    expect(reachable.has(tileKey({ x: 15, y: 4 }))).toBe(true);
+    // The heart is sealed behind the hatch until its guard falls.
+    const heartApproach = findSectionById('floor3-heart-approach');
+    expect(heartApproach).toBeDefined();
+    if (!heartApproach) return;
+    const { minX, maxX, minY, maxY } = heartApproach.bounds;
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++)
+        expect(reachable.has(tileKey({ x, y })), `${x},${y}`).toBe(false);
+    }
     expect(
       hasAdjacentApproach(reachable, entity('floor3-keeper-final-record').tile),
     ).toBe(true);
@@ -302,32 +307,34 @@ describe('authored content', () => {
     expect(archive?.bounds.minX).toBeGreaterThan(15);
     expect(entity('floor3-vault-route-mark').tile.x).toBeLessThan(6);
     expect(entity('floor3-keeper-final-record').tile.x).toBeGreaterThan(15);
-    for (const id of [
-      'floor3-archive-sentry',
-      'floor3-vault-sentry',
-    ] as const) {
-      const sentry = entity(id);
-      expect(sentry.tile.x).not.toBe(6);
-      expect(sentry.tile.x).not.toBe(15);
-    }
 
     const shortcut = latch('floor3-heart-shortcut');
+    expect('guardIds' in shortcut && shortcut.guardIds).toEqual([
+      'floor3-archive-sentry',
+    ]);
     expect(
-      reachable.has(tileKey(tileInDirection(shortcut.tile, shortcut.rearSide))),
+      hasAdjacentApproach(reachable, entity('floor3-archive-sentry').tile),
     ).toBe(true);
-    // The rear approach must sit inside the Heart Approach section: the
-    // shortcut opens from the reconnect point, not from the galleries.
-    const heartApproach = findSectionById('floor3-heart-approach');
-    expect(heartApproach).toBeDefined();
-    if (heartApproach) {
-      const rear = tileInDirection(shortcut.tile, shortcut.rearSide);
-      expect(
-        rear.x >= heartApproach.bounds.minX &&
-          rear.x <= heartApproach.bounds.maxX &&
-          rear.y >= heartApproach.bounds.minY &&
-          rear.y <= heartApproach.bounds.maxY,
-      ).toBe(true);
-    }
+    expect(
+      reachable.has(tileKey(tileInDirection(shortcut.tile, 'south'))),
+    ).toBe(true);
+
+    // Once opened, the hatch is the way into the Heart Approach.
+    const hatchOpen = {
+      ...freshFloor3,
+      defeatedEnemyIds: ['floor3-archive-sentry'],
+      openedShortcutIds: [shortcut.id],
+    };
+    const reachableOpen = floodFloor(
+      MAPS.floor3,
+      [portal('floor3-to-floor2').tile],
+      (tile) =>
+        MAPS.floor3.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(hatchOpen, tile),
+    );
+    expect(
+      reachableOpen.has(tileKey(tileInDirection(shortcut.tile, 'north'))),
+    ).toBe(true);
     expect(
       directionFromTo(
         entity('floor3-heart-waystone').tile,
@@ -336,16 +343,19 @@ describe('authored content', () => {
     ).not.toBeNull();
 
     expect(
-      hasAdjacentApproach(reachable, entity('floor3-core-guardian').tile),
+      hasAdjacentApproach(reachableOpen, entity('floor3-core-guardian').tile),
     ).toBe(true);
     // Unopened rewards block by design, so only the boss can seal the Core.
     expect(
-      hasAdjacentApproach(reachable, entity('floor3-restoration-core').tile),
+      hasAdjacentApproach(
+        reachableOpen,
+        entity('floor3-restoration-core').tile,
+      ),
     ).toBe(false);
 
     const afterBoss = {
-      ...freshFloor3,
-      defeatedEnemyIds: ['floor3-core-guardian'],
+      ...hatchOpen,
+      defeatedEnemyIds: ['floor3-archive-sentry', 'floor3-core-guardian'],
     };
     const reachableAfter = floodFloor(
       MAPS.floor3,
@@ -363,6 +373,42 @@ describe('authored content', () => {
         entity('floor3-restoration-core').tile,
       ),
     ).toBe(true);
+  });
+
+  it('opens every latch only by clearing its guards or from another floor', () => {
+    // A rear latch's rear side must lie beyond the floor's front stair:
+    // walking in from it, latches shut, never reaches that side.
+    const frontStair: Partial<Record<MapId, string>> = {
+      floor1: 'floor1-to-village',
+      floor2: 'floor2-front-to-floor1',
+      floor3: 'floor3-to-floor2',
+    };
+    for (const map of Object.values(MAPS)) {
+      for (const candidate of map.entities) {
+        if (candidate.kind !== 'latch' || !('rearSide' in candidate)) continue;
+        const front = frontStair[map.id];
+        expect(front, `${map.id} front stair`).toBeDefined();
+        if (!front) continue;
+        const reachable = floodFloor(
+          map,
+          [portal(front).tile],
+          (tile) =>
+            map.layout[tile.y]?.[tile.x] === '.' &&
+            !map.entities.some(
+              (other) =>
+                other.kind === 'latch' &&
+                other.tile.x === tile.x &&
+                other.tile.y === tile.y,
+            ),
+        );
+        expect(
+          reachable.has(
+            tileKey(tileInDirection(candidate.tile, candidate.rearSide)),
+          ),
+          candidate.id,
+        ).toBe(false);
+      }
+    }
   });
 
   it('keeps the treasury pocket sealed from ordinary floor one entries', () => {
@@ -612,6 +658,30 @@ describe('validateContent failure branches', () => {
     ]);
     expect(validateContent(maps)).toEqual([
       'typo-clue: unknown fact id: not-a-fact',
+    ]);
+  });
+
+  it('flags a guarded latch whose guard is not an enemy on its map', () => {
+    const maps = villageWith([
+      {
+        kind: 'latch',
+        id: 'typo-latch',
+        tile: { x: 9, y: 3 },
+        guardIds: ['village-warden', 'floor3-archive-sentry'],
+      },
+    ]);
+    expect(validateContent(maps)).toEqual([
+      'typo-latch: guard village-warden is not an enemy here',
+      'typo-latch: guard floor3-archive-sentry is not an enemy here',
+    ]);
+  });
+
+  it('flags a guarded latch without guards', () => {
+    const maps = villageWith([
+      { kind: 'latch', id: 'bare-latch', tile: { x: 9, y: 3 }, guardIds: [] },
+    ]);
+    expect(validateContent(maps)).toEqual([
+      'bare-latch: guarded latch has no guards',
     ]);
   });
 

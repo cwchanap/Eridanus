@@ -84,8 +84,14 @@ export type EnemyEntity = BaseEntity &
     stats: Readonly<{ hp: number; attack: number; defense: number }>;
     gold: number;
   }>;
+// A latch opens from its rearSide, which only another floor reaches, or,
+// when guarded, from either side once every guard is defeated.
 export type LatchEntity = BaseEntity &
-  Readonly<{ kind: 'latch'; rearSide: Direction }>;
+  Readonly<{ kind: 'latch' }> &
+  (
+    | Readonly<{ rearSide: Direction }>
+    | Readonly<{ guardIds: readonly string[] }>
+  );
 export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
 // A maze entrance whose maze is not built yet: bumping it shows its text
 // and records nothing.
@@ -195,6 +201,7 @@ export type ActionEffect =
   | { kind: 'reward'; stat: Stat; amount: number }
   | { kind: 'healed'; hp: number }
   | { kind: 'latchOpened'; id: string }
+  | { kind: 'latchGuarded'; id: string; remaining: number }
   | { kind: 'combatPrompt'; enemyId: string; preview: WinnableCombatPreview }
   | { kind: 'enemyDefeated'; enemyId: string; hpLost: number; gold: number }
   | { kind: 'purchasePrompt'; shopId: string; ware: ShopWare }

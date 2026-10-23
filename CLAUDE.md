@@ -72,7 +72,7 @@ Gold comes only from defeated enemies (each `EnemyEntity` authors its drop). A s
 
 ### Movement is interaction
 
-There is no separate "interact" key. Moving into an occupied tile calls `interactWithEntity` and the player normally _stays put_ (a `sealed` entrance — a maze not built yet — just shows its text and records nothing); only portals (step-on travel) and already-consumed entities (collected reward, defeated enemy, opened latch) let the player advance. Latches open only from their `rearSide` — `interactWithEntity` compares the direction from the latch back to the player's tile.
+There is no separate "interact" key. Moving into an occupied tile calls `interactWithEntity` and the player normally _stays put_ (a `sealed` entrance — a maze not built yet — just shows its text and records nothing); only portals (step-on travel) and already-consumed entities (collected reward, defeated enemy, opened latch) let the player advance. A latch is either a rear latch, opening only from its `rearSide` (`interactWithEntity` compares the direction from the latch back to the player's tile), or a guarded latch with `guardIds`, opening from either side once every guard is defeated (bumping it earlier shows how many remain). A rear latch's rear side must be reachable only through another floor; `content.test.ts` checks that from the floor's front stair.
 
 ### Content authoring
 

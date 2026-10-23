@@ -122,7 +122,7 @@ async function climbToFloor2CentralHall(page: Page): Promise<void> {
   ).toHaveCount(1);
 }
 
-async function enterFloor3AndReachHeartApproach(page: Page): Promise<void> {
+async function enterFloor3(page: Page): Promise<void> {
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
     'floor3',
@@ -139,36 +139,34 @@ async function enterFloor3AndReachHeartApproach(page: Page): Promise<void> {
   await expect(
     page.locator('[data-section="floor3-twin-galleries"]'),
   ).toHaveCount(1);
-
-  // Left x4: move to the west spine at (6,12)
-  await press(page, 'ArrowLeft', 4);
-
-  // Up x8: follow the unobstructed west spine to Heart Approach (6,4).
-  // The route is intentionally independent of floor3-vault-sentry (2,6).
-  await press(page, 'ArrowUp', 8);
-  await expect(
-    page.locator('[data-section="floor3-heart-approach"]'),
-  ).toHaveCount(1);
 }
 
-async function openHeartShortcutAndHeal(page: Page): Promise<void> {
-  // Down: bump floor3-heart-shortcut (10,5) from rearSide=north — its
-  // rear approach (10,4) sits inside the Heart Approach section
-  await press(page, 'ArrowDown', 1);
+// From (10,12): Right x5, Up x4 to (15,8), at the Keeper Archive's mouth
+async function walkToKeeperArchive(page: Page): Promise<void> {
+  await press(page, 'ArrowRight', 5);
+  await press(page, 'ArrowUp', 4);
+}
+
+async function openHeartHatchAndHeal(page: Page): Promise<void> {
+  // From (17,8), below the defeated archive sentry: Left x2, Down x4,
+  // Left x5 back to (10,12); Up x7: the centre column to (10,6), and the
+  // last press bumps floor3-heart-shortcut (10,5), whose guard is down
+  await press(page, 'ArrowLeft', 2);
+  await press(page, 'ArrowDown', 4);
+  await press(page, 'ArrowLeft', 5);
+  await press(page, 'ArrowUp', 7);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'latchOpened',
   );
 
-  // Down x5 crosses the opened latch to (10,9); Up x2 proves it is now
-  // two-way
-  await press(page, 'ArrowDown', 5);
-  await press(page, 'ArrowUp', 2);
-  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
-
-  // Up x4 -> sole boss approach (10,3); Right: bump the heart waystone
+  // Up x3: through the open hatch, the only way into the Heart Approach,
+  // to the sole boss approach (10,3); Right: bump the heart waystone
   // (11,3), staying at (10,3)
-  await press(page, 'ArrowUp', 4);
+  await press(page, 'ArrowUp', 3);
+  await expect(
+    page.locator('[data-section="floor3-heart-approach"]'),
+  ).toHaveCount(1);
   await press(page, 'ArrowRight', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
@@ -193,8 +191,8 @@ async function claimRestorationCore(page: Page): Promise<void> {
 }
 
 async function descendToFloor1RearWing(page: Page): Promise<void> {
-  // Floor 3 (10,2) -> opened center shortcut -> floor3-to-floor2 (10,13).
-  // The 3rd Down recrosses the persisted-open shortcut; the 11th steps on
+  // Floor 3 (10,2) -> opened heart hatch -> floor3-to-floor2 (10,13).
+  // The 3rd Down recrosses the persisted-open hatch; the 11th steps on
   // the portal and arrives at Floor 2 (8,1), on the stair pocket itself
   await press(page, 'ArrowDown', 11);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
@@ -433,17 +431,31 @@ test('completes the required-only MVP route', async ({ page }) => {
 
   // Up: the fact gate opens (main-subject-returned) → Floor 3 (10,13)
   await press(page, 'ArrowUp', 1);
-  await enterFloor3AndReachHeartApproach(page);
+  await enterFloor3(page);
 
-  // The heart clue at (9,3) blocks a straight row-3 crossing, so dogleg
-  // through (8,4) before returning to the center column:
-  // Up -> (6,3), Right x2 -> (8,3), Down -> (8,4), Right x2 -> (10,4)
+  // Up x7: the centre column to (10,6); the last press bumps the heart
+  // hatch (10,5), still held by its one guard, the archive sentry
+  await press(page, 'ArrowUp', 7);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'latchGuarded',
+  );
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-remaining',
+    '1',
+  );
+
+  // Down x6 back to (10,12), on to the archive, Right x2 to (17,8); Up:
+  // bump floor3-archive-sentry (17,7); Fight → HP 7/30
+  await press(page, 'ArrowDown', 6);
+  await walkToKeeperArchive(page);
+  await press(page, 'ArrowRight', 2);
   await press(page, 'ArrowUp', 1);
-  await press(page, 'ArrowRight', 2);
-  await press(page, 'ArrowDown', 1);
-  await press(page, 'ArrowRight', 2);
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 15');
+  await page.getByRole('button', { name: 'Fight' }).click();
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 7/30');
 
-  await openHeartShortcutAndHeal(page);
+  await openHeartHatchAndHeal(page);
 
   // The required route collects no optional rewards: fresh baseline stats
   // restored by the waystone, before the guardian gate
@@ -634,65 +646,48 @@ test('completes the explorer MVP route with expanded ending context', async ({
   await expect(
     page.locator('[data-note="floor2-depth-seal-seen"]'),
   ).toHaveCount(1);
-  // Down x7: back to the Central Hall (8,9)
+  // Down x7: back to the Central Hall (8,9). Up x2, Right x4: the last
+  // press bumps floor2-east-release (12,7); its guard, the east sentry,
+  // still stands, so it stays shut and says how many guards are left
   await press(page, 'ArrowDown', 7);
-
-  // Up x2, Right x4: the last press bumps floor2-east-release (12,7) from
-  // its rear (west) side and opens it
   await press(page, 'ArrowUp', 2);
   await press(page, 'ArrowRight', 4);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
-    'latchOpened',
+    'latchGuarded',
+  );
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-remaining',
+    '1',
   );
 
-  // Right x2: through the open release into the East Service Wing
-  await press(page, 'ArrowRight', 2);
-  await expect(
-    page.locator('[data-section="floor2-east-service"]'),
-  ).toHaveCount(1);
-
-  // Up x5: the north column reaches the Rear Gallery (13,2)
-  await press(page, 'ArrowUp', 5);
-  await expect(
-    page.locator('[data-section="floor2-rear-gallery"]'),
-  ).toHaveCount(1);
-
-  // Left x2, Down: bump floor2-missing-subject (11,3) → it departs for the
-  // village and the main lead advances
-  await press(page, 'ArrowLeft', 2);
-  await press(page, 'ArrowDown', 1);
+  // Up x3 to (11,4); Up: bump floor2-missing-subject (11,3) → it departs
+  // for the village and the main lead advances
+  await press(page, 'ArrowUp', 3);
+  await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'dialogue',
   );
   await expect(page.locator('[data-lead="investigate-deeper"]')).toHaveCount(1);
 
-  // Down x2: the vacated subject tile neither blocks nor talks
-  await press(page, 'ArrowDown', 2);
+  // Up x2: the vacated subject tile neither blocks nor talks, to (11,2)
+  await press(page, 'ArrowUp', 2);
   await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
   await expect(page.getByTestId('effect')).toHaveCount(0);
 
-  // Down x3, Left x6: the last press bumps floor2-west-release (5,7) from
-  // its rear (east) side and opens it
-  await press(page, 'ArrowDown', 3);
-  await press(page, 'ArrowLeft', 6);
-  await expect(page.getByTestId('effect')).toHaveAttribute(
-    'data-effect',
-    'latchOpened',
-  );
-
-  // Left x2: through the open release into the West Archive (4,7)
-  await press(page, 'ArrowLeft', 2);
+  // Left x10 along the Rear Gallery to (1,2), Down x2 into the West
+  // Archive (1,4)
+  await press(page, 'ArrowLeft', 10);
+  await press(page, 'ArrowDown', 2);
   await expect(
     page.locator('[data-section="floor2-west-archive"]'),
   ).toHaveCount(1);
 
-  // Left, Up x2, Left: bump the keeper's paired-release ledger (2,5) —
-  // the Floor 2 evidence for the scribe's ledger thread
-  await press(page, 'ArrowLeft', 1);
-  await press(page, 'ArrowUp', 2);
-  await press(page, 'ArrowLeft', 1);
+  // Down, Right: bump the keeper's paired-release ledger (2,5) — the
+  // Floor 2 evidence for the scribe's ledger thread
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowRight', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'clue',
@@ -701,10 +696,11 @@ test('completes the explorer MVP route with expanded ending context', async ({
     page.locator('[data-note="floor2-paired-release-ledger-read"]'),
   ).toHaveCount(1);
 
-  // Right, Up x2: the treasury stair (4,3) → Floor 1 workshop
-  // treasury (17,7) — the clue bump left the player on (3,5)
-  await press(page, 'ArrowRight', 1);
-  await press(page, 'ArrowUp', 2);
+  // Up, Right x3, Up: the treasury stair (4,3) → Floor 1 workshop
+  // treasury (17,7) — the clue bump left the player on (1,5)
+  await press(page, 'ArrowUp', 1);
+  await press(page, 'ArrowRight', 3);
+  await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
     'floor1',
@@ -744,34 +740,59 @@ test('completes the explorer MVP route with expanded ending context', async ({
   await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
   await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 4');
 
-  // Right: back through the treasury stair → Floor 2 (4,3). Down x4,
-  // Right x2: crossing the west release from its front side only works
-  // while it stays open
+  // Right: back through the treasury stair → Floor 2 (4,3)
   await press(page, 'ArrowRight', 1);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
     'floor2',
   );
-  await press(page, 'ArrowDown', 4);
-  await press(page, 'ArrowRight', 2);
-  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
 
-  // Up x3: to (6,4). Right x5, Up x2, Right x2: reach row 2 via the
-  // x=11 column (the depth stair sits in its own dead-end pocket at
-  // (8,1) and no longer lies on the row-2 corridor). Down x5: around
-  // the rear gallery to (13,7), then Left x2: crossing the east release
-  // from its front side only works while it stays open
+  // Down, Left x3, Up x2 to the Rear Gallery (1,2); Right x12 to (13,2);
+  // Down x4 down the north column to (13,6) in the East Service Wing
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowLeft', 3);
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 12);
+  await press(page, 'ArrowDown', 4);
+  await expect(
+    page.locator('[data-section="floor2-east-service"]'),
+  ).toHaveCount(1);
+
+  // Right: bump floor2-east-sentry (14,6); the treasury's DEF 4 keeps
+  // the cost down; Fight → HP 13/30
+  await press(page, 'ArrowRight', 1);
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 9');
+  await page.getByRole('button', { name: 'Fight' }).click();
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 13/30');
+
+  // Down, Left: with its guard down the east release opens, here from
+  // the wing side
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowLeft', 1);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'latchOpened',
+  );
+
+  // Left x7 through it and across the hall to (6,7); Left: the paired
+  // west release answers to the same sentry, so it opens too
+  await press(page, 'ArrowLeft', 7);
+  await press(page, 'ArrowLeft', 1);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'latchOpened',
+  );
+
+  // Left x2 through it into the West Archive (4,7), Right x2 back: both
+  // releases stay open
+  await press(page, 'ArrowLeft', 2);
+  await press(page, 'ArrowRight', 2);
+
+  // Up x3 to (6,4), Right x5 to (11,4), Up x2 to (11,2): the missing
+  // subject's tile is still walkable — it stays gone
   await press(page, 'ArrowUp', 3);
   await press(page, 'ArrowRight', 5);
   await press(page, 'ArrowUp', 2);
-  await press(page, 'ArrowRight', 2);
-  await press(page, 'ArrowDown', 5);
-  await press(page, 'ArrowLeft', 2);
-  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
-
-  // Up x5: the missing subject's tile is still walkable — it stays gone
-  await press(page, 'ArrowUp', 5);
-  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
   await expect(page.getByTestId('effect')).toHaveCount(0);
 
   // Right x5: rear portal → Floor 1 rear wing (21,3)
@@ -797,12 +818,12 @@ test('completes the explorer MVP route with expanded ending context', async ({
   await press(page, 'ArrowUp', 3);
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 12');
 
-  // Down, Right x2: preview the gatekeeper at 6 HP loss; Fight → HP 16/30
+  // Down, Right x2: preview the gatekeeper at 6 HP loss; Fight → HP 7/30
   await press(page, 'ArrowDown', 1);
   await press(page, 'ArrowRight', 2);
   await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 6');
   await page.getByRole('button', { name: 'Fight' }).click();
-  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 16/30');
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 7/30');
 
   // Left x2, Up x2, Left: open the rear latch from its east side
   await press(page, 'ArrowLeft', 2);
@@ -839,6 +860,9 @@ test('completes the explorer MVP route with expanded ending context', async ({
     'data-effect',
     'dialogue',
   );
+  // Left: drink from the well (16,8), staying at (17,8) → HP 30/30
+  await press(page, 'ArrowLeft', 1);
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30/30');
 
   // Village (17,8) -> Up x3, Left x2 to (15,5) -> village-to-floor1
   // (23,1) -> Floor 1 (2,14)
@@ -861,15 +885,15 @@ test('completes the explorer MVP route with expanded ending context', async ({
   // (10,13): the fact gate opens because main-subject-returned is
   // already durable
   await press(page, 'ArrowUp', 10);
-  await enterFloor3AndReachHeartApproach(page);
+  await enterFloor3(page);
 
-  // Right x9 along row 4 to (15,4), Down x4 to (15,8), Right x3 to
-  // (18,8), Up: bump floor3-keeper-final-record (18,7) from the south —
-  // the keeper archive detour never touches the optional archive sentry
-  // (17,7) guarding it from the west
-  await press(page, 'ArrowRight', 9);
-  await press(page, 'ArrowDown', 4);
+  // On to the archive, Right x3 to (18,8), Up: bump
+  // floor3-keeper-final-record (18,7) from the south
+  await walkToKeeperArchive(page);
   await press(page, 'ArrowRight', 3);
+  await expect(
+    page.locator('[data-section="floor3-keeper-archive"]'),
+  ).toHaveCount(1);
   await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
@@ -879,14 +903,15 @@ test('completes the explorer MVP route with expanded ending context', async ({
     page.locator('[data-note="floor3-keeper-final-record-read"]'),
   ).toHaveCount(1);
 
-  // Left x3 back to (15,8), Up x4 to (15,4), Left x5 to (10,4): the
-  // detour also replaces the old (9,3) dogleg — the heart clue never
-  // blocks this row-4 crossing
-  await press(page, 'ArrowLeft', 3);
-  await press(page, 'ArrowUp', 4);
-  await press(page, 'ArrowLeft', 5);
+  // Left, Up: bump floor3-archive-sentry (17,7), the heart hatch's guard;
+  // Fight → HP 24/30
+  await press(page, 'ArrowLeft', 1);
+  await press(page, 'ArrowUp', 1);
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 6');
+  await page.getByRole('button', { name: 'Fight' }).click();
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 24/30');
 
-  await openHeartShortcutAndHeal(page);
+  await openHeartHatchAndHeal(page);
   const healedHp = await page.locator('[data-stat="hp"]').textContent();
   const maxHp = Number(healedHp?.split('/')[1]);
   expect(healedHp).toBe(`HP ${maxHp}/${maxHp}`);
