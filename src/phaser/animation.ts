@@ -8,7 +8,7 @@ import type { Point } from './camera';
 // frames.
 export const IDLE_MS = 1800;
 // How long the hero takes to slide into the next tile.
-export const STEP_MS = 120;
+export const STEP_MS = 160;
 // The fallback breath squashes a sprite toward its feet by this fraction, so
 // it never grows out of its cell.
 const BREATH = 0.05;
@@ -44,6 +44,19 @@ export function breath(time: number, offset: number): number {
 // How far the hero's current step has gone, from 0 to 1.
 export function stepProgress(time: number, start: number): number {
   return Math.min(Math.max((time - start) / STEP_MS, 0), 1);
+}
+
+// Which walk frame shows partway through the hero's `count`th step. A cycle
+// spans two steps (one per foot), so each step plays half of it and held
+// keys carry the cycle on rather than restarting it.
+export function walkFrame(
+  count: number,
+  progress: number,
+  frames: number,
+): number {
+  const perStep = Math.max(1, Math.floor(frames / 2));
+  const within = Math.min(Math.floor(progress * perStep), perStep - 1);
+  return (count * perStep + within) % frames;
 }
 
 // The lift of a hero with no walk frames, so a step reads as a stride

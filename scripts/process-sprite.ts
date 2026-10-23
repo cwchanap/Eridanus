@@ -5,12 +5,25 @@
 // gets hard 0/255 alpha so no fringe shows on the map.
 //
 //   bun run sprite <asset-key> <raw.png> [out.png]
+//   bun run sprite <asset-key> <sheet.png> --frames <idle|walk> <count>
+//
+// The --frames form cuts a sheet of <count> figures standing side by side in
+// equal columns into that sprite's animation frames (<stem>-<motion>-<n>.png
+// beside it). Every frame shares one scale, set by the largest figure, and
+// each stands centred on the bottom edge, so a cycle never swells, shrinks or
+// drifts between frames.
 //
 // Needs ffmpeg and ffprobe on PATH.
 
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
-import { ART_SIZE, ASSET_PATHS, type AssetKey } from '../src/phaser/assets';
+import {
+  ART_SIZE,
+  ASSET_PATHS,
+  framePath,
+  type AssetKey,
+  type Motion,
+} from '../src/phaser/assets';
 
 const KEY_TOLERANCE = 56; // RGB distance from the background colour
 
@@ -74,7 +87,18 @@ function keyBackground({ width, height, data }: Image): void {
 
 // The square source window the output samples: the figure's bounding box
 // widened to a square, centred across and resting on the bottom edge.
-function figureSquare({ width, height, data }: Image) {
+function figureSquare(image: Image) {
+  const { left, right, top, bottom } = figureBox(image);
+  const side = Math.max(right - left + 1, bottom - top + 1);
+  return {
+    x: Math.round((left + right + 1 - side) / 2),
+    y: bottom + 1 - side,
+    side,
+  };
+}
+
+// The bounding box of the opaque pixels.
+function figureBox({ width, height, data }: Image) {
   let left = width;
   let right = -1;
   let top = height;
@@ -89,12 +113,32 @@ function figureSquare({ width, height, data }: Image) {
     }
   }
   if (right < 0) throw new Error('nothing left after keying the background');
-  const side = Math.max(right - left + 1, bottom - top + 1);
-  return {
-    x: Math.round((left + right + 1 - side) / 2),
-    y: bottom + 1 - side,
+  return { left, right, top, bottom };
+}
+
+// One column of a sheet cut `count` ways.
+function column(sheet: Image, index: number, count: number): Image {
+  const width = Math.floor(sheet.width / count);
+  const data = new Uint8Array(width * sheet.height * 4);
+  for (let y = 0; y < sheet.height; y += 1) {
+    const from = (y * sheet.width + index * width) * 4;
+    data.set(sheet.data.subarray(from, from + width * 4), y * width * 4);
+  }
+  return { width, height: sheet.height, data };
+}
+
+// Each figure's window: one side for all, fitting the largest figure, centred
+// across and resting on the bottom edge of its own figure.
+function frameSquares(figures: Image[]) {
+  const boxes = figures.map(figureBox);
+  const side = Math.max(
+    ...boxes.map((b) => Math.max(b.right - b.left + 1, b.bottom - b.top + 1)),
+  );
+  return boxes.map((b) => ({
+    x: Math.round((b.left + b.right + 1 - side) / 2),
+    y: b.bottom + 1 - side,
     side,
-  };
+  }));
 }
 
 // Area-averages the window down to ART_SIZE, weighting colour by alpha.
@@ -135,15 +179,44 @@ function downscale(
   return { width: ART_SIZE, height: ART_SIZE, data: out };
 }
 
-const [key, input, output] = process.argv.slice(2);
-if (!key || !Object.hasOwn(ASSET_PATHS, key) || !input) {
+const [key, input, output, motion, countArg] = process.argv.slice(2);
+const count = Number(countArg);
+const framesMode = output === '--frames';
+if (
+  !key ||
+  !Object.hasOwn(ASSET_PATHS, key) ||
+  !input ||
+  (framesMode &&
+    (!['idle', 'walk'].includes(motion!) ||
+      !Number.isInteger(count) ||
+      count < 1))
+) {
   console.error(
-    `usage: bun run sprite <asset-key> <raw.png> [out.png]\nkeys: ${Object.keys(ASSET_PATHS).join(', ')}`,
+    `usage: bun run sprite <asset-key> <raw.png> [out.png]\n       bun run sprite <asset-key> <sheet.png> --frames <idle|walk> <count>\nkeys: ${Object.keys(ASSET_PATHS).join(', ')}`,
   );
   process.exit(1);
 }
 const assetKey = key as AssetKey;
 const source = decode(input);
+const publicDir = join(import.meta.dirname, '..', 'public');
+
+if (framesMode) {
+  const figures = Array.from({ length: count }, (_, i) =>
+    column(source, i, count),
+  );
+  figures.forEach(keyBackground);
+  const windows = frameSquares(figures);
+  figures.forEach((figure, i) => {
+    const outPath = join(
+      publicDir,
+      framePath(assetKey, motion as Motion, i + 1),
+    );
+    encode(downscale(figure, windows[i]!, true), outPath);
+    console.log(`${outPath}  ${ART_SIZE}x${ART_SIZE}`);
+  });
+  process.exit(0);
+}
+
 const terrain = assetKey.startsWith('terrain-');
 let window;
 if (terrain) {
@@ -160,7 +233,6 @@ if (terrain) {
   keyBackground(source);
   window = figureSquare(source);
 }
-const outPath =
-  output ?? join(import.meta.dirname, '..', 'public', ASSET_PATHS[assetKey]);
+const outPath = output ?? join(publicDir, ASSET_PATHS[assetKey]);
 encode(downscale(source, window, !terrain), outPath);
 console.log(`${outPath}  ${ART_SIZE}x${ART_SIZE}`);
