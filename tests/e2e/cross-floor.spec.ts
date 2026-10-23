@@ -174,12 +174,142 @@ async function openHeartHatchAndHeal(page: Page): Promise<void> {
   );
 }
 
+// Confirm the open combat prompt with Enter and wait for the win.
+async function fight(page: Page): Promise<void> {
+  await expect(page.getByTestId('combat-prompt')).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'enemyDefeated',
+  );
+}
+
+async function expectHealed(page: Page): Promise<void> {
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'healed',
+  );
+}
+
+// From the heart approach (10,3), the heart sentinel's (10,2) prompt
+// open: fight, Right to drink at the waystone (11,3) again, and Up x2
+// across the sentinel's tile to the stair (10,1) → Floor 4 (11,14).
+async function descendPastHeartSentinel(page: Page): Promise<void> {
+  await fight(page);
+  await press(page, 'ArrowRight', 1);
+  await expectHealed(page);
+  await press(page, 'ArrowUp', 2);
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'floor4',
+  );
+  await expect(
+    page.locator('[data-section="floor4-stair-landing"]'),
+  ).toHaveCount(1);
+}
+
+// Floor 4 by its west snake: Up x2 to the Lower Hall (11,12), Left x4,
+// Up x2, Right x2 to (9,10); Up bumps the snake sentry (9,9).
+async function crossFloor4(page: Page): Promise<void> {
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowLeft', 4);
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowRight', 2);
+  await press(page, 'ArrowUp', 1);
+  await fight(page);
+
+  // Up x2 to (9,8); Left opens the snake's chest (8,8) → ATK +2
+  await press(page, 'ArrowUp', 2);
+  await press(page, 'ArrowLeft', 1);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'reward',
+  );
+
+  // Left x2, Up x3 to (7,5); Up bumps the west stair guard (7,4)
+  await press(page, 'ArrowLeft', 2);
+  await press(page, 'ArrowUp', 3);
+  await press(page, 'ArrowUp', 1);
+  await fight(page);
+
+  // Up x3, Right x3 along the Upper Gallery to (10,2); Up drinks at the
+  // stair waystone (10,1); Right bumps the stair warden (11,2)
+  await press(page, 'ArrowUp', 3);
+  await press(page, 'ArrowRight', 3);
+  await expect(
+    page.locator('[data-section="floor4-upper-gallery"]'),
+  ).toHaveCount(1);
+  await press(page, 'ArrowUp', 1);
+  await expectHealed(page);
+  await press(page, 'ArrowRight', 1);
+  await fight(page);
+
+  // Right onto the warden's tile, Up: the stair → Floor 5 (12,1)
+  await press(page, 'ArrowRight', 1);
+  await press(page, 'ArrowUp', 1);
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'floor5',
+  );
+}
+
+// Floor 5 to the guardian's approach (12,10), healed, by the north-west
+// gate and the Middle Ring's west side.
+async function crossFloor5ToGuardian(page: Page): Promise<void> {
+  // Right drinks at the landing waystone (13,1); Down, Left x6 to (6,2);
+  // Down bumps the north-west gate (6,3)
+  await press(page, 'ArrowRight', 1);
+  await expectHealed(page);
+  await press(page, 'ArrowDown', 1);
+  await press(page, 'ArrowLeft', 6);
+  await press(page, 'ArrowDown', 1);
+  await fight(page);
+
+  // Down x2 into the Middle Ring (6,4), Right x6 to (12,4); Down drinks at
+  // the ring waystone (12,5)
+  await press(page, 'ArrowDown', 2);
+  await expect(page.locator('[data-section="floor5-middle-ring"]')).toHaveCount(
+    1,
+  );
+  await press(page, 'ArrowRight', 6);
+  await press(page, 'ArrowDown', 1);
+  await expectHealed(page);
+
+  // Left x9 to (3,4), Down x3 to (3,7); Down opens the ring chest (3,8)
+  // → DEF +2
+  await press(page, 'ArrowLeft', 9);
+  await press(page, 'ArrowDown', 3);
+  await press(page, 'ArrowDown', 1);
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'reward',
+  );
+
+  // Down x8 to (3,15), Right x10 to (13,15); Up bumps the sanctum gate
+  // (13,14)
+  await press(page, 'ArrowDown', 8);
+  await press(page, 'ArrowRight', 10);
+  await press(page, 'ArrowUp', 1);
+  await fight(page);
+
+  // Up x4 into the Inner Ring and up to (13,11), Left, Up to the
+  // guardian's approach (12,10); Right drinks at the heart waystone (13,10)
+  await press(page, 'ArrowUp', 4);
+  await press(page, 'ArrowLeft', 1);
+  await press(page, 'ArrowUp', 1);
+  await expect(
+    page.locator('[data-section="floor5-heart-chamber"]'),
+  ).toHaveCount(1);
+  await press(page, 'ArrowRight', 1);
+  await expectHealed(page);
+}
+
 async function claimRestorationCore(page: Page): Promise<void> {
-  // Up: onto the former boss tile (10,2) without blocking
+  // Up: onto the former boss tile (12,9) without blocking
   await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
 
-  // Up: bump floor3-restoration-core (10,1)
+  // Up: bump floor5-restoration-core (12,8)
   await press(page, 'ArrowUp', 1);
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
@@ -190,20 +320,14 @@ async function claimRestorationCore(page: Page): Promise<void> {
   ).toHaveCount(1);
 }
 
-async function descendToFloor1RearWing(page: Page): Promise<void> {
-  // Floor 3 (10,2) -> opened heart hatch -> floor3-to-floor2 (10,13).
-  // The 3rd Down recrosses the persisted-open hatch; the 11th steps on
-  // the portal and arrives at Floor 2 (8,1), on the stair pocket itself
-  await press(page, 'ArrowDown', 11);
+// From (12,9), core in hand: Up x2 over the opened core chest onto the
+// lift (12,7), which the core powers → village (21,1).
+async function rideLiftHome(page: Page): Promise<void> {
+  await press(page, 'ArrowUp', 2);
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
-    'floor2',
+    'village',
   );
-
-  // Down: step off the stair pocket to (8,2). Right x8: Floor 2 Rear
-  // Gallery -> floor2-rear-to-floor1 (16,2) -> Floor 1 (21,3)
-  await press(page, 'ArrowDown', 1);
-  await press(page, 'ArrowRight', 8);
 }
 
 // The village's tower stair (23,1) sits at the end of a branch of the
@@ -230,13 +354,21 @@ async function walkTowerToNorthGate(page: Page): Promise<void> {
   await press(page, 'ArrowDown', 2);
 }
 
+// From the lift's village end (21,1): Down x2, Left x6 to (15,3), Down x2
+// through the north gate to (15,5).
+async function walkLiftToNorthGate(page: Page): Promise<void> {
+  await press(page, 'ArrowDown', 2);
+  await press(page, 'ArrowLeft', 6);
+  await press(page, 'ArrowDown', 2);
+}
+
 async function handCoreToWarden(
   page: Page,
   endingLineId: string,
 ): Promise<void> {
   // Back through the north gate to (15,5), Down x3 to (15,8), passing
   // west of the well (16,8) without drinking
-  await walkTowerToNorthGate(page);
+  await walkLiftToNorthGate(page);
   await press(page, 'ArrowDown', 3);
 
   // Down: bump village-warden at (15,9) — carrying the core ends the
@@ -324,10 +456,10 @@ test('accepts movement while assets are still loading', async ({ page }) => {
 });
 
 test('completes the required-only MVP route', async ({ page }) => {
-  // The full village -> Floor 3 -> ending walk plus a per-press blocked
+  // The full village -> Floor 5 -> ending walk plus a per-press blocked
   // check runs past a minute on a software-rendered CI browser, where the
   // 3x camera fills the whole canvas with tiles every frame.
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
   await startFreshRun(page);
   await expect(page.getByTestId('how-to-play')).toBeVisible();
 
@@ -463,46 +595,34 @@ test('completes the required-only MVP route', async ({ page }) => {
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 10');
   await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 2');
 
-  // Up: bump floor3-core-guardian (10,2) from the sole approach. The
-  // baseline cost is pinned here; src/game/combat.test.ts remains the
-  // single owner of the guardian's balance expectations
+  // Up: bump floor3-heart-sentinel (10,2) → HP 12/30, then on to Floor 4
   await press(page, 'ArrowUp', 1);
-  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 25');
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 18');
+  await descendPastHeartSentinel(page);
+
+  await crossFloor4(page);
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 9/30');
+  await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 12');
+
+  await crossFloor5ToGuardian(page);
+  // The only stats the required route gains are the two chests it must
+  // pass; src/game/combat.test.ts owns the guardian's balance
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30/30');
+  await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 12');
+  await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 4');
+
+  // Up: bump floor5-core-guardian (12,9) from the sole approach
+  await press(page, 'ArrowUp', 1);
+  await expect(page.getByTestId('combat-hp-loss')).toHaveText('HP loss: 24');
   await page.getByRole('button', { name: 'Fight' }).click();
   await expect(page.getByTestId('effect')).toHaveAttribute(
     'data-effect',
     'enemyDefeated',
   );
-  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 5/30');
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 6/30');
 
   await claimRestorationCore(page);
-  await descendToFloor1RearWing(page);
-
-  // Floor 1 rear wing → village portal (2,14). Down x3 stops short of
-  // the unclaimed power core (13,8); Left, Down to (12,8) so the next
-  // Left bumps the never-opened rear latch (11,8) from its rearSide
-  // (east) and opens it
-  await press(page, 'ArrowDown', 1);
-  await press(page, 'ArrowLeft', 8);
-  await press(page, 'ArrowDown', 3);
-  await press(page, 'ArrowLeft', 1);
-  await press(page, 'ArrowDown', 1);
-  await press(page, 'ArrowLeft', 1);
-  await expect(page.getByTestId('effect')).toHaveAttribute(
-    'data-effect',
-    'latchOpened',
-  );
-  await press(page, 'ArrowLeft', 2);
-  await press(page, 'ArrowDown', 1);
-  await press(page, 'ArrowLeft', 3);
-  await press(page, 'ArrowDown', 1);
-  await press(page, 'ArrowLeft', 4);
-  await press(page, 'ArrowDown', 4);
-  await press(page, 'ArrowLeft', 1);
-  await expect(page.getByTestId('map-name')).toHaveAttribute(
-    'data-map-id',
-    'village',
-  );
+  await rideLiftHome(page);
 
   // No keeper record was read, so the plain restoration ending renders
   await handCoreToWarden(page, 'warden-restoration-ending');
@@ -528,10 +648,10 @@ test('completes the required-only MVP route', async ({ page }) => {
 test('completes the explorer MVP route with expanded ending context', async ({
   page,
 }) => {
-  // The full village -> Floor 3 -> ending walk plus a per-press blocked
+  // The full village -> Floor 5 -> ending walk plus a per-press blocked
   // check runs past a minute on a software-rendered CI browser, where the
   // 3x camera fills the whole canvas with tiles every frame.
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
   await startFreshRun(page);
 
   // Up: bump village-warden (15,9) from the start tile (15,10)
@@ -916,7 +1036,13 @@ test('completes the explorer MVP route with expanded ending context', async ({
   const maxHp = Number(healedHp?.split('/')[1]);
   expect(healedHp).toBe(`HP ${maxHp}/${maxHp}`);
 
-  // Up: bump floor3-core-guardian (10,2) from the sole approach. The HP
+  // Up: bump floor3-heart-sentinel (10,2), then on to Floor 4 and 5
+  await press(page, 'ArrowUp', 1);
+  await descendPastHeartSentinel(page);
+  await crossFloor4(page);
+  await crossFloor5ToGuardian(page);
+
+  // Up: bump floor5-core-guardian (12,9) from the sole approach. The HP
   // loss is computed from the journey's actual stats — the optional
   // rewards collected earlier make it lower than the fresh baseline —
   // never hardcoded.
@@ -937,7 +1063,7 @@ test('completes the explorer MVP route with expanded ending context', async ({
   );
   // Same math as the game: the guardian's authored stats feed the real
   // previewCombat instead of a copied formula
-  const guardian = findEntityById('floor3-core-guardian');
+  const guardian = findEntityById('floor5-core-guardian');
   if (guardian?.kind !== 'enemy') throw new Error('core guardian missing');
   const bossPreview = previewCombat(
     { hp, maxHp, attack: atk, defense: def, gold: 0 },
@@ -964,10 +1090,10 @@ test('completes the explorer MVP route with expanded ending context', async ({
   await page.reload();
   await expect(page.getByTestId('map-name')).toHaveAttribute(
     'data-map-id',
-    'floor3',
+    'floor5',
   );
   // Down, Up x2: the defeated boss tile and the opened core chest both
-  // stay traversable; Down again re-arms (10,2) as the return start
+  // stay traversable; Down again re-arms (12,9) as the return start
   await press(page, 'ArrowDown', 1);
   await press(page, 'ArrowUp', 2);
   await press(page, 'ArrowDown', 1);
@@ -976,23 +1102,7 @@ test('completes the explorer MVP route with expanded ending context', async ({
     page.locator('[data-lead="return-restoration-core"]'),
   ).toHaveCount(1);
 
-  await descendToFloor1RearWing(page);
-
-  // Floor 1 rear wing -> opened rear latch -> village portal (2,14)
-  await press(page, 'ArrowDown', 1);
-  await press(page, 'ArrowLeft', 8);
-  await press(page, 'ArrowDown', 4);
-  await press(page, 'ArrowLeft', 3);
-  await press(page, 'ArrowDown', 1);
-  await press(page, 'ArrowLeft', 3);
-  await press(page, 'ArrowDown', 1);
-  await press(page, 'ArrowLeft', 4);
-  await press(page, 'ArrowDown', 4);
-  await press(page, 'ArrowLeft', 1);
-  await expect(page.getByTestId('map-name')).toHaveAttribute(
-    'data-map-id',
-    'village',
-  );
+  await rideLiftHome(page);
 
   // The keeper record was read on the optional route, so the expanded
   // ledger ending renders

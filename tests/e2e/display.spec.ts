@@ -168,6 +168,7 @@ for (const view of [
     ['village', { x: 8, y: 1 }],
     ['floor2', { x: 8, y: 11 }],
     ['floor3', { x: 10, y: 13 }],
+    ['floor5', { x: 12, y: 1 }],
   ] as const) {
     test(`keeps the hero clear of the HUD on ${mapId} at ${view.width}x${view.height}`, async ({
       page,

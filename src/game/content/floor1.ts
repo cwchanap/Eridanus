@@ -149,6 +149,30 @@ export const floor1: MapDefinition = {
       stat: 'defense',
       amount: 2,
     },
+    {
+      kind: 'enemy',
+      id: 'floor1-gallery-sentry',
+      tile: { x: 16, y: 2 },
+      assetId: 'enemy-ruin-guard',
+      stats: { hp: 20, attack: 7, defense: 4 },
+      gold: 10,
+    },
+    {
+      kind: 'enemy',
+      id: 'floor1-rear-sentry',
+      tile: { x: 21, y: 13 },
+      assetId: 'enemy-ruin-guard',
+      stats: { hp: 20, attack: 7, defense: 4 },
+      gold: 10,
+    },
+    {
+      kind: 'enemy',
+      id: 'floor1-west-lurker',
+      tile: { x: 2, y: 7 },
+      assetId: 'enemy-ruin-guard',
+      stats: { hp: 16, attack: 6, defense: 3 },
+      gold: 8,
+    },
   ],
   sections: [
     {

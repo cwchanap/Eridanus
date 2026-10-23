@@ -136,6 +136,8 @@ describe('authored content', () => {
       'floor1',
       'floor2',
       'floor3',
+      'floor4',
+      'floor5',
       'village',
     ]);
   });
@@ -148,8 +150,9 @@ describe('authored content', () => {
     expect(findEntityById('floor1-power-core')?.kind).toBe('reward');
     expect(findEntityById('floor1-gatekeeper')?.kind).toBe('enemy');
     expect(findEntityById('floor1-rear-latch')?.kind).toBe('latch');
-    expect(findEntityById('floor3-core-guardian')?.kind).toBe('enemy');
-    expect(findEntityById('floor3-restoration-core')?.kind).toBe('reward');
+    expect(findEntityById('floor3-heart-sentinel')?.kind).toBe('enemy');
+    expect(findEntityById('floor5-core-guardian')?.kind).toBe('enemy');
+    expect(findEntityById('floor5-restoration-core')?.kind).toBe('reward');
     expect(findEntityById('floor3-heart-shortcut')?.kind).toBe('latch');
     expect(findEntityById('floor3-heart-waystone')?.kind).toBe('recovery');
     expect(findEntityById('floor3-keeper-final-record')?.kind).toBe('clue');
@@ -338,41 +341,105 @@ describe('authored content', () => {
     expect(
       directionFromTo(
         entity('floor3-heart-waystone').tile,
-        tileInDirection(entity('floor3-core-guardian').tile, 'south'),
+        tileInDirection(entity('floor3-heart-sentinel').tile, 'south'),
       ),
     ).not.toBeNull();
 
     expect(
-      hasAdjacentApproach(reachableOpen, entity('floor3-core-guardian').tile),
+      hasAdjacentApproach(reachableOpen, entity('floor3-heart-sentinel').tile),
     ).toBe(true);
-    // Unopened rewards block by design, so only the boss can seal the Core.
-    expect(
-      hasAdjacentApproach(
-        reachableOpen,
-        entity('floor3-restoration-core').tile,
-      ),
-    ).toBe(false);
+    // The heart sentinel alone holds the stair down to Floor 4.
+    expect(reachableOpen.has(tileKey(portal('floor3-to-floor4').tile))).toBe(
+      false,
+    );
 
-    const afterBoss = {
+    const afterSentinel = {
       ...hatchOpen,
-      defeatedEnemyIds: ['floor3-archive-sentry', 'floor3-core-guardian'],
+      defeatedEnemyIds: ['floor3-archive-sentry', 'floor3-heart-sentinel'],
     };
     const reachableAfter = floodFloor(
       MAPS.floor3,
       [portal('floor3-to-floor2').tile],
       (tile) =>
         MAPS.floor3.layout[tile.y]?.[tile.x] === '.' &&
-        !isTileBlockedByEntity(afterBoss, tile),
+        !isTileBlockedByEntity(afterSentinel, tile),
     );
-    expect(
-      reachableAfter.has(tileKey(entity('floor3-core-guardian').tile)),
-    ).toBe(true);
-    expect(
-      hasAdjacentApproach(
-        reachableAfter,
-        entity('floor3-restoration-core').tile,
-      ),
-    ).toBe(true);
+    expect(reachableAfter.has(tileKey(portal('floor3-to-floor4').tile))).toBe(
+      true,
+    );
+  });
+
+  // Each deeper floor is fought through: from its arrival stair, nothing
+  // defeated, the way on is out of reach; clearing the required route's
+  // guards and chests opens it.
+  for (const { mapId, from, to, cleared } of [
+    {
+      mapId: 'floor4',
+      from: 'floor4-to-floor3',
+      to: 'floor4-to-floor5',
+      cleared: [
+        'floor4-west-snake-sentry',
+        'floor4-west-snake-cache',
+        'floor4-west-stair-guard',
+        'floor4-stair-warden',
+      ],
+    },
+    {
+      mapId: 'floor5',
+      from: 'floor5-to-floor4',
+      to: 'floor5-lift-to-village',
+      cleared: [
+        'floor5-northwest-gate',
+        'floor5-west-ring-cache',
+        'floor5-sanctum-gate',
+        'floor5-core-guardian',
+        'floor5-restoration-core',
+      ],
+    },
+  ] as const) {
+    it(`gates ${mapId}'s way on behind its required fights`, () => {
+      const map = MAPS[mapId];
+      const flood = (ids: readonly string[]) => {
+        const state = {
+          ...createInitialGameState(),
+          mapId,
+          defeatedEnemyIds: ids,
+          openedRewardIds: ids,
+        };
+        return floodFloor(
+          map,
+          [portal(from).tile],
+          (tile) =>
+            map.layout[tile.y]?.[tile.x] === '.' &&
+            !isTileBlockedByEntity(state, tile),
+        );
+      };
+      expect(flood([]).has(tileKey(portal(to).tile))).toBe(false);
+      expect(flood(cleared).has(tileKey(portal(to).tile))).toBe(true);
+    });
+  }
+
+  it('reaches every floor five entity once the floor is cleared', () => {
+    const everything = MAPS.floor5.entities.map(({ id }) => id);
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor5' as const,
+      defeatedEnemyIds: everything,
+      openedRewardIds: everything,
+    };
+    const reachable = floodFloor(
+      MAPS.floor5,
+      [portal('floor5-to-floor4').tile],
+      (tile) =>
+        MAPS.floor5.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(state, tile),
+    );
+    for (const entity of MAPS.floor5.entities)
+      expect(
+        reachable.has(tileKey(entity.tile)) ||
+          hasAdjacentApproach(reachable, entity.tile),
+        entity.id,
+      ).toBe(true);
   });
 
   it('opens every latch only by clearing its guards or from another floor', () => {

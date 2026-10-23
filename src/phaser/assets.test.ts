@@ -220,10 +220,10 @@ describe('asset seam', () => {
     // Same person before and after the rescue.
     expect(art('floor2-missing-subject')).toBe(art('village-returned-subject'));
 
-    const guardian = art('floor3-core-guardian');
+    const guardian = art('floor5-core-guardian');
     for (const map of Object.values(MAPS)) {
       for (const entity of map.entities) {
-        if (entity.kind !== 'enemy' || entity.id === 'floor3-core-guardian')
+        if (entity.kind !== 'enemy' || entity.id === 'floor5-core-guardian')
           continue;
         expect(resolveEntityAsset(entity, state), entity.id).not.toBe(guardian);
       }

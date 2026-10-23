@@ -120,6 +120,38 @@ export const floor2: MapDefinition = {
       stats: { hp: 28, attack: 8, defense: 5 },
       gold: 15,
     },
+    {
+      kind: 'enemy',
+      id: 'floor2-archive-lurker',
+      tile: { x: 3, y: 10 },
+      assetId: 'enemy-ruin-guard',
+      stats: { hp: 24, attack: 7, defense: 4 },
+      gold: 12,
+    },
+    {
+      kind: 'enemy',
+      id: 'floor2-service-lurker',
+      tile: { x: 16, y: 8 },
+      assetId: 'enemy-ruin-guard',
+      stats: { hp: 24, attack: 7, defense: 4 },
+      gold: 12,
+    },
+    {
+      kind: 'enemy',
+      id: 'floor2-hall-sentry',
+      tile: { x: 9, y: 6 },
+      assetId: 'enemy-ruin-guard',
+      stats: { hp: 22, attack: 7, defense: 4 },
+      gold: 10,
+    },
+    {
+      kind: 'enemy',
+      id: 'floor2-wing-sentry',
+      tile: { x: 15, y: 4 },
+      assetId: 'enemy-ruin-sentinel',
+      stats: { hp: 28, attack: 8, defense: 5 },
+      gold: 15,
+    },
   ],
   sections: [
     {

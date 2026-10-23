@@ -56,7 +56,7 @@ function mainLead(state: GameState): LeadId {
   if (knows(state.factIds, 'main-village-restored')) return 'story-complete';
   if (state.itemIds.includes('tower-restoration-core'))
     return 'return-restoration-core';
-  if (state.defeatedEnemyIds.includes('floor3-core-guardian'))
+  if (state.defeatedEnemyIds.includes('floor5-core-guardian'))
     return 'claim-restoration-core';
   if (knows(state.factIds, 'floor2-depth-stairs-used'))
     return 'reach-heart-chamber';

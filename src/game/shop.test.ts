@@ -29,7 +29,14 @@ describe('shops', () => {
       nextWare(smith, { ...atSmith, itemIds: ['iron-sword'] })?.itemId,
     ).toBe('steel-sword');
     expect(
-      nextWare(smith, { ...atSmith, itemIds: ['iron-sword', 'steel-sword'] }),
+      nextWare(smith, { ...atSmith, itemIds: ['iron-sword', 'steel-sword'] })
+        ?.itemId,
+    ).toBe('runed-blade');
+    expect(
+      nextWare(smith, {
+        ...atSmith,
+        itemIds: ['iron-sword', 'steel-sword', 'runed-blade'],
+      }),
     ).toBeUndefined();
   });
 
@@ -76,7 +83,10 @@ describe('shops', () => {
   });
 
   it('reports sold out once every ware is owned', () => {
-    const owned = { ...atSmith, itemIds: ['iron-sword', 'steel-sword'] };
+    const owned = {
+      ...atSmith,
+      itemIds: ['iron-sword', 'steel-sword', 'runed-blade'],
+    };
     const result = attemptMove(owned, 'south');
     expect(result.ok && result.effect).toEqual({
       kind: 'soldOut',
