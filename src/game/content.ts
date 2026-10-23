@@ -250,6 +250,15 @@ export function validateContent(
             `${entity.id}: unknown intro fact id: ${entity.introFactId}`,
           );
       }
+      if (entity.kind === 'latch' && 'guardIds' in entity) {
+        if (entity.guardIds.length === 0)
+          errors.push(`${entity.id}: guarded latch has no guards`);
+        for (const guardId of entity.guardIds) {
+          const guard = map.entities.find(({ id }) => id === guardId);
+          if (guard?.kind !== 'enemy')
+            errors.push(`${entity.id}: guard ${guardId} is not an enemy here`);
+        }
+      }
       if (entity.kind === 'clue' && entity.factId && !hasFact(entity.factId))
         errors.push(`${entity.id}: unknown fact id: ${entity.factId}`);
       if (entity.kind === 'reward' && entity.grant === 'item') {

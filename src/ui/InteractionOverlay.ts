@@ -77,7 +77,12 @@ function effectMessage(effect: ActionEffect): Message | null {
     case 'latchOpened':
       return {
         tag: 'Shortcut',
-        text: 'The rear latch opens. The shortcut is now usable from both sides.',
+        text: 'The latch opens. The shortcut is now usable from both sides.',
+      };
+    case 'latchGuarded':
+      return {
+        tag: 'Sealed',
+        text: `Guards hold this latch shut. Defeat ${effect.remaining} more to open it.`,
       };
     case 'enemyDefeated':
       return {
@@ -247,6 +252,10 @@ function renderMessage(view: OverlayView): string {
   if (effect && message) {
     return `<div class="message" data-testid="effect" data-effect="${effect.kind}"${
       effect.kind === 'dialogue' ? ` data-line="${effect.lineId}"` : ''
+    }${
+      effect.kind === 'latchGuarded'
+        ? ` data-remaining="${effect.remaining}"`
+        : ''
     }>${effectPortrait(effect, state)}<div class="message-body"><span class="message-tag">${message.tag}</span><p class="message-text">${message.text}</p></div></div>${CLOSE_BUTTON}`;
   }
   return `<p class="log-hint"><span class="keys"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span> Explore. Walk into anything to interact with it.</p>`;

@@ -18,7 +18,11 @@ const base: GameState = {
 
 describe('attemptMove', () => {
   const latchEntity = findEntityById('floor1-rear-latch');
-  if (!latchEntity || latchEntity.kind !== 'latch')
+  if (
+    !latchEntity ||
+    latchEntity.kind !== 'latch' ||
+    !('rearSide' in latchEntity)
+  )
     throw new Error('floor1-rear-latch missing');
   const rearTile = tileInDirection(latchEntity.tile, latchEntity.rearSide);
   const westRelease = findEntityById('floor2-west-release');
@@ -218,92 +222,96 @@ describe('attemptMove', () => {
   });
 
   for (const release of [westRelease, eastRelease]) {
-    const rear = tileInDirection(release.tile, release.rearSide);
-    const front = tileInDirection(
+    // The hall side and the wing side of each release.
+    const hall = tileInDirection(
       release.tile,
-      release.rearSide === 'east' ? 'west' : 'east',
+      release.id === 'floor2-west-release' ? 'east' : 'west',
     );
-    const frontMove: Direction = release.rearSide;
-    const rearMove: Direction = release.rearSide === 'east' ? 'west' : 'east';
+    const wing = tileInDirection(
+      release.tile,
+      release.id === 'floor2-west-release' ? 'west' : 'east',
+    );
+    const toWing: Direction =
+      release.id === 'floor2-west-release' ? 'west' : 'east';
+    const toHall: Direction = toWing === 'west' ? 'east' : 'west';
 
-    it(`blocks ${release.id} from the front`, () => {
-      const atFront = { ...base, mapId: 'floor2' as const, tile: front };
-      expect(attemptMove(atFront, frontMove)).toEqual({
-        ok: false,
-        reason: 'latch-closed-front',
-      });
+    it(`${release.id} stays shut while its guard stands, from either side`, () => {
+      for (const [tile, move] of [
+        [hall, toWing],
+        [wing, toHall],
+      ] as const) {
+        const state = { ...base, mapId: 'floor2' as const, tile };
+        expect(attemptMove(state, move)).toEqual({
+          ok: true,
+          state,
+          effect: { kind: 'latchGuarded', id: release.id, remaining: 1 },
+        });
+      }
     });
 
-    it(`opens ${release.id} from the rear where the player stands`, () => {
-      const atRear = { ...base, mapId: 'floor2' as const, tile: rear };
-      const result = attemptMove(atRear, rearMove);
-      expect(result.ok).toBe(true);
-      if (!result.ok) return;
-      expect(result.state.tile).toEqual(rear);
-      expect(result.state.openedShortcutIds).toEqual([release.id]);
+    it(`${release.id} opens from either side once its guard falls`, () => {
+      for (const [tile, move] of [
+        [hall, toWing],
+        [wing, toHall],
+      ] as const) {
+        const cleared = {
+          ...base,
+          mapId: 'floor2' as const,
+          tile,
+          defeatedEnemyIds: ['floor2-east-sentry'],
+        };
+        const result = attemptMove(cleared, move);
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        expect(result.state.tile).toEqual(tile);
+        expect(result.state.openedShortcutIds).toEqual([release.id]);
+      }
     });
 
     it(`an opened ${release.id} is traversable both ways without duplicating its id`, () => {
       const open = {
         ...base,
         mapId: 'floor2' as const,
-        tile: front,
+        tile: hall,
         openedShortcutIds: [release.id],
       };
-      const enter = attemptMove(open, frontMove);
+      const enter = attemptMove(open, toWing);
       expect(enter.ok).toBe(true);
       if (!enter.ok) return;
       expect(enter.state.tile).toEqual(release.tile);
-      const exit = attemptMove(enter.state, frontMove);
+      const exit = attemptMove(enter.state, toWing);
       expect(exit.ok).toBe(true);
       if (!exit.ok) return;
-      expect(exit.state.tile).toEqual(rear);
-      const back = attemptMove(exit.state, rearMove);
+      expect(exit.state.tile).toEqual(wing);
+      const back = attemptMove(exit.state, toHall);
       expect(back.ok).toBe(true);
       if (!back.ok) return;
       expect(back.state.tile).toEqual(release.tile);
-      const leave = attemptMove(back.state, rearMove);
+      const leave = attemptMove(back.state, toHall);
       expect(leave.ok).toBe(true);
       if (!leave.ok) return;
-      expect(leave.state.tile).toEqual(front);
+      expect(leave.state.tile).toEqual(hall);
       expect(leave.state.openedShortcutIds).toEqual([release.id]);
     });
   }
 
-  it('opens both floor2 releases in either order', () => {
-    const westFirst = attemptMove(
-      { ...base, mapId: 'floor2' as const, tile: { x: 6, y: 7 } },
-      'west',
-    );
-    expect(westFirst.ok).toBe(true);
-    if (!westFirst.ok) return;
-    const thenEast = attemptMove(
-      { ...westFirst.state, tile: { x: 11, y: 7 } },
-      'east',
-    );
-    expect(thenEast.ok).toBe(true);
-    if (!thenEast.ok) return;
-    expect(thenEast.state.openedShortcutIds).toHaveLength(2);
-    expect(thenEast.state.openedShortcutIds).toEqual(
-      expect.arrayContaining(['floor2-west-release', 'floor2-east-release']),
-    );
-
-    const eastFirst = attemptMove(
-      { ...base, mapId: 'floor2' as const, tile: { x: 11, y: 7 } },
-      'east',
-    );
-    expect(eastFirst.ok).toBe(true);
-    if (!eastFirst.ok) return;
-    const thenWest = attemptMove(
-      { ...eastFirst.state, tile: { x: 6, y: 7 } },
-      'west',
-    );
-    expect(thenWest.ok).toBe(true);
-    if (!thenWest.ok) return;
-    expect(thenWest.state.openedShortcutIds).toHaveLength(2);
-    expect(thenWest.state.openedShortcutIds).toEqual(
-      expect.arrayContaining(['floor2-west-release', 'floor2-east-release']),
-    );
+  it('the floor3 heart hatch counts its undefeated guards', () => {
+    const below = { ...base, mapId: 'floor3' as const, tile: { x: 10, y: 6 } };
+    expect(attemptMove(below, 'north')).toEqual({
+      ok: true,
+      state: below,
+      effect: {
+        kind: 'latchGuarded',
+        id: 'floor3-heart-shortcut',
+        remaining: 1,
+      },
+    });
+    const cleared = { ...below, defeatedEnemyIds: ['floor3-archive-sentry'] };
+    const result = attemptMove(cleared, 'north');
+    expect(result.ok && result.effect).toEqual({
+      kind: 'latchOpened',
+      id: 'floor3-heart-shortcut',
+    });
   });
 
   it('returns through the treasury stair, records the fact, and discovers the workshop treasury', () => {

@@ -61,13 +61,13 @@ export const floor2: MapDefinition = {
       kind: 'latch',
       id: 'floor2-west-release',
       tile: { x: 5, y: 7 },
-      rearSide: 'east',
+      guardIds: ['floor2-east-sentry'],
     },
     {
       kind: 'latch',
       id: 'floor2-east-release',
       tile: { x: 12, y: 7 },
-      rearSide: 'west',
+      guardIds: ['floor2-east-sentry'],
     },
     {
       kind: 'npc',
@@ -83,7 +83,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-paired-release-ledger',
       tile: { x: 2, y: 5 },
       assetId: 'clue-runes',
-      text: 'A keeper\'s ledger lies open: "The rear releases are paired. Each gate yields only to a hand on its far side — open either first; both lead back."',
+      text: 'A keeper\'s ledger lies open: "The hall releases are paired. Both answer to the sentry posted in the service wing — while it stands, neither gate yields."',
       factId: 'floor2-paired-release-ledger-read',
     },
     {

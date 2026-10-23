@@ -14,6 +14,7 @@ const EFFECT_CUES: Record<ActionEffect['kind'], readonly SfxCue[]> = {
   itemReward: ['pickup'],
   healed: ['heal'],
   latchOpened: ['latch'],
+  latchGuarded: ['locked'],
   combatPrompt: ['encounter'],
   enemyDefeated: ['hit', 'win'],
   purchasePrompt: ['confirm'],

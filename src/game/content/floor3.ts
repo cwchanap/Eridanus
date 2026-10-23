@@ -9,7 +9,7 @@ export const floor3: MapDefinition = {
     '##########.###########',
     '######..........######',
     '######..........######',
-    '##.###.###.####.###.##',
+    '##.#######.########.##',
     '##..##.###.####.##..##',
     '##...#.###.####.#...##',
     '##.....###.####.....##',
@@ -32,7 +32,7 @@ export const floor3: MapDefinition = {
       kind: 'latch',
       id: 'floor3-heart-shortcut',
       tile: { x: 10, y: 5 },
-      rearSide: 'north',
+      guardIds: ['floor3-archive-sentry'],
     },
     {
       kind: 'recovery',

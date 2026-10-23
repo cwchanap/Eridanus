@@ -33,7 +33,7 @@ const LEAD_TEXT: Record<LeadId, string> = {
   'ledger-follow-deeper-record':
     'The paired rear-release mechanisms explain the fragment. Seek the final record deeper in the tower.',
   'reach-heart-chamber':
-    'Floor 3 is open. Follow the paired routes toward the tower heart.',
+    'Floor 3 is open. Defeat the hatch guard in the galleries to reach the tower heart.',
   'claim-restoration-core':
     'The core guardian is defeated. Recover the Restoration Core.',
   'return-restoration-core':
