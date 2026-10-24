@@ -2,7 +2,6 @@ import type { MapDefinition } from '../types';
 
 export const floor3: MapDefinition = {
   id: 'floor3',
-  name: 'Tower Floor 3',
   layout: [
     '######################',
     '##########.###########',
@@ -47,14 +46,12 @@ export const floor3: MapDefinition = {
       id: 'floor3-heart-lockdown-record',
       tile: { x: 9, y: 3 },
       assetId: 'clue-runes',
-      text: 'The keeper etched one final warning: the guardian lattice is still defending an isolation state two floors down, at the true heart. Break the stalled guardian, recover the Restoration Core, and return it to the village before the tower flow fails completely.',
     },
     {
       kind: 'clue',
       id: 'floor3-keeper-final-record',
       tile: { x: 18, y: 7 },
       assetId: 'clue-runes',
-      text: 'Final keeper record: the paired releases isolated a guardian control fault. The isolation held, but nobody returned to clear it; the same tower flow continued feeding the village until the core began to fail.',
       factId: 'floor3-keeper-final-record-read',
     },
     {
@@ -62,7 +59,6 @@ export const floor3: MapDefinition = {
       id: 'floor3-vault-route-mark',
       tile: { x: 3, y: 7 },
       assetId: 'clue-runes',
-      text: 'The old route scratches repeat here, but one mark turns back toward the northwest wall instead of the tower heart.',
     },
     {
       kind: 'enemy',
@@ -174,32 +170,26 @@ export const floor3: MapDefinition = {
   sections: [
     {
       id: 'floor3-entry-vestibule',
-      name: 'Entry Vestibule',
       bounds: { minX: 8, maxX: 12, minY: 12, maxY: 13 },
     },
     {
       id: 'floor3-twin-galleries',
-      name: 'Twin Galleries',
       bounds: { minX: 2, maxX: 19, minY: 5, maxY: 12 },
     },
     {
       id: 'floor3-keeper-archive',
-      name: 'Keeper Archive',
       bounds: { minX: 16, maxX: 19, minY: 5, maxY: 8 },
     },
     {
       id: 'floor3-hidden-vault',
-      name: 'Hidden Vault',
       bounds: { minX: 2, maxX: 5, minY: 5, maxY: 8 },
     },
     {
       id: 'floor3-heart-approach',
-      name: 'Heart Approach',
       bounds: { minX: 6, maxX: 15, minY: 3, maxY: 4 },
     },
     {
       id: 'floor3-heart-stair',
-      name: 'Heart Stair',
       bounds: { minX: 10, maxX: 10, minY: 1, maxY: 2 },
     },
   ],

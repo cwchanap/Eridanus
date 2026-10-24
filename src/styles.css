@@ -20,7 +20,35 @@
   --danger: #ef6a5c;
   --success: #6fd88a;
   --glow: rgba(116, 217, 234, 0.28);
+  --body: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --display: 'Cinzel', 'Trajan Pro', Georgia, serif;
+}
+
+/* Cinzel and the system UI font carry no CJK glyphs, and the browser picks
+   Traditional or Japanese letterforms from <html lang> (set by the language
+   picker). Naming sans fonts per script after the Latin ones keeps Latin
+   text and digits as they are and fills in the rest, whatever the OS. */
+:root:lang(zh-Hant) {
+  --cjk:
+    'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC',
+    'WenQuanYi Zen Hei', sans-serif;
+  --body: system-ui, -apple-system, 'Segoe UI', var(--cjk);
+  --display: 'Cinzel', 'Trajan Pro', var(--cjk);
+}
+
+:root:lang(ja) {
+  --cjk:
+    'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans JP', 'Noto Sans CJK JP',
+    'WenQuanYi Zen Hei', sans-serif;
+  --body: system-ui, -apple-system, 'Segoe UI', var(--cjk);
+  --display: 'Cinzel', 'Trajan Pro', var(--cjk);
+}
+
+/* CJK has no italics; the browser would only slant the glyphs. */
+:root:lang(zh-Hant)
+  :is(.panel-empty, .message[data-effect='clue'] .message-text),
+:root:lang(ja) :is(.panel-empty, .message[data-effect='clue'] .message-text) {
+  font-style: normal;
 }
 
 /* The village glows warm; the tower floors keep the cool rune light. */
@@ -44,11 +72,7 @@ body {
 
 body {
   color: var(--text);
-  font:
-    15px/1.45 system-ui,
-    -apple-system,
-    'Segoe UI',
-    sans-serif;
+  font: 15px/1.45 var(--body);
   background-color: var(--bg-deep);
   /* A few tiled star layers plus a faint diagonal "river" of light. */
   background-image:
@@ -203,9 +227,7 @@ kbd {
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.35);
   color: var(--gold-bright);
-  font:
-    600 11px/1.4 system-ui,
-    sans-serif;
+  font: 600 11px/1.4 var(--body);
   text-align: center;
 }
 
@@ -798,6 +820,9 @@ kbd {
 .journal-head .panel-title {
   flex: 1;
   margin: 0;
+  /* CJK titles can break between any two characters, so without this the
+     buttons squeeze "日誌" onto two lines instead of wrapping below it. */
+  white-space: nowrap;
 }
 
 .journal[data-open='false'] .panel-title::after {
@@ -819,9 +844,7 @@ kbd {
   border-radius: 6px;
   background: transparent;
   color: var(--text-dim);
-  font:
-    600 12px/1.4 system-ui,
-    sans-serif;
+  font: 600 12px/1.4 var(--body);
   cursor: pointer;
 }
 

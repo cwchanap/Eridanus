@@ -2,7 +2,6 @@ import type { MapDefinition } from '../types';
 
 export const floor2: MapDefinition = {
   id: 'floor2',
-  name: 'Tower Floor 2',
   layout: [
     '##################',
     '########.#########',
@@ -53,8 +52,6 @@ export const floor2: MapDefinition = {
         kind: 'fact',
         requiresFactId: 'main-subject-returned',
         lockedFactId: 'floor2-depth-seal-seen',
-        lockedText:
-          'The lower keeper seal will not release until the missing subject returns with the warning from below.',
       },
     },
     {
@@ -74,7 +71,6 @@ export const floor2: MapDefinition = {
       id: 'floor2-missing-subject',
       tile: { x: 11, y: 3 },
       assetId: 'npc-subject',
-      name: 'Missing Subject',
       introFactId: 'main-subject-returned',
       presence: { factId: 'main-subject-returned', when: 'unknown' },
     },
@@ -83,7 +79,6 @@ export const floor2: MapDefinition = {
       id: 'floor2-paired-release-ledger',
       tile: { x: 2, y: 5 },
       assetId: 'clue-runes',
-      text: 'A keeper\'s ledger lies open: "The hall releases are paired. Both answer to the sentry posted in the service wing — while it stands, neither gate yields."',
       factId: 'floor2-paired-release-ledger-read',
     },
     {
@@ -156,27 +151,22 @@ export const floor2: MapDefinition = {
   sections: [
     {
       id: 'floor2-front-landing',
-      name: 'Front Landing',
       bounds: { minX: 7, maxX: 10, minY: 10, maxY: 11 },
     },
     {
       id: 'floor2-central-hall',
-      name: 'Central Hall',
       bounds: { minX: 6, maxX: 11, minY: 4, maxY: 9 },
     },
     {
       id: 'floor2-west-archive',
-      name: 'West Archive',
       bounds: { minX: 1, maxX: 5, minY: 4, maxY: 10 },
     },
     {
       id: 'floor2-east-service',
-      name: 'East Service Wing',
       bounds: { minX: 12, maxX: 16, minY: 4, maxY: 10 },
     },
     {
       id: 'floor2-rear-gallery',
-      name: 'Rear Gallery',
       bounds: { minX: 1, maxX: 16, minY: 1, maxY: 3 },
     },
   ],

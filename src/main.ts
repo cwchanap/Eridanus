@@ -2,7 +2,6 @@ import '@fontsource/cinzel/latin-700.css';
 import './styles.css';
 import { cuesFor } from './audio/cues';
 import { Sfx } from './audio/sfx';
-import { MAPS } from './game/content';
 import { buildJournalView } from './game/journal';
 import { dispatchInput } from './game/session';
 import { loadGame, resetGame, saveGame } from './game/save';
@@ -13,6 +12,8 @@ import type {
   InputCommand,
   SessionState,
 } from './game/types';
+import { loadLocale, saveLocale, type Locale } from './i18n/locale';
+import { MESSAGES } from './i18n/messages';
 import { createGame, type CreatedGame } from './phaser/createGame';
 import { InteractionOverlay, showsMessage } from './ui/InteractionOverlay';
 
@@ -24,6 +25,8 @@ let session: SessionState = { game: createInitialGameState(), pending: null };
 let effect: ActionEffect | null = null;
 let blocked: BlockedReason | null = null;
 let created: CreatedGame | null = null;
+let locale = loadLocale(window.localStorage);
+document.documentElement.lang = locale;
 const sfx = new Sfx(window.localStorage);
 
 const overlay = new InteractionOverlay(
@@ -31,17 +34,26 @@ const overlay = new InteractionOverlay(
   () => handleInput({ kind: 'confirm' }),
   () => handleInput({ kind: 'cancel' }),
   sfx,
+  changeLocale,
 );
 
 function renderOverlay(): void {
   overlay.render({
     state: session.game,
-    mapName: MAPS[session.game.mapId].name,
+    locale,
     pending: session.pending,
     effect,
     blocked,
     journal: buildJournalView(session.game),
   });
+}
+
+function changeLocale(next: Locale): void {
+  locale = next;
+  saveLocale(window.localStorage, locale);
+  // The browser picks CJK glyph variants and fonts from the page language.
+  document.documentElement.lang = locale;
+  renderOverlay();
 }
 
 function handleInput(input: InputCommand): void {
@@ -72,7 +84,7 @@ function startRuntime(
     // Scene create() performs the first refresh once Phaser boots.
     created = createGame(gameRoot!, {
       getSession: () => session,
-      hasMessage: () => showsMessage(effect, blocked),
+      hasMessage: () => showsMessage(effect, blocked, MESSAGES[locale]),
       onInput: handleInput,
     });
   } else {
@@ -84,7 +96,9 @@ function startRuntime(
 const load = loadGame(window.localStorage);
 if (load.kind === 'invalid') {
   // No scene exists yet, so keyboard input stays dead until the explicit reset.
-  overlay.renderInvalidSave(() => startRuntime(resetGame(window.localStorage)));
+  overlay.renderInvalidSave(locale, () =>
+    startRuntime(resetGame(window.localStorage)),
+  );
 } else {
   startRuntime(load.state);
 }

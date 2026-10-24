@@ -2,7 +2,6 @@ import type { MapDefinition } from '../types';
 
 export const floor1: MapDefinition = {
   id: 'floor1',
-  name: 'Tower Floor 1',
   layout: [
     '########################',
     '#....#.....#...........#',
@@ -40,7 +39,6 @@ export const floor1: MapDefinition = {
         kind: 'item',
         requiresItemId: 'tower-depth-sigil',
         lockedFactId: 'floor1-depth-seal-seen',
-        lockedText: 'A crest-shaped socket seals the lower stair.',
       },
     },
     {
@@ -56,7 +54,6 @@ export const floor1: MapDefinition = {
       id: 'floor1-route-mark',
       tile: { x: 9, y: 4 },
       assetId: 'clue-runes',
-      text: 'Route scratches point toward a connection that returns from below.',
       factId: 'floor1-route-mark-seen',
     },
     {
@@ -64,7 +61,6 @@ export const floor1: MapDefinition = {
       id: 'floor1-treasury-overlook',
       tile: { x: 10, y: 3 },
       assetId: 'clue-runes',
-      text: 'The arch facing the visible treasury is bricked from this side.',
       factId: 'floor1-treasury-sealed',
     },
     {
@@ -74,7 +70,6 @@ export const floor1: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'item',
       itemId: 'ledger-fragment-1',
-      label: 'Ledger Fragment',
     },
     {
       kind: 'reward',
@@ -92,7 +87,6 @@ export const floor1: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'item',
       itemId: 'tower-depth-sigil',
-      label: 'Tower Sigil',
     },
     {
       kind: 'enemy',
@@ -177,28 +171,23 @@ export const floor1: MapDefinition = {
   sections: [
     {
       id: 'floor1-entry-court',
-      name: 'Entry Court',
       bounds: { minX: 1, maxX: 10, minY: 12, maxY: 14 },
       factIds: ['floor1-treasury-seen'],
     },
     {
       id: 'floor1-lower-loop',
-      name: 'Lower Loop',
       bounds: { minX: 1, maxX: 10, minY: 7, maxY: 11 },
     },
     {
       id: 'floor1-upper-gallery',
-      name: 'Upper Gallery',
       bounds: { minX: 1, maxX: 10, minY: 1, maxY: 6 },
     },
     {
       id: 'floor1-rear-wing',
-      name: 'Rear Wing',
       bounds: { minX: 11, maxX: 22, minY: 1, maxY: 14 },
     },
     {
       id: 'floor1-workshop-treasury',
-      name: 'Workshop Treasury',
       bounds: { minX: 15, maxX: 17, minY: 6, maxY: 8 },
     },
   ],

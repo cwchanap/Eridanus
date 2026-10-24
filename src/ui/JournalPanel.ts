@@ -1,48 +1,7 @@
 import type { JournalEntry, JournalView, LeadId } from '../game/journal';
-import { factNote } from '../game/journal';
+import { LOCALE_CODES, LOCALE_NAMES, type Locale } from '../i18n/locale';
+import { pick, type Messages } from '../i18n/messages';
 import { ICONS } from './icons';
-
-const ENTRY_TITLE: Record<JournalEntry['id'], string> = {
-  main: 'Main quest',
-  heirloom: 'Heirloom',
-  route: 'Lost Route',
-  ledger: 'Keeper Ledger',
-};
-
-const LEAD_TEXT: Record<LeadId, string> = {
-  'seek-warden': 'Speak with the village warden.',
-  'find-sigil': 'Search Floor 1 for the reusable tower sigil.',
-  descend: 'The sigil opens the lower stair. Descend to Floor 2.',
-  'search-floor2':
-    'The lower stair stands open. Search Floor 2 for the missing subject.',
-  'investigate-deeper':
-    'The subject returned with tales of what waits below Floor 2. Investigate deeper.',
-  'heirloom-find-workshop': 'Look for the sealed workshop treasury.',
-  'heirloom-inspect-treasury':
-    'Find a way to inspect the visible treasury approach.',
-  'heirloom-find-other-entrance':
-    'The visible approach is sealed. Look for another entrance from below.',
-  'heirloom-claim-treasury':
-    'A hidden stair reaches the treasury from below. Claim the workshop heirloom.',
-  'heirloom-resolved': 'The workshop heirloom is recovered.',
-  'route-find-marks': 'Look for the old route scratches.',
-  'route-verify-return': 'Verify where the marked return connection leads.',
-  'route-resolved': 'The return connection is verified. The old route is real.',
-  'ledger-find-fragment': 'Search for a surviving keeper ledger fragment.',
-  'ledger-find-later-pages': 'Look deeper in the tower for later ledger pages.',
-  'ledger-follow-deeper-record':
-    'The paired guarded releases explain the fragment. Seek the final record deeper in the tower.',
-  'reach-heart-chamber':
-    'The lower tower is open. Defeat the Floor 3 hatch guard and fight down to the tower heart on Floor 5.',
-  'claim-restoration-core':
-    'The core guardian is defeated. Recover the Restoration Core.',
-  'return-restoration-core':
-    'Bring the Restoration Core back to the village warden.',
-  'story-complete':
-    'The Restoration Core is back in the village. The tower can be restored.',
-  'ledger-resolved':
-    'The final keeper record explains the guardian isolation failure.',
-};
 
 const RESOLVED_LEADS: ReadonlySet<LeadId> = new Set([
   'heirloom-resolved',
@@ -51,11 +10,11 @@ const RESOLVED_LEADS: ReadonlySet<LeadId> = new Set([
   'story-complete',
 ]);
 
-function renderEntry(entry: JournalEntry): string {
+function renderEntry(entry: JournalEntry, m: Messages): string {
   const resolved = RESOLVED_LEADS.has(entry.lead) ? ' data-resolved' : '';
   return `<li class="lead" data-lead="${entry.lead}"${resolved}>
-    <span class="lead-title">${ENTRY_TITLE[entry.id]}</span>
-    <span class="lead-text">${LEAD_TEXT[entry.lead]}</span>
+    <span class="lead-title">${m.leadTitles[entry.id]}</span>
+    <span class="lead-text">${m.leads[entry.lead]}</span>
   </li>`;
 }
 
@@ -65,41 +24,57 @@ function group(title: string, body: string): string {
     : '';
 }
 
-function renderPlaces(view: JournalView): string {
-  return view.sections
+function renderPlaces(view: JournalView, m: Messages): string {
+  return view.sectionIds
     .map(
-      (section) =>
-        `<span class="place" data-section="${section.id}">${section.name}</span>`,
+      (id) =>
+        `<span class="place" data-section="${id}">${pick(m.sections, id)}</span>`,
     )
     .join('');
 }
 
-// open and muted are the overlay's own view preferences (the J and M keys or
-// the head's buttons); a folded journal keeps only its title bar on screen.
+// One button that steps through the languages, so it stays as small as the
+// head's other buttons. It reads as the language the page is in now.
+function renderLanguageButton(m: Messages, locale: Locale): string {
+  const label = `${m.ui.language}: ${LOCALE_NAMES[locale]}`;
+  return `<button type="button" class="journal-toggle" data-action="next-locale" data-locale="${locale}" aria-label="${label}" title="${label}"><span lang="${locale}">${LOCALE_CODES[locale]}</span></button>`;
+}
+
+// The overlay's own view preferences: whether the journal is open (the J key
+// or its button) and whether sound is muted (M). A folded journal keeps only
+// its title bar on screen. The language button lives in the same head.
+export type JournalPrefs = Readonly<{
+  open: boolean;
+  muted: boolean;
+  locale: Locale;
+}>;
+
 export function renderJournal(
   view: JournalView,
-  open = true,
-  muted = false,
+  m: Messages,
+  { open = true, muted = false, locale = 'en' }: Partial<JournalPrefs> = {},
 ): string {
-  const optional = view.optional.map(renderEntry).join('');
+  const optional = view.optional.map((entry) => renderEntry(entry, m)).join('');
   const notes = view.observationFactIds
-    .map((id) => `<li data-note="${id}">${factNote(id) ?? ''}</li>`)
+    .map((id) => `<li data-note="${id}">${m.notes[id]}</li>`)
     .join('');
-  const places = renderPlaces(view);
+  const places = renderPlaces(view, m);
   const body = open
     ? `<div class="journal-body">
-      <ul class="leads leads-main">${renderEntry(view.main)}</ul>
-      ${group('Side leads', optional && `<ul class="leads">${optional}</ul>`)}
-      ${group('Notes', notes && `<ul class="notes">${notes}</ul>`)}
-      ${group('Places found', places && `<div class="place-list">${places}</div>`)}
+      <ul class="leads leads-main">${renderEntry(view.main, m)}</ul>
+      ${group(m.ui.sideLeads, optional && `<ul class="leads">${optional}</ul>`)}
+      ${group(m.ui.notes, notes && `<ul class="notes">${notes}</ul>`)}
+      ${group(m.ui.placesFound, places && `<div class="place-list">${places}</div>`)}
     </div>`
     : '';
-  return `<section class="panel journal" data-testid="journal" aria-label="Journal" data-open="${open}">
+  const soundLabel = muted ? m.ui.unmute : m.ui.mute;
+  return `<section class="panel journal" data-testid="journal" aria-label="${m.ui.journal}" data-open="${open}">
     <div class="journal-head">
-      <h2 class="panel-title">Journal</h2>
+      <h2 class="panel-title">${m.ui.journal}</h2>
       <div class="journal-actions">
-      <button type="button" class="journal-toggle" data-action="toggle-sound" data-muted="${muted}" aria-label="${muted ? 'Unmute' : 'Mute'} sound" title="${muted ? 'Unmute' : 'Mute'} sound" aria-keyshortcuts="M">${muted ? ICONS.muted : ICONS.sound}<kbd aria-hidden="true">M</kbd></button>
-      <button type="button" class="journal-toggle" data-action="toggle-journal" aria-expanded="${open}" aria-keyshortcuts="J">${open ? 'Hide' : 'Show'} <kbd aria-hidden="true">J</kbd></button>
+      ${renderLanguageButton(m, locale)}
+      <button type="button" class="journal-toggle" data-action="toggle-sound" data-muted="${muted}" aria-label="${soundLabel}" title="${soundLabel}" aria-keyshortcuts="M">${muted ? ICONS.muted : ICONS.sound}<kbd aria-hidden="true">M</kbd></button>
+      <button type="button" class="journal-toggle" data-action="toggle-journal" aria-expanded="${open}" aria-keyshortcuts="J">${open ? m.ui.hide : m.ui.show} <kbd aria-hidden="true">J</kbd></button>
       </div>
     </div>
     ${body}

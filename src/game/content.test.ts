@@ -162,14 +162,15 @@ describe('authored content', () => {
     expect(findItemRewardByItemId('tower-depth-sigil')?.id).toBe(
       'floor1-depth-sigil',
     );
-    expect(findSectionById('floor1-upper-gallery')?.name).toBe('Upper Gallery');
-    expect(findSectionById('floor2-front-landing')?.name).toBe('Front Landing');
-    expect(findSectionById('floor2-central-hall')?.name).toBe('Central Hall');
-    expect(findSectionById('floor2-west-archive')?.name).toBe('West Archive');
-    expect(findSectionById('floor2-east-service')?.name).toBe(
-      'East Service Wing',
-    );
-    expect(findSectionById('floor2-rear-gallery')?.name).toBe('Rear Gallery');
+    for (const id of [
+      'floor1-upper-gallery',
+      'floor2-front-landing',
+      'floor2-central-hall',
+      'floor2-west-archive',
+      'floor2-east-service',
+      'floor2-rear-gallery',
+    ])
+      expect(findSectionById(id)?.id).toBe(id);
   });
 
   const tileKey = (tile: Tile): string => `${tile.x},${tile.y}`;
@@ -518,7 +519,6 @@ describe('authored content', () => {
     );
 
     const section = findSectionById('floor1-workshop-treasury');
-    expect(section?.name).toBe('Workshop Treasury');
     if (!section) return;
     const inBounds = (tile: Tile): boolean =>
       tile.x >= section.bounds.minX &&
@@ -579,7 +579,6 @@ describe('validateContent failure branches', () => {
         kind: 'clue',
         id: 'village-recovery',
         tile: { x: 9, y: 3 },
-        text: 'duplicate id',
       },
     ]);
     expect(validateContent(maps)).toEqual([
@@ -593,7 +592,6 @@ describe('validateContent failure branches', () => {
         kind: 'clue',
         id: 'stacked-clue',
         tile: { x: 16, y: 8 },
-        text: 'shares a tile',
       },
     ]);
     expect(validateContent(maps)).toEqual([
@@ -607,7 +605,6 @@ describe('validateContent failure branches', () => {
         kind: 'clue',
         id: 'wall-clue',
         tile: { x: 0, y: 1 },
-        text: 'on a wall',
       },
     ]);
     expect(validateContent(maps)).toEqual([
@@ -719,7 +716,6 @@ describe('validateContent failure branches', () => {
         kind: 'clue',
         id: 'typo-clue',
         tile: { x: 9, y: 3 },
-        text: 'points nowhere',
         factId: 'not-a-fact',
       },
     ]);
@@ -762,7 +758,6 @@ describe('validateContent failure branches', () => {
         lock: {
           kind: 'item',
           requiresItemId: 'no-such-item',
-          lockedText: 'sealed',
           lockedFactId: 'main-missing-person-lead',
         },
       },
@@ -783,7 +778,6 @@ describe('validateContent failure branches', () => {
         lock: {
           kind: 'fact',
           requiresFactId: 'not-a-fact',
-          lockedText: 'sealed',
           lockedFactId: 'main-missing-person-lead',
         },
       },
@@ -809,7 +803,6 @@ describe('validateContent failure branches', () => {
         lock: {
           kind: 'fact',
           requiresFactId: 'main-missing-person-lead',
-          lockedText: 'sealed',
           lockedFactId: 'not-a-fact',
         },
       },
@@ -859,7 +852,6 @@ describe('validateContent failure branches', () => {
             assetId: 'chest-relic-closed',
             grant: 'item',
             itemId: 'tower-depth-sigil',
-            label: 'Duplicate Sigil',
           },
         ],
       },
