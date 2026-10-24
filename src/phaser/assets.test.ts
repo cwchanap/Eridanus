@@ -35,7 +35,6 @@ const testNpc: NpcEntity = {
   kind: 'npc',
   id: 'village-warden',
   tile: { x: 1, y: 1 },
-  name: 'Guide',
   introFactId: 'optional-route-lead',
 };
 

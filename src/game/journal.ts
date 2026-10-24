@@ -1,4 +1,4 @@
-import { FACTS, hasFact } from './content/facts';
+import { isObservationFact, type ObservationFactId } from './content/facts';
 import { findSectionById } from './content';
 import type { GameState } from './types';
 
@@ -30,23 +30,12 @@ export type JournalEntry = Readonly<{
   lead: LeadId;
 }>;
 
-export type JournalSection = Readonly<{
-  id: string;
-  name: string;
-}>;
-
 export type JournalView = Readonly<{
   main: JournalEntry;
   optional: readonly JournalEntry[];
-  sections: readonly JournalSection[];
-  observationFactIds: readonly string[];
+  sectionIds: readonly string[];
+  observationFactIds: readonly ObservationFactId[];
 }>;
-
-export function factNote(id: string): string | undefined {
-  if (!hasFact(id)) return undefined;
-  const fact = FACTS[id as keyof typeof FACTS];
-  return 'note' in fact ? fact.note : undefined;
-}
 
 function knows(factIds: readonly string[], id: string): boolean {
   return factIds.includes(id);
@@ -117,12 +106,7 @@ export function buildJournalView(state: GameState): JournalView {
   return {
     main: { id: 'main', lead: mainLead(state) },
     optional: optionalEntries(state),
-    sections: state.discoveredSectionIds.flatMap((id) => {
-      const section = findSectionById(id);
-      return section ? [{ id: section.id, name: section.name }] : [];
-    }),
-    observationFactIds: state.factIds.filter(
-      (id) => factNote(id) !== undefined,
-    ),
+    sectionIds: state.discoveredSectionIds.filter((id) => findSectionById(id)),
+    observationFactIds: state.factIds.filter(isObservationFact),
   };
 }

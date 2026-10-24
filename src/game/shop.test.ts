@@ -90,7 +90,7 @@ describe('shops', () => {
     const result = attemptMove(owned, 'south');
     expect(result.ok && result.effect).toEqual({
       kind: 'soldOut',
-      speaker: 'Smith',
+      shopId: 'village-weapon-shop',
     });
   });
 
@@ -147,7 +147,7 @@ describe('ambient villagers', () => {
     const result = attemptMove(state, 'east');
     expect(result.ok && result.effect).toEqual({
       kind: 'dialogue',
-      speaker: 'Elder',
+      speakerId: 'village-elder',
       lineId: 'elder-sealed-crypt',
     });
     expect(result.ok && result.state.factIds).toEqual([]);

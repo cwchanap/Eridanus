@@ -16,7 +16,7 @@ export function interactWithEntity(
       return {
         ok: true,
         state: next,
-        effect: { kind: 'clue', text: entity.text },
+        effect: { kind: 'clue', clueId: entity.id },
       };
     }
     case 'recovery': {
@@ -44,7 +44,7 @@ export function interactWithEntity(
         state: next,
         effect: {
           kind: 'dialogue',
-          speaker: entity.name,
+          speakerId: entity.id,
           lineId: interaction.lineId,
         },
       };
@@ -64,11 +64,7 @@ export function interactWithEntity(
         return {
           ok: true,
           state: next,
-          effect: {
-            kind: 'itemReward',
-            itemId: entity.itemId,
-            label: entity.label,
-          },
+          effect: { kind: 'itemReward', itemId: entity.itemId },
         };
       }
 
@@ -144,7 +140,7 @@ export function interactWithEntity(
       return {
         ok: true,
         state,
-        effect: { kind: 'accessLocked', text: entity.text },
+        effect: { kind: 'accessLocked', entityId: entity.id },
       };
     case 'shop': {
       const ware = nextWare(entity, state);
@@ -152,7 +148,7 @@ export function interactWithEntity(
         return {
           ok: true,
           state,
-          effect: { kind: 'soldOut', speaker: entity.name },
+          effect: { kind: 'soldOut', shopId: entity.id },
         };
       return {
         ok: true,

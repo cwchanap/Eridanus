@@ -61,14 +61,12 @@ export type NpcPresence = Readonly<{
 export type ClueEntity = BaseEntity &
   Readonly<{
     kind: 'clue';
-    text: string;
     factId?: string;
   }>;
 export type NpcEntity = BaseEntity &
   Readonly<{
     kind: 'npc';
     id: NpcId;
-    name: string;
     // Ambient villagers carry no lead, so talking to them records nothing.
     introFactId?: string;
     presence?: NpcPresence;
@@ -77,7 +75,7 @@ export type RewardEntity = BaseEntity &
   Readonly<{ kind: 'reward' }> &
   (
     | Readonly<{ grant: 'stat'; stat: Stat; amount: number }>
-    | Readonly<{ grant: 'item'; itemId: string; label: string }>
+    | Readonly<{ grant: 'item'; itemId: string }>
   );
 export type EnemyEntity = BaseEntity &
   Readonly<{
@@ -95,33 +93,29 @@ export type LatchEntity = BaseEntity &
     | Readonly<{ guardIds: readonly string[]; rearSide?: Direction }>
   );
 export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
-// A maze entrance whose maze is not built yet: bumping it shows its text
+// A maze entrance whose maze is not built yet: bumping it shows its notice
 // and records nothing.
-export type SealedEntity = BaseEntity &
-  Readonly<{ kind: 'sealed'; text: string }>;
+export type SealedEntity = BaseEntity & Readonly<{ kind: 'sealed' }>;
 // A one-time purchase: owning it is having its itemId, and buying it adds
 // amount to stat once, like a stat reward.
 export type ShopWare = Readonly<{
   itemId: string;
-  label: string;
   price: number;
   stat: Stat;
   amount: number;
 }>;
 // A shopkeeper sells their wares in order, one per visit to the counter.
 export type ShopEntity = BaseEntity &
-  Readonly<{ kind: 'shop'; name: string; wares: readonly ShopWare[] }>;
+  Readonly<{ kind: 'shop'; wares: readonly ShopWare[] }>;
 export type PortalLock =
   | Readonly<{
       kind: 'item';
       requiresItemId: string;
-      lockedText: string;
       lockedFactId: string;
     }>
   | Readonly<{
       kind: 'fact';
       requiresFactId: string;
-      lockedText: string;
       lockedFactId: string;
     }>;
 
@@ -144,7 +138,6 @@ export type Entity =
   | ShopEntity;
 export type MapSection = Readonly<{
   id: string;
-  name: string;
   bounds: Readonly<{
     minX: number;
     maxX: number;
@@ -155,7 +148,6 @@ export type MapSection = Readonly<{
 }>;
 export type MapDefinition = Readonly<{
   id: MapId;
-  name: string;
   layout: readonly string[];
   entities: readonly Entity[];
   sections: readonly MapSection[];
@@ -199,7 +191,7 @@ export type BlockedReason =
 export type ActionEffect =
   | { kind: 'moved' }
   | { kind: 'traveled'; mapId: MapId }
-  | { kind: 'clue'; text: string }
+  | { kind: 'clue'; clueId: string }
   | { kind: 'reward'; stat: Stat; amount: number }
   | { kind: 'healed'; hp: number }
   | { kind: 'latchOpened'; id: string }
@@ -208,10 +200,10 @@ export type ActionEffect =
   | { kind: 'enemyDefeated'; enemyId: string; hpLost: number; gold: number }
   | { kind: 'purchasePrompt'; shopId: string; ware: ShopWare }
   | { kind: 'purchased'; ware: ShopWare }
-  | { kind: 'soldOut'; speaker: string }
-  | { kind: 'dialogue'; speaker: string; lineId: DialogueLineId }
-  | { kind: 'itemReward'; itemId: string; label: string }
-  | { kind: 'accessLocked'; text: string };
+  | { kind: 'soldOut'; shopId: string }
+  | { kind: 'dialogue'; speakerId: NpcId; lineId: DialogueLineId }
+  | { kind: 'itemReward'; itemId: string }
+  | { kind: 'accessLocked'; entityId: string };
 
 export type ActionResult =
   | { ok: true; state: GameState; effect: ActionEffect }
