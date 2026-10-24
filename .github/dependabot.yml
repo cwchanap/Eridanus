@@ -13,6 +13,12 @@ updates:
     commit-message:
       prefix: 'chore(deps)'
       include: 'scope'
+    # typescript-eslint 8.x rejects TS 7 (the native-compiler major), so a major
+    # bump fails `bun run lint` until typescript-eslint supports it. Block majors;
+    # minor/patch still group-update. Revisit when typescript-eslint ships TS 7 support.
+    ignore:
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     groups:
       js-minor-and-patch:
         patterns:
