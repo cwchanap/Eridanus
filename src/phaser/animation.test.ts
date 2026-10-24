@@ -6,7 +6,10 @@ import {
   hop,
   idleFrame,
   idleOffset,
+  AT_REST,
   lerp,
+  startStep,
+  stepPosition,
   stepProgress,
   walkFrame,
 } from './animation';
@@ -66,5 +69,24 @@ describe('character animation timing', () => {
     expect([0, 0.5].map((p) => walkFrame(3, p, 4))).toEqual([2, 3]);
     // Two frames: one per step, alternating feet.
     expect([1, 2, 3].map((n) => walkFrame(n, 0.5, 2))).toEqual([1, 0, 1]);
+  });
+
+  it('keeps the hero within a tile of its real one however fast moves come', () => {
+    // Ten moves east, 33 ms apart (a held key's repeat rate), each far
+    // quicker than STEP_MS.
+    const centre = (x: number) => ({ x: (x + 0.5) * 32, y: 16 });
+    let step = AT_REST;
+    for (let x = 1; x <= 10; x++) {
+      const now = x * 33;
+      step = startStep(step, centre(x - 1), now);
+      const drawn = stepPosition(step, centre(x), now + 32);
+      expect(centre(x).x - drawn.x).toBeGreaterThan(0);
+      expect(centre(x).x - drawn.x).toBeLessThanOrEqual(32);
+      expect(drawn.y).toBe(16);
+    }
+    expect(step.count).toBe(10);
+    expect(stepPosition(step, centre(10), 10 * 33 + STEP_MS)).toEqual(
+      centre(10),
+    );
   });
 });

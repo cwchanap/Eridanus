@@ -65,6 +65,29 @@ export function hop(progress: number): number {
   return HOP * Math.sin(progress * Math.PI);
 }
 
+// The hero's latest step: where it left from, when, and how many steps so
+// far (which picks the walk frame).
+export type Step = Readonly<{ from: Point; start: number; count: number }>;
+
+export const AT_REST: Step = {
+  from: { x: 0, y: 0 },
+  start: -Infinity,
+  count: 0,
+};
+
+// A new step leaves from the centre of the tile the hero is stepping off, not
+// from wherever it is drawn, so however fast moves arrive the drawn hero is
+// never more than a tile behind and only ever slides between two adjacent
+// floor tiles.
+export function startStep(step: Step, leaving: Point, now: number): Step {
+  return { from: leaving, start: now, count: step.count + 1 };
+}
+
+// Where the hero is drawn at `time`, stepping toward `target`.
+export function stepPosition(step: Step, target: Point, time: number): Point {
+  return lerp(step.from, target, stepProgress(time, step.start));
+}
+
 export function lerp(from: Point, to: Point, progress: number): Point {
   return {
     x: from.x + (to.x - from.x) * progress,
