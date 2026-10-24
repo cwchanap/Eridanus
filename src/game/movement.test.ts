@@ -84,7 +84,7 @@ describe('attemptMove', () => {
     if (!result.ok) return;
     expect(result.effect).toEqual({
       kind: 'accessLocked',
-      text: 'A crest-shaped socket seals the lower stair.',
+      entityId: 'floor1-front-to-floor2',
     });
     expect(result.state.mapId).toBe('floor1');
     expect(result.state.tile).toEqual({ x: 9, y: 3 });
@@ -100,7 +100,6 @@ describe('attemptMove', () => {
       kind: 'item',
       requiresItemId: 'tower-depth-sigil',
       lockedFactId: 'floor1-depth-seal-seen',
-      lockedText: 'A crest-shaped socket seals the lower stair.',
     });
   });
 
@@ -133,7 +132,7 @@ describe('attemptMove', () => {
     if (!result.ok) return;
     expect(result.effect).toEqual({
       kind: 'accessLocked',
-      text: 'The lower keeper seal will not release until the missing subject returns with the warning from below.',
+      entityId: 'floor2-depth-to-floor3',
     });
     expect(result.state.mapId).toBe('floor2');
     expect(result.state.tile).toEqual({ x: 8, y: 2 });

@@ -70,7 +70,6 @@ describe('actions', () => {
     expect(first.effect).toEqual({
       kind: 'itemReward',
       itemId: 'tower-depth-sigil',
-      label: sigil.label,
     });
     expect(interactWithEntity(first.state, sigil, first.state.tile)).toEqual({
       ok: false,
@@ -100,7 +99,6 @@ describe('actions', () => {
       kind: 'npc',
       id: 'village-artisan',
       tile: { x: 5, y: 2 },
-      name: 'Artisan',
       introFactId: 'optional-heirloom-lead',
     };
     const state = {
@@ -116,7 +114,7 @@ describe('actions', () => {
     ]);
     expect(result.effect).toEqual({
       kind: 'dialogue',
-      speaker: 'Artisan',
+      speakerId: 'village-artisan',
       lineId: 'artisan-find-other-entrance',
     });
   });
@@ -130,7 +128,7 @@ describe('actions', () => {
     const result = interactWithEntity(state, overlook, state.tile);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.effect).toEqual({ kind: 'clue', text: overlook.text });
+    expect(result.effect).toEqual({ kind: 'clue', clueId: overlook.id });
     expect(result.state.factIds).toContain('floor1-treasury-sealed');
   });
 
@@ -143,7 +141,10 @@ describe('actions', () => {
     const result = interactWithEntity(state, finalRecord, state.tile);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.effect).toEqual({ kind: 'clue', text: finalRecord.text });
+    expect(result.effect).toEqual({
+      kind: 'clue',
+      clueId: finalRecord.id,
+    });
     expect(
       result.state.factIds.filter(
         (id) => id === 'floor3-keeper-final-record-read',
@@ -162,7 +163,7 @@ describe('actions', () => {
     if (!first.ok) return;
     expect(first.effect).toEqual({
       kind: 'dialogue',
-      speaker: warden.name,
+      speakerId: warden.id,
       lineId: 'warden-restoration-ending',
     });
     expect(first.state.factIds).toContain('main-village-restored');
@@ -225,7 +226,6 @@ describe('actions', () => {
     expect(first.effect).toEqual({
       kind: 'itemReward',
       itemId: 'tower-restoration-core',
-      label: 'Restoration Core',
     });
     expect(first.state.openedRewardIds).toContain('floor5-restoration-core');
     expect(first.state.itemIds).toContain('tower-restoration-core');
@@ -286,7 +286,7 @@ describe('actions', () => {
     expect(bump.state.tile).toEqual(state.tile);
     expect(bump.effect).toEqual({
       kind: 'dialogue',
-      speaker: missingSubject.name,
+      speakerId: missingSubject.id,
       lineId: 'subject-returning',
     });
   });
@@ -328,7 +328,7 @@ describe('actions', () => {
     expect(bump.state.tile).toEqual(after.tile);
     expect(bump.effect).toEqual({
       kind: 'dialogue',
-      speaker: returnedSubject.name,
+      speakerId: returnedSubject.id,
       lineId: 'subject-village',
     });
     expect(

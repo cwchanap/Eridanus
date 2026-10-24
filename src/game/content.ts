@@ -145,13 +145,6 @@ export function findShopWareByItemId(itemId: string): ShopWare | undefined {
     .find((ware) => ware.itemId === itemId);
 }
 
-// Owned items come from item rewards and shop wares alike.
-export function itemLabel(itemId: string): string {
-  const reward = findItemRewardByItemId(itemId);
-  if (reward?.grant === 'item') return reward.label;
-  return findShopWareByItemId(itemId)?.label ?? itemId;
-}
-
 export function validateContent(
   maps: Record<MapId, MapDefinition> = MAPS,
 ): readonly string[] {

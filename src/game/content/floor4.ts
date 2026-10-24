@@ -2,7 +2,6 @@ import type { MapDefinition } from '../types';
 
 export const floor4: MapDefinition = {
   id: 'floor4',
-  name: 'Tower Floor 4',
   // The Foundry. From the landing, a west and an east wing each climb to
   // the Upper Gallery by an outer column or a winding snake, every way
   // guarded. The snakes each hold a chest on the way (attack west, defense
@@ -47,7 +46,6 @@ export const floor4: MapDefinition = {
       id: 'floor4-landing-scratches',
       tile: { x: 10, y: 13 },
       assetId: 'clue-runes',
-      text: 'Scratched beside the stair: "The heart lies one floor down. Every way through the foundry answers to a blade."',
     },
     { kind: 'recovery', id: 'floor4-stair-waystone', tile: { x: 10, y: 1 } },
     // The four ways up from the Lower Hall.
@@ -242,47 +240,38 @@ export const floor4: MapDefinition = {
   sections: [
     {
       id: 'floor4-stair-landing',
-      name: 'Stair Landing',
       bounds: { minX: 10, maxX: 12, minY: 13, maxY: 14 },
     },
     {
       id: 'floor4-lower-hall',
-      name: 'Lower Hall',
       bounds: { minX: 1, maxX: 21, minY: 12, maxY: 12 },
     },
     {
       id: 'floor4-west-works',
-      name: 'West Works',
       bounds: { minX: 1, maxX: 9, minY: 3, maxY: 11 },
     },
     {
       id: 'floor4-east-works',
-      name: 'East Works',
       bounds: { minX: 13, maxX: 21, minY: 3, maxY: 11 },
     },
     {
       id: 'floor4-west-store',
-      name: 'West Store',
       bounds: { minX: 1, maxX: 5, minY: 2, maxY: 4 },
     },
     {
       id: 'floor4-east-store',
-      name: 'East Store',
       bounds: { minX: 17, maxX: 21, minY: 2, maxY: 4 },
     },
     {
       id: 'floor4-upper-gallery',
-      name: 'Upper Gallery',
       bounds: { minX: 7, maxX: 15, minY: 1, maxY: 2 },
     },
     {
       id: 'floor4-forge',
-      name: 'Forge',
       bounds: { minX: 9, maxX: 13, minY: 3, maxY: 6 },
     },
     {
       id: 'floor4-forge-cellar',
-      name: 'Forge Cellar',
       bounds: { minX: 11, maxX: 11, minY: 7, maxY: 10 },
     },
   ],

@@ -3,57 +3,36 @@ export const FACTS = {
   'optional-heirloom-lead': {},
   'optional-route-lead': {},
   'optional-ledger-lead': {},
-  'village-tower-stairs-used': {
-    note: 'Stairs connect the village and Floor 1.',
-  },
-  'floor1-treasury-seen': {
-    note: 'A sealed treasury is visible from the Entry Court.',
-  },
-  'floor1-treasury-sealed': {
-    note: 'The treasury arch is bricked from this side.',
-  },
-  'floor1-route-mark-seen': {
-    note: 'Route scratches point toward a connection that returns from below.',
-  },
-  'floor1-depth-seal-seen': {
-    note: 'A crest-shaped socket seals the lower stair.',
-  },
-  'floor1-depth-stairs-used': {
-    note: 'The lower stair reaches Floor 2.',
-  },
-  'floor1-rear-stairs-used': {
-    note: 'A second stair returns to the Rear Wing.',
-  },
+  'village-tower-stairs-used': { observation: true },
+  'floor1-treasury-seen': { observation: true },
+  'floor1-treasury-sealed': { observation: true },
+  'floor1-route-mark-seen': { observation: true },
+  'floor1-depth-seal-seen': { observation: true },
+  'floor1-depth-stairs-used': { observation: true },
+  'floor1-rear-stairs-used': { observation: true },
   'main-subject-returned': {},
-  'floor1-treasury-return-used': {
-    note: 'A hidden stair behind the treasury reaches Floor 2 — the sealed treasury can be entered from behind.',
-  },
-  'floor2-paired-release-ledger-read': {
-    note: 'The keeper paired two hall releases: both stay shut until the service wing sentry falls.',
-  },
-  'floor2-depth-seal-seen': {
-    note: 'The lower seal would not release until the missing subject returned with the keeper warning.',
-  },
-  'floor2-depth-stairs-used': {
-    note: 'The sealed lower stair reaches Floor 3.',
-  },
-  'floor3-keeper-final-record-read': {
-    note: 'The final keeper record says the paired releases isolated a failed guardian control state while the tower continued feeding the village system.',
-  },
-  'floor3-depth-stairs-used': {
-    note: 'The stair behind the heart sentinel reaches Floor 4.',
-  },
-  'floor4-depth-stairs-used': {
-    note: 'The foundry stair reaches Floor 5, the tower heart.',
-  },
-  'tower-lift-seen': {
-    note: 'A dead lift cage links the village to the tower heart. Its socket is shaped for a power core.',
-  },
+  'floor1-treasury-return-used': { observation: true },
+  'floor2-paired-release-ledger-read': { observation: true },
+  'floor2-depth-seal-seen': { observation: true },
+  'floor2-depth-stairs-used': { observation: true },
+  'floor3-keeper-final-record-read': { observation: true },
+  'floor3-depth-stairs-used': { observation: true },
+  'floor4-depth-stairs-used': { observation: true },
+  'tower-lift-seen': { observation: true },
   'main-village-restored': {},
-} as const satisfies Record<string, { note?: string }>;
+} as const satisfies Record<string, { observation?: true }>;
 
 export type FactId = keyof typeof FACTS;
+// Observation facts show as journal notes; their text is in the message
+// tables (i18n), keyed by the fact id.
+export type ObservationFactId = {
+  [Id in FactId]: (typeof FACTS)[Id] extends { observation: true } ? Id : never;
+}[FactId];
 
 export function hasFact(id: string): boolean {
   return Object.hasOwn(FACTS, id);
+}
+
+export function isObservationFact(id: string): id is ObservationFactId {
+  return hasFact(id) && 'observation' in FACTS[id as FactId];
 }

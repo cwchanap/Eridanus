@@ -35,10 +35,7 @@ export function attemptMove(
         return {
           ok: true,
           state: next,
-          effect: {
-            kind: 'accessLocked',
-            text: entity.lock.lockedText,
-          },
+          effect: { kind: 'accessLocked', entityId: entity.id },
         };
       }
       let next: GameState = {

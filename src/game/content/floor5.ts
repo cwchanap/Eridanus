@@ -2,7 +2,6 @@ import type { MapDefinition } from '../types';
 
 export const floor5: MapDefinition = {
   id: 'floor5',
-  name: 'Tower Floor 5',
   // The Heart. Three rings: the Outer Ring from the landing, the Middle Ring
   // behind three gates, and the Inner Ring behind one. The guardian holds
   // the heart at the centre, with the Restoration Core behind it and a lift
@@ -275,7 +274,6 @@ export const floor5: MapDefinition = {
       id: 'floor5-lattice-record',
       tile: { x: 11, y: 10 },
       assetId: 'clue-runes',
-      text: 'The guardian lattice still hums with the old isolation order. Behind it, the Restoration Core waits above a dead lift shaft.',
     },
     {
       kind: 'enemy',
@@ -292,7 +290,6 @@ export const floor5: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'item',
       itemId: 'tower-restoration-core',
-      label: 'Restoration Core',
     },
     {
       kind: 'portal',
@@ -304,45 +301,36 @@ export const floor5: MapDefinition = {
         kind: 'item',
         requiresItemId: 'tower-restoration-core',
         lockedFactId: 'tower-lift-seen',
-        lockedText:
-          'The lift cage hangs dead. Its socket is shaped for a power core.',
       },
     },
   ],
   sections: [
     {
       id: 'floor5-landing',
-      name: 'Lower Landing',
       bounds: { minX: 12, maxX: 13, minY: 1, maxY: 1 },
     },
     {
       id: 'floor5-outer-ring',
-      name: 'Outer Ring',
       bounds: { minX: 1, maxX: 23, minY: 2, maxY: 17 },
     },
     {
       id: 'floor5-middle-ring',
-      name: 'Middle Ring',
       bounds: { minX: 3, maxX: 21, minY: 4, maxY: 15 },
     },
     {
       id: 'floor5-inner-ring',
-      name: 'Inner Ring',
       bounds: { minX: 5, maxX: 19, minY: 6, maxY: 13 },
     },
     {
       id: 'floor5-west-vault',
-      name: 'West Vault',
       bounds: { minX: 7, maxX: 9, minY: 8, maxY: 10 },
     },
     {
       id: 'floor5-east-vault',
-      name: 'East Vault',
       bounds: { minX: 15, maxX: 17, minY: 8, maxY: 10 },
     },
     {
       id: 'floor5-heart-chamber',
-      name: 'Heart Chamber',
       bounds: { minX: 11, maxX: 13, minY: 7, maxY: 10 },
     },
   ],

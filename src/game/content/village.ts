@@ -2,7 +2,6 @@ import type { MapDefinition } from '../types';
 
 export const village: MapDefinition = {
   id: 'village',
-  name: 'Starting Village',
   // An open village in the middle, walled, with a gate on each side. The
   // outskirts around it are a winding maze whose dead-end branches hold the
   // tower stair (north) and the sealed Mine (west), Crypt (east) and Barrow
@@ -38,14 +37,12 @@ export const village: MapDefinition = {
       id: 'village-warden',
       tile: { x: 15, y: 9 },
       assetId: 'npc-warden',
-      name: 'Warden',
       introFactId: 'main-missing-person-lead',
     },
     {
       kind: 'npc',
       id: 'village-artisan',
       tile: { x: 11, y: 8 },
-      name: 'Artisan',
       introFactId: 'optional-heirloom-lead',
     },
     {
@@ -53,7 +50,6 @@ export const village: MapDefinition = {
       id: 'village-scout',
       tile: { x: 14, y: 5 },
       assetId: 'npc-scout',
-      name: 'Scout',
       introFactId: 'optional-route-lead',
     },
     {
@@ -61,7 +57,6 @@ export const village: MapDefinition = {
       id: 'village-scribe',
       tile: { x: 20, y: 11 },
       assetId: 'npc-scribe',
-      name: 'Scribe',
       introFactId: 'optional-ledger-lead',
     },
     {
@@ -69,7 +64,6 @@ export const village: MapDefinition = {
       id: 'village-returned-subject',
       tile: { x: 17, y: 9 },
       assetId: 'npc-subject',
-      name: 'Returned Subject',
       introFactId: 'main-subject-returned',
       presence: { factId: 'main-subject-returned', when: 'known' },
     },
@@ -78,46 +72,39 @@ export const village: MapDefinition = {
       id: 'village-elder',
       tile: { x: 22, y: 12 },
       assetId: 'npc-elder',
-      name: 'Elder',
     },
     {
       kind: 'npc',
       id: 'village-guard',
       tile: { x: 10, y: 9 },
       assetId: 'npc-guard',
-      name: 'Guard',
     },
     {
       kind: 'npc',
       id: 'village-child',
       tile: { x: 7, y: 1 },
       assetId: 'npc-child',
-      name: 'Child',
     },
     {
       kind: 'shop',
       id: 'village-weapon-shop',
       tile: { x: 11, y: 13 },
       assetId: 'npc-smith',
-      name: 'Smith',
       wares: [
         {
           itemId: 'iron-sword',
-          label: 'Iron Sword',
           price: 15,
           stat: 'attack',
           amount: 1,
         },
         {
           itemId: 'steel-sword',
-          label: 'Steel Sword',
           price: 40,
           stat: 'attack',
           amount: 2,
         },
         {
           itemId: 'runed-blade',
-          label: 'Runed Blade',
           price: 90,
           stat: 'attack',
           amount: 4,
@@ -129,25 +116,21 @@ export const village: MapDefinition = {
       id: 'village-armor-shop',
       tile: { x: 16, y: 13 },
       assetId: 'npc-armorer',
-      name: 'Armorer',
       wares: [
         {
           itemId: 'leather-vest',
-          label: 'Leather Vest',
           price: 15,
           stat: 'defense',
           amount: 1,
         },
         {
           itemId: 'chain-mail',
-          label: 'Chain Mail',
           price: 40,
           stat: 'defense',
           amount: 2,
         },
         {
           itemId: 'plate-armor',
-          label: 'Plate Armor',
           price: 90,
           stat: 'defense',
           amount: 4,
@@ -159,25 +142,21 @@ export const village: MapDefinition = {
       id: 'village-item-shop',
       tile: { x: 21, y: 13 },
       assetId: 'npc-merchant',
-      name: 'Merchant',
       wares: [
         {
           itemId: 'vitality-charm',
-          label: 'Vitality Charm',
           price: 10,
           stat: 'maxHp',
           amount: 5,
         },
         {
           itemId: 'heart-amulet',
-          label: 'Heart Amulet',
           price: 30,
           stat: 'maxHp',
           amount: 10,
         },
         {
           itemId: 'life-crystal',
-          label: 'Life Crystal',
           price: 70,
           stat: 'maxHp',
           amount: 20,
@@ -202,8 +181,6 @@ export const village: MapDefinition = {
         kind: 'item',
         requiresItemId: 'tower-restoration-core',
         lockedFactId: 'tower-lift-seen',
-        lockedText:
-          'A lift cage hangs dead in its shaft. Its socket is shaped for a power core.',
       },
     },
     {
@@ -211,52 +188,43 @@ export const village: MapDefinition = {
       id: 'village-mine-entrance',
       tile: { x: 1, y: 7 },
       assetId: 'stairs-sealed',
-      text: 'Fallen timbers choke the old mine shaft. The way in is sealed for now.',
     },
     {
       kind: 'sealed',
       id: 'village-crypt-entrance',
       tile: { x: 29, y: 9 },
       assetId: 'stairs-sealed',
-      text: 'An iron grate bars the crypt stair, its lock rusted shut. The way in is sealed for now.',
     },
     {
       kind: 'sealed',
       id: 'village-barrow-entrance',
       tile: { x: 1, y: 19 },
       assetId: 'stairs-sealed',
-      text: 'A great stone rolled across the barrow mouth will not budge. The way in is sealed for now.',
     },
   ],
   sections: [
     {
       id: 'village-square',
-      name: 'Village Square',
       bounds: { minX: 8, maxX: 24, minY: 4, maxY: 16 },
     },
     {
       id: 'village-market',
-      name: 'Market Row',
       bounds: { minX: 9, maxX: 23, minY: 12, maxY: 15 },
     },
     {
       id: 'village-tower-road',
-      name: 'Tower Road',
       bounds: { minX: 1, maxX: 31, minY: 1, maxY: 3 },
     },
     {
       id: 'village-mine-trail',
-      name: 'Mine Trail',
       bounds: { minX: 1, maxX: 7, minY: 4, maxY: 16 },
     },
     {
       id: 'village-crypt-lane',
-      name: 'Crypt Lane',
       bounds: { minX: 25, maxX: 31, minY: 4, maxY: 16 },
     },
     {
       id: 'village-barrow-path',
-      name: 'Barrow Path',
       bounds: { minX: 1, maxX: 31, minY: 17, maxY: 19 },
     },
   ],

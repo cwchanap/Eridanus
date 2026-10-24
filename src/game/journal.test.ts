@@ -36,7 +36,7 @@ describe('restoration ending', () => {
     if (!ending.ok) return;
     expect(ending.effect).toEqual({
       kind: 'dialogue',
-      speaker: warden.name,
+      speakerId: warden.id,
       lineId: 'warden-restoration-ending',
     });
     expect(
