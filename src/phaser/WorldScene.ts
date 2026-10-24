@@ -103,8 +103,9 @@ export class WorldScene extends Phaser.Scene {
     if (direction !== undefined) {
       event.preventDefault();
       // A held key repeats far faster than a step plays, so its repeats wait
-      // for the current step to land; fresh presses always go through.
-      if (event.repeat && this.stepping()) return;
+      // for the map to draw and the current step to land; fresh presses
+      // always go through.
+      if (event.repeat && !this.canRepeat()) return;
       this.playerFacing = direction;
       this.deps.onInput({ kind: 'move', direction });
       return;
@@ -316,8 +317,8 @@ export class WorldScene extends Phaser.Scene {
     return stepPosition(this.step, target, time);
   }
 
-  private stepping(): boolean {
-    return this.ready && stepProgress(this.time.now, this.step.start) < 1;
+  private canRepeat(): boolean {
+    return this.ready && stepProgress(this.time.now, this.step.start) >= 1;
   }
 
   // Moves everything that animates to where it stands at `time`: every
