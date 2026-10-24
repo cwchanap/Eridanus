@@ -12,8 +12,11 @@ import {
   hop,
   idleFrame,
   idleOffset,
-  lerp,
+  AT_REST,
+  startStep,
+  stepPosition,
   stepProgress,
+  type Step,
   walkFrame,
 } from './animation';
 import {
@@ -71,9 +74,6 @@ type Actor = Readonly<{
   offset: number;
 }>;
 
-// The hero's latest step: from where they were drawn to their new tile.
-type Step = Readonly<{ from: Point; start: number; count: number }>;
-
 const tileCentre = (tile: Tile): Point => ({
   x: (tile.x + 0.5) * TILE_SIZE,
   y: (tile.y + 0.5) * TILE_SIZE,
@@ -95,13 +95,16 @@ export class WorldScene extends Phaser.Scene {
   // Where the last refresh() put the hero, so the next one can tell a step
   // from a stair or a load.
   private shown: Readonly<{ mapId: MapId; tile: Tile }> | null = null;
-  private step: Step = { from: { x: 0, y: 0 }, start: -Infinity, count: 0 };
+  private step: Step = AT_REST;
   private follow = { top: 0, strip: 0, zoom: 1 };
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
     const direction = KEY_DIRECTIONS.get(event.key);
     if (direction !== undefined) {
       event.preventDefault();
+      // A held key repeats far faster than a step plays, so its repeats wait
+      // for the current step to land; fresh presses always go through.
+      if (event.repeat && this.stepping()) return;
       this.playerFacing = direction;
       this.deps.onInput({ kind: 'move', direction });
       return;
@@ -175,9 +178,8 @@ export class WorldScene extends Phaser.Scene {
     this.children.removeAll(true);
     this.actors = [];
 
-    // One tile along the same map is a step: slide from wherever the hero
-    // is drawn now, so held keys glide rather than snap back. Anything
-    // else (stairs, a load, a reset) just places them.
+    // One tile along the same map is a step, slid from the tile left behind.
+    // Anything else (stairs, a load, a reset) just places the hero.
     const shown = this.shown;
     if (
       shown?.mapId === state.mapId &&
@@ -185,11 +187,7 @@ export class WorldScene extends Phaser.Scene {
         Math.abs(shown.tile.y - state.tile.y) ===
         1
     ) {
-      this.step = {
-        from: this.heroAt(now),
-        start: now,
-        count: this.step.count + 1,
-      };
+      this.step = startStep(this.step, tileCentre(shown.tile), now);
     } else if (
       shown?.mapId !== state.mapId ||
       shown.tile.x !== state.tile.x ||
@@ -315,7 +313,11 @@ export class WorldScene extends Phaser.Scene {
   // The centre of the hero as drawn at `time`, partway through a step.
   private heroAt(time: number): Point {
     const target = tileCentre(this.shown?.tile ?? { x: 0, y: 0 });
-    return lerp(this.step.from, target, stepProgress(time, this.step.start));
+    return stepPosition(this.step, target, time);
+  }
+
+  private stepping(): boolean {
+    return this.ready && stepProgress(this.time.now, this.step.start) < 1;
   }
 
   // Moves everything that animates to where it stands at `time`: every
