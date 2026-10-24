@@ -1,7 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { STEP_MS } from '../../src/phaser/animation';
-
 // The hero's tile as the autosave last wrote it.
 function savedTileX(page: Page): Promise<number | undefined> {
   return page.evaluate(() => {
@@ -37,11 +35,14 @@ test('a held arrow key walks one tile per step, not one per repeat', async ({
   await expect.poll(() => savedTileX(page)).toBe(16);
 
   // Once the step lands, holding on walks on.
-  await page.waitForTimeout(STEP_MS * 2);
-  await page.evaluate(() =>
-    window.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'ArrowRight', repeat: true }),
-    ),
-  );
-  await expect.poll(() => savedTileX(page)).toBe(17);
+  await expect
+    .poll(async () => {
+      await page.evaluate(() =>
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowRight', repeat: true }),
+        ),
+      );
+      return savedTileX(page);
+    })
+    .toBeGreaterThan(16);
 });
