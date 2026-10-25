@@ -17,7 +17,7 @@ import type {
 } from './game/types';
 import { loadLocale, saveLocale, type Locale } from './i18n/locale';
 import { MESSAGES } from './i18n/messages';
-import { blowMs } from './phaser/animation';
+import { IMPACT, blowMs } from './phaser/animation';
 import { createGame, type CreatedGame } from './phaser/createGame';
 import type { Strike } from './phaser/WorldScene';
 import { InteractionOverlay, showsMessage } from './ui/InteractionOverlay';
@@ -38,7 +38,11 @@ type Battle = {
   before: GameState;
   enemyId: string;
   blows: readonly Blow[];
+  // Blows started, and blows that have struck home (each lands IMPACT into
+  // its blow, when the scene shows the hit).
   shown: number;
+  landed: number;
+  enemyHp: number;
   ms: number;
   timer: number;
   // The fight's own cues, held for its end.
@@ -57,11 +61,21 @@ const overlay = new InteractionOverlay(
   changeLocale,
 );
 
+// Both sides' HP as the battle shows them: from the last blow to land.
+function battleHp(fight: Battle): { heroHp: number; enemyHp: number } {
+  return (
+    fight.blows[fight.landed - 1] ?? {
+      heroHp: fight.before.player.hp,
+      enemyHp: fight.enemyHp,
+    }
+  );
+}
+
 // What the map and HUD show: the session, or the game mid-battle.
 function shownSession(): SessionState {
   if (!battle) return session;
   const { before } = battle;
-  const hp = battle.blows[battle.shown - 1]?.heroHp ?? before.player.hp;
+  const hp = battleHp(battle).heroHp;
   return {
     game: { ...before, player: { ...before.player, hp } },
     pending: null,
@@ -86,7 +100,12 @@ function renderOverlay(): void {
     effect: battle ? null : effect,
     blocked,
     journal: buildJournalView(game),
-    battle: strike && { enemyId: strike.enemyId, blow: strike.blow },
+    battle: strike &&
+      battle && {
+        enemyId: strike.enemyId,
+        blow: strike.blow,
+        enemyHp: battleHp(battle).enemyHp,
+      },
   });
 }
 
@@ -109,6 +128,8 @@ function startBattle(
     enemyId,
     blows,
     shown: 0,
+    landed: 0,
+    enemyHp: enemy.stats.hp,
     ms: blowMs(blows.length),
     timer: 0,
     cues,
@@ -117,15 +138,25 @@ function startBattle(
   return true;
 }
 
+// A blow starts with the striker's lunge; its hit lands IMPACT into it.
 function nextBlow(): void {
   if (!battle) return;
   battle.shown += 1;
+  battle.timer = window.setTimeout(landBlow, battle.ms * IMPACT);
+  redraw();
+}
+
+// The hit connects: HP drops and the hit sounds as the scene flashes the
+// one struck. After the last one the enemy gets another blow's length to
+// fade.
+function landBlow(): void {
+  if (!battle) return;
+  battle.landed = battle.shown;
   sfx.play(['hit']);
-  // After the last blow the enemy gets a second blow's length to fade.
   const last = battle.shown === battle.blows.length;
   battle.timer = window.setTimeout(
     last ? endBattle : nextBlow,
-    last ? battle.ms * 2 : battle.ms,
+    battle.ms * ((last ? 2 : 1) - IMPACT),
   );
   redraw();
 }
