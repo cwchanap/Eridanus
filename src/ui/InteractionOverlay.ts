@@ -360,12 +360,24 @@ export class InteractionOverlay {
     this.root
       .querySelector<HTMLButtonElement>('[data-action="confirm"]')
       ?.addEventListener('click', () => this.onConfirm());
-    // Closing a message is a cancel with nothing pending, like Escape, and
-    // a cancel mid-battle skips it.
-    for (const action of ['cancel', 'dismiss', 'skip'])
+    // Closing a message is a cancel with nothing pending, like Escape.
+    for (const action of ['cancel', 'dismiss'])
       this.root
         .querySelector<HTMLButtonElement>(`[data-action="${action}"]`)
         ?.addEventListener('click', () => this.onCancel());
+    // Skip is a cancel mid-battle. The battle redraws the card every blow,
+    // which can swap the button between a press and its release and lose
+    // the click, so a pointer skips on press; a keyboard click (detail 0)
+    // still counts.
+    const skip = this.root.querySelector<HTMLButtonElement>(
+      '[data-action="skip"]',
+    );
+    skip?.addEventListener('pointerdown', (event) => {
+      if (event.button === 0) this.onCancel();
+    });
+    skip?.addEventListener('click', (event) => {
+      if (event.detail === 0) this.onCancel();
+    });
     this.root
       .querySelector<HTMLButtonElement>('[data-action="toggle-journal"]')
       ?.addEventListener('click', () => this.toggleJournal());

@@ -129,6 +129,8 @@ export class WorldScene extends Phaser.Scene {
       // for the map to draw and the current step to land; fresh presses
       // always go through.
       if (event.repeat && !this.canRepeat()) return;
+      // A playing battle takes no moves, so it must not turn the hero either.
+      if (this.deps.getStrike()) return;
       this.playerFacing = direction;
       this.deps.onInput({ kind: 'move', direction });
       return;
