@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialGameState } from '../game/state';
 import { MESSAGES } from '../i18n/messages';
-import { renderHeroSheet, renderKeyItems, renderStatus } from './StatusPanel';
+import { renderHeroSheet, renderStatus } from './StatusPanel';
 
 // The e2e journeys read stats back as the data-stat element's text.
 function statText(html: string, stat: string): string | undefined {
@@ -44,44 +44,8 @@ describe('renderStatus', () => {
   });
 });
 
-describe('renderKeyItems', () => {
-  it('shows nothing before anything is found', () => {
-    expect(renderKeyItems(createInitialGameState(), m)).toBe('');
-  });
-
-  it('names carried items from the message table', () => {
-    const html = renderKeyItems(
-      {
-        ...createInitialGameState(),
-        itemIds: ['tower-depth-sigil'],
-      },
-      m,
-    );
-    expect(html).toContain('data-item="tower-depth-sigil"');
-    expect(html).toContain('Tower Sigil');
-  });
-
-  it('leaves bought wares to the equipment', () => {
-    const html = renderKeyItems(
-      {
-        ...createInitialGameState(),
-        itemIds: ['tower-depth-sigil', 'iron-sword'],
-      },
-      m,
-    );
-    expect(html).toContain('data-item="tower-depth-sigil"');
-    expect(html).not.toContain('iron-sword');
-    expect(
-      renderKeyItems(
-        { ...createInitialGameState(), itemIds: ['iron-sword'] },
-        m,
-      ),
-    ).toBe('');
-  });
-});
-
 describe('renderHeroSheet', () => {
-  it('shows the stats and items without a second set of data-stat', () => {
+  it('shows the stats and equipment without a second set of data-stat', () => {
     const html = renderHeroSheet(
       {
         ...createInitialGameState(),
@@ -92,8 +56,9 @@ describe('renderHeroSheet', () => {
     );
     expect(html).toContain('<span class="sheet-value">22</span>');
     expect(html).toContain('<span class="sheet-value">17</span>');
-    expect(html).toContain('data-item="tower-depth-sigil"');
     expect(html).toContain('data-testid="equipment"');
+    // Carried items belong to the items tab.
+    expect(html).not.toContain('data-item=');
     expect(html).not.toContain('data-stat=');
   });
 });

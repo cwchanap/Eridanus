@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MAPS } from './content';
-import { EQUIP_SLOTS, equippedWares } from './equipment';
+import { EQUIP_SLOTS, equippedWares, unequippedWares } from './equipment';
 
 describe('equippedWares', () => {
   it('is empty before anything is bought', () => {
@@ -23,6 +23,27 @@ describe('equippedWares', () => {
     expect(equippedWares(['tower-depth-sigil', 'iron-sword'])).toEqual({
       weapon: expect.objectContaining({ itemId: 'iron-sword' }),
     });
+  });
+});
+
+describe('unequippedWares', () => {
+  it('lists the wares a later one replaced, in purchase order', () => {
+    const spare = unequippedWares([
+      'iron-sword',
+      'leather-vest',
+      'steel-sword',
+      'tower-depth-sigil',
+      'runed-blade',
+    ]);
+    expect(spare.map((ware) => ware.itemId)).toEqual([
+      'iron-sword',
+      'steel-sword',
+    ]);
+  });
+
+  it('is empty while every ware owned is worn', () => {
+    expect(unequippedWares([])).toEqual([]);
+    expect(unequippedWares(['iron-sword', 'leather-vest'])).toEqual([]);
   });
 });
 

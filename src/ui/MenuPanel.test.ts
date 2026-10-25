@@ -27,6 +27,9 @@ describe('renderMenu', () => {
       'data-panel="quests" aria-labelledby="menu-tab-quests">',
     );
     expect(html).toContain('data-tab="quests" aria-selected="true"');
+    expect(html).toContain(
+      'data-panel="items" aria-labelledby="menu-tab-items" hidden',
+    );
   });
 
   it('stays in the page, hidden, while closed', () => {

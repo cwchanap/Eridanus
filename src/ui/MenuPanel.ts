@@ -3,10 +3,11 @@ import type { GameState } from '../game/types';
 import { LOCALE_CODES, LOCALE_NAMES, type Locale } from '../i18n/locale';
 import type { Messages } from '../i18n/messages';
 import { ICONS } from './icons';
+import { renderItems } from './ItemsPanel';
 import { renderNotes, renderQuests } from './JournalPanel';
 import { renderHeroSheet } from './StatusPanel';
 
-export const MENU_TABS = ['hero', 'quests', 'notes'] as const;
+export const MENU_TABS = ['hero', 'items', 'quests', 'notes'] as const;
 export type MenuTab = (typeof MENU_TABS)[number];
 
 // The overlay's own view preferences, never saved with the run: whether the
@@ -22,6 +23,8 @@ function tabLabel(tab: MenuTab, m: Messages): string {
   switch (tab) {
     case 'hero':
       return m.ui.hero;
+    case 'items':
+      return m.ui.items;
     case 'quests':
       return m.ui.quests;
     case 'notes':
@@ -38,6 +41,8 @@ function tabBody(
   switch (tab) {
     case 'hero':
       return renderHeroSheet(state, m);
+    case 'items':
+      return renderItems(state, m);
     case 'quests':
       return renderQuests(journal, m);
     case 'notes':

@@ -7,8 +7,11 @@ export const ja: Messages = {
   ui: {
     playerStatus: 'ステータス',
     hero: '勇者',
+    items: '持ち物',
+    noItems: 'まだ何も見つけていない。',
     equipment: '装備',
     slotEmpty: 'なし',
+    unequipped: '未装備',
     keyItems: 'だいじなもの',
     location: '現在地',
     messages: 'メッセージ',

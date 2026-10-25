@@ -20,3 +20,16 @@ export function equippedWares(itemIds: readonly string[]): Equipment {
   }
   return worn;
 }
+
+// Owned wares a later one has replaced in their slot, in purchase order.
+export function unequippedWares(
+  itemIds: readonly string[],
+): readonly ShopWare[] {
+  const worn = new Set(
+    Object.values(equippedWares(itemIds)).map((ware) => ware.itemId),
+  );
+  return itemIds.flatMap((id) => {
+    const ware = findShopWareByItemId(id);
+    return ware && !worn.has(id) ? [ware] : [];
+  });
+}

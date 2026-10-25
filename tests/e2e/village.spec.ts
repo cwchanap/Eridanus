@@ -102,7 +102,10 @@ test('a better ware replaces the one worn in its slot', async ({ page }) => {
   await expect(bonus).toHaveAttribute('data-after', '3');
   await buy.click();
   await expect(weapon).toHaveAttribute('data-item', 'steel-sword');
-  await expect(page.locator('[data-item="iron-sword"]')).toHaveCount(0);
+  // The Iron Sword is no longer worn; the items tab keeps it as spare.
+  await expect(
+    page.locator('[data-items="unequipped"] [data-item="iron-sword"]'),
+  ).toHaveCount(1);
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 13');
   await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 45');
 

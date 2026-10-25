@@ -17,8 +17,11 @@ export const en = {
     // Status panel
     playerStatus: 'Player status',
     hero: 'Hero',
+    items: 'Items',
+    noItems: 'Nothing found yet.',
     equipment: 'Equipment',
     slotEmpty: 'Empty',
+    unequipped: 'Unequipped',
     keyItems: 'Key items',
     // Location banner and message box
     location: 'Location',
