@@ -219,12 +219,15 @@ export class Journey {
   }
 
   // Fights the open prompt, with Enter or its Fight button, and checks the
-  // win and the HP it left.
-  async confirm(via: 'Enter' | 'click' = 'Enter'): Promise<void> {
+  // win and the HP it left. The fight plays out blow by blow first; `skip`
+  // cuts it short with Escape, which the rules never see.
+  async confirm(via: 'Enter' | 'click' = 'Enter', skip = false): Promise<void> {
     await this.answer({ kind: 'confirm' }, via, 'Enter', 'Fight');
     if (this.session.pending) throw new Error('the fight did not resolve');
     const { hp } = this.game.player;
     await this.check(async (page) => {
+      await expect(page.getByTestId('battle')).toBeVisible();
+      if (skip) await page.keyboard.press('Escape');
       await expect(page.getByTestId('effect')).toHaveAttribute(
         'data-effect',
         'enemyDefeated',
@@ -258,9 +261,13 @@ export class Journey {
     await this.page?.getByRole('button', { name: button }).click();
   }
 
-  async fight(id: string, via: 'Enter' | 'click' = 'Enter'): Promise<void> {
+  async fight(
+    id: string,
+    via: 'Enter' | 'click' = 'Enter',
+    skip = false,
+  ): Promise<void> {
     await this.prompt(id);
-    await this.confirm(via);
+    await this.confirm(via, skip);
   }
 
   // With nothing pending, Enter just closes the shown message.

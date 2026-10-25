@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import type { Blow } from '../game/combat';
 import { MAPS, findEntityById, getActiveEntities } from '../game/content';
 import type {
   Direction,
@@ -8,8 +9,10 @@ import type {
   Tile,
 } from '../game/types';
 import {
+  IMPACT,
   breath,
   hop,
+  lunge,
   idleFrame,
   idleOffset,
   AT_REST,
@@ -45,7 +48,18 @@ export type WorldSceneDeps = {
   // Whether the message box shows something Enter/Escape can close.
   hasMessage: () => boolean;
   onInput: (input: InputCommand) => void;
+  // The blow a battle is playing, if one is.
+  getStrike: () => Strike | null;
 };
+
+// One blow of a playing battle: the `index`th of the fight, taking `ms`.
+export type Strike = Readonly<{
+  enemyId: string;
+  blow: Blow;
+  index: number;
+  ms: number;
+  last: boolean;
+}>;
 
 // The enemy an open combat prompt is about, outlined inside its own cell.
 const TARGET_COLOR = 0xef6a5c;
@@ -73,6 +87,16 @@ const tileCentre = (tile: Tile): Point => ({
   y: (tile.y + 0.5) * TILE_SIZE,
 });
 
+// Damage numbers: their height in map units, how far they rise over a blow,
+// and their colour on the enemy and on the hero.
+const DAMAGE_SIZE = 12;
+const DAMAGE_RISE = 8;
+const DAMAGE_COLOR = { hero: '#ffe9a8', enemy: '#ff8a7a' } as const;
+// A struck character flashes this colour from the impact until this far
+// through the blow.
+const HURT_TINT = 0xff6a5c;
+const HURT_UNTIL = 0.75;
+
 const PROMPT_KEYS = new Map<string, InputCommand>([
   ['Enter', { kind: 'confirm' }],
   ['Escape', { kind: 'cancel' }],
@@ -91,6 +115,11 @@ export class WorldScene extends Phaser.Scene {
   private shown: Readonly<{ mapId: MapId; tile: Tile }> | null = null;
   private step: Step = AT_REST;
   private follow = { top: 0, strip: 0, zoom: 1 };
+  // The battle blow on show, when it started, and the enemy fighting it.
+  private strike: Strike | null = null;
+  private strikeStart = 0;
+  private foe: Readonly<{ actor: Actor; feet: Point }> | null = null;
+  private damage: Phaser.GameObjects.Text | null = null;
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
     const direction = keyDirection(event);
@@ -254,8 +283,19 @@ export class WorldScene extends Phaser.Scene {
     }
     this.children.bringToTop(edges);
 
-    const target =
-      pending?.kind === 'combat' && findEntityById(pending.enemyId);
+    const strike = this.deps.getStrike();
+    if (
+      strike &&
+      (strike.index !== this.strike?.index ||
+        strike.enemyId !== this.strike.enemyId)
+    )
+      this.strikeStart = now;
+    this.strike = strike;
+    this.foe = null;
+
+    const targetId =
+      strike?.enemyId ?? (pending?.kind === 'combat' ? pending.enemyId : null);
+    const target = targetId !== null && findEntityById(targetId);
     if (target) {
       this.add
         .rectangle(
@@ -278,7 +318,8 @@ export class WorldScene extends Phaser.Scene {
         y: (entity.tile.y + 1) * TILE_SIZE,
       };
       if (isCharacter(assetKey)) {
-        this.addActor(assetKey, feet, idleOffset(entity.tile));
+        const actor = this.addActor(assetKey, feet, idleOffset(entity.tile));
+        if (entity.id === strike?.enemyId) this.foe = { actor, feet };
       } else {
         this.add
           .image(feet.x, feet.y, assetKey)
@@ -290,6 +331,22 @@ export class WorldScene extends Phaser.Scene {
     const heroKey = resolvePlayerAsset(this.playerFacing);
     this.hero = this.addActor(heroKey, { x: 0, y: 0 }, 0);
     this.heroWalk = spriteFrames(heroKey, 'walk').map((frame) => frame.key);
+    // Drawn at the camera's own resolution and scaled back down, so the
+    // number stays crisp at any zoom.
+    const fontSize = Math.max(1, Math.round(DAMAGE_SIZE * zoom));
+    this.damage = strike
+      ? this.add
+          .text(0, 0, `-${strike.blow.damage}`, {
+            fontFamily: 'Cinzel, serif',
+            fontSize: `${fontSize}px`,
+            fontStyle: 'bold',
+            color: DAMAGE_COLOR[strike.blow.by === 'hero' ? 'hero' : 'enemy'],
+            stroke: '#140c08',
+            strokeThickness: Math.max(1, Math.round(fontSize / 5)),
+          })
+          .setOrigin(0.5, 1)
+          .setScale(DAMAGE_SIZE / fontSize)
+      : null;
     this.pose(now);
   }
 
@@ -346,9 +403,45 @@ export class WorldScene extends Phaser.Scene {
       }
     }
     this.hero.image.setPosition(at.x, at.y + TILE_SIZE / 2 - lift);
+    this.poseStrike(time, at);
 
     const { top, strip, zoom } = this.follow;
     const centre = cameraCentre(top, strip, zoom, at);
     this.cameras.main.centerOn(centre.x, centre.y);
+  }
+
+  // The battle blow on show: the striker lunges at its foe, which flashes
+  // as the number of HP it lost rises off it. After the last blow the enemy
+  // fades out before the victory shows.
+  private poseStrike(time: number, heroAt: Point): void {
+    const { strike, foe, hero, damage } = this;
+    if (!strike || !foe || !hero) return;
+    const progress = (time - this.strikeStart) / strike.ms;
+    const toFoe = {
+      x: Math.sign(foe.feet.x - heroAt.x),
+      y: Math.sign(foe.feet.y - TILE_SIZE / 2 - heroAt.y),
+    };
+    const heroStrikes = strike.blow.by === 'hero';
+    const reach = lunge(progress) * TILE_SIZE * (heroStrikes ? 1 : -1);
+    // update() poses the hero afresh every frame, but not the enemy, so its
+    // lunge starts from its own feet.
+    const [striker, struck] = heroStrikes
+      ? [hero.image, foe.actor.image]
+      : [foe.actor.image, hero.image];
+    const home = heroStrikes ? { x: hero.image.x, y: hero.image.y } : foe.feet;
+    foe.actor.image.setPosition(foe.feet.x, foe.feet.y);
+    striker.setPosition(home.x + toFoe.x * reach, home.y + toFoe.y * reach);
+    const hurt = progress >= IMPACT && progress < HURT_UNTIL;
+    if (hurt) struck.setTint(HURT_TINT).setTintMode(Phaser.TintModes.FILL);
+    else struck.clearTint();
+    foe.actor.image.setAlpha(
+      strike.last ? Math.min(1, Math.max(0, 2 - progress)) : 1,
+    );
+
+    if (!damage) return;
+    const rise = Math.min(1, Math.max(0, (progress - IMPACT) / (1 - IMPACT)));
+    damage
+      .setPosition(struck.x, struck.y - TILE_SIZE * 0.6 - rise * DAMAGE_RISE)
+      .setAlpha(progress < IMPACT ? 0 : Math.min(1, Math.max(0, 2 - progress)));
   }
 }

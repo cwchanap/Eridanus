@@ -17,7 +17,8 @@ const EFFECT_CUES: Record<ActionEffect['kind'], readonly SfxCue[]> = {
   latchWired: ['locked'],
   leverPulled: ['latch'],
   combatPrompt: ['encounter'],
-  enemyDefeated: ['hit', 'win'],
+  // Each blow of the battle plays its own hit (main.ts); this is the end.
+  enemyDefeated: ['win'],
   purchasePrompt: ['confirm'],
   purchased: ['buy'],
   soldOut: ['deny'],

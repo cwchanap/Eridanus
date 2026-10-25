@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialGameState } from './state';
 import { findEntityById } from './content';
-import { previewCombat, resolveCombat } from './combat';
+import { combatBlows, previewCombat, resolveCombat } from './combat';
 
 const enemy = findEntityById('floor1-gatekeeper');
 if (!enemy || enemy.kind !== 'enemy') throw new Error('test enemy missing');
@@ -141,5 +141,34 @@ describe('combat', () => {
         gold: 8,
       },
     });
+  });
+
+  it('replays a fight blow by blow, hero first, totalling the preview', () => {
+    const player = {
+      ...createInitialGameState().player,
+      hp: 30,
+      attack: 10,
+      defense: 2,
+    };
+    const stats = { hp: 25, attack: 7, defense: 3 };
+    expect(combatBlows(player, stats)).toEqual([
+      { by: 'hero', damage: 7, heroHp: 30, enemyHp: 18 },
+      { by: 'enemy', damage: 5, heroHp: 25, enemyHp: 18 },
+      { by: 'hero', damage: 7, heroHp: 25, enemyHp: 11 },
+      { by: 'enemy', damage: 5, heroHp: 20, enemyHp: 11 },
+      { by: 'hero', damage: 7, heroHp: 20, enemyHp: 4 },
+      { by: 'enemy', damage: 5, heroHp: 15, enemyHp: 4 },
+      { by: 'hero', damage: 7, heroHp: 15, enemyHp: 0 },
+    ]);
+    const preview = previewCombat(player, stats);
+    if (!preview.winnable) throw new Error('expected a winnable fight');
+    expect(combatBlows(player, stats).at(-1)?.heroHp).toBe(
+      player.hp - preview.hpLoss,
+    );
+  });
+
+  it('has no blows for a fight the hero cannot win', () => {
+    const player = { ...createInitialGameState().player, attack: 1 };
+    expect(combatBlows(player, boss.stats)).toEqual([]);
   });
 });

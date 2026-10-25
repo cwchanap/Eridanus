@@ -94,3 +94,29 @@ export function lerp(from: Point, to: Point, progress: number): Point {
     y: from.y + (to.y - from.y) * progress,
   };
 }
+
+// A battle plays every blow of the fight (combat.ts combatBlows), each one
+// quicker the longer the fight, so even a long one is over in a moment.
+const BATTLE_MS = 1600;
+const BLOW_MS = { min: 120, max: 360 };
+// How far a striker lunges toward its foe, in tiles, and when in its blow
+// the strike lands.
+const LUNGE = 0.35;
+export const IMPACT = 0.4;
+
+// How long each blow of a `blows`-blow fight takes.
+export function blowMs(blows: number): number {
+  return Math.min(
+    BLOW_MS.max,
+    Math.max(BLOW_MS.min, Math.round(BATTLE_MS / Math.max(1, blows))),
+  );
+}
+
+// How far (in tiles) a striker stands toward its foe at `progress` through
+// its blow: out to the impact, then back to its own cell.
+export function lunge(progress: number): number {
+  if (progress <= 0 || progress >= 1) return 0;
+  return progress < IMPACT
+    ? (LUNGE * progress) / IMPACT
+    : (LUNGE * (1 - progress)) / (1 - IMPACT);
+}

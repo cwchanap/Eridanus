@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   IDLE_MS,
+  IMPACT,
+  blowMs,
+  lunge,
   STEP_MS,
   breath,
   hop,
@@ -88,5 +91,20 @@ describe('character animation timing', () => {
     expect(stepPosition(step, centre(10), 10 * 33 + STEP_MS)).toEqual(
       centre(10),
     );
+  });
+});
+
+describe('battle timing', () => {
+  it('shortens blows for long fights within bounds', () => {
+    expect(blowMs(3)).toBe(360);
+    expect(blowMs(10)).toBe(160);
+    expect(blowMs(40)).toBe(120);
+  });
+
+  it('lunges out to the impact and back home', () => {
+    expect(lunge(0)).toBe(0);
+    expect(lunge(IMPACT)).toBeCloseTo(0.35);
+    expect(lunge(1)).toBe(0);
+    expect(lunge(0.7)).toBeGreaterThan(0);
   });
 });

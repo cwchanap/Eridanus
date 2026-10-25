@@ -1,7 +1,9 @@
 import '@fontsource/cinzel/latin-700.css';
 import './styles.css';
 import { cuesFor } from './audio/cues';
-import { Sfx } from './audio/sfx';
+import { Sfx, type SfxCue } from './audio/sfx';
+import { combatBlows, type Blow } from './game/combat';
+import { findEntityById } from './game/content';
 import { buildJournalView } from './game/journal';
 import { dispatchInput } from './game/session';
 import { loadGame, resetGame, saveGame } from './game/save';
@@ -9,12 +11,15 @@ import { createInitialGameState } from './game/state';
 import type {
   ActionEffect,
   BlockedReason,
+  GameState,
   InputCommand,
   SessionState,
 } from './game/types';
 import { loadLocale, saveLocale, type Locale } from './i18n/locale';
 import { MESSAGES } from './i18n/messages';
+import { blowMs } from './phaser/animation';
 import { createGame, type CreatedGame } from './phaser/createGame';
+import type { Strike } from './phaser/WorldScene';
 import { InteractionOverlay, showsMessage } from './ui/InteractionOverlay';
 
 const gameRoot = document.querySelector<HTMLElement>('#game');
@@ -25,6 +30,21 @@ let session: SessionState = { game: createInitialGameState(), pending: null };
 let effect: ActionEffect | null = null;
 let blocked: BlockedReason | null = null;
 let created: CreatedGame | null = null;
+// A won fight replays blow by blow before its victory shows. The fight is
+// already resolved and saved; this only holds back what the player sees:
+// the game from before it, with the hero's HP ticking down. Enter or Escape
+// skips to the end.
+type Battle = {
+  before: GameState;
+  enemyId: string;
+  blows: readonly Blow[];
+  shown: number;
+  ms: number;
+  timer: number;
+  // The fight's own cues, held for its end.
+  cues: readonly SfxCue[];
+};
+let battle: Battle | null = null;
 let locale = loadLocale(window.localStorage);
 document.documentElement.lang = locale;
 const sfx = new Sfx(window.localStorage);
@@ -37,15 +57,86 @@ const overlay = new InteractionOverlay(
   changeLocale,
 );
 
+// What the map and HUD show: the session, or the game mid-battle.
+function shownSession(): SessionState {
+  if (!battle) return session;
+  const { before } = battle;
+  const hp = battle.blows[battle.shown - 1]?.heroHp ?? before.player.hp;
+  return {
+    game: { ...before, player: { ...before.player, hp } },
+    pending: null,
+  };
+}
+
+function currentStrike(): Strike | null {
+  if (!battle) return null;
+  const blow = battle.blows[battle.shown - 1];
+  if (!blow) return null;
+  const { enemyId, shown, ms, blows } = battle;
+  return { enemyId, blow, index: shown, ms, last: shown === blows.length };
+}
+
 function renderOverlay(): void {
+  const { game, pending } = shownSession();
+  const strike = currentStrike();
   overlay.render({
-    state: session.game,
+    state: game,
     locale,
-    pending: session.pending,
-    effect,
+    pending,
+    effect: battle ? null : effect,
     blocked,
-    journal: buildJournalView(session.game),
+    journal: buildJournalView(game),
+    battle: strike && { enemyId: strike.enemyId, blow: strike.blow },
   });
+}
+
+function redraw(): void {
+  created?.scene.refresh();
+  renderOverlay();
+}
+
+function startBattle(
+  before: GameState,
+  enemyId: string,
+  cues: readonly SfxCue[],
+): boolean {
+  const enemy = findEntityById(enemyId);
+  if (enemy?.kind !== 'enemy') return false;
+  const blows = combatBlows(before.player, enemy.stats);
+  if (blows.length === 0) return false;
+  battle = {
+    before,
+    enemyId,
+    blows,
+    shown: 0,
+    ms: blowMs(blows.length),
+    timer: 0,
+    cues,
+  };
+  nextBlow();
+  return true;
+}
+
+function nextBlow(): void {
+  if (!battle) return;
+  battle.shown += 1;
+  sfx.play(['hit']);
+  // After the last blow the enemy gets a second blow's length to fade.
+  const last = battle.shown === battle.blows.length;
+  battle.timer = window.setTimeout(
+    last ? endBattle : nextBlow,
+    last ? battle.ms * 2 : battle.ms,
+  );
+  redraw();
+}
+
+function endBattle(): void {
+  if (!battle) return;
+  window.clearTimeout(battle.timer);
+  const { cues } = battle;
+  battle = null;
+  sfx.play(cues);
+  redraw();
 }
 
 function changeLocale(next: Locale): void {
@@ -58,7 +149,13 @@ function changeLocale(next: Locale): void {
 
 function handleInput(input: InputCommand): void {
   if (!created) return;
+  // A playing battle takes no moves; Enter or Escape skips it.
+  if (battle) {
+    if (input.kind !== 'move') endBattle();
+    return;
+  }
   const previousGame = session.game;
+  const previousPending = session.pending;
   const transition = dispatchInput(session, input);
   if (transition.ok) {
     session = transition.session;
@@ -69,9 +166,16 @@ function handleInput(input: InputCommand): void {
   } else {
     blocked = transition.reason;
   }
-  sfx.play(cuesFor(input, transition));
-  created.scene.refresh();
-  renderOverlay();
+  const cues = cuesFor(input, transition);
+  if (
+    transition.ok &&
+    previousPending?.kind === 'combat' &&
+    transition.effect?.kind === 'enemyDefeated' &&
+    startBattle(previousGame, previousPending.enemyId, cues)
+  )
+    return;
+  sfx.play(cues);
+  redraw();
 }
 
 function startRuntime(
@@ -83,9 +187,12 @@ function startRuntime(
   if (!created) {
     // Scene create() performs the first refresh once Phaser boots.
     created = createGame(gameRoot!, {
-      getSession: () => session,
-      hasMessage: () => showsMessage(effect, blocked, MESSAGES[locale]),
+      getSession: shownSession,
+      // A playing battle counts, so a fresh Enter or Escape skips it.
+      hasMessage: () =>
+        battle !== null || showsMessage(effect, blocked, MESSAGES[locale]),
       onInput: handleInput,
+      getStrike: currentStrike,
     });
   } else {
     created.scene.refresh();

@@ -30,6 +30,10 @@ export const en = {
     leavesYouAt: (hp: number) => `leaves you at ${hp}`,
     fight: 'Fight',
     cancel: 'Cancel',
+    // Battle (the fight playing out)
+    youStrike: (damage: number) => `You strike for ${damage}.`,
+    enemyStrikes: (damage: number) => `It strikes back for ${damage}.`,
+    skip: 'Skip',
     // Shop card
     shop: 'Shop',
     price: (price: number) => `Price: ${price} gold`,

@@ -52,3 +52,36 @@ export function resolveCombat(
     },
   };
 }
+
+// One strike of a fight: who struck, for how much, and both sides' HP after.
+export type Blow = Readonly<{
+  by: 'hero' | 'enemy';
+  damage: number;
+  heroHp: number;
+  enemyHp: number;
+}>;
+
+// The fight previewCombat prices, blow by blow, for the battle animation:
+// the hero strikes first and the two trade until the enemy falls, so the
+// hero takes one hit fewer than they deal. The rules only use the total.
+export function combatBlows(
+  player: PlayerStats,
+  enemy: EnemyEntity['stats'],
+): readonly Blow[] {
+  const preview = previewCombat(player, enemy);
+  if (!preview.winnable) return [];
+  const heroDamage = player.attack - enemy.defense;
+  const enemyDamage = Math.max(0, enemy.attack - player.defense);
+  let heroHp = player.hp;
+  let enemyHp = enemy.hp;
+  const blows: Blow[] = [];
+  for (let hit = 0; hit < preview.hitsNeeded; hit++) {
+    if (hit > 0) {
+      heroHp -= enemyDamage;
+      blows.push({ by: 'enemy', damage: enemyDamage, heroHp, enemyHp });
+    }
+    enemyHp = Math.max(0, enemyHp - heroDamage);
+    blows.push({ by: 'hero', damage: heroDamage, heroHp, enemyHp });
+  }
+  return blows;
+}
