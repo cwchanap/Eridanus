@@ -18,9 +18,9 @@ export function logStrip(cssWidth: number): number {
 // Screen pixels the top panels cover down the middle of the window, where
 // the hero stands (styles.css "#ui" and its 1023px/639px/short-window
 // rules; keep them in step). Wide windows put only the location banner
-// there, under #ui's 20px padding; the hero card and journal sit in side
-// columns. Below 1024px those two share a row under the banner, capped at
-// 200px and shrinking on short windows; short windows at least 640px wide
+// there, under #ui's 20px padding; the hero card and quest tracker sit in
+// side columns. Below 1024px those two share a row under the banner, capped
+// at 150px and shrinking on short windows; short windows at least 640px wide
 // move them beside the banner into one 72px row instead. Panels scroll
 // inside their caps, so these are fixed for a window size.
 const BANNER = 61;
@@ -32,7 +32,7 @@ export function hudTop(cssWidth: number, cssHeight: number): number {
   if (cssWidth >= SHORT_MIN_WIDTH && cssHeight < SHORT_MAX_HEIGHT) {
     return 12 + 72;
   }
-  const row = Math.min(Math.max(cssHeight - 340, 0), 200);
+  const row = Math.min(Math.max(cssHeight - 340, 0), 150);
   return 12 + BANNER + 10 + row;
 }
 

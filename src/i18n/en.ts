@@ -21,7 +21,6 @@ export const en = {
     // Location banner and message box
     location: 'Location',
     messages: 'Messages',
-    explore: 'Explore. Walk into anything to interact with it.',
     closeMessage: 'Close message',
     enemy: 'Enemy',
     // Combat encounter card
@@ -47,13 +46,14 @@ export const en = {
     invalidSaveBody:
       "The saved run in this browser can't be loaded. Reset it to start a fresh run.",
     resetSave: 'Reset save',
-    // Journal head
-    journal: 'Journal',
+    // Quest tracker and menu
+    menu: 'Menu',
+    closeMenu: 'Close menu',
+    quests: 'Quests',
     sideLeads: 'Side leads',
     notes: 'Notes',
+    noNotes: 'Nothing noted yet.',
     placesFound: 'Places found',
-    show: 'Show',
-    hide: 'Hide',
     mute: 'Mute sound',
     unmute: 'Unmute sound',
     language: 'Language',
@@ -64,6 +64,8 @@ export const en = {
     interact: 'Walk into people, chests, gates, and stairs to use them.',
     fight: (enter: string, esc: string) =>
       `Fights show their exact HP cost first: ${enter} to fight, ${esc} to back off.`,
+    menu: (esc: string) =>
+      `${esc} opens the menu: your hero, items, quests and notes.`,
     autosave: 'Progress saves automatically.',
     tip: 'Start by talking to the Warden in the teal cloak.',
   },

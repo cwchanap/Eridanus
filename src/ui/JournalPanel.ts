@@ -1,7 +1,5 @@
 import type { JournalEntry, JournalView, LeadId } from '../game/journal';
-import { LOCALE_CODES, LOCALE_NAMES, type Locale } from '../i18n/locale';
 import { pick, type Messages } from '../i18n/messages';
-import { ICONS } from './icons';
 
 const RESOLVED_LEADS: ReadonlySet<LeadId> = new Set([
   'heirloom-resolved',
@@ -24,59 +22,34 @@ function group(title: string, body: string): string {
     : '';
 }
 
-function renderPlaces(view: JournalView, m: Messages): string {
-  return view.sectionIds
+// The HUD's top-right corner: only the main quest, and the way into the
+// menu that holds the rest. It carries no data-lead, so the menu's quest
+// tab stays the one place the e2e journeys read leads from.
+export function renderQuestTracker(view: JournalView, m: Messages): string {
+  return `<section class="panel quest" data-testid="quest" aria-label="${m.leadTitles.main}">
+    <p class="quest-text"><span class="lead-title">${m.leadTitles.main}</span> <span class="quest-lead" data-quest="${view.main.lead}">${m.leads[view.main.lead]}</span></p>
+    <button type="button" class="chip-button" data-action="open-menu" aria-keyshortcuts="Escape">${m.ui.menu} <kbd aria-hidden="true">Esc</kbd></button>
+  </section>`;
+}
+
+// The menu's quests tab: the main quest, then every side lead taken.
+export function renderQuests(view: JournalView, m: Messages): string {
+  const optional = view.optional.map((entry) => renderEntry(entry, m)).join('');
+  return `<ul class="leads leads-main">${renderEntry(view.main, m)}</ul>
+    ${group(m.ui.sideLeads, optional && `<ul class="leads">${optional}</ul>`)}`;
+}
+
+// The menu's notes tab: what was seen, and the places found.
+export function renderNotes(view: JournalView, m: Messages): string {
+  const notes = view.observationFactIds
+    .map((id) => `<li data-note="${id}">${m.notes[id]}</li>`)
+    .join('');
+  const places = view.sectionIds
     .map(
       (id) =>
         `<span class="place" data-section="${id}">${pick(m.sections, id)}</span>`,
     )
     .join('');
-}
-
-// One button that steps through the languages, so it stays as small as the
-// head's other buttons. It reads as the language the page is in now.
-function renderLanguageButton(m: Messages, locale: Locale): string {
-  const label = `${m.ui.language}: ${LOCALE_NAMES[locale]}`;
-  return `<button type="button" class="journal-toggle" data-action="next-locale" data-locale="${locale}" aria-label="${label}" title="${label}"><span lang="${locale}">${LOCALE_CODES[locale]}</span></button>`;
-}
-
-// The overlay's own view preferences: whether the journal is open (the J key
-// or its button) and whether sound is muted (M). A folded journal keeps only
-// its title bar on screen. The language button lives in the same head.
-export type JournalPrefs = Readonly<{
-  open: boolean;
-  muted: boolean;
-  locale: Locale;
-}>;
-
-export function renderJournal(
-  view: JournalView,
-  m: Messages,
-  { open = true, muted = false, locale = 'en' }: Partial<JournalPrefs> = {},
-): string {
-  const optional = view.optional.map((entry) => renderEntry(entry, m)).join('');
-  const notes = view.observationFactIds
-    .map((id) => `<li data-note="${id}">${m.notes[id]}</li>`)
-    .join('');
-  const places = renderPlaces(view, m);
-  const body = open
-    ? `<div class="journal-body">
-      <ul class="leads leads-main">${renderEntry(view.main, m)}</ul>
-      ${group(m.ui.sideLeads, optional && `<ul class="leads">${optional}</ul>`)}
-      ${group(m.ui.notes, notes && `<ul class="notes">${notes}</ul>`)}
-      ${group(m.ui.placesFound, places && `<div class="place-list">${places}</div>`)}
-    </div>`
-    : '';
-  const soundLabel = muted ? m.ui.unmute : m.ui.mute;
-  return `<section class="panel journal" data-testid="journal" aria-label="${m.ui.journal}" data-open="${open}">
-    <div class="journal-head">
-      <h2 class="panel-title">${m.ui.journal}</h2>
-      <div class="journal-actions">
-      ${renderLanguageButton(m, locale)}
-      <button type="button" class="journal-toggle" data-action="toggle-sound" data-muted="${muted}" aria-label="${soundLabel}" title="${soundLabel}" aria-keyshortcuts="M">${muted ? ICONS.muted : ICONS.sound}<kbd aria-hidden="true">M</kbd></button>
-      <button type="button" class="journal-toggle" data-action="toggle-journal" aria-expanded="${open}" aria-keyshortcuts="J">${open ? m.ui.hide : m.ui.show} <kbd aria-hidden="true">J</kbd></button>
-      </div>
-    </div>
-    ${body}
-  </section>`;
+  return `${group(m.ui.notes, notes && `<ul class="notes">${notes}</ul>`) || `<p class="panel-empty">${m.ui.noNotes}</p>`}
+    ${group(m.ui.placesFound, places && `<div class="place-list">${places}</div>`)}`;
 }

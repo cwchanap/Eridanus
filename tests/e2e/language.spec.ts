@@ -11,6 +11,8 @@ test('the language button translates the whole screen and is remembered', async 
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 10');
 
+  // The language button lives in the menu, which Escape opens.
+  await page.keyboard.press('Escape');
   await page.locator(nextLanguage).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hant');
   const zh = MESSAGES['zh-Hant'];
@@ -36,7 +38,9 @@ test('the language button translates the whole screen and is remembered', async 
     ja.dialogue['warden-main-lead'],
   );
 
-  // A third press comes back around to English.
+  // A third press comes back around to English. The menu's HUD button
+  // opens it even with a message on show.
+  await page.locator('[data-action="open-menu"]').click();
   await page.locator(nextLanguage).click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 10');

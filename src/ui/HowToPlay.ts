@@ -12,6 +12,7 @@ export function renderHowToPlay(state: GameState, m: Messages): string {
       <li><span class="keys"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span> <span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span> ${howToPlay.move}</li>
       <li>${howToPlay.interact}</li>
       <li>${howToPlay.fight('<kbd>Enter</kbd>', '<kbd>Esc</kbd>')}</li>
+      <li>${howToPlay.menu('<kbd>Esc</kbd>')}</li>
       <li>${howToPlay.autosave}</li>
     </ul>
     <p class="how-to-play-tip">${howToPlay.tip}</p>

@@ -71,8 +71,8 @@ describe('hudTop', () => {
   });
 
   it('clears the stacked row below 1024px, shrinking on short windows', () => {
-    expect(hudTop(400, 844)).toBe(283);
-    expect(hudTop(1023, 600)).toBe(283);
+    expect(hudTop(400, 844)).toBe(233);
+    expect(hudTop(1023, 600)).toBe(233);
     expect(hudTop(400, 440)).toBe(183);
     expect(hudTop(400, 300)).toBe(83);
   });

@@ -152,7 +152,7 @@ async function expectHeroClearOfHud(
     page.getByTestId('interaction'),
     // The hero card's column, which caps it and scrolls what overflows.
     page.locator('.hud-left'),
-    page.getByTestId('journal'),
+    page.getByTestId('quest'),
     page.locator('.location'),
     page.getByTestId('how-to-play'),
   ]) {
@@ -192,13 +192,13 @@ for (const view of [
   }
 }
 
-// Below 1024px the hero card and journal stack in a row under the banner;
-// a journal full of notes must still stop above the hero on a short phone.
+// Below 1024px the hero card and quest tracker share a row under the
+// banner; a long quest must still stop above the hero on a short phone.
 for (const view of [
   { width: 400, height: 600 },
   { width: 900, height: 500 },
 ]) {
-  test(`keeps the hero clear of a full journal at ${view.width}x${view.height}`, async ({
+  test(`keeps the hero clear of a long quest at ${view.width}x${view.height}`, async ({
     page,
   }) => {
     await page.setViewportSize(view);
@@ -210,10 +210,6 @@ for (const view of [
       'floor2-depth-stairs-used',
       'floor2-paired-release-ledger-read',
     ]);
-    await expect(page.getByTestId('journal')).toHaveAttribute(
-      'data-open',
-      'true',
-    );
     await expectHeroClearOfHud(page, view, FLOOR2_ARRIVAL);
   });
 }

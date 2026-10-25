@@ -17,9 +17,11 @@ import {
   resolvePortraitPath,
   type AssetKey,
 } from '../phaser/assets';
+import { keyDirection } from '../phaser/keys';
 import { renderHowToPlay } from './HowToPlay';
 import { ICONS } from './icons';
-import { renderJournal } from './JournalPanel';
+import { renderQuestTracker } from './JournalPanel';
+import { MENU_TABS, renderMenu, type MenuTab } from './MenuPanel';
 import { renderStatus } from './StatusPanel';
 
 export type OverlayView = Readonly<{
@@ -107,7 +109,7 @@ function effectMessage(effect: ActionEffect, m: Messages): Message | null {
   }
 }
 
-// Whether the message box shows a message rather than the explore hint, so
+// Whether the message box shows a message rather than nothing, so
 // Enter/Escape (or its close button) has something to close.
 export function showsMessage(
   effect: ActionEffect | null,
@@ -278,7 +280,7 @@ function renderMessage(view: OverlayView, m: Messages): string {
   if (effect && message) {
     return `<div class="message" data-testid="effect" data-effect="${effect.kind}"${effectAttributes(effect)}>${effectPortrait(effect, state)}<div class="message-body"><span class="message-tag">${message.tag}</span><p class="message-text">${message.text}</p></div></div>${closeButton(m)}`;
   }
-  return `<p class="log-hint"><span class="keys"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span> ${m.ui.explore}</p>`;
+  return '';
 }
 
 // Stable attributes the e2e journeys read back instead of authored prose.
@@ -292,17 +294,18 @@ function effectAttributes(effect: ActionEffect): string {
   return '';
 }
 
-const SCROLLING_PANELS = ['.journal-body', '.hud-left'] as const;
+const SCROLLING_PANELS = ['.menu-body', '.hud-left'] as const;
 
 export type SoundToggle = { readonly muted: boolean; toggleMuted(): void };
 
 export class InteractionOverlay {
-  // Whether the journal is folded is a view preference, not game state, so
-  // it is never saved. The last view is kept so J can re-render on its own.
-  private journalOpen = true;
+  // The menu (open, and on which tab) is a view preference, not game state,
+  // so it is never saved. The last view is kept so the menu's keys can
+  // re-render on their own.
+  private menuOpen = false;
+  private menuTab: MenuTab = 'hero';
   private view: OverlayView | null = null;
-  // Scroll positions outlive the DOM: a folded journal has no .journal-body
-  // to read on the next render, so they are kept here, not re-read each time.
+  // Scroll positions outlive the DOM: every render replaces the panels.
   private readonly scrollTops = new Map<string, number>();
 
   constructor(
@@ -312,56 +315,97 @@ export class InteractionOverlay {
     private readonly sound: SoundToggle,
     private readonly onLocaleChange: (locale: Locale) => void,
   ) {
-    window.addEventListener('keydown', (event) => {
-      if (event.repeat || event.ctrlKey || event.metaKey || event.altKey)
-        return;
-      const key = event.key.toLowerCase();
-      if (key === 'j') this.toggleJournal();
-      if (key === 'm') this.toggleSound();
-    });
+    // Capture runs before the scene's own window listener, so an open menu
+    // keeps every key from the map: no step, prompt or skip goes on under it.
+    window.addEventListener('keydown', (event) => this.handleKey(event), true);
+  }
+
+  private handleKey(event: KeyboardEvent): void {
+    if (this.menuOpen) event.stopPropagation();
+    if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key.toLowerCase() === 'm') this.toggleSound();
+    if (!this.menuOpen) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeMenu();
+      return;
+    }
+    // Left and right (or A and D) step through the tabs.
+    const direction = keyDirection(event);
+    if (direction === 'west' || direction === 'east') {
+      event.preventDefault();
+      const step = direction === 'east' ? 1 : MENU_TABS.length - 1;
+      const index = MENU_TABS.indexOf(this.menuTab);
+      this.showTab(MENU_TABS[(index + step) % MENU_TABS.length]!);
+    }
+  }
+
+  // Escape opens the menu when nothing else takes it (WorldScene), or its
+  // HUD button does.
+  openMenu(): void {
+    // No view means the invalid-save screen, which has no menu.
+    if (!this.view || this.menuOpen) return;
+    this.menuOpen = true;
+    this.render(this.view);
+    this.focusTab();
+  }
+
+  private closeMenu(): void {
+    if (!this.view) return;
+    this.menuOpen = false;
+    this.render(this.view);
+  }
+
+  private showTab(tab: MenuTab): void {
+    if (!this.view) return;
+    this.menuTab = tab;
+    // A new tab reads from its top: the render keeps the scroll it finds.
+    const body = this.root.querySelector('.menu-body');
+    if (body) body.scrollTop = 0;
+    this.render(this.view);
+    this.focusTab();
+  }
+
+  private focusTab(): void {
+    this.root
+      .querySelector<HTMLElement>(
+        `[data-action="menu-tab"][aria-selected="true"]`,
+      )
+      ?.focus();
   }
 
   private toggleSound(): void {
     if (!this.view) return;
-    const toggle = '[data-action="toggle-sound"]';
-    const hadFocus = document.activeElement?.matches(toggle) ?? false;
     this.sound.toggleMuted();
     this.render(this.view);
-    if (hadFocus) this.root.querySelector<HTMLElement>(toggle)?.focus();
-  }
-
-  private toggleJournal(): void {
-    // No view means the invalid-save screen, which has no journal.
-    if (!this.view) return;
-    const toggle = '[data-action="toggle-journal"]';
-    const hadFocus = document.activeElement?.matches(toggle) ?? false;
-    this.journalOpen = !this.journalOpen;
-    this.render(this.view);
-    // The render replaces the button, so hand focus to its replacement.
-    if (hadFocus) this.root.querySelector<HTMLElement>(toggle)?.focus();
   }
 
   render(view: OverlayView): void {
     const { state, locale, pending, journal } = view;
     const m = MESSAGES[locale];
     this.view = view;
-    // Every render replaces the panels, so keep their scroll positions.
+    // Every render replaces the panels, so keep their scroll positions and,
+    // inside the menu, which control had focus.
     for (const selector of SCROLLING_PANELS) {
       const panel = this.root.querySelector(selector);
       if (panel) this.scrollTops.set(selector, panel.scrollTop);
     }
+    const focused = menuFocus(this.root);
+    const message = renderMessage(view, m);
     this.root.innerHTML = `
       <div class="hud-left">
         ${renderStatus(state, m, pending?.kind === 'combat' ? pending.preview.hpLoss : 0)}
         ${renderHowToPlay(state, m)}
       </div>
       ${renderLocation(state, m)}
-      ${renderJournal(journal, m, { open: this.journalOpen, muted: this.sound.muted, locale })}
-      <section class="panel log" data-testid="interaction" aria-label="${m.ui.messages}"><div class="log-body">${renderMessage(view, m)}</div></section>`;
+      ${renderQuestTracker(journal, m)}
+      <section class="panel log" data-testid="interaction" aria-label="${m.ui.messages}"${message ? '' : ' hidden'}><div class="log-body">${message}</div></section>
+      ${renderMenu(state, journal, m, { open: this.menuOpen, tab: this.menuTab, muted: this.sound.muted, locale })}`;
     for (const selector of SCROLLING_PANELS) {
       const panel = this.root.querySelector(selector);
       if (panel) panel.scrollTop = this.scrollTops.get(selector) ?? 0;
     }
+    if (focused) this.root.querySelector<HTMLElement>(focused)?.focus();
     this.root
       .querySelector<HTMLButtonElement>('[data-action="confirm"]')
       ?.addEventListener('click', () => this.onConfirm());
@@ -383,23 +427,28 @@ export class InteractionOverlay {
     skip?.addEventListener('click', (event) => {
       if (event.detail === 0) this.onCancel();
     });
-    this.root
-      .querySelector<HTMLButtonElement>('[data-action="toggle-journal"]')
-      ?.addEventListener('click', () => this.toggleJournal());
-    this.root
-      .querySelector<HTMLButtonElement>('[data-action="toggle-sound"]')
-      ?.addEventListener('click', () => this.toggleSound());
-    this.root
-      .querySelector<HTMLButtonElement>('[data-action="next-locale"]')
-      ?.addEventListener('click', () => this.cycleLocale());
+    this.bindMenu();
   }
 
-  private cycleLocale(): void {
-    if (!this.view) return;
-    const button = '[data-action="next-locale"]';
-    this.onLocaleChange(nextLocale(this.view.locale));
-    // The re-render replaced the button, so hand focus to its replacement.
-    this.root.querySelector<HTMLElement>(button)?.focus();
+  private bindMenu(): void {
+    const on = (action: string, handler: (button: HTMLElement) => void) => {
+      for (const button of this.root.querySelectorAll<HTMLElement>(
+        `[data-action="${action}"]`,
+      ))
+        button.addEventListener('click', () => handler(button));
+    };
+    on('open-menu', () => this.openMenu());
+    on('close-menu', () => this.closeMenu());
+    on('menu-tab', (button) => this.showTab(button.dataset.tab as MenuTab));
+    on('toggle-sound', () => this.toggleSound());
+    on('next-locale', () => {
+      if (this.view) this.onLocaleChange(nextLocale(this.view.locale));
+    });
+    // A click on the dimmed map around the menu closes it.
+    const backdrop = this.root.querySelector<HTMLElement>('.menu-backdrop');
+    backdrop?.addEventListener('click', (event) => {
+      if (event.target === backdrop) this.closeMenu();
+    });
   }
 
   renderInvalidSave(locale: Locale, onReset: () => void): void {
@@ -415,4 +464,14 @@ export class InteractionOverlay {
       .querySelector<HTMLButtonElement>('[data-action="reset"]')
       ?.addEventListener('click', () => onReset());
   }
+}
+
+// The control inside the menu that has focus, as a selector its
+// replacement will match after the next render.
+function menuFocus(root: HTMLElement): string | null {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || !active.closest('.menu')) return null;
+  if (!root.contains(active) || !active.dataset.action) return null;
+  const tab = active.dataset.tab ? `[data-tab="${active.dataset.tab}"]` : '';
+  return `[data-action="${active.dataset.action}"]${tab}`;
 }
