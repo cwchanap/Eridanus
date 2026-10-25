@@ -9,6 +9,8 @@ export const ja: Messages = {
     hero: '勇者',
     items: '持ち物',
     noItems: 'まだ何も見つけていない。',
+    equipped: '装備中',
+    keyItems: 'だいじなもの',
     location: '現在地',
     messages: 'メッセージ',
     closeMessage: 'メッセージを閉じる',
