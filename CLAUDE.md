@@ -62,17 +62,17 @@ keyboard (WorldScene) / button click (InteractionOverlay)
 
 ### State model
 
-`GameState` (durable, persisted) is `mapId`, `tile`, `player` stats (including `gold`), and six id arrays: `openedRewardIds`, `defeatedEnemyIds`, `openedShortcutIds` (opened latches and thrown levers), `itemIds`, `factIds`, `discoveredSectionIds`. It is deeply `Readonly` — every rule returns a new object rather than mutating.
+`GameState` (durable, persisted) is `mapId`, `tile`, `player` stats (including `gold`), `trades` (status points bought from traders, which prices the next one) and six id arrays: `openedRewardIds`, `defeatedEnemyIds`, `openedShortcutIds` (opened latches and thrown levers), `itemIds`, `factIds`, `discoveredSectionIds`. It is deeply `Readonly` — every rule returns a new object rather than mutating.
 
-`PendingInteraction` (transient, never persisted) exists only for the two-phase combat and purchase prompts. `SessionState = { game, pending }`. While `pending` is set, moves are rejected with `interaction-pending`; `confirm` resolves (a refused purchase keeps the prompt open), `cancel` clears.
+`PendingInteraction` (transient, never persisted) exists only for the two-phase combat, purchase and trade prompts. `SessionState = { game, pending }`. While `pending` is set, moves are rejected with `interaction-pending`; `confirm` resolves a fight or purchase (a refused purchase keeps the prompt open), `choose` (keys 1–9 or a button) resolves a trade, `cancel` clears; any other input leaves the prompt open.
 
 HP is one uncapped number with no maximum, as in 魔塔: fights spend it and nothing refills it. It only grows through one-time `hp` rewards (chests, and the waystones, which are `reward` entities drawn with the `recovery-waystone` sprite that vanish once drunk) and HP wares. Each waystone's amount is sized for the required-route fights after it; `combat.test.ts` walks that route and pins the HP it ends on.
 
-Gold comes only from defeated enemies (each `EnemyEntity` authors its drop). A shop's wares are one-time purchases that equip into a slot (`weapon`, `armor` or `accessory`): a ware replaces the one worn in its slot, so its `amount` is the bonus it gives while worn, not on top of the one it replaces (a ladder's amounts are cumulative). Owning one is having its `itemId` in `itemIds`, and the one worn per slot is the last bought (`equipment.ts`'s `equippedWares`), so the save needs no extra array.
+Gold comes only from defeated enemies (each `EnemyEntity` authors its drop). A shop's wares are one-time purchases that equip into a slot (`weapon`, `armor` or `accessory`): a ware replaces the one worn in its slot, so its `amount` is the bonus it gives while worn, not on top of the one it replaces (a ladder's amounts are cumulative). Owning one is having its `itemId` in `itemIds`, and the one worn per slot is the last bought (`equipment.ts`'s `equippedWares`), so the save needs no extra array. A `trader` (the village's Status Trader) is the repeatable sink for what the wares leave over: each of its `offers` sells a few points of one stat, every trade costs `basePrice + priceStep × trades`, and the one `trades` counter is shared by all traders. Its points are plain stat gains, so they stay when a ware replaces another. Adding a stat to a trader is one more offer plus its `statLabels` word.
 
 ### Closed contracts
 
-`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `lever`, `npc`, `portal`, `shop`, `sealed`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `content.ts`'s `isEntityBlocking`, `InteractionOverlay`'s `effectMessage`, the `reasons` table in all three `src/i18n` languages, and `content.ts`'s validator.
+`MapId`, `Direction`, `Stat`, `Entity` kinds (`clue`, `reward`, `enemy`, `latch`, `lever`, `npc`, `portal`, `shop`, `trader`, `sealed`), `ActionEffect`, and `BlockedReason` are small closed unions in `types.ts`. Switches over them are exhaustive with no `default` — TypeScript's strict mode catches missed cases. Adding an entity kind or blocked reason means updating `actions.ts`, `movement.ts`, `content.ts`'s `isEntityBlocking`, `InteractionOverlay`'s `effectMessage`, the `reasons` table in all three `src/i18n` languages, and `content.ts`'s validator.
 
 ### Movement is interaction
 
@@ -80,7 +80,7 @@ There is no separate "interact" key. Moving into an occupied tile calls `interac
 
 ### Content authoring
 
-Maps are rectangular ASCII rows using only `#` (wall) and `.` (floor), plus a list of entities placed by tile. Entities, sections and maps carry ids, never prose: a new NPC, shop ware, clue, sealed entrance, locked portal, section or observation fact (`observation: true` in `FACTS`) needs its text in all three `src/i18n` tables, and `messages.test.ts` fails until it has one. `validateContent()` in `content.ts` enforces rectangularity, legal glyphs, globally unique ids, one entity per tile, entities on floor, and **reciprocal portals** (every portal's target tile must hold a portal pointing back). `content.test.ts` asserts it returns no errors — a bad map fails unit tests, not the browser.
+Maps are rectangular ASCII rows using only `#` (wall) and `.` (floor), plus a list of entities placed by tile. Entities, sections and maps carry ids, never prose: a new NPC, shop ware, shop or trader (a trader is named in the `shops` table), clue, sealed entrance, locked portal, section or observation fact (`observation: true` in `FACTS`) needs its text in all three `src/i18n` tables, and `messages.test.ts` fails until it has one. `validateContent()` in `content.ts` enforces rectangularity, legal glyphs, globally unique ids, one entity per tile, entities on floor, and **reciprocal portals** (every portal's target tile must hold a portal pointing back). `content.test.ts` asserts it returns no errors — a bad map fails unit tests, not the browser.
 
 ### Persistence
 

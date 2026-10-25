@@ -21,6 +21,7 @@ describe('createInitialGameState', () => {
       itemIds: [],
       factIds: [],
       discoveredSectionIds: ['village-square'],
+      trades: 0,
     });
   });
 });

@@ -14,7 +14,9 @@ const sorted = (ids: Iterable<string>) => [...ids].sort();
 const authored = {
   sections: maps.flatMap((map) => map.sections.map(({ id }) => id)),
   npcs: entities.flatMap((e) => (e.kind === 'npc' ? [e.id] : [])),
-  shops: entities.flatMap((e) => (e.kind === 'shop' ? [e.id] : [])),
+  shops: entities.flatMap((e) =>
+    e.kind === 'shop' || e.kind === 'trader' ? [e.id] : [],
+  ),
   items: entities.flatMap((e) => {
     if (e.kind === 'reward' && e.grant === 'item') return [e.itemId];
     return e.kind === 'shop' ? e.wares.map((ware) => ware.itemId) : [];

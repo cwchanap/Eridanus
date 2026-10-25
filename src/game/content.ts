@@ -92,6 +92,7 @@ export function isEntityBlocking(entity: Entity, state: GameState): boolean {
     case 'npc':
     case 'sealed':
     case 'shop':
+    case 'trader':
       return true;
     case 'portal':
       return false;
@@ -291,6 +292,15 @@ export function validateContent(
           if (ware.price <= 0 || ware.amount <= 0)
             errors.push(`${ware.itemId}: price and amount must be positive`);
         }
+      }
+
+      if (entity.kind === 'trader') {
+        if (entity.offers.length === 0)
+          errors.push(`${entity.id}: trader has no offers`);
+        if (entity.basePrice <= 0 || entity.priceStep < 0)
+          errors.push(`${entity.id}: base price must be positive`);
+        if (entity.offers.some((offer) => offer.amount <= 0))
+          errors.push(`${entity.id}: offer amounts must be positive`);
       }
 
       if (entity.kind === 'portal') {

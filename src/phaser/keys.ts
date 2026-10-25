@@ -24,3 +24,10 @@ export function keyDirection(event: KeyPress): Direction | undefined {
   const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
   return KEY_DIRECTIONS.get(key);
 }
+
+// The digits 1-9 choose the first to ninth offer of a trade prompt; a digit
+// with Ctrl/Cmd/Alt held stays the browser's (tab switching).
+export function keyChoice(event: KeyPress): number | undefined {
+  if (event.ctrlKey || event.metaKey || event.altKey) return undefined;
+  return /^[1-9]$/.test(event.key) ? Number(event.key) - 1 : undefined;
+}

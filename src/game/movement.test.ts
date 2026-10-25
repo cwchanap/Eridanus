@@ -45,6 +45,7 @@ const base: GameState = {
   itemIds: [],
   factIds: [],
   discoveredSectionIds: [],
+  trades: 0,
 };
 
 describe('attemptMove', () => {

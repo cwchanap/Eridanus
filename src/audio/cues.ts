@@ -22,6 +22,8 @@ const EFFECT_CUES: Record<ActionEffect['kind'], readonly SfxCue[]> = {
   purchasePrompt: ['confirm'],
   purchased: ['buy'],
   soldOut: ['deny'],
+  tradePrompt: ['confirm'],
+  traded: ['buy'],
   dialogue: ['dialogue'],
   accessLocked: ['locked'],
 };

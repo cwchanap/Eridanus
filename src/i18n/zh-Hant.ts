@@ -31,6 +31,7 @@ export const zhHant: Messages = {
     leavesYou: (gold) => `購買後剩下 ${gold}`,
     buy: '購買',
     leave: '離開',
+    trade: '交易',
     invalidSave: '無效的存檔',
     invalidSaveTitle: '存檔資料無效。',
     invalidSaveBody: '此瀏覽器中的存檔無法載入。請重設存檔，開始新的冒險。',
@@ -79,6 +80,7 @@ export const zhHant: Messages = {
     sealed: '封鎖',
     victory: '勝利',
     purchased: '已購買',
+    traded: '已交易',
     item: '道具',
     lever: '拉桿',
   },
@@ -220,6 +222,7 @@ export const zhHant: Messages = {
     'village-weapon-shop': '鐵匠',
     'village-armor-shop': '甲冑匠',
     'village-item-shop': '商人',
+    'village-status-trader': '能力商人',
   },
   items: {
     'iron-sword': '鐵劍',
@@ -356,6 +359,6 @@ export const zhHant: Messages = {
       '東邊山丘下的墓窖，在我出生之前就封住了。總有一天得有人把它打開，但不是今天。',
     'guard-sealed-mine': '舊礦坑多年前就塌了。在坑道補強好之前，沒有人會下去。',
     'child-gold-tip':
-      '打倒塔裡的守衛會掉金幣喔！市集街的商店可以用金幣換裝備。',
+      '打倒塔裡的守衛會掉金幣喔！市集街的商店可以用金幣換裝備，街尾西邊的能力商人還能用金幣換能力呢。',
   },
 };

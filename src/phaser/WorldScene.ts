@@ -41,7 +41,7 @@ import {
   logStrip,
   type Point,
 } from './camera';
-import { keyDirection } from './keys';
+import { keyChoice, keyDirection } from './keys';
 
 export type WorldSceneDeps = {
   getSession: () => SessionState;
@@ -137,13 +137,23 @@ export class WorldScene extends Phaser.Scene {
       this.deps.onInput({ kind: 'move', direction });
       return;
     }
-    // Enter/Escape answer an open combat or purchase prompt; with none open,
-    // either one closes the shown message (a cancel with nothing pending is
-    // a no-op that clears it), but only on a fresh press, so a held Enter
-    // that just confirmed a prompt can't auto-repeat away its result. With
-    // nothing to answer or close, Escape opens the menu and Enter is left
-    // alone. preventDefault stops a focused button from also firing its
-    // click.
+    // 1-9 pick an offer on an open trade prompt, and do nothing otherwise.
+    // A held key must not buy again, or be denied again, on every repeat.
+    const choice = keyChoice(event);
+    if (choice !== undefined) {
+      if (this.deps.getSession().pending && !event.repeat) {
+        event.preventDefault();
+        this.deps.onInput({ kind: 'choose', index: choice });
+      }
+      return;
+    }
+    // Enter/Escape answer an open combat or purchase prompt (a trade prompt
+    // answers Escape only); with none open, either one closes the shown
+    // message (a cancel with nothing pending is a no-op that clears it), but
+    // only on a fresh press, so a held Enter that just confirmed a prompt
+    // can't auto-repeat away its result. With nothing to answer or close,
+    // Escape opens the menu and Enter is left alone. preventDefault stops a
+    // focused button from also firing its click.
     const command = PROMPT_KEYS.get(event.key);
     if (command === undefined) return;
     if (this.deps.getSession().pending) {

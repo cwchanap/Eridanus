@@ -730,6 +730,18 @@ kbd {
   gap: 8px;
 }
 
+/* A trader's buttons, one per offer and then Leave, sit under the price and
+   wrap rather than spill past a narrow card. */
+.encounter-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.encounter-choices .button:last-child {
+  margin-left: 8px;
+}
+
 /* The battle card re-renders every blow, so it must not replay the card's
    entrance; only the enemy's HP bar moves, easing down to each blow. */
 .encounter[data-kind='battle'] {
@@ -1227,6 +1239,20 @@ kbd {
     flex-direction: column;
   }
 
+  /* The log is a fixed height, so the trader's row must fit on one or two
+     lines: the coin icons make way for the numbers. */
+  .encounter-choices .button {
+    padding: 6px 10px;
+  }
+
+  .encounter-choices .button .icon {
+    display: none;
+  }
+
+  .encounter-choices .button:last-child {
+    margin-left: 0;
+  }
+
   .button {
     min-width: 0;
   }
@@ -1249,6 +1275,20 @@ kbd {
   }
 
   .hero .portrait {
+    display: none;
+  }
+
+  .encounter-choices {
+    gap: 6px;
+  }
+
+  .encounter-choices .button {
+    padding: 6px 8px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+
+  .encounter-choices .button kbd {
     display: none;
   }
 

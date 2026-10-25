@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { findEntityById } from './content';
 import { attemptMove } from './movement';
 import { dispatchInput } from './session';
-import { nextWare, resolvePurchase } from './shop';
+import { nextWare, resolvePurchase, resolveTrade, tradePrice } from './shop';
 import { createInitialGameState } from './state';
-import type { GameState, ShopEntity } from './types';
+import type { GameState, ShopEntity, TraderEntity } from './types';
 
 function shop(id: string): ShopEntity {
   const entity = findEntityById(id);
@@ -159,6 +159,131 @@ describe('shops', () => {
       session: opened.session,
       reason: 'not-enough-gold',
     });
+  });
+});
+
+const trader = ((): TraderEntity => {
+  const entity = findEntityById('village-status-trader');
+  if (entity?.kind !== 'trader') throw new Error('trader missing');
+  return entity;
+})();
+
+// Standing on Market Row beside the trader's stall (9,13), with a full purse.
+const atTrader: GameState = {
+  ...createInitialGameState(),
+  tile: { x: 9, y: 12 },
+  player: { ...createInitialGameState().player, gold: 200 },
+};
+const [attack, defense, hp] = trader.offers;
+
+describe('status trader', () => {
+  it('lifts the price by one step for every trade made', () => {
+    expect(tradePrice(trader, atTrader)).toBe(30);
+    expect(tradePrice(trader, { ...atTrader, trades: 1 })).toBe(40);
+    expect(tradePrice(trader, { ...atTrader, trades: 5 })).toBe(80);
+  });
+
+  it('bumping the stall opens a trade prompt without spending', () => {
+    const result = attemptMove(atTrader, 'south');
+    expect(result).toEqual({
+      ok: true,
+      state: atTrader,
+      effect: { kind: 'tradePrompt', traderId: trader.id },
+    });
+  });
+
+  it('trading spends gold, raises the chosen stat, and counts the trade', () => {
+    const result = resolveTrade(atTrader, trader, attack!);
+    expect(result).toEqual({
+      ok: true,
+      state: {
+        ...atTrader,
+        player: { ...atTrader.player, gold: 170, attack: 11 },
+        trades: 1,
+      },
+      effect: { kind: 'traded', offer: attack, price: 30 },
+    });
+    const next = result.ok ? result.state : atTrader;
+    const second = resolveTrade(next, trader, hp!);
+    expect(second.ok && second.state.player).toMatchObject({
+      hp: 40,
+      gold: 130,
+    });
+    expect(second.ok && second.effect).toMatchObject({ price: 40 });
+  });
+
+  it('refuses a trade the hero cannot afford', () => {
+    const poor = { ...atTrader, player: { ...atTrader.player, gold: 29 } };
+    expect(resolveTrade(poor, trader, defense!)).toEqual({
+      ok: false,
+      reason: 'not-enough-gold',
+    });
+  });
+
+  it('choose picks an offer through the session prompt', () => {
+    const opened = dispatchInput(
+      { game: atTrader, pending: null },
+      { kind: 'move', direction: 'south' },
+    );
+    expect(opened.session.pending).toEqual({
+      kind: 'trade',
+      traderId: trader.id,
+    });
+
+    const bought = dispatchInput(opened.session, { kind: 'choose', index: 1 });
+    expect(bought.ok && bought.session.pending).toBeNull();
+    expect(bought.session.game.player).toMatchObject({
+      defense: 3,
+      gold: 170,
+    });
+    expect(bought.session.game.trades).toBe(1);
+  });
+
+  it('cancel leaves the stall without trading', () => {
+    const opened = dispatchInput(
+      { game: atTrader, pending: null },
+      { kind: 'move', direction: 'south' },
+    );
+    const left = dispatchInput(opened.session, { kind: 'cancel' });
+    expect(left.session).toEqual({ game: atTrader, pending: null });
+  });
+
+  it('a refused trade keeps the prompt open', () => {
+    const poor = { ...atTrader, player: { ...atTrader.player, gold: 0 } };
+    const opened = dispatchInput(
+      { game: poor, pending: null },
+      { kind: 'move', direction: 'south' },
+    );
+    expect(dispatchInput(opened.session, { kind: 'choose', index: 0 })).toEqual(
+      { ok: false, session: opened.session, reason: 'not-enough-gold' },
+    );
+  });
+
+  it('ignores Enter and a missing offer, leaving the prompt open', () => {
+    const opened = dispatchInput(
+      { game: atTrader, pending: null },
+      { kind: 'move', direction: 'south' },
+    );
+    for (const input of [
+      { kind: 'confirm' },
+      { kind: 'choose', index: 3 },
+    ] as const)
+      expect(dispatchInput(opened.session, input)).toEqual({
+        ok: true,
+        session: opened.session,
+        effect: null,
+      });
+  });
+
+  it('keeps a number key from answering a fight or a shop counter', () => {
+    const shopping = dispatchInput(
+      { game: { ...atTrader, tile: { x: 11, y: 12 } }, pending: null },
+      { kind: 'move', direction: 'south' },
+    );
+    expect(shopping.session.pending?.kind).toBe('purchase');
+    expect(
+      dispatchInput(shopping.session, { kind: 'choose', index: 0 }),
+    ).toEqual({ ok: true, session: shopping.session, effect: null });
   });
 });
 
