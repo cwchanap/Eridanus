@@ -25,12 +25,9 @@ describe('cuesFor', () => {
     expect(cuesFor(input, dispatchInput(combat, input))).toEqual(['bump']);
   });
 
-  it('plays a hit then the win for a won fight', () => {
+  it('plays the win for a won fight', () => {
     const input = { kind: 'confirm' } as const;
-    expect(cuesFor(input, dispatchInput(combat, input))).toEqual([
-      'hit',
-      'win',
-    ]);
+    expect(cuesFor(input, dispatchInput(combat, input))).toEqual(['win']);
   });
 
   it('plays cancel only for a cancelled prompt', () => {

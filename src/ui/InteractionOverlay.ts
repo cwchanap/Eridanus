@@ -1,3 +1,4 @@
+import type { Blow } from '../game/combat';
 import type {
   ActionEffect,
   BlockedReason,
@@ -28,7 +29,12 @@ export type OverlayView = Readonly<{
   effect: ActionEffect | null;
   blocked: BlockedReason | null;
   journal: JournalView;
+  // The blow a playing battle is showing (main.ts), in place of any prompt
+  // or message.
+  battle: BattleView | null;
 }>;
+
+export type BattleView = Readonly<{ enemyId: string; blow: Blow }>;
 
 type Message = Readonly<{ tag: string; text: string }>;
 type CombatPending = Extract<PendingInteraction, { kind: 'combat' }>;
@@ -191,6 +197,32 @@ function renderEncounter(
   </section>`;
 }
 
+// The encounter card again while the fight plays: the enemy's HP draining
+// blow by blow, and a Skip button where Fight/Cancel were.
+function renderBattle(
+  battle: BattleView,
+  state: GameState,
+  m: Messages,
+): string {
+  const enemy = findEntityById(battle.enemyId);
+  const assetKey = entityAsset(enemy, state);
+  const name = assetKey ? pick(m.enemies, assetKey, m.ui.enemy) : m.ui.enemy;
+  const { blow } = battle;
+  const maxHp = enemy?.kind === 'enemy' ? enemy.stats.hp : blow.enemyHp;
+  const left = maxHp > 0 ? Math.round((blow.enemyHp / maxHp) * 100) : 0;
+  return `<section class="encounter" data-kind="battle" data-testid="battle" aria-label="${m.ui.combat}">
+    ${renderPortrait(assetKey, 'enemy')}
+    <div class="encounter-info">
+      <div class="encounter-head"><span class="message-tag">${name}</span><p class="encounter-stats"><span data-testid="battle-enemy-hp">${m.statLabels.hp} ${blow.enemyHp}/${maxHp}</span></p></div>
+      <div class="battle-bar" aria-hidden="true"><span style="width: ${left}%"></span></div>
+      <p class="encounter-cost" data-blow="${blow.by}">${blow.by === 'hero' ? m.ui.youStrike(blow.damage) : m.ui.enemyStrikes(blow.damage)}</p>
+    </div>
+    <div class="encounter-actions">
+      <button type="button" class="button" data-action="skip" aria-keyshortcuts="Enter Escape">${m.ui.skip} <kbd aria-hidden="true">Enter</kbd></button>
+    </div>
+  </section>`;
+}
+
 function promptButtons(confirm: string, cancel: string): string {
   return `<button type="button" class="button button-fight" data-action="confirm" aria-keyshortcuts="Enter">${confirm} <kbd aria-hidden="true">Enter</kbd></button>
       <button type="button" class="button" data-action="cancel" aria-keyshortcuts="Escape">${cancel} <kbd aria-hidden="true">Esc</kbd></button>`;
@@ -223,7 +255,8 @@ function renderPurchase(
 }
 
 function renderMessage(view: OverlayView, m: Messages): string {
-  const { state, pending, effect, blocked } = view;
+  const { state, pending, effect, blocked, battle } = view;
+  if (battle) return renderBattle(battle, state, m);
   const blockedHtml = blocked
     ? `<div class="message message-blocked" data-testid="blocked-reason" data-reason="${blocked}"><p class="message-text">${m.reasons[blocked]}</p></div>`
     : '';
@@ -327,8 +360,9 @@ export class InteractionOverlay {
     this.root
       .querySelector<HTMLButtonElement>('[data-action="confirm"]')
       ?.addEventListener('click', () => this.onConfirm());
-    // Closing a message is a cancel with nothing pending, like Escape.
-    for (const action of ['cancel', 'dismiss'])
+    // Closing a message is a cancel with nothing pending, like Escape, and
+    // a cancel mid-battle skips it.
+    for (const action of ['cancel', 'dismiss', 'skip'])
       this.root
         .querySelector<HTMLButtonElement>(`[data-action="${action}"]`)
         ?.addEventListener('click', () => this.onCancel());

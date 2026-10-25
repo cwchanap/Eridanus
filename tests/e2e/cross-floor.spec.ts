@@ -111,7 +111,8 @@ async function drinkAndClimbToFloor2(j: Journey): Promise<void> {
 }
 
 async function clearServiceWing(j: Journey): Promise<void> {
-  await j.fight('floor2-service-guard');
+  // A long fight, skipped partway with Escape.
+  await j.fight('floor2-service-guard', 'Enter', true);
   await j.drink('floor2-service-waystone');
   await j.fight('floor2-stack-mite-1');
   await j.fight('floor2-stack-mite-2');

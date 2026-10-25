@@ -705,6 +705,30 @@ kbd {
   gap: 8px;
 }
 
+/* The battle card re-renders every blow, so it must not replay the card's
+   entrance; only the enemy's HP bar moves, easing down to each blow. */
+.encounter[data-kind='battle'] {
+  animation: none;
+}
+
+.battle-bar {
+  width: min(240px, 100%);
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.battle-bar span {
+  display: block;
+  height: 100%;
+  background: var(--danger);
+}
+
+.encounter-cost[data-blow='enemy'] {
+  color: var(--danger);
+}
+
 .button {
   display: inline-flex;
   align-items: center;
