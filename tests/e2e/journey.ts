@@ -223,15 +223,13 @@ export class Journey {
   async confirm(via: 'Enter' | 'click' = 'Enter'): Promise<void> {
     await this.answer({ kind: 'confirm' }, via, 'Enter', 'Fight');
     if (this.session.pending) throw new Error('the fight did not resolve');
-    const { hp, maxHp } = this.game.player;
+    const { hp } = this.game.player;
     await this.check(async (page) => {
       await expect(page.getByTestId('effect')).toHaveAttribute(
         'data-effect',
         'enemyDefeated',
       );
-      await expect(page.locator('[data-stat="hp"]')).toHaveText(
-        `HP ${hp}/${maxHp}`,
-      );
+      await expect(page.locator('[data-stat="hp"]')).toHaveText(`HP ${hp}`);
     });
     await this.expectInSync();
   }
@@ -275,10 +273,10 @@ export class Journey {
 
   // The hero card shows the stats the rules reached.
   async expectStats(): Promise<void> {
-    const { hp, maxHp, attack, defense, gold } = this.game.player;
+    const { hp, attack, defense, gold } = this.game.player;
     await this.check(async (page) => {
       for (const [stat, text] of [
-        ['hp', `HP ${hp}/${maxHp}`],
+        ['hp', `HP ${hp}`],
         ['attack', `ATK ${attack}`],
         ['defense', `DEF ${defense}`],
         ['gold', `Gold ${gold}`],
@@ -287,8 +285,9 @@ export class Journey {
     });
   }
 
-  async heal(id: string): Promise<void> {
-    await this.expectBump(id, 'healed');
+  // Drinks a waystone's one-time HP.
+  async drink(id: string): Promise<void> {
+    await this.expectBump(id, 'reward');
   }
 
   // Walks onto a stair and rides it.

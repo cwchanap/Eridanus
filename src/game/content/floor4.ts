@@ -58,7 +58,15 @@ export const floor4: MapDefinition = {
       tile: { x: 11, y: 1 },
       assetId: 'clue-runes',
     },
-    { kind: 'recovery', id: 'floor4-landing-waystone', tile: { x: 15, y: 1 } },
+    {
+      kind: 'reward',
+      id: 'floor4-landing-waystone',
+      tile: { x: 15, y: 1 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 15,
+    },
     {
       kind: 'enemy',
       id: 'floor4-west-gate-guard',
@@ -90,7 +98,7 @@ export const floor4: MapDefinition = {
       tile: { x: 5, y: 3 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -110,14 +118,22 @@ export const floor4: MapDefinition = {
       stat: 'defense',
       amount: 1,
     },
-    { kind: 'recovery', id: 'floor4-west-waystone', tile: { x: 7, y: 11 } },
+    {
+      kind: 'reward',
+      id: 'floor4-west-waystone',
+      tile: { x: 7, y: 11 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 50,
+    },
     {
       kind: 'reward',
       id: 'floor4-west-tooth-cache',
       tile: { x: 3, y: 11 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -147,7 +163,7 @@ export const floor4: MapDefinition = {
       tile: { x: 5, y: 15 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -190,7 +206,7 @@ export const floor4: MapDefinition = {
       tile: { x: 1, y: 19 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -230,7 +246,7 @@ export const floor4: MapDefinition = {
       tile: { x: 11, y: 25 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     // The East Works.
@@ -248,7 +264,7 @@ export const floor4: MapDefinition = {
       tile: { x: 21, y: 3 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -268,14 +284,22 @@ export const floor4: MapDefinition = {
       stat: 'attack',
       amount: 1,
     },
-    { kind: 'recovery', id: 'floor4-east-waystone', tile: { x: 19, y: 11 } },
+    {
+      kind: 'reward',
+      id: 'floor4-east-waystone',
+      tile: { x: 19, y: 11 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 50,
+    },
     {
       kind: 'reward',
       id: 'floor4-east-tooth-cache',
       tile: { x: 21, y: 11 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -292,7 +316,7 @@ export const floor4: MapDefinition = {
       tile: { x: 23, y: 11 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -389,7 +413,7 @@ export const floor4: MapDefinition = {
       tile: { x: 25, y: 21 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -433,7 +457,7 @@ export const floor4: MapDefinition = {
       tile: { x: 15, y: 7 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -481,7 +505,15 @@ export const floor4: MapDefinition = {
       ],
     },
     // The Casting Gallery, behind the foundry gate.
-    { kind: 'recovery', id: 'floor4-stair-waystone', tile: { x: 11, y: 15 } },
+    {
+      kind: 'reward',
+      id: 'floor4-stair-waystone',
+      tile: { x: 11, y: 15 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 20,
+    },
     {
       kind: 'enemy',
       id: 'floor4-casting-hand-1',
@@ -512,7 +544,7 @@ export const floor4: MapDefinition = {
       tile: { x: 15, y: 15 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 6,
     },
     {

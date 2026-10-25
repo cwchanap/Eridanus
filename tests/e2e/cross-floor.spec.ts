@@ -95,28 +95,27 @@ async function expectPromptHoldsStill(page: Page): Promise<void> {
   expect(await cancel.boundingBox()).toEqual(cancelBox);
 }
 
-// The required route, floor by floor, as the bumps it makes. Each 'heal'
-// is a drink the next fights need at base stats; the explorer's extra
-// stats only make them cheaper.
+// The required route, floor by floor, as the bumps it makes. HP never
+// refills: each waystone gives its HP once, sized for the fights after it
+// at base stats; the explorer's extra stats only make them cheaper.
 async function claimDepthSigil(j: Journey): Promise<void> {
   await j.fight('floor1-sigil-warden');
   await j.expectBump('floor1-depth-sigil', 'itemReward');
 }
 
-async function healAndClimbToFloor2(j: Journey): Promise<void> {
+async function drinkAndClimbToFloor2(j: Journey): Promise<void> {
   await j.travel('floor1-to-village');
-  await j.heal('village-recovery');
+  await j.drink('village-waystone');
   await j.travel('village-to-floor1');
   await j.travel('floor1-front-to-floor2');
 }
 
 async function clearServiceWing(j: Journey): Promise<void> {
   await j.fight('floor2-service-guard');
-  await j.heal('floor2-service-waystone');
+  await j.drink('floor2-service-waystone');
   await j.fight('floor2-stack-mite-1');
   await j.fight('floor2-stack-mite-2');
   await j.fight('floor2-stack-mite-3');
-  await j.heal('floor2-service-waystone');
 }
 
 // Down the rear stair to Floor 1's rear wing for the power core, and back.
@@ -130,7 +129,6 @@ async function claimPowerCore(j: Journey): Promise<void> {
 }
 
 async function sendSubjectHome(j: Journey): Promise<void> {
-  await j.heal('floor2-service-waystone');
   await j.fight('floor2-east-sentry');
   await j.expectBump('floor2-east-release', 'latchOpened');
   await j.expectBump('floor2-missing-subject', 'dialogue');
@@ -141,9 +139,7 @@ async function sendSubjectHome(j: Journey): Promise<void> {
 }
 
 async function descendToFloor3(j: Journey): Promise<void> {
-  await j.heal('floor2-service-waystone');
   await j.fight('floor2-stair-warden');
-  await j.heal('floor2-service-waystone');
   await j.travel('floor2-depth-to-floor3');
   await j.check((page) => shows(page, 'lead', 'reach-heart-chamber'));
 }
@@ -154,36 +150,32 @@ async function throwHeartLevers(j: Journey): Promise<void> {
   await j.fight('floor3-spine-crawler-1');
   await j.fight('floor3-spine-crawler-2');
   await j.expectBump('floor3-gallery-cache', 'reward');
-  await j.heal('floor3-gallery-waystone');
+  await j.drink('floor3-gallery-waystone');
   await j.fight('floor3-archive-guard');
   await j.fight('floor3-archive-crawler-1');
   await j.fight('floor3-archive-crawler-2');
-  await j.heal('floor3-gallery-waystone');
   await j.fight('floor3-archive-sentry');
   await j.expectBump('floor3-crown-lever', 'leverPulled');
-  await j.heal('floor3-gallery-waystone');
   await j.expectBump('floor3-gallery-lever', 'leverPulled');
   await j.expectBump('floor3-west-lever', 'leverPulled');
 }
 
 async function descendPastHeartSentinel(j: Journey): Promise<void> {
   await j.expectBump('floor3-heart-shortcut', 'latchOpened');
-  await j.heal('floor3-heart-waystone');
+  await j.drink('floor3-heart-waystone');
   await j.fight('floor3-heart-sentinel');
-  await j.heal('floor3-heart-waystone');
   await j.travel('floor3-to-floor4');
 }
 
 // Floor 4's two works wings, each a gate guard, a pair of hands and a
 // foreman sitting on a chest.
 async function clearWorksWings(j: Journey): Promise<void> {
+  await j.drink('floor4-landing-waystone');
   for (const wing of ['west', 'east']) {
-    await j.heal('floor4-landing-waystone');
     await j.fight(`floor4-${wing}-gate-guard`);
-    await j.heal(`floor4-${wing}-waystone`);
+    await j.drink(`floor4-${wing}-waystone`);
     await j.fight(`floor4-${wing}-hand-1`);
     await j.fight(`floor4-${wing}-hand-2`);
-    await j.heal(`floor4-${wing}-waystone`);
     await j.fight(`floor4-${wing}-foreman`);
     await j.expectBump(`floor4-${wing}-works-cache`, 'reward');
   }
@@ -192,7 +184,6 @@ async function clearWorksWings(j: Journey): Promise<void> {
 // The foundry gate's four levers are linked in a row: each pull drags its
 // neighbours, so only the two outer ones together throw all four.
 async function openFoundryGate(j: Journey): Promise<void> {
-  await j.heal('floor4-landing-waystone');
   await j.fight('floor4-forge-warden');
   await j.expectBump('floor4-gate-lever-1', 'leverPulled');
   await j.expectBump('floor4-foundry-gate', 'latchWired');
@@ -203,25 +194,21 @@ async function openFoundryGate(j: Journey): Promise<void> {
   });
   await j.expectBump('floor4-gate-lever-4', 'leverPulled');
   await j.expectBump('floor4-foundry-gate', 'latchOpened');
-  await j.heal('floor4-stair-waystone');
+  await j.drink('floor4-stair-waystone');
   await j.fight('floor4-stair-warden');
-  await j.heal('floor4-stair-waystone');
   await j.travel('floor4-to-floor5');
 }
 
 async function reachGuardian(j: Journey): Promise<void> {
-  await j.heal('floor5-landing-waystone');
+  await j.drink('floor5-landing-waystone');
   await j.fight('floor5-west-warden');
   await j.expectBump('floor5-west-warden-cache', 'reward');
-  await j.heal('floor5-landing-waystone');
   await j.fight('floor5-south-gate-guard');
-  await j.heal('floor5-ring-waystone');
+  await j.drink('floor5-ring-waystone');
   await j.fight('floor5-south-warden');
-  await j.heal('floor5-ring-waystone');
   await j.fight('floor5-east-warden');
-  await j.heal('floor5-ring-waystone');
   await j.expectBump('floor5-sanctum-seal', 'latchOpened');
-  await j.heal('floor5-heart-waystone');
+  await j.drink('floor5-heart-waystone');
 }
 
 async function claimRestorationCore(j: Journey): Promise<void> {
@@ -292,7 +279,7 @@ const REQUIRED: readonly Chapter[] = [
       });
       await j.confirm('click');
       await claimDepthSigil(j);
-      await healAndClimbToFloor2(j);
+      await drinkAndClimbToFloor2(j);
     },
   },
   {
@@ -373,7 +360,7 @@ const EXPLORER: readonly Chapter[] = [
       await j.expectBump('floor1-route-mark', 'clue');
       await j.check((page) => shows(page, 'note', 'floor1-route-mark-seen'));
       await claimDepthSigil(j);
-      await healAndClimbToFloor2(j);
+      await drinkAndClimbToFloor2(j);
     },
   },
   {
@@ -396,7 +383,6 @@ const EXPLORER: readonly Chapter[] = [
       await sendSubjectHome(j);
       // With its guard down the west release opens onto the archive,
       // where the brute holds the treasury stair.
-      await j.heal('floor2-service-waystone');
       await j.expectBump('floor2-west-release', 'latchOpened');
       await j.fight('floor2-archive-brute');
       await j.travel('floor2-treasury-to-floor1');
@@ -476,7 +462,7 @@ test('serves every runtime image in the asset catalog', async ({ request }) => {
 test('boots the real game with persistent player stats', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('hud')).toBeVisible();
-  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30/30');
+  await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30');
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 10');
   await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 2');
 });
@@ -492,7 +478,7 @@ for (const view of [
   }) => {
     await page.setViewportSize(view);
     await startFreshRun(page);
-    await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30/30');
+    await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30');
     await expectHudFits(page);
   });
 }

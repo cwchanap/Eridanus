@@ -19,17 +19,6 @@ export function interactWithEntity(
         effect: { kind: 'clue', clueId: entity.id },
       };
     }
-    case 'recovery': {
-      const next = {
-        ...state,
-        player: { ...state.player, hp: state.player.maxHp },
-      };
-      return {
-        ok: true,
-        state: next,
-        effect: { kind: 'healed', hp: next.player.hp },
-      };
-    }
     case 'npc': {
       const introduced = entity.introFactId
         ? recordFact(state, entity.introFactId)
@@ -72,7 +61,6 @@ export function interactWithEntity(
         ...state.player,
         [entity.stat]: state.player[entity.stat] + entity.amount,
       };
-      if (entity.stat === 'maxHp') player.hp += entity.amount;
 
       return {
         ok: true,

@@ -6,7 +6,7 @@ const pending: SessionState = {
   game: {
     mapId: 'floor1',
     tile: { x: 12, y: 5 },
-    player: { hp: 30, maxHp: 30, attack: 12, defense: 2, gold: 0 },
+    player: { hp: 30, attack: 12, defense: 2, gold: 0 },
     openedRewardIds: ['floor1-power-core'],
     defeatedEnemyIds: [],
     openedShortcutIds: [],

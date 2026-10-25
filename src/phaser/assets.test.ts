@@ -195,6 +195,11 @@ describe('asset seam', () => {
               : { ...state, openedShortcutIds: [entity.id] };
           const open = resolveEntityAsset(entity, openedState);
 
+          // A drained waystone vanishes; everything else shows its open art.
+          if (entity.assetId === 'recovery-waystone') {
+            expect(open, `${entity.id} should vanish once drunk`).toBeNull();
+            continue;
+          }
           expect(open, `${entity.id} has no open art`).not.toBeNull();
           expect(open, `${entity.id} open art is identical to closed`).not.toBe(
             closed,

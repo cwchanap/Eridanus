@@ -16,7 +16,7 @@ export const zhHant: Messages = {
     enemy: '敵人',
     combat: '戰鬥',
     hpLoss: (loss) => `HP 損失：${loss}`,
-    leavesYouAt: (hp, maxHp) => `戰後剩下 ${hp}/${maxHp}`,
+    leavesYouAt: (hp) => `戰後剩下 ${hp}`,
     fight: '戰鬥',
     cancel: '取消',
     shop: '商店',
@@ -53,17 +53,15 @@ export const zhHant: Messages = {
     attack: '攻擊',
     defense: '防禦',
     gold: '金幣',
-    maxHp: '最大 HP',
   },
   statNames: {
     attack: '攻擊力',
     defense: '防禦力',
-    maxHp: '最大 HP',
+    hp: 'HP',
   },
   tags: {
     clue: '線索',
     powerUp: '能力提升',
-    restored: '恢復',
     shortcut: '捷徑',
     sealed: '封鎖',
     victory: '勝利',
@@ -73,7 +71,6 @@ export const zhHant: Messages = {
   },
   effects: {
     statUp: (stat, amount) => `${stat}提升了 ${amount}。`,
-    healed: (hp) => `HP 已恢復至 ${hp}。`,
     latchOpened: '門閂打開了。這條捷徑現在可以從兩側通行。',
     latchGuarded: (remaining) =>
       `守衛把這道門閂鎖得死死的。再擊敗 ${remaining} 名守衛才能打開。`,

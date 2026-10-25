@@ -48,8 +48,6 @@ function effectMessage(effect: ActionEffect, m: Messages): Message | null {
         tag: m.tags.powerUp,
         text: m.effects.statUp(m.statNames[effect.stat], effect.amount),
       };
-    case 'healed':
-      return { tag: m.tags.restored, text: m.effects.healed(effect.hp) };
     case 'latchOpened':
       return { tag: m.tags.shortcut, text: m.effects.latchOpened };
     case 'latchGuarded':
@@ -185,7 +183,7 @@ function renderEncounter(
     ${portrait}
     <div class="encounter-info">
       <div class="encounter-head"><span class="message-tag">${name}</span>${stats}</div>
-      <p class="encounter-cost"><span data-testid="combat-hp-loss">${m.ui.hpLoss(pending.preview.hpLoss)}</span> <span class="encounter-after">${m.ui.leavesYouAt(hpAfter, state.player.maxHp)}</span></p>
+      <p class="encounter-cost"><span data-testid="combat-hp-loss">${m.ui.hpLoss(pending.preview.hpLoss)}</span> <span class="encounter-after">${m.ui.leavesYouAt(hpAfter)}</span></p>
     </div>
     <div class="encounter-actions">
       ${promptButtons(`${ICONS.sword}${m.ui.fight}`, m.ui.cancel)}

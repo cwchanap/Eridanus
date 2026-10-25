@@ -61,14 +61,22 @@ export const floor2: MapDefinition = {
       gold: 8,
     },
     // The East Service Wing.
-    { kind: 'recovery', id: 'floor2-service-waystone', tile: { x: 19, y: 15 } },
+    {
+      kind: 'reward',
+      id: 'floor2-service-waystone',
+      tile: { x: 19, y: 15 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 90,
+    },
     {
       kind: 'reward',
       id: 'floor2-service-store',
       tile: { x: 23, y: 15 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 2,
     },
     {
@@ -93,7 +101,7 @@ export const floor2: MapDefinition = {
       tile: { x: 17, y: 5 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -110,7 +118,7 @@ export const floor2: MapDefinition = {
       tile: { x: 21, y: 1 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -182,7 +190,7 @@ export const floor2: MapDefinition = {
       tile: { x: 19, y: 1 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     // The Central Hall.
@@ -223,7 +231,7 @@ export const floor2: MapDefinition = {
       tile: { x: 15, y: 1 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 2,
     },
     {
@@ -295,7 +303,7 @@ export const floor2: MapDefinition = {
       tile: { x: 1, y: 9 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 4,
     },
     {
@@ -312,7 +320,7 @@ export const floor2: MapDefinition = {
       tile: { x: 5, y: 9 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 4,
     },
     {
@@ -345,7 +353,7 @@ export const floor2: MapDefinition = {
       tile: { x: 1, y: 1 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -360,7 +368,7 @@ export const floor2: MapDefinition = {
       tile: { x: 5, y: 1 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 2,
     },
     {
@@ -386,7 +394,7 @@ export const floor2: MapDefinition = {
       tile: { x: 9, y: 9 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 2,
     },
     {

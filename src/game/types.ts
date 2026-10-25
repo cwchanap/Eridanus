@@ -3,12 +3,13 @@ import type { FactId } from './content/facts';
 export type MapId =
   'village' | 'floor1' | 'floor2' | 'floor3' | 'floor4' | 'floor5';
 export type Direction = 'north' | 'south' | 'east' | 'west';
-export type Stat = 'attack' | 'defense' | 'maxHp';
+export type Stat = 'attack' | 'defense' | 'hp';
 export type Tile = Readonly<{ x: number; y: number }>;
 
+// HP is one uncapped pool: fights spend it and only one-time rewards and
+// wares add to it, so nothing ever refills it.
 export type PlayerStats = Readonly<{
   hp: number;
-  maxHp: number;
   attack: number;
   defense: number;
   gold: number;
@@ -97,7 +98,6 @@ export type LatchEntity = BaseEntity &
 // wired to it through links. A thrown lever's id sits in openedShortcutIds.
 export type LeverEntity = BaseEntity &
   Readonly<{ kind: 'lever'; links?: readonly string[] }>;
-export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
 // A maze entrance whose maze is not built yet: bumping it shows its notice
 // and records nothing.
 export type SealedEntity = BaseEntity & Readonly<{ kind: 'sealed' }>;
@@ -137,7 +137,6 @@ export type Entity =
   | EnemyEntity
   | LatchEntity
   | LeverEntity
-  | RecoveryEntity
   | NpcEntity
   | PortalEntity
   | SealedEntity
@@ -199,7 +198,6 @@ export type ActionEffect =
   | { kind: 'traveled'; mapId: MapId }
   | { kind: 'clue'; clueId: string }
   | { kind: 'reward'; stat: Stat; amount: number }
-  | { kind: 'healed'; hp: number }
   | { kind: 'latchOpened'; id: string }
   | { kind: 'latchGuarded'; id: string; remaining: number }
   | { kind: 'latchWired'; id: string; thrown: number; total: number }

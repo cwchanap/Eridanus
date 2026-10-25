@@ -138,8 +138,10 @@ const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {
   west: 'player-west',
 };
 
-const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey>> = {
+// A drained waystone (null) leaves nothing behind.
+const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey | null>> = {
   'chest-relic-closed': 'chest-relic-open',
+  'recovery-waystone': null,
   'shortcut-gate-closed': 'shortcut-gate-open',
   'lever-off': 'lever-on',
 };
@@ -153,7 +155,6 @@ function baseEntityAsset(entity: Entity): AssetKey | null {
   if (entity.assetId !== undefined) {
     return explicitAsset(entity.assetId);
   }
-  if (entity.kind === 'recovery') return 'recovery-waystone';
   if (entity.kind === 'latch') return 'shortcut-gate-closed';
   if (entity.kind === 'lever') return 'lever-off';
   if (entity.kind === 'npc') return 'npc-village-guide';
@@ -180,7 +181,8 @@ export function resolveEntityAsset(
     ((entity.kind === 'latch' || entity.kind === 'lever') &&
       state.openedShortcutIds.includes(entity.id));
 
-  return opened ? (OPEN_VARIANT[base] ?? base) : base;
+  const variant = OPEN_VARIANT[base];
+  return opened && variant !== undefined ? variant : base;
 }
 
 export function resolvePortraitPath(assetKey: AssetKey): string {

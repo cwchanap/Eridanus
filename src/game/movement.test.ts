@@ -38,7 +38,7 @@ const latchFront = beside(latchEntity.id, OPPOSITE[rearSide]);
 const base: GameState = {
   mapId: 'floor1',
   tile: latchFront.tile,
-  player: { hp: 30, maxHp: 30, attack: 10, defense: 2, gold: 0 },
+  player: { hp: 30, attack: 10, defense: 2, gold: 0 },
   openedRewardIds: [],
   defeatedEnemyIds: [],
   openedShortcutIds: [],

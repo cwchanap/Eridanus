@@ -23,7 +23,6 @@ export function resolvePurchase(
     gold: state.player.gold - ware.price,
     [ware.stat]: state.player[ware.stat] + ware.amount,
   };
-  if (ware.stat === 'maxHp') player.hp += ware.amount;
   return {
     ok: true,
     state: addItem({ ...state, player }, ware.itemId),

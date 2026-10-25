@@ -10,7 +10,7 @@ const combat: SessionState = {
     ...game,
     mapId: 'floor1',
     tile: { x: 12, y: 5 },
-    player: { hp: 30, maxHp: 30, attack: 12, defense: 2, gold: 0 },
+    player: { hp: 30, attack: 12, defense: 2, gold: 0 },
   },
   pending: {
     kind: 'combat',
@@ -49,6 +49,21 @@ describe('cuesFor', () => {
     expect(
       cuesFor(move, { ok: false, session: combat, reason: 'combat-lethal' }),
     ).toEqual(['lose']);
+    // An HP reward (a waystone or an HP chest) sounds like a drink.
+    expect(
+      cuesFor(move, {
+        ok: true,
+        session: combat,
+        effect: { kind: 'reward', stat: 'hp', amount: 20 },
+      }),
+    ).toEqual(['heal']);
+    expect(
+      cuesFor(move, {
+        ok: true,
+        session: combat,
+        effect: { kind: 'reward', stat: 'attack', amount: 2 },
+      }),
+    ).toEqual(['pickup']);
     expect(
       cuesFor(move, { ok: false, session: combat, reason: 'not-enough-gold' }),
     ).toEqual(['deny']);

@@ -44,7 +44,15 @@ export const floor5: MapDefinition = {
       assetId: 'stairs-up',
       target: { mapId: 'floor4', tile: { x: 13, y: 17 } },
     },
-    { kind: 'recovery', id: 'floor5-landing-waystone', tile: { x: 11, y: 1 } },
+    {
+      kind: 'reward',
+      id: 'floor5-landing-waystone',
+      tile: { x: 11, y: 1 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 40,
+    },
     {
       kind: 'clue',
       id: 'floor5-seal-inscription',
@@ -99,7 +107,7 @@ export const floor5: MapDefinition = {
       tile: { x: 1, y: 19 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -125,7 +133,7 @@ export const floor5: MapDefinition = {
       tile: { x: 13, y: 19 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 10,
     },
     {
@@ -137,7 +145,15 @@ export const floor5: MapDefinition = {
       gold: 12,
     },
     // The south arcs.
-    { kind: 'recovery', id: 'floor5-ring-waystone', tile: { x: 15, y: 17 } },
+    {
+      kind: 'reward',
+      id: 'floor5-ring-waystone',
+      tile: { x: 15, y: 17 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 45,
+    },
     {
       kind: 'enemy',
       id: 'floor5-south-warden',
@@ -177,7 +193,7 @@ export const floor5: MapDefinition = {
       tile: { x: 15, y: 19 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -194,7 +210,7 @@ export const floor5: MapDefinition = {
       tile: { x: 27, y: 13 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 10,
     },
     // The east arcs.
@@ -253,7 +269,7 @@ export const floor5: MapDefinition = {
       tile: { x: 13, y: 1 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -339,7 +355,7 @@ export const floor5: MapDefinition = {
       tile: { x: 10, y: 15 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 4,
     },
     {
@@ -372,7 +388,15 @@ export const floor5: MapDefinition = {
       ],
     },
     // The sanctum: a waystone, the guardian, the core and the lift home.
-    { kind: 'recovery', id: 'floor5-heart-waystone', tile: { x: 11, y: 9 } },
+    {
+      kind: 'reward',
+      id: 'floor5-heart-waystone',
+      tile: { x: 11, y: 9 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 25,
+    },
     {
       kind: 'enemy',
       id: 'floor5-core-guardian',

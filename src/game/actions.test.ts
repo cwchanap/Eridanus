@@ -9,7 +9,7 @@ import type { NpcEntity } from './types';
 
 const reward = findEntityById('floor1-power-core');
 const sigil = findEntityById('floor1-depth-sigil');
-const recovery = findEntityById('village-recovery');
+const waystone = findEntityById('village-waystone');
 const latch = findEntityById('floor1-rear-latch');
 const enemy = findEntityById('floor1-gatekeeper');
 const overlook = findEntityById('floor1-treasury-overlook');
@@ -17,8 +17,8 @@ const finalRecord = findEntityById('floor3-keeper-final-record');
 if (!reward || reward.kind !== 'reward') throw new Error('reward missing');
 if (!sigil || sigil.kind !== 'reward' || sigil.grant !== 'item')
   throw new Error('sigil missing');
-if (!recovery || recovery.kind !== 'recovery')
-  throw new Error('recovery missing');
+if (!waystone || waystone.kind !== 'reward')
+  throw new Error('waystone missing');
 if (!latch || latch.kind !== 'latch') throw new Error('latch missing');
 if (!enemy || enemy.kind !== 'enemy') throw new Error('enemy missing');
 if (!overlook || overlook.kind !== 'clue') throw new Error('clue missing');
@@ -77,18 +77,18 @@ describe('actions', () => {
     });
   });
 
-  it('heals without resetting dungeon progress', () => {
+  it('a waystone adds HP once, past the starting value', () => {
     const state = {
       ...createInitialGameState(),
-      player: { hp: 8, maxHp: 30, attack: 12, defense: 2, gold: 0 },
+      player: { hp: 25, attack: 12, defense: 2, gold: 0 },
       openedRewardIds: ['floor1-power-core'],
       defeatedEnemyIds: ['floor1-gatekeeper'],
       openedShortcutIds: ['floor1-rear-latch'],
     };
-    const result = interactWithEntity(state, recovery, { x: 3, y: 2 });
+    const result = interactWithEntity(state, waystone, { x: 3, y: 2 });
     expect(result.ok && result.state).toMatchObject({
-      player: { hp: 30, maxHp: 30, attack: 12, defense: 2, gold: 0 },
-      openedRewardIds: ['floor1-power-core'],
+      player: { hp: 45, attack: 12, defense: 2, gold: 0 },
+      openedRewardIds: ['floor1-power-core', 'village-waystone'],
       defeatedEnemyIds: ['floor1-gatekeeper'],
       openedShortcutIds: ['floor1-rear-latch'],
     });
@@ -183,7 +183,7 @@ describe('actions', () => {
       ...createInitialGameState(),
       mapId: 'floor5' as const,
       tile: tileInDirection(boss.tile, 'west'),
-      player: { hp: 30, maxHp: 30, attack: 16, defense: 6, gold: 0 },
+      player: { hp: 30, attack: 16, defense: 6, gold: 0 },
     };
     const preview = previewCombat(state.player, boss.stats);
     expect(preview).toEqual({ winnable: true, hitsNeeded: 6, hpLoss: 25 });

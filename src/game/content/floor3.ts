@@ -177,7 +177,7 @@ export const floor3: MapDefinition = {
       tile: { x: 7, y: 17 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     // The West Crypt Walk, off the foot of the west prowler's gallery.
@@ -187,7 +187,7 @@ export const floor3: MapDefinition = {
       tile: { x: 1, y: 21 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -218,7 +218,7 @@ export const floor3: MapDefinition = {
       tile: { x: 11, y: 23 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     // The South Galleries, past the east prowler.
@@ -248,7 +248,15 @@ export const floor3: MapDefinition = {
       stat: 'defense',
       amount: 2,
     },
-    { kind: 'recovery', id: 'floor3-gallery-waystone', tile: { x: 23, y: 15 } },
+    {
+      kind: 'reward',
+      id: 'floor3-gallery-waystone',
+      tile: { x: 23, y: 15 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 45,
+    },
     { kind: 'lever', id: 'floor3-gallery-lever', tile: { x: 15, y: 17 } },
     // The East Crypt Walk, off the lever corridor.
     {
@@ -265,7 +273,7 @@ export const floor3: MapDefinition = {
       tile: { x: 21, y: 21 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -315,7 +323,7 @@ export const floor3: MapDefinition = {
       tile: { x: 21, y: 7 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 5,
     },
     {
@@ -350,7 +358,15 @@ export const floor3: MapDefinition = {
     },
     { kind: 'lever', id: 'floor3-crown-lever', tile: { x: 23, y: 1 } },
     // The heart, behind the hatch.
-    { kind: 'recovery', id: 'floor3-heart-waystone', tile: { x: 15, y: 5 } },
+    {
+      kind: 'reward',
+      id: 'floor3-heart-waystone',
+      tile: { x: 15, y: 5 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 20,
+    },
     {
       kind: 'clue',
       id: 'floor3-heart-lockdown-record',
@@ -421,7 +437,7 @@ export const floor3: MapDefinition = {
       tile: { x: 1, y: 7 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     // The Undercroft, on the old shaft between Floors 4 and 2.
@@ -471,7 +487,7 @@ export const floor3: MapDefinition = {
       tile: { x: 15, y: 21 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 10,
     },
     {

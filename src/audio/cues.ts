@@ -12,7 +12,6 @@ const EFFECT_CUES: Record<ActionEffect['kind'], readonly SfxCue[]> = {
   clue: ['clue'],
   reward: ['pickup'],
   itemReward: ['pickup'],
-  healed: ['heal'],
   latchOpened: ['latch'],
   latchGuarded: ['locked'],
   latchWired: ['locked'],
@@ -44,6 +43,8 @@ export function cuesFor(
   transition: SessionTransition,
 ): readonly SfxCue[] {
   if (!transition.ok) return BLOCKED_CUES[transition.reason];
-  if (transition.effect) return EFFECT_CUES[transition.effect.kind];
+  const effect = transition.effect;
+  if (effect?.kind === 'reward' && effect.stat === 'hp') return ['heal'];
+  if (effect) return EFFECT_CUES[effect.kind];
   return input.kind === 'cancel' ? ['cancel'] : [];
 }
