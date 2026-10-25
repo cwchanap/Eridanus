@@ -1,41 +1,53 @@
 import { describe, expect, it } from 'vitest';
 import { dispatchInput } from '../game/session';
 import { createInitialGameState } from '../game/state';
-import type { SessionState } from '../game/types';
+import type { Rng, SessionState } from '../game/types';
 import { cuesFor } from './cues';
 
 const game = createInitialGameState();
+// Every roll lands, so a fight plays out as its forecast says.
+const hits: Rng = () => 0;
 const combat: SessionState = {
   game: {
     ...game,
     mapId: 'floor1',
     tile: { x: 12, y: 5 },
-    player: { hp: 30, attack: 12, defense: 2, gold: 0 },
+    player: { hp: 30, attack: 12, defense: 2, agility: 5, gold: 0 },
   },
   pending: {
     kind: 'combat',
     enemyId: 'floor1-gatekeeper',
-    preview: { winnable: true, hitsNeeded: 3, hpLoss: 10 },
+    preview: {
+      winnable: true,
+      hitsNeeded: 3,
+      hpLoss: 9,
+      heroHit: 1,
+      enemyHit: 0.9,
+    },
   },
 };
 
 describe('cuesFor', () => {
   it('bumps a move refused while a prompt is open', () => {
     const input = { kind: 'move', direction: 'north' } as const;
-    expect(cuesFor(input, dispatchInput(combat, input))).toEqual(['bump']);
+    expect(cuesFor(input, dispatchInput(combat, input, hits))).toEqual([
+      'bump',
+    ]);
   });
 
   it('plays the win for a won fight', () => {
     const input = { kind: 'confirm' } as const;
-    expect(cuesFor(input, dispatchInput(combat, input))).toEqual(['win']);
+    expect(cuesFor(input, dispatchInput(combat, input, hits))).toEqual(['win']);
   });
 
   it('plays cancel only for a cancelled prompt', () => {
     const cancel = { kind: 'cancel' } as const;
-    expect(cuesFor(cancel, dispatchInput(combat, cancel))).toEqual(['cancel']);
+    expect(cuesFor(cancel, dispatchInput(combat, cancel, hits))).toEqual([
+      'cancel',
+    ]);
     const idle = { game, pending: null };
     const confirm = { kind: 'confirm' } as const;
-    expect(cuesFor(confirm, dispatchInput(idle, confirm))).toEqual([]);
+    expect(cuesFor(confirm, dispatchInput(idle, confirm, hits))).toEqual([]);
   });
 
   it('maps effects and refusals to their cues', () => {

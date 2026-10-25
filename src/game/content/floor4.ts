@@ -72,7 +72,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-west-gate-guard',
       tile: { x: 8, y: 3 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5 },
+      stats: { hp: 28, attack: 9, defense: 5, agility: 3 },
       gold: 10,
     },
     {
@@ -80,7 +80,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-gate-guard',
       tile: { x: 18, y: 3 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5 },
+      stats: { hp: 28, attack: 9, defense: 5, agility: 3 },
       gold: 10,
     },
     // The West Works.
@@ -89,7 +89,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-west-lurker',
       tile: { x: 3, y: 4 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 32, attack: 10, defense: 6 },
+      stats: { hp: 32, attack: 10, defense: 6, agility: 4 },
       gold: 10,
     },
     {
@@ -106,7 +106,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-west-prowler',
       tile: { x: 5, y: 6 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 32, attack: 10, defense: 6 },
+      stats: { hp: 32, attack: 10, defense: 6, agility: 6 },
       gold: 10,
     },
     {
@@ -147,7 +147,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-west-store-guard',
       tile: { x: 3, y: 14 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 34, attack: 10, defense: 7 },
+      stats: { hp: 34, attack: 10, defense: 7, agility: 2 },
       gold: 12,
     },
     {
@@ -171,7 +171,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-west-hand-1',
       tile: { x: 7, y: 17 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -179,7 +179,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-west-hand-2',
       tile: { x: 6, y: 17 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -187,7 +187,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-west-foreman',
       tile: { x: 5, y: 17 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 10, defense: 6 },
+      stats: { hp: 30, attack: 10, defense: 6, agility: 2 },
       gold: 14,
     },
     {
@@ -220,7 +220,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-west-flue-hand-1',
       tile: { x: 3, y: 21 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -228,7 +228,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-west-flue-hand-2',
       tile: { x: 3, y: 22 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -255,7 +255,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-lurker',
       tile: { x: 23, y: 4 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 32, attack: 10, defense: 6 },
+      stats: { hp: 32, attack: 10, defense: 6, agility: 4 },
       gold: 10,
     },
     {
@@ -272,7 +272,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-prowler',
       tile: { x: 21, y: 6 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 32, attack: 10, defense: 6 },
+      stats: { hp: 32, attack: 10, defense: 6, agility: 6 },
       gold: 10,
     },
     {
@@ -307,7 +307,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-tooth-hand',
       tile: { x: 23, y: 10 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -324,7 +324,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-store-guard',
       tile: { x: 23, y: 14 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 34, attack: 10, defense: 7 },
+      stats: { hp: 34, attack: 10, defense: 7, agility: 2 },
       gold: 12,
     },
     {
@@ -347,7 +347,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-hand-1',
       tile: { x: 19, y: 17 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -355,7 +355,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-hand-2',
       tile: { x: 20, y: 17 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -363,7 +363,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-foreman',
       tile: { x: 21, y: 17 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 10, defense: 6 },
+      stats: { hp: 30, attack: 10, defense: 6, agility: 2 },
       gold: 14,
     },
     {
@@ -396,7 +396,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-flue-hand-1',
       tile: { x: 23, y: 21 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -404,7 +404,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-east-flue-hand-2',
       tile: { x: 23, y: 22 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -431,7 +431,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-forge-keeper',
       tile: { x: 12, y: 5 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 40, attack: 13, defense: 9 },
+      stats: { hp: 40, attack: 13, defense: 9, agility: 1 },
       gold: 12,
     },
     {
@@ -448,7 +448,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-cellar-lurker',
       tile: { x: 14, y: 5 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 32, attack: 10, defense: 6 },
+      stats: { hp: 32, attack: 10, defense: 6, agility: 4 },
       gold: 10,
     },
     {
@@ -465,7 +465,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-forge-warden',
       tile: { x: 13, y: 8 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 12, defense: 8 },
+      stats: { hp: 30, attack: 12, defense: 8, agility: 2 },
       gold: 14,
     },
     // The control run: four linked levers, each dragging its neighbours.
@@ -519,7 +519,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-casting-hand-1',
       tile: { x: 17, y: 16 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -527,7 +527,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-casting-hand-2',
       tile: { x: 17, y: 17 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -535,7 +535,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-casting-hand-3',
       tile: { x: 16, y: 17 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 4 },
       gold: 6,
     },
     {
@@ -552,7 +552,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-stair-warden',
       tile: { x: 13, y: 15 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 34, attack: 11, defense: 7 },
+      stats: { hp: 34, attack: 11, defense: 7, agility: 2 },
       gold: 14,
     },
     {
@@ -576,7 +576,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-slag-wisp-1',
       tile: { x: 17, y: 20 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 36, attack: 28, defense: 14 },
+      stats: { hp: 36, attack: 28, defense: 14, agility: 8 },
       gold: 10,
     },
     {
@@ -584,7 +584,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-slag-wisp-2',
       tile: { x: 17, y: 21 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 36, attack: 28, defense: 14 },
+      stats: { hp: 36, attack: 28, defense: 14, agility: 8 },
       gold: 10,
     },
     {
@@ -592,7 +592,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-slag-wisp-3',
       tile: { x: 17, y: 22 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 36, attack: 28, defense: 14 },
+      stats: { hp: 36, attack: 28, defense: 14, agility: 8 },
       gold: 10,
     },
     {
@@ -609,7 +609,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-slag-brute',
       tile: { x: 9, y: 22 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 50, attack: 32, defense: 16 },
+      stats: { hp: 50, attack: 32, defense: 16, agility: 1 },
       gold: 14,
     },
     {

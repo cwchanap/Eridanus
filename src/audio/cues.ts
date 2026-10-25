@@ -19,6 +19,7 @@ const EFFECT_CUES: Record<ActionEffect['kind'], readonly SfxCue[]> = {
   combatPrompt: ['encounter'],
   // Each blow of the battle plays its own hit (main.ts); this is the end.
   enemyDefeated: ['win'],
+  heroDefeated: ['lose'],
   purchasePrompt: ['confirm'],
   purchased: ['buy'],
   soldOut: ['deny'],

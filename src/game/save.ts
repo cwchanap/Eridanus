@@ -39,7 +39,7 @@ function hasValidShape(state: unknown): state is GameState {
   const player = record['player'];
   if (typeof player !== 'object' || player === null) return false;
   const playerRecord = player as Record<string, unknown>;
-  for (const stat of ['hp', 'attack', 'defense', 'gold'] as const) {
+  for (const stat of ['hp', 'attack', 'defense', 'agility', 'gold'] as const) {
     const value = playerRecord[stat];
     if (typeof value !== 'number' || !Number.isFinite(value)) return false;
   }

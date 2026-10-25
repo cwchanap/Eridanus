@@ -71,7 +71,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-east-prowler',
       tile: { x: 16, y: 9 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 8, defense: 4 },
+      stats: { hp: 24, attack: 8, defense: 4, agility: 5 },
       gold: 8,
     },
     {
@@ -79,7 +79,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-spine-crawler-1',
       tile: { x: 17, y: 9 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 18, attack: 6, defense: 3 },
+      stats: { hp: 18, attack: 6, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -87,7 +87,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-spine-crawler-2',
       tile: { x: 18, y: 9 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 18, attack: 6, defense: 3 },
+      stats: { hp: 18, attack: 6, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -95,7 +95,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-archive-guard',
       tile: { x: 23, y: 8 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5 },
+      stats: { hp: 28, attack: 9, defense: 5, agility: 3 },
       gold: 9,
     },
     {
@@ -111,7 +111,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-west-lurker',
       tile: { x: 7, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 8, defense: 4 },
+      stats: { hp: 26, attack: 8, defense: 4, agility: 4 },
       gold: 8,
     },
     {
@@ -119,7 +119,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gallery-crawler-1',
       tile: { x: 1, y: 15 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3 },
+      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -127,7 +127,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gallery-crawler-2',
       tile: { x: 1, y: 16 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3 },
+      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -144,7 +144,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-west-prowler',
       tile: { x: 11, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 8, defense: 4 },
+      stats: { hp: 26, attack: 8, defense: 4, agility: 6 },
       gold: 8,
     },
     {
@@ -152,7 +152,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-east-lurker',
       tile: { x: 15, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5 },
+      stats: { hp: 28, attack: 9, defense: 5, agility: 4 },
       gold: 9,
     },
     {
@@ -160,7 +160,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gallery-crawler-3',
       tile: { x: 14, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3 },
+      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -168,7 +168,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gallery-crawler-4',
       tile: { x: 13, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3 },
+      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -201,7 +201,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-walk-crawler-1',
       tile: { x: 9, y: 23 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3 },
+      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -209,7 +209,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-walk-crawler-2',
       tile: { x: 10, y: 23 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3 },
+      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -227,7 +227,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-east-warden',
       tile: { x: 19, y: 11 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 32, attack: 9, defense: 6 },
+      stats: { hp: 32, attack: 9, defense: 6, agility: 2 },
       gold: 10,
     },
     {
@@ -264,7 +264,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-walk-lurker',
       tile: { x: 19, y: 17 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5 },
+      stats: { hp: 28, attack: 9, defense: 5, agility: 4 },
       gold: 9,
     },
     {
@@ -281,7 +281,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gutter-crawler-1',
       tile: { x: 15, y: 23 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3 },
+      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -289,7 +289,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gutter-crawler-2',
       tile: { x: 14, y: 23 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3 },
+      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
       gold: 5,
     },
     {
@@ -314,7 +314,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-archive-lurker',
       tile: { x: 21, y: 6 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5 },
+      stats: { hp: 28, attack: 9, defense: 5, agility: 4 },
       gold: 9,
     },
     {
@@ -337,7 +337,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-archive-crawler-1',
       tile: { x: 19, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 3 },
       gold: 6,
     },
     {
@@ -345,7 +345,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-archive-crawler-2',
       tile: { x: 20, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4 },
+      stats: { hp: 20, attack: 7, defense: 4, agility: 3 },
       gold: 6,
     },
     {
@@ -353,7 +353,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-archive-sentry',
       tile: { x: 23, y: 2 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 10, defense: 6 },
+      stats: { hp: 30, attack: 10, defense: 6, agility: 2 },
       gold: 14,
     },
     { kind: 'lever', id: 'floor3-crown-lever', tile: { x: 23, y: 1 } },
@@ -378,7 +378,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-approach-sentry',
       tile: { x: 10, y: 5 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 9, defense: 6 },
+      stats: { hp: 30, attack: 9, defense: 6, agility: 2 },
       gold: 10,
     },
     {
@@ -395,7 +395,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-heart-sentinel',
       tile: { x: 9, y: 6 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 28, attack: 9, defense: 6 },
+      stats: { hp: 28, attack: 9, defense: 6, agility: 2 },
       gold: 14,
     },
     {
@@ -419,7 +419,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-vault-sentry',
       tile: { x: 1, y: 2 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 36, attack: 12, defense: 8 },
+      stats: { hp: 36, attack: 12, defense: 8, agility: 2 },
       gold: 12,
     },
     {
@@ -453,7 +453,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-crypt-shade-1',
       tile: { x: 10, y: 21 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 40, attack: 30, defense: 16 },
+      stats: { hp: 40, attack: 30, defense: 16, agility: 9 },
       gold: 10,
     },
     {
@@ -461,7 +461,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-crypt-shade-2',
       tile: { x: 11, y: 21 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 40, attack: 30, defense: 16 },
+      stats: { hp: 40, attack: 30, defense: 16, agility: 9 },
       gold: 10,
     },
     {
@@ -469,7 +469,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-crypt-shade-3',
       tile: { x: 12, y: 21 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 40, attack: 30, defense: 16 },
+      stats: { hp: 40, attack: 30, defense: 16, agility: 9 },
       gold: 10,
     },
     {
@@ -501,7 +501,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-crypt-warden',
       tile: { x: 19, y: 20 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 56, attack: 34, defense: 18 },
+      stats: { hp: 56, attack: 34, defense: 18, agility: 1 },
       gold: 16,
     },
     {

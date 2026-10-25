@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-import type { Blow } from '../game/combat';
 import { MAPS, findEntityById, getActiveEntities } from '../game/content';
 import type {
+  Blow,
   Direction,
   InputCommand,
   MapId,
@@ -54,13 +54,16 @@ export type WorldSceneDeps = {
   getStrike: () => Strike | null;
 };
 
-// One blow of a playing battle: the `index`th of the fight, taking `ms`.
+// One blow of a playing battle: the `index`th of the fight, taking `ms`. A
+// blow that missed floats `miss` (the word, in the player's language) in
+// place of its damage.
 export type Strike = Readonly<{
   enemyId: string;
   blow: Blow;
   index: number;
   ms: number;
   last: boolean;
+  miss: string;
 }>;
 
 // The enemy an open combat prompt is about, outlined inside its own cell.
@@ -94,6 +97,7 @@ const tileCentre = (tile: Tile): Point => ({
 const DAMAGE_SIZE = 12;
 const DAMAGE_RISE = 8;
 const DAMAGE_COLOR = { hero: '#ffe9a8', enemy: '#ff8a7a' } as const;
+const MISS_COLOR = '#d7dbe8';
 // A struck character flashes this colour from the impact until this far
 // through the blow.
 const HURT_TINT = 0xff6a5c;
@@ -356,14 +360,21 @@ export class WorldScene extends Phaser.Scene {
     const fontSize = Math.max(1, Math.round(DAMAGE_SIZE * zoom));
     this.damage = strike
       ? this.add
-          .text(0, 0, `-${strike.blow.damage}`, {
-            fontFamily: 'Cinzel, serif',
-            fontSize: `${fontSize}px`,
-            fontStyle: 'bold',
-            color: DAMAGE_COLOR[strike.blow.by === 'hero' ? 'hero' : 'enemy'],
-            stroke: '#140c08',
-            strokeThickness: Math.max(1, Math.round(fontSize / 5)),
-          })
+          .text(
+            0,
+            0,
+            strike.blow.hit ? `-${strike.blow.damage}` : strike.miss,
+            {
+              fontFamily: 'Cinzel, serif',
+              fontSize: `${fontSize}px`,
+              fontStyle: 'bold',
+              color: strike.blow.hit
+                ? DAMAGE_COLOR[strike.blow.by]
+                : MISS_COLOR,
+              stroke: '#140c08',
+              strokeThickness: Math.max(1, Math.round(fontSize / 5)),
+            },
+          )
           .setOrigin(0.5, 1)
           .setScale(DAMAGE_SIZE / fontSize)
       : null;
@@ -452,10 +463,13 @@ export class WorldScene extends Phaser.Scene {
     foe.actor.image.setPosition(foe.feet.x, foe.feet.y);
     striker.setPosition(home.x + toFoe.x * reach, home.y + toFoe.y * reach);
     const hurt = progress >= IMPACT && progress < HURT_UNTIL;
-    if (hurt) struck.setTint(HURT_TINT).setTintMode(Phaser.TintModes.FILL);
+    if (hurt && strike.blow.hit)
+      struck.setTint(HURT_TINT).setTintMode(Phaser.TintModes.FILL);
     else struck.clearTint();
     foe.actor.image.setAlpha(
-      strike.last ? Math.min(1, Math.max(0, 2 - progress)) : 1,
+      strike.last && strike.blow.enemyHp === 0
+        ? Math.min(1, Math.max(0, 2 - progress))
+        : 1,
     );
 
     if (!damage) return;

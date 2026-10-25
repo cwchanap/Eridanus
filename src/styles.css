@@ -999,6 +999,10 @@ kbd {
   color: var(--defense);
 }
 
+.sheet-stat[data-tone='agility'] {
+  color: var(--success);
+}
+
 .sheet-stat[data-tone='gold'] {
   color: var(--gold);
 }
@@ -1327,6 +1331,23 @@ kbd {
   }
 
   .sheet-head .portrait {
+    display: none;
+  }
+
+  /* The card's column is about 100px wide: the stats pair up two to a
+     line, the hit chances give way, and the buttons drop their key hints
+     to leave the text room. */
+  .encounter-stats {
+    flex-wrap: wrap;
+    gap: 0 8px;
+  }
+
+  .encounter-stats span {
+    white-space: nowrap;
+  }
+
+  [data-testid='combat-hit-chances'],
+  .encounter-actions kbd {
     display: none;
   }
 }

@@ -65,7 +65,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-west-warden',
       tile: { x: 1, y: 7 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 34, attack: 12, defense: 7 },
+      stats: { hp: 34, attack: 12, defense: 7, agility: 2 },
       gold: 16,
     },
     {
@@ -82,7 +82,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-west-lurker',
       tile: { x: 1, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 32, attack: 11, defense: 7 },
+      stats: { hp: 32, attack: 11, defense: 7, agility: 4 },
       gold: 12,
     },
     {
@@ -90,7 +90,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-ring-wisp-1',
       tile: { x: 1, y: 12 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 10, defense: 6 },
+      stats: { hp: 26, attack: 10, defense: 6, agility: 8 },
       gold: 7,
     },
     {
@@ -98,7 +98,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-ring-wisp-2',
       tile: { x: 1, y: 13 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 10, defense: 6 },
+      stats: { hp: 26, attack: 10, defense: 6, agility: 8 },
       gold: 7,
     },
     {
@@ -115,7 +115,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-west-vault-keeper',
       tile: { x: 7, y: 18 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 60, attack: 18, defense: 12 },
+      stats: { hp: 60, attack: 18, defense: 12, agility: 1 },
       gold: 20,
     },
     {
@@ -141,7 +141,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-south-gate-guard',
       tile: { x: 13, y: 16 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 32, attack: 11, defense: 7 },
+      stats: { hp: 32, attack: 11, defense: 7, agility: 3 },
       gold: 12,
     },
     // The south arcs.
@@ -159,7 +159,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-south-warden',
       tile: { x: 19, y: 17 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 40, attack: 12, defense: 8 },
+      stats: { hp: 40, attack: 12, defense: 8, agility: 2 },
       gold: 16,
     },
     {
@@ -176,7 +176,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-ring-wisp-3',
       tile: { x: 17, y: 19 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 10, defense: 6 },
+      stats: { hp: 26, attack: 10, defense: 6, agility: 8 },
       gold: 7,
     },
     {
@@ -184,7 +184,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-ring-wisp-4',
       tile: { x: 16, y: 19 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 10, defense: 6 },
+      stats: { hp: 26, attack: 10, defense: 6, agility: 8 },
       gold: 7,
     },
     {
@@ -201,7 +201,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-southeast-lurker',
       tile: { x: 23, y: 19 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 34, attack: 12, defense: 8 },
+      stats: { hp: 34, attack: 12, defense: 8, agility: 4 },
       gold: 12,
     },
     {
@@ -219,7 +219,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-east-sentry',
       tile: { x: 21, y: 3 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 32, attack: 11, defense: 7 },
+      stats: { hp: 32, attack: 11, defense: 7, agility: 3 },
       gold: 12,
     },
     {
@@ -227,7 +227,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-ring-wisp-5',
       tile: { x: 20, y: 3 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 10, defense: 6 },
+      stats: { hp: 26, attack: 10, defense: 6, agility: 8 },
       gold: 7,
     },
     {
@@ -235,7 +235,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-ring-wisp-6',
       tile: { x: 19, y: 3 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 10, defense: 6 },
+      stats: { hp: 26, attack: 10, defense: 6, agility: 8 },
       gold: 7,
     },
     {
@@ -252,7 +252,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-east-lurker',
       tile: { x: 17, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 32, attack: 11, defense: 7 },
+      stats: { hp: 32, attack: 11, defense: 7, agility: 4 },
       gold: 12,
     },
     {
@@ -260,7 +260,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-ring-wisp-7',
       tile: { x: 16, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 10, defense: 6 },
+      stats: { hp: 26, attack: 10, defense: 6, agility: 8 },
       gold: 7,
     },
     {
@@ -277,7 +277,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-east-warden',
       tile: { x: 27, y: 3 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 40, attack: 12, defense: 8 },
+      stats: { hp: 40, attack: 12, defense: 8, agility: 2 },
       gold: 16,
     },
     {
@@ -294,7 +294,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-east-vault-keeper',
       tile: { x: 22, y: 11 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 60, attack: 18, defense: 12 },
+      stats: { hp: 60, attack: 18, defense: 12, agility: 1 },
       gold: 20,
     },
     {
@@ -321,7 +321,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-inner-lurker',
       tile: { x: 11, y: 5 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 34, attack: 12, defense: 8 },
+      stats: { hp: 34, attack: 12, defense: 8, agility: 4 },
       gold: 12,
     },
     {
@@ -338,7 +338,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-ring-wisp-8',
       tile: { x: 8, y: 15 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 10, defense: 6 },
+      stats: { hp: 26, attack: 10, defense: 6, agility: 8 },
       gold: 7,
     },
     {
@@ -346,7 +346,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-ring-wisp-9',
       tile: { x: 9, y: 15 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 10, defense: 6 },
+      stats: { hp: 26, attack: 10, defense: 6, agility: 8 },
       gold: 7,
     },
     {
@@ -402,7 +402,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-core-guardian',
       tile: { x: 15, y: 11 },
       assetId: 'enemy-core-guardian',
-      stats: { hp: 44, attack: 11, defense: 8 },
+      stats: { hp: 44, attack: 11, defense: 8, agility: 2 },
       gold: 40,
     },
     {

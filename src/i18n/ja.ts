@@ -18,12 +18,16 @@ export const ja: Messages = {
     closeMessage: 'メッセージを閉じる',
     enemy: '敵',
     combat: '戦闘',
-    hpLoss: (loss) => `失うHP：${loss}`,
-    leavesYouAt: (hp) => `戦闘後 ${hp}`,
+    hpLoss: (loss) => `失うHP：約${loss}`,
+    hitChances: (you, it) => `命中率：自分 ${you}%・敵 ${it}%`,
+    leavesYouAt: (hp) => `戦闘後 約${hp}`,
     fight: '戦う',
     cancel: 'やめる',
     youStrike: (damage) => `${damage} のダメージを与えた。`,
     enemyStrikes: (damage) => `反撃で ${damage} のダメージを受けた。`,
+    youMiss: '攻撃は外れた。',
+    enemyMisses: '敵の攻撃は外れた。',
+    miss: '外れ',
     skip: 'スキップ',
     shop: 'お店',
     price: (price) => `価格：${price}ゴールド`,
@@ -53,7 +57,7 @@ export const ja: Messages = {
     move: '1マス移動する。',
     interact: '人や宝箱、門、階段に向かって歩くと、話したり使ったりできる。',
     fight: (enter, esc) =>
-      `戦闘の前に、失うHPが正確に表示される。${enter}で戦い、${esc}でやめる。`,
+      `戦闘の前に、失うHPの平均が表示される。攻撃が外れると実際の値は変わる。${enter}で戦い、${esc}でやめる。`,
     menu: (esc) =>
       `${esc}でメニューを開く：勇者、持ち物、クエスト、メモを確認できる。`,
     autosave: '進行状況は自動で保存される。',
@@ -63,6 +67,7 @@ export const ja: Messages = {
     hp: 'HP',
     attack: '攻撃',
     defense: '防御',
+    agility: '敏捷',
     gold: 'ゴールド',
   },
   slotLabels: {
@@ -81,6 +86,7 @@ export const ja: Messages = {
     shortcut: '近道',
     sealed: '封鎖',
     victory: '勝利',
+    defeat: '敗北',
     purchased: '購入',
     traded: '取引',
     item: 'アイテム',
@@ -103,6 +109,8 @@ export const ja: Messages = {
       }`,
     victory: (hpLost, gold) =>
       `敵を倒した。失ったHP：${hpLost}。${gold > 0 ? `獲得ゴールド：${gold}。` : ''}`,
+    defeated:
+      '打ち負かされ、村で目を覚ました。失ったものはなく、敵はまだ立ちはだかっている。',
     purchased: (item, stat, amount) =>
       `${item}を装備した：${stat} +${amount}。`,
     soldOut: '売り切れだよ。うちの品はもう全部持っているね。',

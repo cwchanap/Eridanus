@@ -8,6 +8,7 @@ import type {
   GameState,
   InputCommand,
   PendingInteraction,
+  Rng,
   SessionState,
   SessionTransition,
 } from './types';
@@ -18,6 +19,7 @@ function resolvePending(
   game: GameState,
   pending: PendingInteraction,
   input: InputCommand,
+  rng: Rng,
 ): ActionResult | null {
   switch (pending.kind) {
     case 'combat': {
@@ -25,7 +27,7 @@ function resolvePending(
       const entity = findEntityById(pending.enemyId);
       if (!entity || entity.kind !== 'enemy')
         throw new Error('Pending combat enemy missing');
-      return resolveCombat(game, entity);
+      return resolveCombat(game, entity, rng);
     }
     case 'purchase':
       return input.kind === 'confirm'
@@ -44,13 +46,14 @@ function resolvePending(
 export function dispatchInput(
   session: SessionState,
   input: InputCommand,
+  rng: Rng,
 ): SessionTransition {
   if (session.pending) {
     if (input.kind === 'move')
       return { ok: false, session, reason: 'interaction-pending' };
     if (input.kind === 'cancel')
       return { ok: true, session: { ...session, pending: null }, effect: null };
-    const result = resolvePending(session.game, session.pending, input);
+    const result = resolvePending(session.game, session.pending, input, rng);
     if (!result) return { ok: true, session, effect: null };
     if (!result.ok) return { ok: false, session, reason: result.reason };
     return {

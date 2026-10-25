@@ -90,7 +90,7 @@ async function bootOnTile(
     {
       mapId,
       tile,
-      player: { hp: 30, attack: 10, defense: 2, gold: 0 },
+      player: { hp: 30, attack: 10, defense: 2, agility: 5, gold: 0 },
       openedRewardIds: [],
       defeatedEnemyIds: [],
       openedShortcutIds: [],

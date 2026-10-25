@@ -169,7 +169,7 @@ describe('saveGame/loadGame', () => {
       ...createInitialGameState(),
       mapId: 'floor1' as const,
       tile: tileOf('floor1-gatekeeper'),
-      player: { hp: 12, attack: 12, defense: 2, gold: 0 },
+      player: { hp: 12, attack: 12, defense: 2, agility: 5, gold: 0 },
       openedRewardIds: [
         'floor1-depth-sigil',
         'floor1-power-core',
@@ -394,7 +394,7 @@ describe('saveGame/loadGame', () => {
   it('round-trips gold and bought wares without a matching reward', () => {
     const state = {
       ...createInitialGameState(),
-      player: { hp: 30, attack: 11, defense: 2, gold: 3 },
+      player: { hp: 30, attack: 11, defense: 2, agility: 5, gold: 3 },
       itemIds: ['iron-sword', 'vitality-charm'],
     };
     saveGame(storage, state);
@@ -418,11 +418,11 @@ describe('saveGame/loadGame', () => {
     });
   });
 
-  it('rejects a save without gold', () => {
+  it.each(['gold', 'agility'])('rejects a save without %s', (stat) => {
     const player: Record<string, number> = {
       ...createInitialGameState().player,
     };
-    delete player['gold'];
+    delete player[stat];
     storage.setItem(
       'eridanus.save',
       JSON.stringify({ ...createInitialGameState(), player }),

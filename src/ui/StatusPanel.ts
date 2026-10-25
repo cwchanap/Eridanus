@@ -47,7 +47,7 @@ export function renderStatus(
 // The menu's hero tab: the same stats, larger, then the gear worn. The stats
 // here carry no data-stat, so the HUD's stay the only ones.
 export function renderHeroSheet(state: GameState, m: Messages): string {
-  const { hp, attack, defense, gold } = state.player;
+  const { hp, attack, defense, agility, gold } = state.player;
   const { statLabels: label } = m;
   const row = (tone: string, icon: string, name: string, value: number) =>
     `<li class="sheet-stat" data-tone="${tone}">${icon}<span class="sheet-label">${name}</span><span class="sheet-value">${value}</span></li>`;
@@ -58,6 +58,7 @@ export function renderHeroSheet(state: GameState, m: Messages): string {
         ${row('hp', ICONS.heart, label.hp, hp)}
         ${row('attack', ICONS.sword, label.attack, attack)}
         ${row('defense', ICONS.shield, label.defense, defense)}
+        ${row('agility', ICONS.bolt, label.agility, agility)}
         ${row('gold', ICONS.coin, label.gold, gold)}
       </ul>
     </div>

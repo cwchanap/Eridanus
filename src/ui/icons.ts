@@ -17,6 +17,7 @@ export const ICONS = {
     'icon-shield',
     '<path d="M12 2.4l7.8 2.8v6.1c0 5-3.3 9-7.8 10.8-4.5-1.8-7.8-5.8-7.8-10.8V5.2z"/><path class="icon-cut" d="M12 5.2v14.4c3.2-1.6 5.2-4.6 5.2-8.3V7.1z"/>',
   ),
+  bolt: icon('icon-bolt', '<path d="M13.6 2L5 13.4h5.4L9.4 22 19 9.8h-5.6z"/>'),
   relic: icon(
     'icon-relic',
     '<path d="M7 3.5h10l4.2 5.6L12 20.7 2.8 9.1z"/><path class="icon-cut" d="M2.8 9.1h18.4L12 20.7z"/>',

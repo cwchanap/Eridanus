@@ -30,13 +30,18 @@ export const en = {
     enemy: 'Enemy',
     // Combat encounter card
     combat: 'Combat',
-    hpLoss: (loss: number) => `HP loss: ${loss}`,
-    leavesYouAt: (hp: number) => `leaves you at ${hp}`,
+    hpLoss: (loss: number) => `HP loss: ~${loss}`,
+    hitChances: (you: number, it: number) => `You hit ${you}% · It hits ${it}%`,
+    leavesYouAt: (hp: number) => `leaves you at ~${hp}`,
     fight: 'Fight',
     cancel: 'Cancel',
     // Battle (the fight playing out)
     youStrike: (damage: number) => `You strike for ${damage}.`,
     enemyStrikes: (damage: number) => `It strikes back for ${damage}.`,
+    youMiss: 'You miss.',
+    enemyMisses: 'It misses.',
+    // Floats off whoever dodged a blow.
+    miss: 'Miss',
     skip: 'Skip',
     // Shop card
     shop: 'Shop',
@@ -69,7 +74,7 @@ export const en = {
     move: 'move one tile.',
     interact: 'Walk into people, chests, gates, and stairs to use them.',
     fight: (enter: string, esc: string) =>
-      `Fights show their exact HP cost first: ${enter} to fight, ${esc} to back off.`,
+      `Fights show their average HP cost first; misses make the real cost vary: ${enter} to fight, ${esc} to back off.`,
     menu: (esc: string) =>
       `${esc} opens the menu: your hero, items, quests and notes.`,
     autosave: 'Progress saves automatically.',
@@ -80,6 +85,7 @@ export const en = {
     hp: 'HP',
     attack: 'ATK',
     defense: 'DEF',
+    agility: 'AGI',
     gold: 'Gold',
   },
   // The menu's gear slots.
@@ -100,6 +106,7 @@ export const en = {
     shortcut: 'Shortcut',
     sealed: 'Sealed',
     victory: 'Victory',
+    defeat: 'Defeat',
     purchased: 'Purchased',
     traded: 'Traded',
     item: 'Item',
@@ -122,6 +129,8 @@ export const en = {
       }`,
     victory: (hpLost: number, gold: number) =>
       `Enemy defeated. HP lost: ${hpLost}.${gold > 0 ? ` Gold found: ${gold}.` : ''}`,
+    defeated:
+      'You are beaten back and wake in the village. Nothing is lost, and the enemy still stands.',
     purchased: (item: string, stat: string, amount: number) =>
       `Equipped ${item}: ${stat} +${amount}.`,
     soldOut: 'Sold out. You already own everything I make.',

@@ -14,6 +14,7 @@ import type {
   Direction,
   GameState,
   InputCommand,
+  Rng,
   SessionState,
   Tile,
 } from '../../src/game/types';
@@ -32,6 +33,22 @@ const OPPOSITE: Record<Direction, Direction> = {
   west: 'east',
 };
 const tileKey = (tile: Tile): string => `${tile.x},${tile.y}`;
+
+// Fights are random, so a journey fixes the rolls on both sides: a roll of
+// zero lands every blow, the most any fight can cost. The pure rules replay
+// it with `hits`; the page gets the same roll from `fixRolls`.
+const hits: Rng = () => 0;
+
+// Pins every roll the game rules make to `roll`, leaving Math.random alone
+// for everyone else: Phaser draws on it too, for texture keys, and breaks if
+// it never changes.
+export async function fixRolls(page: Page, roll: number): Promise<void> {
+  await page.addInitScript((value) => {
+    const random = Math.random;
+    Math.random = () =>
+      new Error().stack?.includes('/src/game/') ? value : random();
+  }, roll);
+}
 
 export async function savedGame(page: Page): Promise<unknown> {
   return page.evaluate(() =>
@@ -80,7 +97,7 @@ export class Journey {
     command: InputCommand,
     key: string,
   ): Promise<ActionEffect | null> {
-    const result = dispatchInput(this.session, command);
+    const result = dispatchInput(this.session, command, hits);
     if (!result.ok)
       throw new Error(
         `${this.game.mapId} ${tileKey(this.game.tile)}: ${key} refused (${result.reason})`,
@@ -213,7 +230,7 @@ export class Journey {
     if (prompt.kind !== 'combatPrompt') return;
     await this.check(async (page) => {
       await expect(page.getByTestId('combat-hp-loss')).toHaveText(
-        `HP loss: ${prompt.preview.hpLoss}`,
+        `HP loss: ~${prompt.preview.hpLoss}`,
       );
     });
   }
@@ -255,7 +272,7 @@ export class Journey {
       await this.input(command, key);
       return;
     }
-    const result = dispatchInput(this.session, command);
+    const result = dispatchInput(this.session, command, hits);
     if (!result.ok) throw new Error(`${button}: ${result.reason}`);
     this.session = result.session;
     await this.page?.getByRole('button', { name: button }).click();
@@ -332,6 +349,7 @@ export function journeyChapters(
     if (chapter.replayOnly) return;
     test(`${name}: ${chapter.title}`, async ({ page }) => {
       test.setTimeout(240_000);
+      await fixRolls(page, 0);
       const journey = new Journey();
       for (const earlier of chapters.slice(0, index))
         await earlier.run(journey);

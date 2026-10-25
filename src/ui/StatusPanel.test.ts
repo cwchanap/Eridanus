@@ -18,7 +18,7 @@ describe('renderStatus', () => {
     const html = renderStatus(
       {
         ...createInitialGameState(),
-        player: { hp: 22, attack: 12, defense: 4, gold: 17 },
+        player: { hp: 22, attack: 12, defense: 4, agility: 5, gold: 17 },
       },
       m,
     );
@@ -49,13 +49,16 @@ describe('renderHeroSheet', () => {
     const html = renderHeroSheet(
       {
         ...createInitialGameState(),
-        player: { hp: 22, attack: 12, defense: 4, gold: 17 },
+        player: { hp: 22, attack: 12, defense: 4, agility: 5, gold: 17 },
         itemIds: ['tower-depth-sigil'],
       },
       m,
     );
     expect(html).toContain('<span class="sheet-value">22</span>');
     expect(html).toContain('<span class="sheet-value">17</span>');
+    expect(html).toContain(
+      `<span class="sheet-label">AGI</span><span class="sheet-value">5</span>`,
+    );
     expect(html).toContain('data-testid="equipment"');
     // Carried items belong to the items tab.
     expect(html).not.toContain('data-item=');
