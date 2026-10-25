@@ -129,6 +129,12 @@ body {
   pointer-events: none;
 }
 
+/* Groups the HUD panels so an open menu can make them inert; they stay
+   #ui's grid items. */
+.hud-layer {
+  display: contents;
+}
+
 .hud-left {
   grid-area: left;
   align-self: start;
