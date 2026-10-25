@@ -321,7 +321,13 @@ export class InteractionOverlay {
   }
 
   private handleKey(event: KeyboardEvent): void {
-    if (this.menuOpen) event.stopPropagation();
+    // Enter on a focused HUD button (Tab reaches the Menu button) presses
+    // that button; the scene would otherwise take it as Fight or Buy.
+    const onButton =
+      event.target instanceof HTMLButtonElement &&
+      this.root.contains(event.target);
+    if (this.menuOpen || (onButton && event.key === 'Enter'))
+      event.stopPropagation();
     if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.key.toLowerCase() === 'm') this.toggleSound();
     if (!this.menuOpen) return;
