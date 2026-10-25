@@ -3,6 +3,7 @@ import type { LeadId } from '../game/journal';
 import type {
   BlockedReason,
   DialogueLineId,
+  EquipSlot,
   MapId,
   NpcId,
   Stat,
@@ -16,9 +17,8 @@ export const en = {
     // Status panel
     playerStatus: 'Player status',
     hero: 'Hero',
-    items: 'Items',
-    noItems: 'Nothing found yet.',
-    equipped: 'Equipped',
+    equipment: 'Equipment',
+    slotEmpty: 'Empty',
     keyItems: 'Key items',
     // Location banner and message box
     location: 'Location',
@@ -78,6 +78,12 @@ export const en = {
     defense: 'DEF',
     gold: 'Gold',
   },
+  // The menu's gear slots.
+  slotLabels: {
+    weapon: 'Weapon',
+    armor: 'Armor',
+    accessory: 'Accessory',
+  } satisfies Record<EquipSlot, string>,
   statNames: {
     attack: 'Attack',
     defense: 'Defense',
@@ -112,7 +118,7 @@ export const en = {
     victory: (hpLost: number, gold: number) =>
       `Enemy defeated. HP lost: ${hpLost}.${gold > 0 ? ` Gold found: ${gold}.` : ''}`,
     purchased: (item: string, stat: string, amount: number) =>
-      `${item}: ${stat} increased by ${amount}.`,
+      `Equipped ${item}: ${stat} +${amount}.`,
     soldOut: 'Sold out. You already own everything I make.',
     obtained: (item: string) => `Obtained ${item}.`,
   },

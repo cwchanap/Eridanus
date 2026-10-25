@@ -1,5 +1,13 @@
+import { equippedWares } from './equipment';
 import { addItem } from './progress';
-import type { ActionResult, GameState, ShopEntity, ShopWare } from './types';
+import type {
+  ActionResult,
+  GameState,
+  PlayerStats,
+  ShopEntity,
+  ShopWare,
+  Stat,
+} from './types';
 
 // Wares sell in authored order, so the counter always offers the cheapest
 // step up the shop has left.
@@ -10,6 +18,12 @@ export function nextWare(
   return shop.wares.find((ware) => !state.itemIds.includes(ware.itemId));
 }
 
+function withStat(player: PlayerStats, stat: Stat, delta: number): PlayerStats {
+  return { ...player, [stat]: player[stat] + delta };
+}
+
+// Buying equips the ware: the bonus of the ware worn in its slot comes off
+// and the new one goes on.
 export function resolvePurchase(
   state: GameState,
   ware: ShopWare,
@@ -18,11 +32,13 @@ export function resolvePurchase(
     return { ok: true, state, effect: { kind: 'purchased', ware } };
   if (state.player.gold < ware.price)
     return { ok: false, reason: 'not-enough-gold' };
-  const player = {
-    ...state.player,
-    gold: state.player.gold - ware.price,
-    [ware.stat]: state.player[ware.stat] + ware.amount,
-  };
+  const worn = equippedWares(state.itemIds)[ware.slot];
+  const paid = { ...state.player, gold: state.player.gold - ware.price };
+  const player = withStat(
+    worn ? withStat(paid, worn.stat, -worn.amount) : paid,
+    ware.stat,
+    ware.amount,
+  );
   return {
     ok: true,
     state: addItem({ ...state, player }, ware.itemId),

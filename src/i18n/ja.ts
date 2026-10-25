@@ -7,9 +7,8 @@ export const ja: Messages = {
   ui: {
     playerStatus: 'ステータス',
     hero: '勇者',
-    items: '持ち物',
-    noItems: 'まだ何も見つけていない。',
-    equipped: '装備中',
+    equipment: '装備',
+    slotEmpty: 'なし',
     keyItems: 'だいじなもの',
     location: '現在地',
     messages: 'メッセージ',
@@ -62,6 +61,11 @@ export const ja: Messages = {
     defense: '防御',
     gold: 'ゴールド',
   },
+  slotLabels: {
+    weapon: '武器',
+    armor: '防具',
+    accessory: 'アクセサリー',
+  },
   statNames: {
     attack: '攻撃力',
     defense: '防御力',
@@ -94,7 +98,8 @@ export const ja: Messages = {
       }`,
     victory: (hpLost, gold) =>
       `敵を倒した。失ったHP：${hpLost}。${gold > 0 ? `獲得ゴールド：${gold}。` : ''}`,
-    purchased: (item, stat, amount) => `${item}：${stat}が${amount}上がった。`,
+    purchased: (item, stat, amount) =>
+      `${item}を装備した：${stat} +${amount}。`,
     soldOut: '売り切れだよ。うちの品はもう全部持っているね。',
     obtained: (item) => `${item}を手に入れた。`,
   },

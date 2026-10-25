@@ -7,9 +7,8 @@ export const zhHant: Messages = {
   ui: {
     playerStatus: '玩家狀態',
     hero: '勇者',
-    items: '道具',
-    noItems: '目前還沒有找到任何東西。',
-    equipped: '裝備中',
+    equipment: '裝備',
+    slotEmpty: '無',
     keyItems: '重要道具',
     location: '所在位置',
     messages: '訊息',
@@ -60,6 +59,11 @@ export const zhHant: Messages = {
     defense: '防禦',
     gold: '金幣',
   },
+  slotLabels: {
+    weapon: '武器',
+    armor: '防具',
+    accessory: '飾品',
+  },
   statNames: {
     attack: '攻擊力',
     defense: '防禦力',
@@ -92,7 +96,7 @@ export const zhHant: Messages = {
       }`,
     victory: (hpLost, gold) =>
       `敵人已被擊敗。損失 HP：${hpLost}。${gold > 0 ? `獲得金幣：${gold}。` : ''}`,
-    purchased: (item, stat, amount) => `${item}：${stat}提升了 ${amount}。`,
+    purchased: (item, stat, amount) => `已裝備${item}：${stat} +${amount}。`,
     soldOut: '賣完了。我做的東西你全都買走啦。',
     obtained: (item) => `獲得了${item}。`,
   },

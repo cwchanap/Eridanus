@@ -415,10 +415,6 @@ kbd {
   filter: none;
 }
 
-.item-group + .item-group {
-  margin-top: 14px;
-}
-
 .how-to-play {
   border-color: rgba(116, 217, 234, 0.4);
 }
@@ -1010,6 +1006,31 @@ kbd {
   margin-left: auto;
   font-size: 12px;
   color: var(--text-dim);
+}
+
+/* One row per gear slot: the slot's name in a fixed column so the wares
+   line up, a bare slot dimmed. */
+.slot-label {
+  flex: 0 0 82px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.slot-name {
+  min-width: 0;
+}
+
+.equipment li[data-empty] {
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.equipment li[data-empty] .icon {
+  color: var(--text-dim);
+  filter: none;
+  opacity: 0.5;
 }
 
 .journal-group {
