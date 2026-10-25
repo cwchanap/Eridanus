@@ -248,11 +248,13 @@ function renderPurchase(
   const short = state.player.gold < ware.price;
   // A ware replaces the one worn in its slot, so show the step up.
   const worn = equippedWares(state.itemIds)[ware.slot];
-  const from = worn?.stat === ware.stat ? `+${worn.amount} → ` : '';
+  const before = worn?.stat === ware.stat ? worn.amount : undefined;
+  const from = before === undefined ? '' : `+${before} → `;
+  const bonusAttrs = `${before === undefined ? '' : ` data-before="${before}"`} data-after="${ware.amount}"`;
   return `<section class="encounter" data-kind="shop" data-testid="purchase-prompt" aria-label="${m.ui.shop}">
     ${renderPortrait(entityAsset(shop, state), 'npc')}
     <div class="encounter-info">
-      <div class="encounter-head"><span class="message-tag">${pick(m.shops, pending.shopId, m.ui.shop)}</span><p class="encounter-stats"><span>${pick(m.items, ware.itemId)}</span><span>${m.statLabels[ware.stat]} ${from}+${ware.amount}</span></p></div>
+      <div class="encounter-head"><span class="message-tag">${pick(m.shops, pending.shopId, m.ui.shop)}</span><p class="encounter-stats"><span>${pick(m.items, ware.itemId)}</span><span data-testid="purchase-bonus"${bonusAttrs}>${m.statLabels[ware.stat]} ${from}+${ware.amount}</span></p></div>
       <p class="encounter-cost"><span data-testid="purchase-price">${m.ui.price(ware.price)}</span> <span class="encounter-after">${
         short
           ? m.ui.youHave(state.player.gold)

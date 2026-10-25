@@ -97,9 +97,9 @@ test('a better ware replaces the one worn in its slot', async ({ page }) => {
   await page.keyboard.press('Escape');
 
   await press(page, 'ArrowDown');
-  await expect(page.getByTestId('purchase-prompt')).toContainText(
-    'ATK +1 → +3',
-  );
+  const bonus = page.getByTestId('purchase-bonus');
+  await expect(bonus).toHaveAttribute('data-before', '1');
+  await expect(bonus).toHaveAttribute('data-after', '3');
   await buy.click();
   await expect(weapon).toHaveAttribute('data-item', 'steel-sword');
   await expect(page.locator('[data-item="iron-sword"]')).toHaveCount(0);
