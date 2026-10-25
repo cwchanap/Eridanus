@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import type { MapId } from '../../src/game/types';
+import { findEntityById } from '../../src/game/content';
+import type { MapId, Tile } from '../../src/game/types';
 import { TILE_SIZE } from '../../src/phaser/assets';
 import {
   cameraCentre,
@@ -105,6 +106,17 @@ async function bootOnTile(
   );
 }
 
+// Where a stair sets the hero down: each floor's arrival hugs the map's
+// edge, where the camera still holds the hero clear of the panels.
+function arrival(portalId: string): Tile {
+  const portal = findEntityById(portalId);
+  if (portal?.kind !== 'portal') throw new Error(`${portalId} is not a stair`);
+  return portal.target.tile;
+}
+
+const FLOOR2_ARRIVAL = arrival('floor1-front-to-floor2');
+const FLOOR3_ARRIVAL = arrival('floor2-depth-to-floor3');
+
 // The camera holds the hero between the top panels and the message log, so
 // their cell must clear every floating panel. The hero's tile projects
 // through the same pure camera math WorldScene uses, against the real
@@ -166,9 +178,9 @@ for (const view of [
 ]) {
   for (const [mapId, tile] of [
     ['village', { x: 8, y: 1 }],
-    ['floor2', { x: 8, y: 11 }],
-    ['floor3', { x: 10, y: 13 }],
-    ['floor5', { x: 12, y: 1 }],
+    ['floor2', FLOOR2_ARRIVAL],
+    ['floor3', FLOOR3_ARRIVAL],
+    ['floor5', arrival('floor4-to-floor5')],
   ] as const) {
     test(`keeps the hero clear of the HUD on ${mapId} at ${view.width}x${view.height}`, async ({
       page,
@@ -190,7 +202,7 @@ for (const view of [
     page,
   }) => {
     await page.setViewportSize(view);
-    await bootOnTile(page, 'floor2', { x: 8, y: 11 }, [
+    await bootOnTile(page, 'floor2', FLOOR2_ARRIVAL, [
       'village-tower-stairs-used',
       'floor1-route-mark-seen',
       'floor1-treasury-sealed',
@@ -202,7 +214,7 @@ for (const view of [
       'data-open',
       'true',
     );
-    await expectHeroClearOfHud(page, view, { x: 8, y: 11 });
+    await expectHeroClearOfHud(page, view, FLOOR2_ARRIVAL);
   });
 }
 
@@ -218,13 +230,13 @@ test.describe('at a fractional device pixel ratio', () => {
   }) => {
     const view = { width: 1024, height: 700 };
     await page.setViewportSize(view);
-    await bootOnTile(page, 'floor3', { x: 10, y: 13 });
+    await bootOnTile(page, 'floor3', FLOOR3_ARRIVAL);
 
     const metrics = await canvasMetrics(page);
     if (!metrics) throw new Error('canvas is not on screen');
     expect(metrics.ratio).toBeCloseTo(1.1, 4);
     expect(metrics.width).toBe(Math.round(view.width * metrics.ratio));
 
-    await expectHeroClearOfHud(page, view, { x: 10, y: 13 });
+    await expectHeroClearOfHud(page, view, FLOOR3_ARRIVAL);
   });
 });

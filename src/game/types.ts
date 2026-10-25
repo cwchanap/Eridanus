@@ -84,14 +84,19 @@ export type EnemyEntity = BaseEntity &
     gold: number;
   }>;
 // A latch opens from its rearSide, which only another floor reaches, or,
-// when guarded, from either side once every guard is defeated. A guarded
-// latch may also keep a rearSide, opening from there regardless of guards.
+// when guarded, from either side once every guard is defeated. A wired
+// latch opens from either side while all its levers are thrown at once.
 export type LatchEntity = BaseEntity &
   Readonly<{ kind: 'latch' }> &
   (
     | Readonly<{ rearSide: Direction }>
-    | Readonly<{ guardIds: readonly string[]; rearSide?: Direction }>
+    | Readonly<{ guardIds: readonly string[] }>
+    | Readonly<{ leverIds: readonly string[] }>
   );
+// Each pull flips a lever between thrown and not, along with every lever
+// wired to it through links. A thrown lever's id sits in openedShortcutIds.
+export type LeverEntity = BaseEntity &
+  Readonly<{ kind: 'lever'; links?: readonly string[] }>;
 export type RecoveryEntity = BaseEntity & Readonly<{ kind: 'recovery' }>;
 // A maze entrance whose maze is not built yet: bumping it shows its notice
 // and records nothing.
@@ -131,6 +136,7 @@ export type Entity =
   | RewardEntity
   | EnemyEntity
   | LatchEntity
+  | LeverEntity
   | RecoveryEntity
   | NpcEntity
   | PortalEntity
@@ -196,6 +202,8 @@ export type ActionEffect =
   | { kind: 'healed'; hp: number }
   | { kind: 'latchOpened'; id: string }
   | { kind: 'latchGuarded'; id: string; remaining: number }
+  | { kind: 'latchWired'; id: string; thrown: number; total: number }
+  | { kind: 'leverPulled'; id: string; thrown: boolean; linked: number }
   | { kind: 'combatPrompt'; enemyId: string; preview: WinnableCombatPreview }
   | { kind: 'enemyDefeated'; enemyId: string; hpLost: number; gold: number }
   | { kind: 'purchasePrompt'; shopId: string; ware: ShopWare }

@@ -86,6 +86,7 @@ export const en = {
     victory: 'Victory',
     purchased: 'Purchased',
     item: 'Item',
+    lever: 'Lever',
   },
   effects: {
     statUp: (stat: string, amount: number) => `${stat} increased by ${amount}.`,
@@ -93,6 +94,16 @@ export const en = {
     latchOpened: 'The latch opens. The shortcut is now usable from both sides.',
     latchGuarded: (remaining: number) =>
       `Guards hold this latch shut. Defeat ${remaining} more to open it.`,
+    latchWired: (thrown: number, total: number) =>
+      `Wired to ${total} levers, this hatch opens only while every one is thrown. ${thrown} of ${total} are thrown now.`,
+    leverPulled: (thrown: boolean, linked: number) =>
+      `${thrown ? 'You throw the lever down.' : 'You push the lever back up.'}${
+        linked === 0
+          ? ''
+          : linked === 1
+            ? ' Another lever swings with it.'
+            : ` ${linked} other levers swing with it.`
+      }`,
     victory: (hpLost: number, gold: number) =>
       `Enemy defeated. HP lost: ${hpLost}.${gold > 0 ? ` Gold found: ${gold}.` : ''}`,
     purchased: (item: string, stat: string, amount: number) =>
@@ -174,37 +185,43 @@ export const en = {
     'village-crypt-lane': 'Crypt Lane',
     'village-barrow-path': 'Barrow Path',
     'floor1-entry-court': 'Entry Court',
-    'floor1-lower-loop': 'Lower Loop',
+    'floor1-west-passages': 'West Passages',
     'floor1-upper-gallery': 'Upper Gallery',
+    'floor1-sigil-vault': 'Sigil Vault',
     'floor1-rear-wing': 'Rear Wing',
     'floor1-workshop-treasury': 'Workshop Treasury',
     'floor2-front-landing': 'Front Landing',
+    'floor2-service-corridor': 'Service Corridor',
+    'floor2-reading-room': 'Sealed Reading Room',
+    'floor2-reading-room-loft': 'Reading Room Loft',
+    'floor2-east-service': 'East Service Wing',
     'floor2-central-hall': 'Central Hall',
     'floor2-west-archive': 'West Archive',
-    'floor2-east-service': 'East Service Wing',
-    'floor2-rear-gallery': 'Rear Gallery',
-    'floor3-entry-vestibule': 'Entry Vestibule',
-    'floor3-twin-galleries': 'Twin Galleries',
-    'floor3-keeper-archive': 'Keeper Archive',
+    'floor3-spine': 'The Spine',
+    'floor3-north-passage': 'North Passage',
     'floor3-hidden-vault': 'Hidden Vault',
-    'floor3-heart-approach': 'Heart Approach',
-    'floor3-heart-stair': 'Heart Stair',
+    'floor3-heart': 'Heart Approach',
+    'floor3-keeper-archive': 'Keeper Archive',
+    'floor3-galleries': 'South Galleries',
+    'floor3-undercroft': 'The Undercroft',
+    'floor3-west-crypt-walk': 'West Crypt Walk',
+    'floor3-east-crypt-walk': 'East Crypt Walk',
     'floor4-stair-landing': 'Stair Landing',
-    'floor4-lower-hall': 'Lower Hall',
     'floor4-west-works': 'West Works',
     'floor4-east-works': 'East Works',
-    'floor4-west-store': 'West Store',
-    'floor4-east-store': 'East Store',
-    'floor4-upper-gallery': 'Upper Gallery',
     'floor4-forge': 'Forge',
-    'floor4-forge-cellar': 'Forge Cellar',
+    'floor4-casting-gallery': 'Casting Gallery',
+    'floor4-slag-cellar': 'Slag Cellar',
+    'floor4-west-flues': 'West Flues',
+    'floor4-east-flues': 'East Flues',
     'floor5-landing': 'Lower Landing',
-    'floor5-outer-ring': 'Outer Ring',
-    'floor5-middle-ring': 'Middle Ring',
+    'floor5-west-ring': 'West Ring',
+    'floor5-north-ring': 'North Ring',
+    'floor5-east-ring': 'East Ring',
+    'floor5-south-ring': 'South Ring',
     'floor5-inner-ring': 'Inner Ring',
-    'floor5-west-vault': 'West Vault',
-    'floor5-east-vault': 'East Vault',
-    'floor5-heart-chamber': 'Heart Chamber',
+    'floor5-sanctum': 'Sanctum',
+    'floor5-old-shaft': 'Old Shaft',
   },
   npcs: {
     'village-warden': 'Warden',
@@ -237,20 +254,48 @@ export const en = {
     'tower-restoration-core': 'Restoration Core',
   },
   clues: {
-    'floor1-route-mark':
-      'Route scratches point toward a connection that returns from below.',
     'floor1-treasury-overlook':
       'The arch facing the visible treasury is bricked from this side.',
+    'floor1-route-mark':
+      'Route scratches point toward a connection that returns from below.',
+    'floor1-gallery-tally':
+      'Tally marks cover the wall, and under them: "Day nine. The wardens no longer let us pass. Whoever finds the Tower Sigil, take it down: the lower stair still knows its shape."',
+    'floor1-rear-note':
+      'A note wedged in the stone: "The power core is still warm. Carry it below: the sentry who holds the archive releases cannot stand against it."',
     'floor2-paired-release-ledger':
       'A keeper\'s ledger lies open: "The hall releases are paired. Both answer to the sentry posted in the service wing — while it stands, neither gate yields."',
-    'floor3-heart-lockdown-record':
-      'The keeper etched one final warning: the guardian lattice is still defending an isolation state two floors down, at the true heart. Break the stalled guardian, recover the Restoration Core, and return it to the village before the tower flow fails completely.',
+    'floor2-hall-notice':
+      'A notice nailed to the shelf: "By keeper order, the descent seal stays shut until the subject who went below comes back up."',
+    'floor2-index-card':
+      'A torn index card: "Treasury stair, last aisle. The brute posted there answers to no keeper."',
+    'floor2-reading-room-glimpse':
+      'Through a gap at the foot of the shelving you glimpse a lamplit reading room below. There is no door on this side. A keeper\'s scrawl: "The old shaft climbs to it from the heart of the tower."',
+    'floor2-reading-room-index':
+      'The reading room\'s index lists one shelf only: "Keeper arms, held back for whoever climbs the old shaft from the heart."',
+    'floor3-vault-route-mark':
+      'The old route scratches repeat here, but one mark turns back toward the west wall instead of the tower heart.',
+    'floor3-crypt-crack':
+      'Through a crack in the wall lies a crypt sealed on every side. A stair climbs out of it at the far end, but no door opens onto this floor.',
     'floor3-keeper-final-record':
       'Final keeper record: the paired releases isolated a guardian control fault. The isolation held, but nobody returned to clear it; the same tower flow continued feeding the village until the core began to fail.',
-    'floor3-vault-route-mark':
-      'The old route scratches repeat here, but one mark turns back toward the northwest wall instead of the tower heart.',
+    'floor3-hatch-diagram':
+      'A wiring diagram is pinned to the shelf: the heart hatch hangs on three levers, at the foot of the west spur, at the foot of the last gallery, and at the crown of this archive. It opens only while all three are down.',
+    'floor3-heart-lockdown-record':
+      'The keeper etched one final warning: the guardian lattice is still defending an isolation state two floors down, at the true heart. Break the stalled guardian, recover the Restoration Core, and return it to the village before the tower flow fails completely.',
+    'floor3-shaft-record':
+      'Carved into the niche: "The keepers\' shaft runs from the heart to the reading room. We sealed every door but the hatches at its ends."',
     'floor4-landing-scratches':
-      'Scratched beside the stair: "The heart lies one floor down. Every way through the foundry answers to a blade."',
+      'Scratched beside the stair: "The heart lies one floor down. The forge warden holds the shaft to the casting gate. Nobody gets past him without the steel the two foremen guard, one in each works."',
+    'floor4-linkage-note':
+      'A fitter\'s note: "The four casting-gate levers share one old linkage. Throw one and its neighbours jump with it. The gate only opens while all four are down."',
+    'floor4-cellar-crack':
+      'Through a crack in the flue wall you see the slag cellar: a spiral sealed on every side, with a stair at its heart. Nothing on this floor opens into it.',
+    'floor4-foundry-ledger':
+      'A foundry ledger: "The old vault stair runs up from the west store. Keep that store guarded."',
+    'floor4-shaft-scrawl':
+      "A keeper's scrawl on the flue wall: the old shaft climbs from a hatch in Floor 5's west vault, held by the two vault keepers, through this cellar and the crypt above, to the reading room on Floor 2.",
+    'floor5-seal-inscription':
+      'Scratched beside the stair: "Three wardens keep the sanctum seal, west, south and east. While any of them stands, the heart stays closed."',
     'floor5-lattice-record':
       'The guardian lattice still hums with the old isolation order. Behind it, the Restoration Core waits above a dead lift shaft.',
   },

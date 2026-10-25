@@ -91,12 +91,18 @@ export function interactWithEntity(
           state,
           effect: { kind: 'latchOpened', id: entity.id },
         };
-      const fromRear =
-        entity.rearSide !== undefined &&
-        directionFromTo(entity.tile, fromTile) === entity.rearSide;
-      if (!fromRear) {
-        if (!('guardIds' in entity))
-          return { ok: false, reason: 'latch-closed-front' };
+      if ('leverIds' in entity) {
+        const total = entity.leverIds.length;
+        const thrown = entity.leverIds.filter((id) =>
+          state.openedShortcutIds.includes(id),
+        ).length;
+        if (thrown < total)
+          return {
+            ok: true,
+            state,
+            effect: { kind: 'latchWired', id: entity.id, thrown, total },
+          };
+      } else if ('guardIds' in entity) {
         const remaining = entity.guardIds.filter(
           (id) => !state.defeatedEnemyIds.includes(id),
         ).length;
@@ -106,6 +112,8 @@ export function interactWithEntity(
             state,
             effect: { kind: 'latchGuarded', id: entity.id, remaining },
           };
+      } else if (directionFromTo(entity.tile, fromTile) !== entity.rearSide) {
+        return { ok: false, reason: 'latch-closed-front' };
       }
       return {
         ok: true,
@@ -114,6 +122,24 @@ export function interactWithEntity(
           openedShortcutIds: [...state.openedShortcutIds, entity.id],
         },
         effect: { kind: 'latchOpened', id: entity.id },
+      };
+    }
+    case 'lever': {
+      const flipped = [entity.id, ...(entity.links ?? [])];
+      const before = state.openedShortcutIds;
+      const openedShortcutIds = [
+        ...before.filter((id) => !flipped.includes(id)),
+        ...flipped.filter((id) => !before.includes(id)),
+      ];
+      return {
+        ok: true,
+        state: { ...state, openedShortcutIds },
+        effect: {
+          kind: 'leverPulled',
+          id: entity.id,
+          thrown: openedShortcutIds.includes(entity.id),
+          linked: flipped.length - 1,
+        },
       };
     }
     case 'enemy': {

@@ -69,6 +69,7 @@ export const zhHant: Messages = {
     victory: '勝利',
     purchased: '已購買',
     item: '道具',
+    lever: '拉桿',
   },
   effects: {
     statUp: (stat, amount) => `${stat}提升了 ${amount}。`,
@@ -76,6 +77,16 @@ export const zhHant: Messages = {
     latchOpened: '門閂打開了。這條捷徑現在可以從兩側通行。',
     latchGuarded: (remaining) =>
       `守衛把這道門閂鎖得死死的。再擊敗 ${remaining} 名守衛才能打開。`,
+    latchWired: (thrown, total) =>
+      `這道活門連著 ${total} 根拉桿，只有全部拉下時才會打開。目前已拉下 ${thrown}／${total} 根。`,
+    leverPulled: (thrown, linked) =>
+      `${thrown ? '你把拉桿拉了下來。' : '你把拉桿推了回去。'}${
+        linked === 0
+          ? ''
+          : linked === 1
+            ? '另一根拉桿也跟著動了。'
+            : `另外 ${linked} 根拉桿也跟著動了。`
+      }`,
     victory: (hpLost, gold) =>
       `敵人已被擊敗。損失 HP：${hpLost}。${gold > 0 ? `獲得金幣：${gold}。` : ''}`,
     purchased: (item, stat, amount) => `${item}：${stat}提升了 ${amount}。`,
@@ -146,37 +157,43 @@ export const zhHant: Messages = {
     'village-crypt-lane': '墓窖巷',
     'village-barrow-path': '古墓小徑',
     'floor1-entry-court': '入口中庭',
-    'floor1-lower-loop': '下層環道',
+    'floor1-west-passages': '西側通道',
     'floor1-upper-gallery': '上層長廊',
+    'floor1-sigil-vault': '徽記金庫',
     'floor1-rear-wing': '後棟',
     'floor1-workshop-treasury': '工坊寶庫',
     'floor2-front-landing': '前方平台',
+    'floor2-service-corridor': '雜務通道',
+    'floor2-reading-room': '封閉的閱覽室',
+    'floor2-reading-room-loft': '閱覽室閣樓',
+    'floor2-east-service': '東側雜務棟',
     'floor2-central-hall': '中央大廳',
     'floor2-west-archive': '西側檔案室',
-    'floor2-east-service': '東側雜務棟',
-    'floor2-rear-gallery': '後方長廊',
-    'floor3-entry-vestibule': '入口前廳',
-    'floor3-twin-galleries': '雙子長廊',
-    'floor3-keeper-archive': '守塔人檔案室',
+    'floor3-spine': '脊廊',
+    'floor3-north-passage': '北側通道',
     'floor3-hidden-vault': '隱藏金庫',
-    'floor3-heart-approach': '塔心前廊',
-    'floor3-heart-stair': '塔心階梯',
+    'floor3-heart': '塔心前廊',
+    'floor3-keeper-archive': '守塔人檔案室',
+    'floor3-galleries': '南側長廊',
+    'floor3-undercroft': '地下墓室',
+    'floor3-west-crypt-walk': '西側墓道',
+    'floor3-east-crypt-walk': '東側墓道',
     'floor4-stair-landing': '階梯平台',
-    'floor4-lower-hall': '下層大廳',
     'floor4-west-works': '西側作業區',
     'floor4-east-works': '東側作業區',
-    'floor4-west-store': '西側倉庫',
-    'floor4-east-store': '東側倉庫',
-    'floor4-upper-gallery': '上層長廊',
     'floor4-forge': '鍛造爐',
-    'floor4-forge-cellar': '鍛造地窖',
+    'floor4-casting-gallery': '鑄造長廊',
+    'floor4-slag-cellar': '熔渣地窖',
+    'floor4-west-flues': '西側煙道',
+    'floor4-east-flues': '東側煙道',
     'floor5-landing': '下方平台',
-    'floor5-outer-ring': '外環',
-    'floor5-middle-ring': '中環',
+    'floor5-west-ring': '西環',
+    'floor5-north-ring': '北環',
+    'floor5-east-ring': '東環',
+    'floor5-south-ring': '南環',
     'floor5-inner-ring': '內環',
-    'floor5-west-vault': '西側金庫',
-    'floor5-east-vault': '東側金庫',
-    'floor5-heart-chamber': '塔心室',
+    'floor5-sanctum': '聖所',
+    'floor5-old-shaft': '舊豎井',
   },
   npcs: {
     'village-warden': '守望長',
@@ -209,19 +226,47 @@ export const zhHant: Messages = {
     'tower-restoration-core': '修復核心',
   },
   clues: {
-    'floor1-route-mark': '刮痕指向一條從下方回返的通道。',
     'floor1-treasury-overlook':
       '正對著那座看得見的寶庫的拱門，從這一側被磚封住了。',
+    'floor1-route-mark': '刮痕指向一條從下方回返的通道。',
+    'floor1-gallery-tally':
+      '牆上滿是計日的刻痕，下方寫著：「第九天。看守們再也不讓我們通過了。誰找到塔之徽記，就把它帶下去：下層的階梯還認得它的形狀。」',
+    'floor1-rear-note':
+      '石縫裡塞著一張紙條：「動力核心還是溫的。把它帶下去：守著檔案室機關的哨兵擋不住它。」',
     'floor2-paired-release-ledger':
       '一本攤開的守塔人記錄冊寫道：「大廳的兩道機關是成對的。兩者都聽命於駐守在雜務棟的哨兵——只要它還站著，兩道門都不會鬆動。」',
-    'floor3-heart-lockdown-record':
-      '守塔人刻下了最後的警告：守護格網仍在守衛著兩層樓之下、真正塔心裡的隔離狀態。擊破停擺的守護者，取回修復核心，並在塔的能流徹底衰竭之前把它送回村莊。',
+    'floor2-hall-notice':
+      '書架上釘著一張告示：「奉守塔人之命，在下去的那個人回來之前，通往下層的封印一律保持關閉。」',
+    'floor2-index-card':
+      '一張撕破的索引卡：「寶庫階梯，最後一條走道。駐守那裡的蠻兵不聽任何守塔人的命令。」',
+    'floor2-reading-room-glimpse':
+      '從書架底部的縫隙往下望，可以瞥見一間點著燈的閱覽室。這一側沒有門。守塔人潦草寫著：「舊豎井從塔心一路通到那裡。」',
+    'floor2-reading-room-index':
+      '閱覽室的目錄只列了一個書架：「守塔人的武具，留給從塔心爬上舊豎井的人。」',
+    'floor3-vault-route-mark':
+      '古老的路線刮痕在這裡重複出現，但有一道刻痕轉向西側的牆，而不是通往塔心。',
+    'floor3-crypt-crack':
+      '牆上的裂縫後方，是一座四面封死的墓室。遠端有一道階梯通往上方，但沒有任何門通往這一層。',
     'floor3-keeper-final-record':
       '守塔人最終記錄：成對的機關隔離了一次守護者控制故障。隔離維持住了，卻沒有人回來解除；塔的能流依舊持續供應村莊，直到核心開始衰竭。',
-    'floor3-vault-route-mark':
-      '古老的路線刮痕在這裡重複出現，但有一道刻痕轉向西北側的牆，而不是通往塔心。',
+    'floor3-hatch-diagram':
+      '書架上釘著一張線路圖：塔心的活門連著三根拉桿，分別在西側支道的盡頭、最後一條長廊的盡頭，以及這座檔案室的頂端。只有三根全部拉下時，活門才會打開。',
+    'floor3-heart-lockdown-record':
+      '守塔人刻下了最後的警告：守護格網仍在守衛著兩層樓之下、真正塔心裡的隔離狀態。擊破停擺的守護者，取回修復核心，並在塔的能流徹底衰竭之前把它送回村莊。',
+    'floor3-shaft-record':
+      '壁龕上刻著：「守塔人的豎井從塔心通往閱覽室。除了兩端的活門，我們封死了每一扇門。」',
     'floor4-landing-scratches':
-      '階梯旁有刻痕：「塔心就在下一層。穿過鑄造場的每一條路，都要用刀劍來回答。」',
+      '階梯旁有刻痕：「塔心就在下一層。鍛造爐的看守把守著通往鑄造門的豎井。兩名工頭各在一處作業區守著鋼材，沒有那些鋼，誰也過不了他那一關。」',
+    'floor4-linkage-note':
+      '裝配工的筆記：「鑄造門的四根拉桿共用一套老舊的連動機構。拉下其中一根，相鄰的拉桿也會跟著跳動。只有四根全部拉下時，門才會打開。」',
+    'floor4-cellar-crack':
+      '從煙道牆上的裂縫，可以看見熔渣地窖：一座四面封死的螺旋迴廊，中心有一道階梯。這一層沒有任何入口通往那裡。',
+    'floor4-foundry-ledger':
+      '一本鑄造場帳簿：「舊金庫的階梯從西側倉庫往上延伸。那座倉庫要有人看守。」',
+    'floor4-shaft-scrawl':
+      '煙道牆上有守塔人的潦草字跡：舊豎井從五樓西側金庫的活門出發（那裡由兩名金庫守衛把守），穿過這座地窖與上方的墓室，一路通到二樓的閱覽室。',
+    'floor5-seal-inscription':
+      '階梯旁有刻痕：「三名看守分別在西、南、東守護聖所的封印。只要其中任何一人還站著，塔心就始終緊閉。」',
     'floor5-lattice-record':
       '守護格網仍迴盪著古老的隔離指令。格網後方，修復核心靜靜躺在一座失去動力的升降井上方。',
   },

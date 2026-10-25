@@ -65,7 +65,10 @@ function hasValidContent(state: GameState): boolean {
   )
     return false;
   if (
-    !state.openedShortcutIds.every((id) => findEntityById(id)?.kind === 'latch')
+    !state.openedShortcutIds.every((id) => {
+      const kind = findEntityById(id)?.kind;
+      return kind === 'latch' || kind === 'lever';
+    })
   )
     return false;
   if (!state.factIds.every(hasFact)) return false;

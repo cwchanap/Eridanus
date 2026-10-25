@@ -9,11 +9,6 @@ if (!enemy || enemy.kind !== 'enemy') throw new Error('test enemy missing');
 const boss = findEntityById('floor5-core-guardian');
 if (!boss || boss.kind !== 'enemy')
   throw new Error('floor5-core-guardian missing');
-// Existence of the pre-boss full heal; content.test.ts proves its cardinal
-// adjacency to the sole boss approach.
-const waystone = findEntityById('floor3-heart-waystone');
-if (!waystone || waystone.kind !== 'recovery')
-  throw new Error('floor3-heart-waystone missing');
 
 describe('combat', () => {
   it('previews baseline and upgraded HP loss', () => {
@@ -49,40 +44,83 @@ describe('combat', () => {
     ).toEqual({ winnable: false, reason: 'combat-lethal' });
   });
 
-  it('previews the floor five boss as five hits and twenty-four HP on the required route', () => {
-    // Base stats plus the two chests the required route passes on floors 4
-    // and 5 (ATK +2, DEF +2); at bare base stats the guardian is lethal.
+  it('previews the floor five boss as six hits and twenty-five HP on the required route', () => {
+    // Base stats plus the chests the required route must open (ATK +6,
+    // DEF +4); at bare base stats the guardian is lethal.
     expect(
       previewCombat(
-        { hp: 30, maxHp: 30, attack: 12, defense: 4, gold: 0 },
+        { hp: 30, maxHp: 30, attack: 16, defense: 6, gold: 0 },
         boss.stats,
       ),
-    ).toEqual({ winnable: true, hitsNeeded: 5, hpLoss: 24 });
+    ).toEqual({ winnable: true, hitsNeeded: 6, hpLoss: 25 });
     expect(previewCombat(createInitialGameState().player, boss.stats)).toEqual({
       winnable: false,
       reason: 'combat-lethal',
     });
   });
 
-  it('lets the required route fight from floor 3 to the guardian at base stats', () => {
+  it('lets the required route fight from floor 1 to the guardian at base stats', () => {
     // The required route takes no optional reward and buys nothing; it
-    // only opens the chests it must pass and drinks at every waystone it
-    // passes. Each fight must leave the hero standing.
+    // only opens the chests it must (the power core, the gallery cache, both
+    // foremen's chests and the west warden's). Each 'heal' is a drink at a
+    // waystone (or the village well) the route passes or walks back to.
+    // Each fight must leave the hero standing.
     const route = [
+      'floor1-west-sentry',
+      'floor1-sigil-warden',
+      'heal',
+      'floor2-service-guard',
+      'floor2-stack-mite-1',
+      'floor2-stack-mite-2',
+      'floor2-stack-mite-3',
+      'heal',
+      'floor1-gallery-sentry',
+      'floor1-rear-sentry',
+      'floor1-power-core',
+      'heal',
+      'floor2-east-sentry',
+      'heal',
+      'floor2-stair-warden',
+      'heal',
+      'floor3-east-prowler',
+      'floor3-spine-crawler-1',
+      'floor3-spine-crawler-2',
+      'floor3-gallery-cache',
+      'heal',
+      'floor3-archive-guard',
+      'floor3-archive-crawler-1',
+      'floor3-archive-crawler-2',
+      'heal',
       'floor3-archive-sentry',
       'heal',
       'floor3-heart-sentinel',
       'heal',
-      'floor4-west-snake-sentry',
-      'floor4-west-snake-cache',
-      'floor4-west-stair-guard',
+      'floor4-west-gate-guard',
+      'floor4-west-hand-1',
+      'floor4-west-hand-2',
+      'heal',
+      'floor4-west-foreman',
+      'floor4-west-works-cache',
+      'heal',
+      'floor4-east-gate-guard',
+      'floor4-east-hand-1',
+      'floor4-east-hand-2',
+      'heal',
+      'floor4-east-foreman',
+      'floor4-east-works-cache',
+      'heal',
+      'floor4-forge-warden',
       'heal',
       'floor4-stair-warden',
       'heal',
-      'floor5-northwest-gate',
+      'floor5-west-warden',
+      'floor5-west-warden-cache',
       'heal',
-      'floor5-west-ring-cache',
-      'floor5-sanctum-gate',
+      'floor5-south-gate-guard',
+      'heal',
+      'floor5-south-warden',
+      'heal',
+      'floor5-east-warden',
       'heal',
       'floor5-core-guardian',
     ];
@@ -106,7 +144,7 @@ describe('combat', () => {
       if (!preview.winnable) return;
       player = { ...player, hp: player.hp - preview.hpLoss };
     }
-    expect(player).toMatchObject({ hp: 6, attack: 12, defense: 4 });
+    expect(player).toMatchObject({ hp: 5, attack: 16, defense: 6 });
   });
 
   it('resolution commits exactly the previewed loss', () => {
@@ -120,14 +158,14 @@ describe('combat', () => {
       ok: true,
       state: {
         ...state,
-        player: { ...state.player, hp: 20, gold: 10 },
+        player: { ...state.player, hp: 20, gold: 8 },
         defeatedEnemyIds: ['floor1-gatekeeper'],
       },
       effect: {
         kind: 'enemyDefeated',
         enemyId: 'floor1-gatekeeper',
         hpLost: 10,
-        gold: 10,
+        gold: 8,
       },
     });
   });

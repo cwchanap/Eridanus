@@ -88,6 +88,7 @@ export function isEntityBlocking(entity: Entity, state: GameState): boolean {
     case 'latch':
       return !state.openedShortcutIds.includes(entity.id);
     case 'clue':
+    case 'lever':
     case 'recovery':
     case 'npc':
     case 'sealed':
@@ -254,6 +255,24 @@ export function validateContent(
           const guard = map.entities.find(({ id }) => id === guardId);
           if (guard?.kind !== 'enemy')
             errors.push(`${entity.id}: guard ${guardId} is not an enemy here`);
+        }
+      }
+      if (entity.kind === 'latch' && 'leverIds' in entity) {
+        if (entity.leverIds.length === 0)
+          errors.push(`${entity.id}: wired latch has no levers`);
+        for (const leverId of entity.leverIds) {
+          const lever = map.entities.find(({ id }) => id === leverId);
+          if (lever?.kind !== 'lever')
+            errors.push(`${entity.id}: lever ${leverId} is not a lever here`);
+        }
+      }
+      if (entity.kind === 'lever') {
+        for (const linkId of entity.links ?? []) {
+          const linked = map.entities.find(({ id }) => id === linkId);
+          if (linkId === entity.id || linked?.kind !== 'lever')
+            errors.push(
+              `${entity.id}: link ${linkId} is not another lever here`,
+            );
         }
       }
       if (entity.kind === 'clue' && entity.factId && !hasFact(entity.factId))
