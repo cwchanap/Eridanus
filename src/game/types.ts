@@ -4,6 +4,7 @@ export type MapId =
   'village' | 'floor1' | 'floor2' | 'floor3' | 'floor4' | 'floor5';
 export type Direction = 'north' | 'south' | 'east' | 'west';
 export type Stat = 'attack' | 'defense' | 'hp';
+export type EquipSlot = 'weapon' | 'armor' | 'accessory';
 export type Tile = Readonly<{ x: number; y: number }>;
 
 // HP is one uncapped pool: fights spend it and only one-time rewards and
@@ -101,11 +102,13 @@ export type LeverEntity = BaseEntity &
 // A maze entrance whose maze is not built yet: bumping it shows its notice
 // and records nothing.
 export type SealedEntity = BaseEntity & Readonly<{ kind: 'sealed' }>;
-// A one-time purchase: owning it is having its itemId, and buying it adds
-// amount to stat once, like a stat reward.
+// A one-time purchase: owning it is having its itemId. Buying it equips it
+// in its slot, in place of the ware worn there, so amount is the bonus it
+// gives to stat while worn, not on top of the ware it replaces.
 export type ShopWare = Readonly<{
   itemId: string;
   price: number;
+  slot: EquipSlot;
   stat: Stat;
   amount: number;
 }>;

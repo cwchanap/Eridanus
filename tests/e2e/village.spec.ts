@@ -80,6 +80,41 @@ test('the smith sells wares in order for gold', async ({ page }) => {
   await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 5');
 });
 
+test('a better ware replaces the one worn in its slot', async ({ page }) => {
+  await bootInVillage(page, { x: 11, y: 12 }, 100);
+  const weapon = page.locator('[data-slot="weapon"]');
+  const buy = page.getByRole('button', { name: 'Buy' });
+
+  // Nothing is worn at first.
+  await expect(weapon).toHaveAttribute('data-empty', 'true');
+
+  // The Iron Sword (+1 ATK, 15 gold), then the Steel Sword (+3 ATK, 40
+  // gold): the step up is +2, not +3 on top of the first.
+  await press(page, 'ArrowDown');
+  await buy.click();
+  await expect(weapon).toHaveAttribute('data-item', 'iron-sword');
+  await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 11');
+  await page.keyboard.press('Escape');
+
+  await press(page, 'ArrowDown');
+  await expect(page.getByTestId('purchase-prompt')).toContainText(
+    'ATK +1 → +3',
+  );
+  await buy.click();
+  await expect(weapon).toHaveAttribute('data-item', 'steel-sword');
+  await expect(page.locator('[data-item="iron-sword"]')).toHaveCount(0);
+  await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 13');
+  await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 45');
+
+  // The other slots are still bare, and the gear survives a reload.
+  await expect(page.locator('[data-slot="armor"]')).toHaveAttribute(
+    'data-empty',
+    'true',
+  );
+  await page.reload();
+  await expect(weapon).toHaveAttribute('data-item', 'steel-sword');
+});
+
 test('a sealed maze entrance turns the hero back and saves nothing', async ({
   page,
 }) => {

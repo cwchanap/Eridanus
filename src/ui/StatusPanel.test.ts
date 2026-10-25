@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialGameState } from '../game/state';
 import { MESSAGES } from '../i18n/messages';
-import { renderHeroSheet, renderItems, renderStatus } from './StatusPanel';
+import { renderHeroSheet, renderKeyItems, renderStatus } from './StatusPanel';
 
 // The e2e journeys read stats back as the data-stat element's text.
 function statText(html: string, stat: string): string | undefined {
@@ -44,13 +44,13 @@ describe('renderStatus', () => {
   });
 });
 
-describe('renderItems', () => {
-  it('shows an empty state before anything is found', () => {
-    expect(renderItems(createInitialGameState(), m)).toContain('panel-empty');
+describe('renderKeyItems', () => {
+  it('shows nothing before anything is found', () => {
+    expect(renderKeyItems(createInitialGameState(), m)).toBe('');
   });
 
   it('names carried items from the message table', () => {
-    const html = renderItems(
+    const html = renderKeyItems(
       {
         ...createInitialGameState(),
         itemIds: ['tower-depth-sigil'],
@@ -61,44 +61,22 @@ describe('renderItems', () => {
     expect(html).toContain('Tower Sigil');
   });
 
-  it('names bought wares from the message table', () => {
-    const html = renderItems(
-      {
-        ...createInitialGameState(),
-        itemIds: ['iron-sword'],
-      },
-      m,
-    );
-    expect(html).toContain('data-item="iron-sword"');
-    expect(html).toContain('Iron Sword');
-    // A ware also names the stat it raised; a found item does not.
-    expect(html).toContain('<span class="item-bonus">ATK +1</span>');
-  });
-
-  it('splits equipped wares from carried key items', () => {
-    const html = renderItems(
+  it('leaves bought wares to the equipment', () => {
+    const html = renderKeyItems(
       {
         ...createInitialGameState(),
         itemIds: ['tower-depth-sigil', 'iron-sword'],
       },
       m,
     );
-    const equipped = html.indexOf('data-items="equipped"');
-    const key = html.indexOf('data-items="key"');
-    expect(equipped).toBeGreaterThan(-1);
-    expect(key).toBeGreaterThan(equipped);
-    expect(html.indexOf('data-item="iron-sword"')).toBeLessThan(key);
-    expect(html.indexOf('data-item="tower-depth-sigil"')).toBeGreaterThan(key);
-  });
-
-  it('leaves out a group with nothing in it', () => {
-    const html = renderItems(
-      { ...createInitialGameState(), itemIds: ['iron-sword'] },
-      m,
-    );
-    expect(html).toContain(m.ui.equipped);
-    expect(html).not.toContain(m.ui.keyItems);
-    expect(html).not.toContain('panel-empty');
+    expect(html).toContain('data-item="tower-depth-sigil"');
+    expect(html).not.toContain('iron-sword');
+    expect(
+      renderKeyItems(
+        { ...createInitialGameState(), itemIds: ['iron-sword'] },
+        m,
+      ),
+    ).toBe('');
   });
 });
 
@@ -115,6 +93,7 @@ describe('renderHeroSheet', () => {
     expect(html).toContain('<span class="sheet-value">22</span>');
     expect(html).toContain('<span class="sheet-value">17</span>');
     expect(html).toContain('data-item="tower-depth-sigil"');
+    expect(html).toContain('data-testid="equipment"');
     expect(html).not.toContain('data-stat=');
   });
 });
@@ -128,6 +107,6 @@ describe('other languages', () => {
     const html = renderStatus(state, MESSAGES.ja);
     expect(statText(html, 'attack')).toBe('攻撃 10');
     expect(statText(html, 'gold')).toBe('ゴールド 0');
-    expect(renderItems(state, MESSAGES['zh-Hant'])).toContain('鐵劍');
+    expect(renderHeroSheet(state, MESSAGES['zh-Hant'])).toContain('鐵劍');
   });
 });

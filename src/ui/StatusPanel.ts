@@ -1,7 +1,8 @@
 import { findShopWareByItemId } from '../game/content';
-import type { GameState, Stat } from '../game/types';
+import type { GameState } from '../game/types';
 import { pick, type Messages } from '../i18n/messages';
 import { PORTRAIT_SIZE, resolvePortraitPath } from '../phaser/assets';
+import { renderEquipment } from './EquipmentPanel';
 import { ICONS } from './icons';
 
 // In English each data-stat element's text stays exactly "HP n", "ATK n",
@@ -44,9 +45,9 @@ export function renderStatus(
   </section>`;
 }
 
-// The menu's hero tab: the same stats, larger, and everything carried. A
-// ware names the stat it raised; a found item (a sigil, a core) just its
-// name. The stats here carry no data-stat, so the HUD's stay the only ones.
+// The menu's hero tab: the same stats, larger, then the gear worn and the
+// key items carried. The stats here carry no data-stat, so the HUD's stay
+// the only ones.
 export function renderHeroSheet(state: GameState, m: Messages): string {
   const { hp, attack, defense, gold } = state.player;
   const { statLabels: label } = m;
@@ -62,38 +63,22 @@ export function renderHeroSheet(state: GameState, m: Messages): string {
         ${row('gold', ICONS.coin, label.gold, gold)}
       </ul>
     </div>
-    ${renderItems(state, m)}
+    ${renderEquipment(state, m)}
+    ${renderKeyItems(state, m)}
   </div>`;
 }
 
-// Wares are worn the moment they're bought, so every one is equipped and
-// names the stat it raised; found items (a sigil, a core) are carried.
-export function renderItems(state: GameState, m: Messages): string {
-  const equipped: string[] = [];
-  const carried: string[] = [];
-  for (const id of state.itemIds) {
-    const name = `<span>${pick(m.items, id)}</span>`;
-    const ware = findShopWareByItemId(id);
-    if (ware)
-      equipped.push(
-        `<li data-item="${id}" data-tone="${ware.stat}">${STAT_ICONS[ware.stat]}${name}<span class="item-bonus">${m.statLabels[ware.stat]} +${ware.amount}</span></li>`,
-      );
-    else carried.push(`<li data-item="${id}">${ICONS.relic}${name}</li>`);
-  }
-  const group = (kind: string, title: string, rows: readonly string[]) =>
-    rows.length
-      ? `<div class="item-group" data-items="${kind}"><h3>${title}</h3><ul>${rows.join('')}</ul></div>`
-      : '';
-  const groups =
-    group('equipped', m.ui.equipped, equipped) +
-    group('key', m.ui.keyItems, carried);
-  return `<div class="items">
-    ${groups || `<h3>${m.ui.items}</h3><p class="panel-empty">${m.ui.noItems}</p>`}
+// Found items (a sigil, a core) are carried; wares are worn, so they show
+// in the equipment instead.
+export function renderKeyItems(state: GameState, m: Messages): string {
+  const keys = state.itemIds.filter((id) => !findShopWareByItemId(id));
+  if (keys.length === 0) return '';
+  const rows = keys.map(
+    (id) =>
+      `<li data-item="${id}">${ICONS.relic}<span>${pick(m.items, id)}</span></li>`,
+  );
+  return `<div class="items" data-items="key">
+    <h3>${m.ui.keyItems}</h3>
+    <ul>${rows.join('')}</ul>
   </div>`;
 }
-
-const STAT_ICONS: Readonly<Record<Stat, string>> = {
-  attack: ICONS.sword,
-  defense: ICONS.shield,
-  hp: ICONS.heart,
-};

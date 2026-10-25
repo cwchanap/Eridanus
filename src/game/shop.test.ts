@@ -66,6 +66,41 @@ describe('shops', () => {
     });
   });
 
+  it('a better ware replaces the one worn in its slot', () => {
+    const rich = {
+      ...atSmith,
+      player: { ...atSmith.player, gold: 100 },
+    };
+    const iron = resolvePurchase(rich, smith.wares[0]!);
+    const steel = iron.ok && resolvePurchase(iron.state, smith.wares[1]!);
+    // 10 base + the Steel Sword's +3, not on top of the Iron Sword's +1.
+    expect(steel && steel.ok && steel.state.player).toMatchObject({
+      attack: 13,
+      gold: 45,
+    });
+    expect(steel && steel.ok && steel.state.itemIds).toEqual([
+      'iron-sword',
+      'steel-sword',
+    ]);
+  });
+
+  it('wares in different slots are worn together', () => {
+    const armorer = shop('village-armor-shop');
+    const rich = {
+      ...atSmith,
+      player: { ...atSmith.player, gold: 100 },
+    };
+    const sword = resolvePurchase(rich, smith.wares[0]!);
+    const vest = sword.ok && resolvePurchase(sword.state, armorer.wares[0]!);
+    const charm =
+      vest && vest.ok && resolvePurchase(vest.state, merchant.wares[0]!);
+    expect(charm && charm.ok && charm.state.player).toMatchObject({
+      attack: 11,
+      defense: 3,
+      hp: 35,
+    });
+  });
+
   it('an HP ware adds to HP with no cap', () => {
     const result = resolvePurchase(atSmith, merchant.wares[0]!);
     expect(result.ok && result.state.player).toMatchObject({
