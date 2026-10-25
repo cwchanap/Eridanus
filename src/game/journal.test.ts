@@ -253,10 +253,12 @@ describe('buildJournalView', () => {
   });
 
   it('reflects the treasury traversal and reward in the heirloom and route leads immediately', () => {
+    const stair = findEntityById('floor2-treasury-to-floor1');
+    if (!stair) throw new Error('floor2-treasury-to-floor1 missing');
     const start = {
       ...createInitialGameState(),
       mapId: 'floor2' as const,
-      tile: { x: 4, y: 4 },
+      tile: { x: stair.tile.x, y: stair.tile.y + 1 },
       factIds: ['optional-heirloom-lead', 'optional-route-lead'],
     };
     const traveled = attemptMove(start, 'north');
@@ -270,7 +272,10 @@ describe('buildJournalView', () => {
       'route-resolved',
     );
 
-    const rewarded = attemptMove(traveled.state, 'west');
+    // Down past the stair and west along the pocket to the treasury chest.
+    let rewarded = attemptMove(traveled.state, 'south');
+    for (const move of ['west', 'west'] as const)
+      rewarded = rewarded.ok ? attemptMove(rewarded.state, move) : rewarded;
     expect(rewarded.ok).toBe(true);
     if (!rewarded.ok) return;
     expect(

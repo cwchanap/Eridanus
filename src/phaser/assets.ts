@@ -35,6 +35,8 @@ export const ASSET_PATHS = {
   'clue-runes': 'assets/interactables/clue-runes.png',
   'shortcut-gate-closed': 'assets/interactables/shortcut-gate-closed.png',
   'shortcut-gate-open': 'assets/interactables/shortcut-gate-open.png',
+  'lever-off': 'assets/interactables/lever-off.png',
+  'lever-on': 'assets/interactables/lever-on.png',
   'chest-relic-closed': 'assets/interactables/chest-relic-closed.png',
   'chest-relic-open': 'assets/interactables/chest-relic-open.png',
 } as const;
@@ -139,6 +141,7 @@ const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {
 const OPEN_VARIANT: Partial<Record<AssetKey, AssetKey>> = {
   'chest-relic-closed': 'chest-relic-open',
   'shortcut-gate-closed': 'shortcut-gate-open',
+  'lever-off': 'lever-on',
 };
 
 function explicitAsset(assetId: string | undefined): AssetKey | null {
@@ -152,6 +155,7 @@ function baseEntityAsset(entity: Entity): AssetKey | null {
   }
   if (entity.kind === 'recovery') return 'recovery-waystone';
   if (entity.kind === 'latch') return 'shortcut-gate-closed';
+  if (entity.kind === 'lever') return 'lever-off';
   if (entity.kind === 'npc') return 'npc-village-guide';
   return null;
 }
@@ -173,7 +177,8 @@ export function resolveEntityAsset(
 
   const opened =
     (entity.kind === 'reward' && state.openedRewardIds.includes(entity.id)) ||
-    (entity.kind === 'latch' && state.openedShortcutIds.includes(entity.id));
+    ((entity.kind === 'latch' || entity.kind === 'lever') &&
+      state.openedShortcutIds.includes(entity.id));
 
   return opened ? (OPEN_VARIANT[base] ?? base) : base;
 }

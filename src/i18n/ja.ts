@@ -71,6 +71,7 @@ export const ja: Messages = {
     victory: '勝利',
     purchased: '購入',
     item: 'アイテム',
+    lever: 'レバー',
   },
   effects: {
     statUp: (stat, amount) => `${stat}が${amount}上がった。`,
@@ -78,6 +79,16 @@ export const ja: Messages = {
     latchOpened: 'かんぬきが外れた。この近道は両側から通れるようになった。',
     latchGuarded: (remaining) =>
       `衛兵がこのかんぬきを閉ざしている。あと${remaining}体倒すと開く。`,
+    latchWired: (thrown, total) =>
+      `このハッチは${total}本のレバーにつながっていて、すべてが倒れているあいだだけ開く。いま倒れているのは${total}本中${thrown}本。`,
+    leverPulled: (thrown, linked) =>
+      `${thrown ? 'レバーを倒した。' : 'レバーを押し戻した。'}${
+        linked === 0
+          ? ''
+          : linked === 1
+            ? 'もう一本のレバーが一緒に動いた。'
+            : `ほかに${linked}本のレバーが一緒に動いた。`
+      }`,
     victory: (hpLost, gold) =>
       `敵を倒した。失ったHP：${hpLost}。${gold > 0 ? `獲得ゴールド：${gold}。` : ''}`,
     purchased: (item, stat, amount) => `${item}：${stat}が${amount}上がった。`,
@@ -150,37 +161,43 @@ export const ja: Messages = {
     'village-crypt-lane': '地下墓所の小道',
     'village-barrow-path': '古墳への小道',
     'floor1-entry-court': '入口の中庭',
-    'floor1-lower-loop': '下の周回路',
+    'floor1-west-passages': '西の通路',
     'floor1-upper-gallery': '上の回廊',
+    'floor1-sigil-vault': '紋章の金庫',
     'floor1-rear-wing': '奥の棟',
     'floor1-workshop-treasury': '工房の宝物庫',
     'floor2-front-landing': '手前の踊り場',
+    'floor2-service-corridor': '作業用通路',
+    'floor2-reading-room': '封じられた閲覧室',
+    'floor2-reading-room-loft': '閲覧室の中二階',
+    'floor2-east-service': '東の作業棟',
     'floor2-central-hall': '中央ホール',
     'floor2-west-archive': '西の資料室',
-    'floor2-east-service': '東の作業棟',
-    'floor2-rear-gallery': '奥の回廊',
-    'floor3-entry-vestibule': '入口の前室',
-    'floor3-twin-galleries': '双子の回廊',
-    'floor3-keeper-archive': '管理人の記録庫',
+    'floor3-spine': '背骨の回廊',
+    'floor3-north-passage': '北の通路',
     'floor3-hidden-vault': '隠し金庫',
-    'floor3-heart-approach': '心臓部への通路',
-    'floor3-heart-stair': '心臓部の階段',
+    'floor3-heart': '心臓部への通路',
+    'floor3-keeper-archive': '管理人の記録庫',
+    'floor3-galleries': '南の回廊',
+    'floor3-undercroft': '地下聖堂',
+    'floor3-west-crypt-walk': '西の墓所通路',
+    'floor3-east-crypt-walk': '東の墓所通路',
     'floor4-stair-landing': '階段の踊り場',
-    'floor4-lower-hall': '下の広間',
     'floor4-west-works': '西の作業場',
     'floor4-east-works': '東の作業場',
-    'floor4-west-store': '西の倉庫',
-    'floor4-east-store': '東の倉庫',
-    'floor4-upper-gallery': '上の回廊',
     'floor4-forge': '鍛冶場',
-    'floor4-forge-cellar': '鍛冶場の地下室',
+    'floor4-casting-gallery': '鋳造の回廊',
+    'floor4-slag-cellar': '鉱滓の地下室',
+    'floor4-west-flues': '西の煙道',
+    'floor4-east-flues': '東の煙道',
     'floor5-landing': '下の踊り場',
-    'floor5-outer-ring': '外環',
-    'floor5-middle-ring': '中環',
+    'floor5-west-ring': '西環',
+    'floor5-north-ring': '北環',
+    'floor5-east-ring': '東環',
+    'floor5-south-ring': '南環',
     'floor5-inner-ring': '内環',
-    'floor5-west-vault': '西の金庫',
-    'floor5-east-vault': '東の金庫',
-    'floor5-heart-chamber': '心臓部の間',
+    'floor5-sanctum': '至聖所',
+    'floor5-old-shaft': '古い縦坑',
   },
   npcs: {
     'village-warden': '守衛長',
@@ -213,19 +230,47 @@ export const ja: Messages = {
     'tower-restoration-core': '復元コア',
   },
   clues: {
-    'floor1-route-mark': '引っかき傷は、下から戻ってくる通路を指している。',
     'floor1-treasury-overlook':
       '見えている宝物庫に面したアーチは、こちら側から煉瓦で塞がれている。',
+    'floor1-route-mark': '引っかき傷は、下から戻ってくる通路を指している。',
+    'floor1-gallery-tally':
+      '壁一面に日数を数える刻み目があり、その下にこう書かれている。「九日目。番人たちはもう我々を通さない。塔の紋章を見つけた者は、それを下へ持っていけ。下の階段はまだその形を覚えている。」',
+    'floor1-rear-note':
+      '石の隙間に紙片が挟まっている。「動力核はまだ温かい。下へ持っていけ。記録庫の解放装置を守る歩哨も、これには敵わない。」',
     'floor2-paired-release-ledger':
       '開かれたままの管理人の記録簿に、こう書かれている。「広間の解放装置は対になっている。どちらも作業棟に置かれた歩哨に従う——歩哨が立っている限り、どちらの門も動かない。」',
-    'floor3-heart-lockdown-record':
-      '管理人が最後の警告を刻んでいた。守護の格子は、二階下、真の心臓部にある隔離状態をいまも守り続けている。止まった守護者を打ち破り、復元コアを回収し、塔の流れが完全に途絶える前に村へ持ち帰れ。',
+    'floor2-hall-notice':
+      '棚に釘で打ちつけられた通達。「管理人の命により、下へ降りた者が戻るまで、降下の封印は閉ざしておくこと。」',
+    'floor2-index-card':
+      '破れた索引カード。「宝物庫の階段、最後の通路。そこに置かれた大男は、どの管理人にも従わない。」',
+    'floor2-reading-room-glimpse':
+      '書棚の足元の隙間から、下にランプの灯る閲覧室が見える。こちら側に扉はない。管理人の走り書き。「古い縦坑が、塔の心臓部からそこへ通じている。」',
+    'floor2-reading-room-index':
+      '閲覧室の目録には一つの棚しか載っていない。「管理人の武具。心臓部から古い縦坑を登ってくる者のために取っておく。」',
+    'floor3-vault-route-mark':
+      '古い経路の引っかき傷がここにも繰り返されている。ただし一つだけ、塔の心臓部ではなく西の壁へ折り返す傷がある。',
+    'floor3-crypt-crack':
+      '壁の割れ目の向こうに、四方を封じられた墓所がある。奥の端から階段が上へ伸びているが、この階へ通じる扉はない。',
     'floor3-keeper-final-record':
       '管理人の最後の記録：対になった解放装置が、守護者の制御不具合を隔離した。隔離は保たれたが、解除しに戻る者はなく、塔の流れは村へ供給され続け、ついにコアが弱り始めた。',
-    'floor3-vault-route-mark':
-      '古い経路の引っかき傷がここにも繰り返されている。ただし一つだけ、塔の心臓部ではなく北西の壁へ折り返す傷がある。',
+    'floor3-hatch-diagram':
+      '棚に配線図が留めてある。心臓部のハッチは三本のレバーにつながっている。西の支道の突き当たり、最後の回廊の突き当たり、そしてこの記録庫の頂。三本すべてが下りているあいだだけ開く。',
+    'floor3-heart-lockdown-record':
+      '管理人が最後の警告を刻んでいた。守護の格子は、二階下、真の心臓部にある隔離状態をいまも守り続けている。止まった守護者を打ち破り、復元コアを回収し、塔の流れが完全に途絶える前に村へ持ち帰れ。',
+    'floor3-shaft-record':
+      '壁龕に刻まれている。「管理人の縦坑は、心臓部から閲覧室まで続く。両端のハッチを除き、扉はすべて封じた。」',
     'floor4-landing-scratches':
-      '階段の脇に刻まれている。「心臓部は一つ下の階にある。鋳造所を抜けるどの道も、剣で答えねばならない。」',
+      '階段の脇に刻まれている。「心臓部は一つ下の階にある。鍛冶場の番人が、鋳造門へ続く縦坑を守っている。二人の親方がそれぞれの作業場で守る鋼なしには、誰も彼を越えられない。」',
+    'floor4-linkage-note':
+      '組立工のメモ。「鋳造門の四本のレバーは、古い連動機構を共有している。一本を倒すと、隣のレバーも一緒に跳ねる。門は四本すべてが下りているあいだしか開かない。」',
+    'floor4-cellar-crack':
+      '煙道の壁の割れ目から鉱滓の地下室が見える。四方を封じられた渦巻きで、その中心に階段がある。この階のどこからも入れない。',
+    'floor4-foundry-ledger':
+      '鋳造所の帳簿。「古い金庫の階段は西の倉庫から上へ延びている。あの倉庫には見張りを置いておけ。」',
+    'floor4-shaft-scrawl':
+      '煙道の壁に管理人の走り書きがある。古い縦坑は、二人の金庫番が守る五階の西の金庫のハッチから始まり、この地下室とその上の墓所を抜けて、二階の閲覧室まで登っている。',
+    'floor5-seal-inscription':
+      '階段の脇に刻まれている。「三人の番人が、西・南・東で至聖所の封印を守っている。一人でも立っている限り、心臓部は閉ざされたままだ。」',
     'floor5-lattice-record':
       '守護の格子は、いまも古い隔離命令を唸らせている。その奥では、動かなくなった昇降機の縦坑の上で復元コアが待っている。',
   },

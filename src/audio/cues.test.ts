@@ -52,5 +52,19 @@ describe('cuesFor', () => {
     expect(
       cuesFor(move, { ok: false, session: combat, reason: 'not-enough-gold' }),
     ).toEqual(['deny']);
+    expect(
+      cuesFor(move, {
+        ok: true,
+        session: combat,
+        effect: { kind: 'leverPulled', id: 'l', thrown: true, linked: 0 },
+      }),
+    ).toEqual(['latch']);
+    expect(
+      cuesFor(move, {
+        ok: true,
+        session: combat,
+        effect: { kind: 'latchWired', id: 'h', thrown: 1, total: 3 },
+      }),
+    ).toEqual(['locked']);
   });
 });

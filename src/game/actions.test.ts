@@ -177,16 +177,16 @@ describe('actions', () => {
   });
 
   it('offers the floor five boss through the ordinary combat prompt and resolves it plainly', () => {
-    // The required route reaches the guardian with the two chests it
-    // passes on floors 4 and 5 (ATK +2, DEF +2).
+    // The required route reaches the guardian with the chests it must open
+    // (ATK +6, DEF +4).
     const state = {
       ...createInitialGameState(),
       mapId: 'floor5' as const,
-      tile: tileInDirection(boss.tile, 'south'),
-      player: { hp: 30, maxHp: 30, attack: 12, defense: 4, gold: 0 },
+      tile: tileInDirection(boss.tile, 'west'),
+      player: { hp: 30, maxHp: 30, attack: 16, defense: 6, gold: 0 },
     };
     const preview = previewCombat(state.player, boss.stats);
-    expect(preview).toEqual({ winnable: true, hitsNeeded: 5, hpLoss: 24 });
+    expect(preview).toEqual({ winnable: true, hitsNeeded: 6, hpLoss: 25 });
 
     expect(interactWithEntity(state, boss, state.tile)).toEqual({
       ok: true,
@@ -197,7 +197,7 @@ describe('actions', () => {
     const fight = resolveCombat(state, boss);
     expect(fight.ok).toBe(true);
     if (!fight.ok) return;
-    expect(fight.state.player.hp).toBe(6);
+    expect(fight.state.player.hp).toBe(5);
     expect(
       fight.state.defeatedEnemyIds.filter((id) => id === boss.id),
     ).toHaveLength(1);
@@ -272,7 +272,7 @@ describe('actions', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor2' as const,
-      tile: { x: 11, y: 4 },
+      tile: tileInDirection(missingSubject.tile, 'south'),
     };
     expect(getActiveEntityAt(state, missingSubject.tile)).toEqual(
       missingSubject,
@@ -295,7 +295,7 @@ describe('actions', () => {
     const returned = {
       ...createInitialGameState(),
       mapId: 'floor2' as const,
-      tile: { x: 11, y: 4 },
+      tile: tileInDirection(missingSubject.tile, 'south'),
       factIds: ['main-subject-returned'],
     };
     expect(getActiveEntityAt(returned, missingSubject.tile)).toBeUndefined();
@@ -303,7 +303,7 @@ describe('actions', () => {
     const step = attemptMove(returned, 'north');
     expect(step.ok).toBe(true);
     if (!step.ok) return;
-    expect(step.state.tile).toEqual({ x: 11, y: 3 });
+    expect(step.state.tile).toEqual(missingSubject.tile);
     expect(step.effect).toEqual({ kind: 'moved' });
   });
 

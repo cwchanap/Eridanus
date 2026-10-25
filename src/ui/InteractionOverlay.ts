@@ -57,6 +57,16 @@ function effectMessage(effect: ActionEffect, m: Messages): Message | null {
         tag: m.tags.sealed,
         text: m.effects.latchGuarded(effect.remaining),
       };
+    case 'latchWired':
+      return {
+        tag: m.tags.sealed,
+        text: m.effects.latchWired(effect.thrown, effect.total),
+      };
+    case 'leverPulled':
+      return {
+        tag: m.tags.lever,
+        text: m.effects.leverPulled(effect.thrown, effect.linked),
+      };
     case 'enemyDefeated':
       return {
         tag: m.tags.victory,
@@ -230,15 +240,20 @@ function renderMessage(view: OverlayView, m: Messages): string {
   if (blocked) return blockedHtml + closeButton(m);
   const message = effect && effectMessage(effect, m);
   if (effect && message) {
-    return `<div class="message" data-testid="effect" data-effect="${effect.kind}"${
-      effect.kind === 'dialogue' ? ` data-line="${effect.lineId}"` : ''
-    }${
-      effect.kind === 'latchGuarded'
-        ? ` data-remaining="${effect.remaining}"`
-        : ''
-    }>${effectPortrait(effect, state)}<div class="message-body"><span class="message-tag">${message.tag}</span><p class="message-text">${message.text}</p></div></div>${closeButton(m)}`;
+    return `<div class="message" data-testid="effect" data-effect="${effect.kind}"${effectAttributes(effect)}>${effectPortrait(effect, state)}<div class="message-body"><span class="message-tag">${message.tag}</span><p class="message-text">${message.text}</p></div></div>${closeButton(m)}`;
   }
   return `<p class="log-hint"><span class="keys"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span> ${m.ui.explore}</p>`;
+}
+
+// Stable attributes the e2e journeys read back instead of authored prose.
+function effectAttributes(effect: ActionEffect): string {
+  if (effect.kind === 'dialogue') return ` data-line="${effect.lineId}"`;
+  if (effect.kind === 'latchGuarded')
+    return ` data-remaining="${effect.remaining}"`;
+  if (effect.kind === 'latchWired')
+    return ` data-thrown="${effect.thrown}" data-total="${effect.total}"`;
+  if (effect.kind === 'leverPulled') return ` data-thrown="${effect.thrown}"`;
+  return '';
 }
 
 const SCROLLING_PANELS = ['.journal-body', '.hud-left'] as const;

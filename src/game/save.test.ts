@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { findEntityById } from './content';
 import { createInitialGameState } from './state';
-import { attemptMove } from './movement';
 import { loadGame, resetGame, saveGame } from './save';
 import type { Tile } from './types';
+
+const tileOf = (id: string): Tile => {
+  const found = findEntityById(id);
+  if (!found) throw new Error(`missing entity: ${id}`);
+  return found.tile;
+};
 
 class MemoryStorage implements Storage {
   private map = new Map<string, string>();
@@ -139,7 +144,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 13, y: 8 },
+        tile: tileOf('floor1-power-core'),
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -152,7 +157,7 @@ describe('saveGame/loadGame', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor1',
-      tile: { x: 13, y: 8 },
+      tile: tileOf('floor1-power-core'),
       openedRewardIds: ['floor1-power-core'],
     };
     storage.setItem('eridanus.save', JSON.stringify(state));
@@ -163,13 +168,13 @@ describe('saveGame/loadGame', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor1' as const,
-      tile: { x: 14, y: 10 },
+      tile: tileOf('floor1-gatekeeper'),
       player: { hp: 12, maxHp: 30, attack: 12, defense: 2, gold: 0 },
       openedRewardIds: [
         'floor1-depth-sigil',
         'floor1-power-core',
         'floor1-future-treasury',
-        'floor2-service-cache',
+        'floor2-service-store',
       ],
       defeatedEnemyIds: [
         'floor1-west-sentry',
@@ -196,7 +201,7 @@ describe('saveGame/loadGame', () => {
         'village-square',
         'village-tower-road',
         'floor1-entry-court',
-        'floor1-lower-loop',
+        'floor1-west-passages',
         'floor1-upper-gallery',
         'floor2-front-landing',
         'floor1-rear-wing',
@@ -257,7 +262,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 15, y: 10 },
+        tile: tileOf('floor1-gatekeeper'),
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -272,7 +277,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 15, y: 10 },
+        tile: tileOf('floor1-gatekeeper'),
         defeatedEnemyIds: ['floor1-gatekeeper'],
       }),
     );
@@ -285,7 +290,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 11, y: 8 },
+        tile: tileOf('floor1-rear-latch'),
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -300,11 +305,31 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 11, y: 8 },
+        tile: tileOf('floor1-rear-latch'),
         openedShortcutIds: ['floor1-rear-latch'],
       }),
     );
     expect(loadGame(storage).kind).toBe('loaded');
+  });
+
+  it('keeps thrown levers among the opened shortcuts and nothing else', () => {
+    const thrown = {
+      ...createInitialGameState(),
+      openedShortcutIds: ['floor3-west-lever', 'floor4-gate-lever-2'],
+    };
+    storage.setItem('eridanus.save', JSON.stringify(thrown));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state: thrown });
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        openedShortcutIds: ['floor1-gatekeeper'],
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
   });
 
   it('rejects a save standing on a clue tile', () => {
@@ -313,7 +338,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor1',
-        tile: { x: 9, y: 4 },
+        tile: tileOf('floor1-route-mark'),
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -397,7 +422,7 @@ describe('saveGame/loadGame', () => {
       JSON.stringify({
         ...createInitialGameState(),
         mapId: 'floor2',
-        tile: { x: 11, y: 3 },
+        tile: tileOf('floor2-missing-subject'),
       }),
     );
     expect(loadGame(storage)).toEqual({
@@ -410,7 +435,7 @@ describe('saveGame/loadGame', () => {
     const state = {
       ...createInitialGameState(),
       mapId: 'floor2',
-      tile: { x: 11, y: 3 },
+      tile: tileOf('floor2-missing-subject'),
       factIds: ['main-subject-returned'],
     };
     storage.setItem('eridanus.save', JSON.stringify(state));
@@ -448,24 +473,6 @@ describe('floor five completion occupancy', () => {
     expect(loadGame(storage)).toEqual({
       kind: 'invalid',
       reason: 'invalid-content',
-    });
-  });
-
-  it('lets a run saved in the Heart Approach before the hatch was guarded out', () => {
-    // Before the hatch was guarded, side passages reached the heart, so a
-    // save may sit north of the shut hatch with its guard still standing.
-    const state = {
-      ...createInitialGameState(),
-      mapId: 'floor3' as const,
-      tile: { x: 10, y: 4 },
-    };
-    storage.setItem('eridanus.save', JSON.stringify(state));
-    const loaded = loadGame(storage);
-    expect(loaded).toEqual({ kind: 'loaded', state });
-    const result = attemptMove(state, 'south');
-    expect(result.ok && result.effect).toEqual({
-      kind: 'latchOpened',
-      id: 'floor3-heart-shortcut',
     });
   });
 

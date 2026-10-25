@@ -168,7 +168,7 @@ export const village: MapDefinition = {
       id: 'village-to-floor1',
       tile: { x: 23, y: 1 },
       assetId: 'stairs-down',
-      target: { mapId: 'floor1', tile: { x: 2, y: 14 } },
+      target: { mapId: 'floor1', tile: { x: 12, y: 15 } },
       factId: 'village-tower-stairs-used',
     },
     {
@@ -176,7 +176,7 @@ export const village: MapDefinition = {
       id: 'village-lift-to-floor5',
       tile: { x: 21, y: 1 },
       assetId: 'stairs-down',
-      target: { mapId: 'floor5', tile: { x: 12, y: 7 } },
+      target: { mapId: 'floor5', tile: { x: 13, y: 9 } },
       lock: {
         kind: 'item',
         requiresItemId: 'tower-restoration-core',

@@ -102,6 +102,23 @@ describe('asset seam', () => {
     ).toBe('shortcut-gate-open');
   });
 
+  it('throws a lever once its id is among the opened shortcuts', () => {
+    const lever = {
+      kind: 'lever' as const,
+      id: 'test-lever',
+      tile: { x: 1, y: 1 },
+    };
+    expect(resolveEntityAsset(lever, createInitialGameState())).toBe(
+      'lever-off',
+    );
+    expect(
+      resolveEntityAsset(lever, {
+        ...createInitialGameState(),
+        openedShortcutIds: [lever.id],
+      }),
+    ).toBe('lever-on');
+  });
+
   it('keeps texture selection independent of runtime activity', () => {
     expect(resolveEntityAsset(testEnemy, createInitialGameState())).toBe(
       'enemy-ruin-guard',
@@ -167,7 +184,11 @@ describe('asset seam', () => {
           ).toBe(true);
         }
 
-        if (entity.kind === 'reward' || entity.kind === 'latch') {
+        if (
+          entity.kind === 'reward' ||
+          entity.kind === 'latch' ||
+          entity.kind === 'lever'
+        ) {
           const openedState =
             entity.kind === 'reward'
               ? { ...state, openedRewardIds: [entity.id] }
