@@ -33,26 +33,26 @@ function expectApart(a: Box, b: Box, what: string) {
   expect(apart, `${what} overlap`).toBe(true);
 }
 
-// On a small window the hero card and journal share a row capped in height
-// (or, on a short one, flank the banner), so anything spilling out of its
-// panel is clipped: every stat must sit inside the hero card and show in
-// full, the journal's toggle likewise, and no two panels may overlap.
+// On a small window the hero card and quest tracker share a row capped in
+// height (or, on a short one, flank the banner), so anything spilling out of
+// its panel is clipped: every stat must sit inside the hero card and show in
+// full, the tracker's Menu button likewise, and no two panels may overlap.
 async function expectHudFits(page: Page): Promise<void> {
   const hud = await page.getByTestId('hud').boundingBox();
   const banner = await page.getByTestId('map-name').boundingBox();
-  const journal = await page.getByTestId('journal').boundingBox();
-  if (!hud || !banner || !journal) throw new Error('HUD is not on screen');
+  const quest = await page.getByTestId('quest').boundingBox();
+  if (!hud || !banner || !quest) throw new Error('HUD is not on screen');
   expectApart(hud, banner, 'hero card and banner');
-  expectApart(hud, journal, 'hero card and journal');
-  expectApart(banner, journal, 'banner and journal');
+  expectApart(hud, quest, 'hero card and quest tracker');
+  expectApart(banner, quest, 'banner and quest tracker');
   for (const stat of ['hp', 'attack', 'defense', 'gold']) {
     const locator = page.locator(`[data-stat="${stat}"]`);
     expectWithin(await locator.boundingBox(), hud, `${stat} stat`);
     await expect(locator).toBeInViewport({ ratio: 1 });
   }
-  const toggle = page.locator('[data-action="toggle-journal"]');
-  expectWithin(await toggle.boundingBox(), journal, 'journal toggle');
-  await expect(toggle).toBeInViewport({ ratio: 1 });
+  const menu = page.locator('[data-action="open-menu"]');
+  expectWithin(await menu.boundingBox(), quest, 'menu button');
+  await expect(menu).toBeInViewport({ ratio: 1 });
 }
 
 async function startFreshRun(page: Page): Promise<void> {
@@ -212,21 +212,28 @@ async function reachGuardian(j: Journey): Promise<void> {
   await j.drink('floor5-heart-waystone');
 }
 
-async function claimRestorationCore(j: Journey): Promise<void> {
+// Returns the message box as the core's short find-message sizes it.
+async function claimRestorationCore(j: Journey): Promise<Box | null> {
   await j.fight('floor5-core-guardian', 'click');
   await j.expectBump('floor5-restoration-core', 'itemReward');
-  await j.check((page) => shows(page, 'lead', 'return-restoration-core'));
+  let box: Box | null = null;
+  await j.check(async (page) => {
+    await shows(page, 'lead', 'return-restoration-core');
+    box = await messageBox(page);
+  });
+  return box;
 }
 
 // The core powers the lift home; carrying it to the warden ends the
 // story. The ending lines are the longest authored dialogue, and the
-// ending fact survives a reload.
-async function endStory(j: Journey, endingLineId: string): Promise<void> {
+// ending fact survives a reload. They fill the same box as the short
+// message `box` was measured on.
+async function endStory(
+  j: Journey,
+  endingLineId: string,
+  box: Box | null,
+): Promise<void> {
   await j.travel('floor5-lift-to-village');
-  let box: Box | null = null;
-  await j.check(async (page) => {
-    box = await messageBox(page);
-  });
   await j.expectBump('village-warden', 'dialogue');
   await j.check(async (page) => {
     await expectLine(page, endingLineId);
@@ -253,16 +260,24 @@ const REQUIRED: readonly Chapter[] = [
         await expectLine(page, 'warden-main-lead');
         // The first recorded fact retires the fresh-run controls hint.
         await expect(page.getByTestId('how-to-play')).toHaveCount(0);
-        // J folds the journal to its title bar and back without moving
-        // the hero.
-        const journal = page.getByTestId('journal');
-        await expect(journal).toBeVisible();
-        await page.keyboard.press('j');
-        await expect(journal).toHaveAttribute('data-open', 'false');
-        await expect(page.locator('[data-lead]')).toHaveCount(0);
-        await page.keyboard.press('j');
-        await expect(journal).toHaveAttribute('data-open', 'true');
       });
+      // The first Escape closes the warden's line; with nothing left to
+      // close, the next opens the menu. Under it the map takes no keys: an
+      // arrow steps through the tabs, not the hero, and Escape closes it.
+      await j.dismiss();
+      await j.check(async (page) => {
+        const menu = page.getByTestId('menu');
+        await expect(menu).toBeHidden();
+        await page.keyboard.press('Escape');
+        await expect(menu).toBeVisible();
+        await expect(menu).toHaveAttribute('data-tab', 'hero');
+        await page.keyboard.press('ArrowRight');
+        await expect(menu).toHaveAttribute('data-tab', 'quests');
+        await expect(menu.locator('[data-lead="find-sigil"]')).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(menu).toBeHidden();
+      });
+      await j.expectInSync();
       await j.travel('village-to-floor1');
       await j.check(async (page) => {
         await shows(page, 'section', 'floor1-entry-court');
@@ -305,9 +320,9 @@ const REQUIRED: readonly Chapter[] = [
     title: 'beats the guardian and ends the story',
     run: async (j) => {
       await reachGuardian(j);
-      await claimRestorationCore(j);
+      const box = await claimRestorationCore(j);
       // No keeper record was read, so the plain ending renders.
-      await endStory(j, 'warden-restoration-ending');
+      await endStory(j, 'warden-restoration-ending', box);
       // The required route never takes an optional lead nor reads the
       // optional evidence: no optional thread or note ever appears.
       await j.check(async (page) => {
@@ -357,7 +372,9 @@ const EXPLORER: readonly Chapter[] = [
       await j.cancel();
       await j.fight('floor1-west-sentry');
       await j.dismiss();
-      await j.check((page) => expect(page.locator('.log-hint')).toBeVisible());
+      await j.check((page) =>
+        expect(page.getByTestId('interaction')).toBeHidden(),
+      );
       await j.expectBump('floor1-route-mark', 'clue');
       await j.check((page) => shows(page, 'note', 'floor1-route-mark-seen'));
       await claimDepthSigil(j);
@@ -425,7 +442,7 @@ const EXPLORER: readonly Chapter[] = [
   {
     title: 'beats the guardian and hears the ledger ending',
     run: async (j) => {
-      await claimRestorationCore(j);
+      const box = await claimRestorationCore(j);
       // The endgame state survives a reload, and the beaten guardian's
       // tile and the emptied core chest stay open.
       await j.check(async (page) => {
@@ -447,7 +464,7 @@ const EXPLORER: readonly Chapter[] = [
           await shows(page, 'note', note);
       });
       // The keeper record was read, so the expanded ledger ending renders.
-      await endStory(j, 'warden-restoration-ending-ledger');
+      await endStory(j, 'warden-restoration-ending-ledger', box);
     },
   },
 ];

@@ -48,6 +48,8 @@ export type WorldSceneDeps = {
   // Whether the message box shows something Enter/Escape can close.
   hasMessage: () => boolean;
   onInput: (input: InputCommand) => void;
+  // Escape with nothing to answer or close opens the menu.
+  onMenu: () => void;
   // The blow a battle is playing, if one is.
   getStrike: () => Strike | null;
 };
@@ -139,16 +141,22 @@ export class WorldScene extends Phaser.Scene {
     // either one closes the shown message (a cancel with nothing pending is
     // a no-op that clears it), but only on a fresh press, so a held Enter
     // that just confirmed a prompt can't auto-repeat away its result. With
-    // nothing to answer or close they are left alone, and preventDefault
-    // stops a focused button from also firing its click.
+    // nothing to answer or close, Escape opens the menu and Enter is left
+    // alone. preventDefault stops a focused button from also firing its
+    // click.
     const command = PROMPT_KEYS.get(event.key);
     if (command === undefined) return;
     if (this.deps.getSession().pending) {
       event.preventDefault();
       this.deps.onInput(command);
-    } else if (!event.repeat && this.deps.hasMessage()) {
+    } else if (event.repeat) {
+      return;
+    } else if (this.deps.hasMessage()) {
       event.preventDefault();
       this.deps.onInput({ kind: 'cancel' });
+    } else if (command.kind === 'cancel') {
+      event.preventDefault();
+      this.deps.onMenu();
     }
   };
 

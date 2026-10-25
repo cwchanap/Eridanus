@@ -64,7 +64,8 @@ test('moves and bumps play sounds, and a mute survives a reload', async ({
   await page.reload();
   await expect(toggle).toHaveAttribute('data-muted', 'true');
 
-  // Unmuting plays a confirm blip.
+  // Unmuting from the menu's button plays a confirm blip.
+  await page.keyboard.press('Escape');
   await toggle.click();
   await expect(toggle).toHaveAttribute('data-muted', 'false');
   expect(await audioStarts(page)).toBeGreaterThan(0);

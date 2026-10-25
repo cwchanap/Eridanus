@@ -11,8 +11,6 @@ export const ja: Messages = {
     noItems: 'まだ何も見つけていない。',
     location: '現在地',
     messages: 'メッセージ',
-    explore:
-      '探索しよう。気になるものに向かって歩くと、調べたり話したりできる。',
     closeMessage: 'メッセージを閉じる',
     enemy: '敵',
     combat: '戦闘',
@@ -34,12 +32,13 @@ export const ja: Messages = {
     invalidSaveBody:
       'このブラウザに保存された記録は読み込めません。リセットして新しく始めてください。',
     resetSave: 'セーブをリセット',
-    journal: '日誌',
+    menu: 'メニュー',
+    closeMenu: 'メニューを閉じる',
+    quests: 'クエスト',
     sideLeads: 'サブの手がかり',
     notes: 'メモ',
+    noNotes: 'まだ何もメモしていない。',
     placesFound: '見つけた場所',
-    show: '開く',
-    hide: '閉じる',
     mute: '音を消す',
     unmute: '音を出す',
     language: '言語',
@@ -50,6 +49,8 @@ export const ja: Messages = {
     interact: '人や宝箱、門、階段に向かって歩くと、話したり使ったりできる。',
     fight: (enter, esc) =>
       `戦闘の前に、失うHPが正確に表示される。${enter}で戦い、${esc}でやめる。`,
+    menu: (esc) =>
+      `${esc}でメニューを開く：勇者、持ち物、クエスト、メモを確認できる。`,
     autosave: '進行状況は自動で保存される。',
     tip: 'まずは青緑のマントを着た守衛長に話しかけてみよう。',
   },

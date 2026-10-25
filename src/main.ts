@@ -223,6 +223,7 @@ function startRuntime(
       hasMessage: () =>
         battle !== null || showsMessage(effect, blocked, MESSAGES[locale]),
       onInput: handleInput,
+      onMenu: () => overlay.openMenu(),
       getStrike: currentStrike,
     });
   } else {

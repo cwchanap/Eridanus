@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialGameState } from '../game/state';
 import { MESSAGES } from '../i18n/messages';
-import { renderItems, renderStatus } from './StatusPanel';
+import { renderHeroSheet, renderItems, renderStatus } from './StatusPanel';
 
 // The e2e journeys read stats back as the data-stat element's text.
 function statText(html: string, stat: string): string | undefined {
@@ -26,6 +26,14 @@ describe('renderStatus', () => {
     expect(statText(html, 'attack')).toBe('ATK 12');
     expect(statText(html, 'defense')).toBe('DEF 4');
     expect(statText(html, 'gold')).toBe('Gold 17');
+  });
+
+  it('leaves items to the menu', () => {
+    const html = renderStatus(
+      { ...createInitialGameState(), itemIds: ['iron-sword'] },
+      m,
+    );
+    expect(html).not.toContain('data-item=');
   });
 
   it('previews a fight cost beside HP without changing the HP text', () => {
@@ -63,6 +71,25 @@ describe('renderItems', () => {
     );
     expect(html).toContain('data-item="iron-sword"');
     expect(html).toContain('Iron Sword');
+    // A ware also names the stat it raised; a found item does not.
+    expect(html).toContain('<span class="item-bonus">ATK +1</span>');
+  });
+});
+
+describe('renderHeroSheet', () => {
+  it('shows the stats and items without a second set of data-stat', () => {
+    const html = renderHeroSheet(
+      {
+        ...createInitialGameState(),
+        player: { hp: 22, attack: 12, defense: 4, gold: 17 },
+        itemIds: ['tower-depth-sigil'],
+      },
+      m,
+    );
+    expect(html).toContain('<span class="sheet-value">22</span>');
+    expect(html).toContain('<span class="sheet-value">17</span>');
+    expect(html).toContain('data-item="tower-depth-sigil"');
+    expect(html).not.toContain('data-stat=');
   });
 });
 
