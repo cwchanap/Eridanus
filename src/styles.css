@@ -400,6 +400,25 @@ kbd {
   filter: drop-shadow(0 0 4px var(--cyan));
 }
 
+.items li[data-tone='attack'] .icon {
+  color: var(--attack);
+  filter: none;
+}
+
+.items li[data-tone='defense'] .icon {
+  color: var(--defense);
+  filter: none;
+}
+
+.items li[data-tone='hp'] .icon {
+  color: var(--hp-low);
+  filter: none;
+}
+
+.item-group + .item-group {
+  margin-top: 14px;
+}
+
 .how-to-play {
   border-color: rgba(116, 217, 234, 0.4);
 }

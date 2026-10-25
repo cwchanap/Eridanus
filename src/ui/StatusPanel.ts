@@ -1,5 +1,5 @@
 import { findShopWareByItemId } from '../game/content';
-import type { GameState } from '../game/types';
+import type { GameState, Stat } from '../game/types';
 import { pick, type Messages } from '../i18n/messages';
 import { PORTRAIT_SIZE, resolvePortraitPath } from '../phaser/assets';
 import { ICONS } from './icons';
@@ -66,18 +66,34 @@ export function renderHeroSheet(state: GameState, m: Messages): string {
   </div>`;
 }
 
+// Wares are worn the moment they're bought, so every one is equipped and
+// names the stat it raised; found items (a sigil, a core) are carried.
 export function renderItems(state: GameState, m: Messages): string {
-  const items = state.itemIds
-    .map((id) => {
-      const ware = findShopWareByItemId(id);
-      const bonus = ware
-        ? `<span class="item-bonus">${m.statLabels[ware.stat]} +${ware.amount}</span>`
-        : '';
-      return `<li data-item="${id}">${ICONS.relic}<span>${pick(m.items, id)}</span>${bonus}</li>`;
-    })
-    .join('');
+  const equipped: string[] = [];
+  const carried: string[] = [];
+  for (const id of state.itemIds) {
+    const name = `<span>${pick(m.items, id)}</span>`;
+    const ware = findShopWareByItemId(id);
+    if (ware)
+      equipped.push(
+        `<li data-item="${id}" data-tone="${ware.stat}">${STAT_ICONS[ware.stat]}${name}<span class="item-bonus">${m.statLabels[ware.stat]} +${ware.amount}</span></li>`,
+      );
+    else carried.push(`<li data-item="${id}">${ICONS.relic}${name}</li>`);
+  }
+  const group = (kind: string, title: string, rows: readonly string[]) =>
+    rows.length
+      ? `<div class="item-group" data-items="${kind}"><h3>${title}</h3><ul>${rows.join('')}</ul></div>`
+      : '';
+  const groups =
+    group('equipped', m.ui.equipped, equipped) +
+    group('key', m.ui.keyItems, carried);
   return `<div class="items">
-    <h3>${m.ui.items}</h3>
-    ${items ? `<ul>${items}</ul>` : `<p class="panel-empty">${m.ui.noItems}</p>`}
+    ${groups || `<h3>${m.ui.items}</h3><p class="panel-empty">${m.ui.noItems}</p>`}
   </div>`;
 }
+
+const STAT_ICONS: Readonly<Record<Stat, string>> = {
+  attack: ICONS.sword,
+  defense: ICONS.shield,
+  hp: ICONS.heart,
+};

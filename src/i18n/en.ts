@@ -18,6 +18,8 @@ export const en = {
     hero: 'Hero',
     items: 'Items',
     noItems: 'Nothing found yet.',
+    equipped: 'Equipped',
+    keyItems: 'Key items',
     // Location banner and message box
     location: 'Location',
     messages: 'Messages',

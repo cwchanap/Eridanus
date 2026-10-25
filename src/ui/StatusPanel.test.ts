@@ -74,6 +74,32 @@ describe('renderItems', () => {
     // A ware also names the stat it raised; a found item does not.
     expect(html).toContain('<span class="item-bonus">ATK +1</span>');
   });
+
+  it('splits equipped wares from carried key items', () => {
+    const html = renderItems(
+      {
+        ...createInitialGameState(),
+        itemIds: ['tower-depth-sigil', 'iron-sword'],
+      },
+      m,
+    );
+    const equipped = html.indexOf('data-items="equipped"');
+    const key = html.indexOf('data-items="key"');
+    expect(equipped).toBeGreaterThan(-1);
+    expect(key).toBeGreaterThan(equipped);
+    expect(html.indexOf('data-item="iron-sword"')).toBeLessThan(key);
+    expect(html.indexOf('data-item="tower-depth-sigil"')).toBeGreaterThan(key);
+  });
+
+  it('leaves out a group with nothing in it', () => {
+    const html = renderItems(
+      { ...createInitialGameState(), itemIds: ['iron-sword'] },
+      m,
+    );
+    expect(html).toContain(m.ui.equipped);
+    expect(html).not.toContain(m.ui.keyItems);
+    expect(html).not.toContain('panel-empty');
+  });
 });
 
 describe('renderHeroSheet', () => {
