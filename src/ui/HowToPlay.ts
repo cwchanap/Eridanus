@@ -9,7 +9,7 @@ export function renderHowToPlay(state: GameState, m: Messages): string {
   return `<section class="panel how-to-play" data-testid="how-to-play" aria-label="${howToPlay.title}">
     <h2 class="panel-title">${howToPlay.title}</h2>
     <ul>
-      <li><span class="keys"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span> ${howToPlay.move}</li>
+      <li><span class="keys"><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd></span> <span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span> ${howToPlay.move}</li>
       <li>${howToPlay.interact}</li>
       <li>${howToPlay.fight('<kbd>Enter</kbd>', '<kbd>Esc</kbd>')}</li>
       <li>${howToPlay.autosave}</li>

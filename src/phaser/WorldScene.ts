@@ -38,6 +38,7 @@ import {
   logStrip,
   type Point,
 } from './camera';
+import { keyDirection } from './keys';
 
 export type WorldSceneDeps = {
   getSession: () => SessionState;
@@ -45,13 +46,6 @@ export type WorldSceneDeps = {
   hasMessage: () => boolean;
   onInput: (input: InputCommand) => void;
 };
-
-const KEY_DIRECTIONS = new Map<string, Direction>([
-  ['ArrowUp', 'north'],
-  ['ArrowDown', 'south'],
-  ['ArrowLeft', 'west'],
-  ['ArrowRight', 'east'],
-]);
 
 // The enemy an open combat prompt is about, outlined inside its own cell.
 const TARGET_COLOR = 0xef6a5c;
@@ -99,7 +93,7 @@ export class WorldScene extends Phaser.Scene {
   private follow = { top: 0, strip: 0, zoom: 1 };
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
-    const direction = KEY_DIRECTIONS.get(event.key);
+    const direction = keyDirection(event);
     if (direction !== undefined) {
       event.preventDefault();
       // A held key repeats far faster than a step plays, so its repeats wait
