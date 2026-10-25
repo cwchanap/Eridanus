@@ -9,6 +9,7 @@ import type {
 } from '../game/types';
 import { findEntityById, findSectionsAt } from '../game/content';
 import { equippedWares } from '../game/equipment';
+import { tradePrice } from '../game/shop';
 import type { JournalView } from '../game/journal';
 import { nextLocale, type Locale } from '../i18n/locale';
 import { MESSAGES, pick, type Messages } from '../i18n/messages';
@@ -47,6 +48,7 @@ export type BattleView = Readonly<{
 type Message = Readonly<{ tag: string; text: string }>;
 type CombatPending = Extract<PendingInteraction, { kind: 'combat' }>;
 type PurchasePending = Extract<PendingInteraction, { kind: 'purchase' }>;
+type TradePending = Extract<PendingInteraction, { kind: 'trade' }>;
 
 function effectMessage(effect: ActionEffect, m: Messages): Message | null {
   switch (effect.kind) {
@@ -54,6 +56,7 @@ function effectMessage(effect: ActionEffect, m: Messages): Message | null {
     case 'traveled':
     case 'combatPrompt':
     case 'purchasePrompt':
+    case 'tradePrompt':
       return null;
     case 'clue':
       return { tag: m.tags.clue, text: pick(m.clues, effect.clueId) };
@@ -91,6 +94,14 @@ function effectMessage(effect: ActionEffect, m: Messages): Message | null {
           pick(m.items, effect.ware.itemId),
           m.statNames[effect.ware.stat],
           effect.ware.amount,
+        ),
+      };
+    case 'traded':
+      return {
+        tag: m.tags.traded,
+        text: m.effects.statUp(
+          m.statNames[effect.offer.stat],
+          effect.offer.amount,
         ),
       };
     case 'soldOut':
@@ -231,9 +242,13 @@ function renderBattle(
   </section>`;
 }
 
+function cancelButton(label: string): string {
+  return `<button type="button" class="button" data-action="cancel" aria-keyshortcuts="Escape">${label} <kbd aria-hidden="true">Esc</kbd></button>`;
+}
+
 function promptButtons(confirm: string, cancel: string): string {
   return `<button type="button" class="button button-fight" data-action="confirm" aria-keyshortcuts="Enter">${confirm} <kbd aria-hidden="true">Enter</kbd></button>
-      <button type="button" class="button" data-action="cancel" aria-keyshortcuts="Escape">${cancel} <kbd aria-hidden="true">Esc</kbd></button>`;
+      ${cancelButton(cancel)}`;
 }
 
 // The shop counter shares the encounter card's frame, so the box keeps its
@@ -267,6 +282,52 @@ function renderPurchase(
   </section>`;
 }
 
+// The trader's card is the shop's, with one Buy button per offer (keys 1, 2,
+// 3) in place of Buy; they all cost the same, so the price sits once above
+// them and the buttons say only what they add. Leave joins them in one row
+// rather than a column of its own, which a narrow card has no width for.
+function renderTrade(
+  pending: TradePending,
+  state: GameState,
+  m: Messages,
+): string {
+  const trader = findEntityById(pending.traderId);
+  if (trader?.kind !== 'trader') return '';
+  const price = tradePrice(trader, state);
+  const { gold } = state.player;
+  const choices = trader.offers
+    .map((offer, index) => {
+      const key = index + 1;
+      return `<button type="button" class="button button-fight" data-action="choose" data-index="${index}" data-stat="${offer.stat}" aria-keyshortcuts="${key}">${ICONS.coin}${m.statLabels[offer.stat]} +${offer.amount} <kbd aria-hidden="true">${key}</kbd></button>`;
+    })
+    .join('');
+  return `<section class="encounter" data-kind="shop" data-testid="trade-prompt" aria-label="${m.ui.trade}">
+    ${renderPortrait(entityAsset(trader, state), 'npc')}
+    <div class="encounter-info">
+      <div class="encounter-head"><span class="message-tag">${pick(m.shops, pending.traderId, m.ui.shop)}</span></div>
+      <p class="encounter-cost"><span data-testid="trade-price">${m.ui.price(price)}</span> <span class="encounter-after">${
+        gold < price ? m.ui.youHave(gold) : m.ui.leavesYou(gold - price)
+      }</span></p>
+      <div class="encounter-choices">${choices}${cancelButton(m.ui.leave)}</div>
+    </div>
+  </section>`;
+}
+
+function renderPrompt(
+  pending: PendingInteraction,
+  state: GameState,
+  m: Messages,
+): string {
+  switch (pending.kind) {
+    case 'combat':
+      return renderEncounter(pending, state, m);
+    case 'purchase':
+      return renderPurchase(pending, state, m);
+    case 'trade':
+      return renderTrade(pending, state, m);
+  }
+}
+
 function renderMessage(view: OverlayView, m: Messages): string {
   const { state, pending, effect, blocked, battle } = view;
   if (battle) return renderBattle(battle, state, m);
@@ -275,12 +336,7 @@ function renderMessage(view: OverlayView, m: Messages): string {
     : '';
   // prompt must stay reachable (Fight/Cancel clickable) even while blocked,
   // or a failed input while pending soft-locks the interaction
-  if (pending)
-    return (
-      (pending.kind === 'combat'
-        ? renderEncounter(pending, state, m)
-        : renderPurchase(pending, state, m)) + blockedHtml
-    );
+  if (pending) return renderPrompt(pending, state, m) + blockedHtml;
   if (blocked) return blockedHtml + closeButton(m);
   const message = effect && effectMessage(effect, m);
   if (effect && message) {
@@ -318,6 +374,7 @@ export class InteractionOverlay {
     private readonly root: HTMLElement,
     private readonly onConfirm: () => void,
     private readonly onCancel: () => void,
+    private readonly onChoose: (index: number) => void,
     private readonly sound: SoundToggle,
     private readonly onLocaleChange: (locale: Locale) => void,
   ) {
@@ -425,6 +482,12 @@ export class InteractionOverlay {
     this.root
       .querySelector<HTMLButtonElement>('[data-action="confirm"]')
       ?.addEventListener('click', () => this.onConfirm());
+    for (const button of this.root.querySelectorAll<HTMLButtonElement>(
+      '[data-action="choose"]',
+    ))
+      button.addEventListener('click', () =>
+        this.onChoose(Number(button.dataset.index)),
+      );
     // Closing a message is a cancel with nothing pending, like Escape.
     for (const action of ['cancel', 'dismiss'])
       this.root

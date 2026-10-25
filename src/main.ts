@@ -57,6 +57,7 @@ const overlay = new InteractionOverlay(
   uiRoot,
   () => handleInput({ kind: 'confirm' }),
   () => handleInput({ kind: 'cancel' }),
+  (index) => handleInput({ kind: 'choose', index }),
   sfx,
   changeLocale,
 );

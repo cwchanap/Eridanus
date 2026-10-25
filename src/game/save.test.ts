@@ -401,6 +401,23 @@ describe('saveGame/loadGame', () => {
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
   });
 
+  it('round-trips the trades made', () => {
+    const state = { ...createInitialGameState(), trades: 3 };
+    saveGame(storage, state);
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it.each([undefined, -1, 1.5, '2'])('rejects trades of %s', (trades) => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({ ...createInitialGameState(), trades }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-shape',
+    });
+  });
+
   it('rejects a save without gold', () => {
     const player: Record<string, number> = {
       ...createInitialGameState().player,

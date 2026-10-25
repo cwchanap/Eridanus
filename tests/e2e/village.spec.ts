@@ -118,6 +118,61 @@ test('a better ware replaces the one worn in its slot', async ({ page }) => {
   await expect(weapon).toHaveAttribute('data-item', 'steel-sword');
 });
 
+test('the status trader sells points at a price that rises', async ({
+  page,
+}) => {
+  // (9,12) is Market Row beside the trader's stall (9,13).
+  await bootInVillage(page, { x: 9, y: 12 }, 100);
+
+  // Down: the stall quotes the first price; Escape leaves without trading.
+  await press(page, 'ArrowDown');
+  await expect(page.getByTestId('trade-prompt')).toBeVisible();
+  await expect(page.getByTestId('trade-price')).toHaveText('Price: 30 gold');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('trade-prompt')).toHaveCount(0);
+  await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 100');
+
+  // Enter does not trade; 1 buys the first offer, +1 ATK.
+  await press(page, 'ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('trade-prompt')).toBeVisible();
+  await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 100');
+  await page.keyboard.press('1');
+  await expect(page.getByTestId('effect')).toHaveAttribute(
+    'data-effect',
+    'traded',
+  );
+  await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 11');
+  await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 70');
+  await page.keyboard.press('Escape');
+
+  // The second point costs 40; its button buys +1 DEF.
+  await press(page, 'ArrowDown');
+  await expect(page.getByTestId('trade-price')).toHaveText('Price: 40 gold');
+  await page.locator('[data-action="choose"][data-stat="defense"]').click();
+  await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 3');
+  await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 30');
+  await page.keyboard.press('Escape');
+
+  // The third costs 50, more than the purse: refused, prompt still open.
+  await press(page, 'ArrowDown');
+  await expect(page.getByTestId('trade-price')).toHaveText('Price: 50 gold');
+  await page.keyboard.press('3');
+  await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
+    'data-reason',
+    'not-enough-gold',
+  );
+  await expect(page.getByTestId('trade-prompt')).toBeVisible();
+  await page.getByRole('button', { name: 'Leave' }).click();
+  await expect(page.getByTestId('trade-prompt')).toHaveCount(0);
+
+  // The price, like the stats, survives a reload.
+  await page.reload();
+  await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 11');
+  await press(page, 'ArrowDown');
+  await expect(page.getByTestId('trade-price')).toHaveText('Price: 50 gold');
+});
+
 test('a sealed maze entrance turns the hero back and saves nothing', async ({
   page,
 }) => {

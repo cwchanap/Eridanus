@@ -11,5 +11,6 @@ export function createInitialGameState(): GameState {
     itemIds: [],
     factIds: [],
     discoveredSectionIds: ['village-square'],
+    trades: 0,
   };
 }

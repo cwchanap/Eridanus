@@ -45,6 +45,7 @@ export const en = {
     leavesYou: (gold: number) => `leaves you ${gold}`,
     buy: 'Buy',
     leave: 'Leave',
+    trade: 'Trade',
     // Invalid-save recovery
     invalidSave: 'Invalid save',
     invalidSaveTitle: 'Save data is invalid.',
@@ -100,6 +101,7 @@ export const en = {
     sealed: 'Sealed',
     victory: 'Victory',
     purchased: 'Purchased',
+    traded: 'Traded',
     item: 'Item',
     lever: 'Lever',
   },
@@ -252,6 +254,7 @@ export const en = {
     'village-weapon-shop': 'Smith',
     'village-armor-shop': 'Armorer',
     'village-item-shop': 'Merchant',
+    'village-status-trader': 'Status Trader',
   },
   items: {
     'iron-sword': 'Iron Sword',
@@ -399,7 +402,7 @@ export const en = {
     'guard-sealed-mine':
       'The old mine collapsed years ago. Nobody goes down there until the shafts are shored up.',
     'child-gold-tip':
-      'The tower guards drop coins when you beat them! The shops on Market Row will trade you gear for them.',
+      "The tower guards drop coins when you beat them! The shops on Market Row will trade you gear for them, and the Status Trader at the row's west end will sell you strength itself.",
   } satisfies Record<DialogueLineId, string>,
 };
 

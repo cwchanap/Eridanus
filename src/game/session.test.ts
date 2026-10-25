@@ -13,6 +13,7 @@ const pending: SessionState = {
     itemIds: [],
     factIds: [],
     discoveredSectionIds: ['floor1-lower-loop'],
+    trades: 0,
   },
   pending: {
     kind: 'combat',

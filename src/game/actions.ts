@@ -170,6 +170,12 @@ export function interactWithEntity(
         effect: { kind: 'purchasePrompt', shopId: entity.id, ware },
       };
     }
+    case 'trader':
+      return {
+        ok: true,
+        state,
+        effect: { kind: 'tradePrompt', traderId: entity.id },
+      };
     case 'portal':
       throw new Error('Portals are step-on movement');
   }

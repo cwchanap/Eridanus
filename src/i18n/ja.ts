@@ -31,6 +31,7 @@ export const ja: Messages = {
     leavesYou: (gold) => `購入後：${gold}`,
     buy: '買う',
     leave: '立ち去る',
+    trade: '取引',
     invalidSave: '無効なセーブ',
     invalidSaveTitle: 'セーブデータが無効です。',
     invalidSaveBody:
@@ -81,6 +82,7 @@ export const ja: Messages = {
     sealed: '封鎖',
     victory: '勝利',
     purchased: '購入',
+    traded: '取引',
     item: 'アイテム',
     lever: 'レバー',
   },
@@ -225,6 +227,7 @@ export const ja: Messages = {
     'village-weapon-shop': '鍛冶屋',
     'village-armor-shop': '防具屋',
     'village-item-shop': '商人',
+    'village-status-trader': 'ステータス商人',
   },
   items: {
     'iron-sword': '鉄の剣',
@@ -369,6 +372,6 @@ export const ja: Messages = {
     'guard-sealed-mine':
       '古い鉱山は何年も前に崩れた。坑道の補強が済むまで、誰も下りない。',
     'child-gold-tip':
-      '塔の衛兵をやっつけると、コインを落とすんだよ！市場通りのお店で、それを装備と交換してくれるよ。',
+      '塔の衛兵をやっつけると、コインを落とすんだよ！市場通りのお店で、それを装備と交換してくれるよ。通りの西のはしにいるステータス商人は、コインを能力そのものに変えてくれるんだ。',
   },
 };

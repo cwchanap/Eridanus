@@ -302,7 +302,7 @@ describe('asset seam', () => {
     for (const map of Object.values(MAPS)) {
       const state = { ...createInitialGameState(), mapId: map.id };
       for (const entity of map.entities) {
-        if (!['npc', 'shop', 'enemy'].includes(entity.kind)) continue;
+        if (!['npc', 'shop', 'trader', 'enemy'].includes(entity.kind)) continue;
         const sprite = resolveEntityAsset(entity, state);
         expect(sprite && PORTRAIT_PATHS[sprite], entity.id).toBeTruthy();
       }
@@ -361,7 +361,7 @@ describe('asset seam', () => {
         const sprite = resolveEntityAsset(entity, state);
         if (!sprite) continue;
         expect(isCharacter(sprite), entity.id).toBe(
-          ['npc', 'shop', 'enemy'].includes(entity.kind),
+          ['npc', 'shop', 'trader', 'enemy'].includes(entity.kind),
         );
       }
     }

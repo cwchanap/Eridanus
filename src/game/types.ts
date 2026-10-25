@@ -115,6 +115,18 @@ export type ShopWare = Readonly<{
 // A shopkeeper sells their wares in order, one per visit to the counter.
 export type ShopEntity = BaseEntity &
   Readonly<{ kind: 'shop'; wares: readonly ShopWare[] }>;
+// One status point a trader sells: amount added to stat.
+export type TraderOffer = Readonly<{ stat: Stat; amount: number }>;
+// Sells status points for gold, like a level up. Every trade the hero has
+// ever made (GameState.trades) lifts the price by priceStep, whichever
+// stat it bought, so the points never run out but each costs more.
+export type TraderEntity = BaseEntity &
+  Readonly<{
+    kind: 'trader';
+    offers: readonly TraderOffer[];
+    basePrice: number;
+    priceStep: number;
+  }>;
 export type PortalLock =
   | Readonly<{
       kind: 'item';
@@ -143,7 +155,8 @@ export type Entity =
   | NpcEntity
   | PortalEntity
   | SealedEntity
-  | ShopEntity;
+  | ShopEntity
+  | TraderEntity;
 export type MapSection = Readonly<{
   id: string;
   bounds: Readonly<{
@@ -171,6 +184,8 @@ export type GameState = Readonly<{
   itemIds: readonly string[];
   factIds: readonly string[];
   discoveredSectionIds: readonly string[];
+  // Status points the hero has bought from traders so far.
+  trades: number;
 }>;
 
 export type WinnableCombatPreview = {
@@ -210,6 +225,8 @@ export type ActionEffect =
   | { kind: 'purchasePrompt'; shopId: string; ware: ShopWare }
   | { kind: 'purchased'; ware: ShopWare }
   | { kind: 'soldOut'; shopId: string }
+  | { kind: 'tradePrompt'; traderId: string }
+  | { kind: 'traded'; offer: TraderOffer; price: number }
   | { kind: 'dialogue'; speakerId: NpcId; lineId: DialogueLineId }
   | { kind: 'itemReward'; itemId: string }
   | { kind: 'accessLocked'; entityId: string };
@@ -224,7 +241,8 @@ export type PendingInteraction =
       enemyId: string;
       preview: WinnableCombatPreview;
     }>
-  | Readonly<{ kind: 'purchase'; shopId: string; ware: ShopWare }>;
+  | Readonly<{ kind: 'purchase'; shopId: string; ware: ShopWare }>
+  | Readonly<{ kind: 'trade'; traderId: string }>;
 
 export type SessionState = Readonly<{
   game: GameState;
@@ -234,6 +252,8 @@ export type SessionState = Readonly<{
 export type InputCommand =
   | Readonly<{ kind: 'move'; direction: Direction }>
   | Readonly<{ kind: 'confirm' }>
+  // Picks the index-th offer of an open trade prompt.
+  | Readonly<{ kind: 'choose'; index: number }>
   | Readonly<{ kind: 'cancel' }>;
 
 export type SessionTransition =

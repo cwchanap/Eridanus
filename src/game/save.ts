@@ -43,6 +43,9 @@ function hasValidShape(state: unknown): state is GameState {
     const value = playerRecord[stat];
     if (typeof value !== 'number' || !Number.isFinite(value)) return false;
   }
+  const trades = record['trades'];
+  if (typeof trades !== 'number' || !Number.isInteger(trades) || trades < 0)
+    return false;
   return (
     isStringArray(record['openedRewardIds']) &&
     isStringArray(record['defeatedEnemyIds']) &&

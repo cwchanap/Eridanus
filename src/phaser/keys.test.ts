@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keyDirection } from './keys';
+import { keyChoice, keyDirection } from './keys';
 
 const press = (key: string, mods: Partial<KeyboardEvent> = {}) => ({
   key,
@@ -33,5 +33,22 @@ describe('keyDirection', () => {
     expect(keyDirection(press('j'))).toBeUndefined();
     expect(keyDirection(press('m'))).toBeUndefined();
     expect(keyDirection(press('Enter'))).toBeUndefined();
+  });
+});
+
+describe('keyChoice', () => {
+  it('maps the digits 1-9 to zero-based offer indexes', () => {
+    expect(keyChoice(press('1'))).toBe(0);
+    expect(keyChoice(press('3'))).toBe(2);
+    expect(keyChoice(press('9'))).toBe(8);
+  });
+
+  it('leaves 0, other keys and browser shortcuts alone', () => {
+    expect(keyChoice(press('0'))).toBeUndefined();
+    expect(keyChoice(press('a'))).toBeUndefined();
+    expect(keyChoice(press('Enter'))).toBeUndefined();
+    expect(keyChoice(press('1', { ctrlKey: true }))).toBeUndefined();
+    expect(keyChoice(press('2', { metaKey: true }))).toBeUndefined();
+    expect(keyChoice(press('3', { altKey: true }))).toBeUndefined();
   });
 });

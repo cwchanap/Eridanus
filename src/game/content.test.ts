@@ -652,6 +652,32 @@ describe('validateContent failure branches', () => {
     ]);
   });
 
+  it('flags a trader with no offers, no price or an empty offer', () => {
+    const maps = villageWith([
+      {
+        kind: 'trader',
+        id: 'bad-trader',
+        tile: { x: 9, y: 3 },
+        offers: [],
+        basePrice: 0,
+        priceStep: 5,
+      },
+      {
+        kind: 'trader',
+        id: 'bad-offer-trader',
+        tile: { x: 10, y: 3 },
+        offers: [{ stat: 'attack', amount: 0 }],
+        basePrice: 5,
+        priceStep: 5,
+      },
+    ]);
+    expect(validateContent(maps)).toEqual([
+      'bad-trader: trader has no offers',
+      'bad-trader: base price must be positive',
+      'bad-offer-trader: offer amounts must be positive',
+    ]);
+  });
+
   it('flags a duplicate entity id', () => {
     const maps = villageWith([
       {

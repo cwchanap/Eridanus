@@ -97,6 +97,7 @@ async function bootOnTile(
       itemIds: [],
       factIds,
       discoveredSectionIds: [],
+      trades: 0,
     },
   );
   await page.reload();

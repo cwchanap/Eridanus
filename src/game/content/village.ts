@@ -181,6 +181,19 @@ export const village: MapDefinition = {
       ],
     },
     {
+      kind: 'trader',
+      id: 'village-status-trader',
+      tile: { x: 9, y: 13 },
+      assetId: 'npc-merchant',
+      offers: [
+        { stat: 'attack', amount: 1 },
+        { stat: 'defense', amount: 1 },
+        { stat: 'hp', amount: 10 },
+      ],
+      basePrice: 30,
+      priceStep: 10,
+    },
+    {
       kind: 'portal',
       id: 'village-to-floor1',
       tile: { x: 23, y: 1 },

@@ -7,6 +7,8 @@ import type {
   ShopEntity,
   ShopWare,
   Stat,
+  TraderEntity,
+  TraderOffer,
 } from './types';
 
 // Wares sell in authored order, so the counter always offers the cheapest
@@ -43,5 +45,29 @@ export function resolvePurchase(
     ok: true,
     state: addItem({ ...state, player }, ware.itemId),
     effect: { kind: 'purchased', ware },
+  };
+}
+
+export function tradePrice(trader: TraderEntity, state: GameState): number {
+  return trader.basePrice + trader.priceStep * state.trades;
+}
+
+export function resolveTrade(
+  state: GameState,
+  trader: TraderEntity,
+  offer: TraderOffer,
+): ActionResult {
+  const price = tradePrice(trader, state);
+  if (state.player.gold < price)
+    return { ok: false, reason: 'not-enough-gold' };
+  const player = withStat(
+    { ...state.player, gold: state.player.gold - price },
+    offer.stat,
+    offer.amount,
+  );
+  return {
+    ok: true,
+    state: { ...state, player, trades: state.trades + 1 },
+    effect: { kind: 'traded', offer, price },
   };
 }
