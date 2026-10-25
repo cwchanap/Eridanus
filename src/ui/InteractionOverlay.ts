@@ -392,14 +392,18 @@ export class InteractionOverlay {
     }
     const focused = menuFocus(this.root);
     const message = renderMessage(view, m);
+    // An open menu makes the HUD under it inert, so Tab can't reach a
+    // prompt's Fight or Buy button behind it.
     this.root.innerHTML = `
-      <div class="hud-left">
-        ${renderStatus(state, m, pending?.kind === 'combat' ? pending.preview.hpLoss : 0)}
-        ${renderHowToPlay(state, m)}
+      <div class="hud-layer"${this.menuOpen ? ' inert' : ''}>
+        <div class="hud-left">
+          ${renderStatus(state, m, pending?.kind === 'combat' ? pending.preview.hpLoss : 0)}
+          ${renderHowToPlay(state, m)}
+        </div>
+        ${renderLocation(state, m)}
+        ${renderQuestTracker(journal, m)}
+        <section class="panel log" data-testid="interaction" aria-label="${m.ui.messages}"${message ? '' : ' hidden'}><div class="log-body">${message}</div></section>
       </div>
-      ${renderLocation(state, m)}
-      ${renderQuestTracker(journal, m)}
-      <section class="panel log" data-testid="interaction" aria-label="${m.ui.messages}"${message ? '' : ' hidden'}><div class="log-body">${message}</div></section>
       ${renderMenu(state, journal, m, { open: this.menuOpen, tab: this.menuTab, muted: this.sound.muted, locale })}`;
     for (const selector of SCROLLING_PANELS) {
       const panel = this.root.querySelector(selector);

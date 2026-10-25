@@ -104,3 +104,23 @@ test('a sealed maze entrance turns the hero back and saves nothing', async ({
   await page.getByRole('button', { name: 'Close message' }).click();
   await expect(page.getByTestId('effect')).toHaveCount(0);
 });
+
+test('the menu holds the shop counter still under it', async ({ page }) => {
+  await bootInVillage(page, { x: 11, y: 12 }, 20);
+  await press(page, 'ArrowDown');
+  await expect(page.getByTestId('purchase-prompt')).toBeVisible();
+
+  // Opened over the counter, the menu keeps keys and focus to itself: no
+  // Tab reaches Buy behind it, and no Enter buys.
+  await page.locator('[data-action="open-menu"]').click();
+  await expect(page.getByTestId('menu')).toBeVisible();
+  for (const key of ['Shift+Tab', 'Enter', 'Shift+Tab', 'Enter', 'Tab'])
+    await page.keyboard.press(key);
+  await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 20');
+  await expect(page.locator('[data-item="iron-sword"]')).toHaveCount(0);
+
+  // Escape closes the menu, and the counter is still open behind it.
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('menu')).toBeHidden();
+  await expect(page.getByTestId('purchase-prompt')).toBeVisible();
+});
