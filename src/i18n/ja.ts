@@ -138,7 +138,7 @@ export const ja: Messages = {
     'ledger-follow-deeper-record':
       '対になった解放装置が断片の意味を説明している。塔の奥にある最後の記録を探そう。',
     'reach-heart-chamber':
-      '塔の下層が開いた。3階のハッチの衛兵を倒し、5階の塔の心臓部まで戦い進もう。',
+      '塔の下層が開いた。3階のハッチにつながるレバーを3本とも下ろし、5階の塔の心臓部まで戦い進もう。',
     'claim-restoration-core': 'コアの守護者を倒した。復元コアを回収しよう。',
     'return-restoration-core': '復元コアを村の守衛長のもとへ持ち帰る。',
     'story-complete': '復元コアは村に戻った。塔を復旧できる。',

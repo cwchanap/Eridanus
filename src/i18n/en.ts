@@ -159,7 +159,7 @@ export const en = {
     'ledger-follow-deeper-record':
       'The paired guarded releases explain the fragment. Seek the final record deeper in the tower.',
     'reach-heart-chamber':
-      'The lower tower is open. Defeat the Floor 3 hatch guard and fight down to the tower heart on Floor 5.',
+      'The lower tower is open. Throw all three levers wired to the Floor 3 hatch and fight down to the tower heart on Floor 5.',
     'claim-restoration-core':
       'The core guardian is defeated. Recover the Restoration Core.',
     'return-restoration-core':

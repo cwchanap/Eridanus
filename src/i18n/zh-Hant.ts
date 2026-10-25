@@ -135,7 +135,7 @@ export const zhHant: Messages = {
     'ledger-follow-deeper-record':
       '成對的守衛機關解釋了這份殘頁。到塔的更深處尋找最終記錄。',
     'reach-heart-chamber':
-      '下層的塔已經開通。擊敗第 3 層艙口的守衛，一路殺到第 5 層的塔心。',
+      '下層的塔已經開通。拉下連著第 3 層活門的三根拉桿，一路殺到第 5 層的塔心。',
     'claim-restoration-core': '核心守護者已被擊敗。取回修復核心。',
     'return-restoration-core': '把修復核心帶回給村莊的守望長。',
     'story-complete': '修復核心已回到村莊。這座塔可以修復了。',
