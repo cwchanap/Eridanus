@@ -34,7 +34,12 @@ export type OverlayView = Readonly<{
   battle: BattleView | null;
 }>;
 
-export type BattleView = Readonly<{ enemyId: string; blow: Blow }>;
+// The blow on show, and the enemy's HP as of the last blow to land.
+export type BattleView = Readonly<{
+  enemyId: string;
+  blow: Blow;
+  enemyHp: number;
+}>;
 
 type Message = Readonly<{ tag: string; text: string }>;
 type CombatPending = Extract<PendingInteraction, { kind: 'combat' }>;
@@ -207,13 +212,13 @@ function renderBattle(
   const enemy = findEntityById(battle.enemyId);
   const assetKey = entityAsset(enemy, state);
   const name = assetKey ? pick(m.enemies, assetKey, m.ui.enemy) : m.ui.enemy;
-  const { blow } = battle;
-  const maxHp = enemy?.kind === 'enemy' ? enemy.stats.hp : blow.enemyHp;
-  const left = maxHp > 0 ? Math.round((blow.enemyHp / maxHp) * 100) : 0;
+  const { blow, enemyHp } = battle;
+  const maxHp = enemy?.kind === 'enemy' ? enemy.stats.hp : enemyHp;
+  const left = maxHp > 0 ? Math.round((enemyHp / maxHp) * 100) : 0;
   return `<section class="encounter" data-kind="battle" data-testid="battle" aria-label="${m.ui.combat}">
     ${renderPortrait(assetKey, 'enemy')}
     <div class="encounter-info">
-      <div class="encounter-head"><span class="message-tag">${name}</span><p class="encounter-stats"><span data-testid="battle-enemy-hp">${m.statLabels.hp} ${blow.enemyHp}/${maxHp}</span></p></div>
+      <div class="encounter-head"><span class="message-tag">${name}</span><p class="encounter-stats"><span data-testid="battle-enemy-hp" data-hp="${enemyHp}">${m.statLabels.hp} ${enemyHp}/${maxHp}</span></p></div>
       <div class="battle-bar" aria-hidden="true"><span style="width: ${left}%"></span></div>
       <p class="encounter-cost" data-blow="${blow.by}">${blow.by === 'hero' ? m.ui.youStrike(blow.damage) : m.ui.enemyStrikes(blow.damage)}</p>
     </div>
