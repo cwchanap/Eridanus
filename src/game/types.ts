@@ -8,13 +8,19 @@ export type EquipSlot = 'weapon' | 'armor' | 'accessory';
 export type Tile = Readonly<{ x: number; y: number }>;
 
 // HP is one uncapped pool: fights spend it and only one-time rewards and
-// wares add to it, so nothing ever refills it.
+// wares add to it, so nothing ever refills it. Agility decides how often
+// each side's blows land (combat.ts hitChance).
 export type PlayerStats = Readonly<{
   hp: number;
   attack: number;
   defense: number;
+  agility: number;
   gold: number;
 }>;
+
+// A source of rolls in [0, 1), like Math.random. The rules take one so a
+// fight can be replayed in tests; only main.ts hands them the real thing.
+export type Rng = () => number;
 
 export type DialogueLineId =
   | 'warden-main-lead'
@@ -82,7 +88,12 @@ export type RewardEntity = BaseEntity &
 export type EnemyEntity = BaseEntity &
   Readonly<{
     kind: 'enemy';
-    stats: Readonly<{ hp: number; attack: number; defense: number }>;
+    stats: Readonly<{
+      hp: number;
+      attack: number;
+      defense: number;
+      agility: number;
+    }>;
     gold: number;
   }>;
 // A latch opens from its rearSide, which only another floor reaches, or,
@@ -188,11 +199,26 @@ export type GameState = Readonly<{
   trades: number;
 }>;
 
+// What a fight is expected to cost. The fight itself is random, so hpLoss is
+// the average over many rolls, and the two hit chances (0 to 1) say how often
+// each side's blows land.
 export type WinnableCombatPreview = {
   winnable: true;
   hitsNeeded: number;
   hpLoss: number;
+  heroHit: number;
+  enemyHit: number;
 };
+
+// One strike of a fight: who struck, whether it landed, for how much (0 on a
+// miss), and both sides' HP after.
+export type Blow = Readonly<{
+  by: 'hero' | 'enemy';
+  hit: boolean;
+  damage: number;
+  heroHp: number;
+  enemyHp: number;
+}>;
 
 export type CombatPreview =
   | WinnableCombatPreview
@@ -221,7 +247,15 @@ export type ActionEffect =
   | { kind: 'latchWired'; id: string; thrown: number; total: number }
   | { kind: 'leverPulled'; id: string; thrown: boolean; linked: number }
   | { kind: 'combatPrompt'; enemyId: string; preview: WinnableCombatPreview }
-  | { kind: 'enemyDefeated'; enemyId: string; hpLost: number; gold: number }
+  | {
+      kind: 'enemyDefeated';
+      enemyId: string;
+      hpLost: number;
+      gold: number;
+      blows: readonly Blow[];
+    }
+  // The enemy won: the hero is carried back to the village, HP and gold kept.
+  | { kind: 'heroDefeated'; enemyId: string; blows: readonly Blow[] }
   | { kind: 'purchasePrompt'; shopId: string; ware: ShopWare }
   | { kind: 'purchased'; ware: ShopWare }
   | { kind: 'soldOut'; shopId: string }

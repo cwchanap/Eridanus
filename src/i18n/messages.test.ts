@@ -66,11 +66,12 @@ describe('English', () => {
 
   // The e2e journeys read these back as written.
   it('keeps the texts the journeys assert on', () => {
-    expect(ui.hpLoss(8)).toBe('HP loss: 8');
+    expect(ui.hpLoss(8)).toBe('HP loss: ~8');
     expect(MESSAGES.en.statLabels).toMatchObject({
       hp: 'HP',
       attack: 'ATK',
       defense: 'DEF',
+      agility: 'AGI',
       gold: 'Gold',
     });
   });

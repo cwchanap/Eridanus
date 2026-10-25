@@ -43,7 +43,7 @@ const testEnemy: EnemyEntity = {
   id: 'test-enemy',
   tile: { x: 1, y: 1 },
   assetId: 'enemy-ruin-guard',
-  stats: { hp: 1, attack: 1, defense: 0 },
+  stats: { hp: 1, attack: 1, defense: 0, agility: 0 },
   gold: 0,
 };
 

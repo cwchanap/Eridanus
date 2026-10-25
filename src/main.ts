@@ -2,7 +2,6 @@ import '@fontsource/cinzel/latin-700.css';
 import './styles.css';
 import { cuesFor } from './audio/cues';
 import { Sfx, type SfxCue } from './audio/sfx';
-import { combatBlows, type Blow } from './game/combat';
 import { findEntityById } from './game/content';
 import { buildJournalView } from './game/journal';
 import { dispatchInput } from './game/session';
@@ -10,6 +9,7 @@ import { loadGame, resetGame, saveGame } from './game/save';
 import { createInitialGameState } from './game/state';
 import type {
   ActionEffect,
+  Blow,
   BlockedReason,
   GameState,
   InputCommand,
@@ -30,7 +30,7 @@ let session: SessionState = { game: createInitialGameState(), pending: null };
 let effect: ActionEffect | null = null;
 let blocked: BlockedReason | null = null;
 let created: CreatedGame | null = null;
-// A won fight replays blow by blow before its victory shows. The fight is
+// A fight replays blow by blow before its outcome shows. The fight is
 // already resolved and saved; this only holds back what the player sees:
 // the game from before it, with the hero's HP ticking down. Enter or Escape
 // skips to the end.
@@ -88,7 +88,14 @@ function currentStrike(): Strike | null {
   const blow = battle.blows[battle.shown - 1];
   if (!blow) return null;
   const { enemyId, shown, ms, blows } = battle;
-  return { enemyId, blow, index: shown, ms, last: shown === blows.length };
+  return {
+    enemyId,
+    blow,
+    index: shown,
+    ms,
+    last: shown === blows.length,
+    miss: MESSAGES[locale].ui.miss,
+  };
 }
 
 function renderOverlay(): void {
@@ -118,12 +125,11 @@ function redraw(): void {
 function startBattle(
   before: GameState,
   enemyId: string,
+  blows: readonly Blow[],
   cues: readonly SfxCue[],
 ): boolean {
   const enemy = findEntityById(enemyId);
-  if (enemy?.kind !== 'enemy') return false;
-  const blows = combatBlows(before.player, enemy.stats);
-  if (blows.length === 0) return false;
+  if (enemy?.kind !== 'enemy' || blows.length === 0) return false;
   battle = {
     before,
     enemyId,
@@ -153,7 +159,7 @@ function nextBlow(): void {
 function landBlow(): void {
   if (!battle) return;
   battle.landed = battle.shown;
-  sfx.play(['hit']);
+  if (battle.blows[battle.landed - 1]?.hit) sfx.play(['hit']);
   const last = battle.shown === battle.blows.length;
   battle.timer = window.setTimeout(
     last ? endBattle : nextBlow,
@@ -188,7 +194,7 @@ function handleInput(input: InputCommand): void {
   }
   const previousGame = session.game;
   const previousPending = session.pending;
-  const transition = dispatchInput(session, input);
+  const transition = dispatchInput(session, input, Math.random);
   if (transition.ok) {
     session = transition.session;
     effect = transition.effect;
@@ -199,11 +205,16 @@ function handleInput(input: InputCommand): void {
     blocked = transition.reason;
   }
   const cues = cuesFor(input, transition);
-  if (
+  const fought =
     transition.ok &&
+    (transition.effect?.kind === 'enemyDefeated' ||
+      transition.effect?.kind === 'heroDefeated')
+      ? transition.effect
+      : null;
+  if (
+    fought &&
     previousPending?.kind === 'combat' &&
-    transition.effect?.kind === 'enemyDefeated' &&
-    startBattle(previousGame, previousPending.enemyId, cues)
+    startBattle(previousGame, fought.enemyId, fought.blows, cues)
   )
     return;
   sfx.play(cues);

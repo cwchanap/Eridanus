@@ -4,7 +4,10 @@ import { attemptMove } from './movement';
 import { dispatchInput } from './session';
 import { nextWare, resolvePurchase, resolveTrade, tradePrice } from './shop';
 import { createInitialGameState } from './state';
-import type { GameState, ShopEntity, TraderEntity } from './types';
+import type { GameState, Rng, ShopEntity, TraderEntity } from './types';
+
+// Purchases roll nothing; the session only needs a source to carry.
+const hits: Rng = () => 0;
 
 function shop(id: string): ShopEntity {
   const entity = findEntityById(id);
@@ -132,6 +135,7 @@ describe('shops', () => {
     const opened = dispatchInput(
       { game: atSmith, pending: null },
       { kind: 'move', direction: 'south' },
+      hits,
     );
     expect(opened.session.pending).toEqual({
       kind: 'purchase',
@@ -139,10 +143,10 @@ describe('shops', () => {
       ware: smith.wares[0],
     });
 
-    const left = dispatchInput(opened.session, { kind: 'cancel' });
+    const left = dispatchInput(opened.session, { kind: 'cancel' }, hits);
     expect(left.session).toEqual({ game: atSmith, pending: null });
 
-    const bought = dispatchInput(opened.session, { kind: 'confirm' });
+    const bought = dispatchInput(opened.session, { kind: 'confirm' }, hits);
     expect(bought.ok && bought.session.pending).toBeNull();
     expect(bought.session.game.itemIds).toEqual(['iron-sword']);
   });
@@ -152,8 +156,9 @@ describe('shops', () => {
     const opened = dispatchInput(
       { game: poor, pending: null },
       { kind: 'move', direction: 'south' },
+      hits,
     );
-    const refused = dispatchInput(opened.session, { kind: 'confirm' });
+    const refused = dispatchInput(opened.session, { kind: 'confirm' }, hits);
     expect(refused).toEqual({
       ok: false,
       session: opened.session,
@@ -224,13 +229,18 @@ describe('status trader', () => {
     const opened = dispatchInput(
       { game: atTrader, pending: null },
       { kind: 'move', direction: 'south' },
+      hits,
     );
     expect(opened.session.pending).toEqual({
       kind: 'trade',
       traderId: trader.id,
     });
 
-    const bought = dispatchInput(opened.session, { kind: 'choose', index: 1 });
+    const bought = dispatchInput(
+      opened.session,
+      { kind: 'choose', index: 1 },
+      hits,
+    );
     expect(bought.ok && bought.session.pending).toBeNull();
     expect(bought.session.game.player).toMatchObject({
       defense: 3,
@@ -243,8 +253,9 @@ describe('status trader', () => {
     const opened = dispatchInput(
       { game: atTrader, pending: null },
       { kind: 'move', direction: 'south' },
+      hits,
     );
-    const left = dispatchInput(opened.session, { kind: 'cancel' });
+    const left = dispatchInput(opened.session, { kind: 'cancel' }, hits);
     expect(left.session).toEqual({ game: atTrader, pending: null });
   });
 
@@ -253,22 +264,28 @@ describe('status trader', () => {
     const opened = dispatchInput(
       { game: poor, pending: null },
       { kind: 'move', direction: 'south' },
+      hits,
     );
-    expect(dispatchInput(opened.session, { kind: 'choose', index: 0 })).toEqual(
-      { ok: false, session: opened.session, reason: 'not-enough-gold' },
-    );
+    expect(
+      dispatchInput(opened.session, { kind: 'choose', index: 0 }, hits),
+    ).toEqual({
+      ok: false,
+      session: opened.session,
+      reason: 'not-enough-gold',
+    });
   });
 
   it('ignores Enter and a missing offer, leaving the prompt open', () => {
     const opened = dispatchInput(
       { game: atTrader, pending: null },
       { kind: 'move', direction: 'south' },
+      hits,
     );
     for (const input of [
       { kind: 'confirm' },
       { kind: 'choose', index: 3 },
     ] as const)
-      expect(dispatchInput(opened.session, input)).toEqual({
+      expect(dispatchInput(opened.session, input, hits)).toEqual({
         ok: true,
         session: opened.session,
         effect: null,
@@ -279,10 +296,11 @@ describe('status trader', () => {
     const shopping = dispatchInput(
       { game: { ...atTrader, tile: { x: 11, y: 12 } }, pending: null },
       { kind: 'move', direction: 'south' },
+      hits,
     );
     expect(shopping.session.pending?.kind).toBe('purchase');
     expect(
-      dispatchInput(shopping.session, { kind: 'choose', index: 0 }),
+      dispatchInput(shopping.session, { kind: 'choose', index: 0 }, hits),
     ).toEqual({ ok: true, session: shopping.session, effect: null });
   });
 });

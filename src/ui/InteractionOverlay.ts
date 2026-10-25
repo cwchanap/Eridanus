@@ -1,6 +1,6 @@
-import type { Blow } from '../game/combat';
 import type {
   ActionEffect,
+  Blow,
   BlockedReason,
   Entity,
   GameState,
@@ -87,6 +87,8 @@ function effectMessage(effect: ActionEffect, m: Messages): Message | null {
         tag: m.tags.victory,
         text: m.effects.victory(effect.hpLost, effect.gold),
       };
+    case 'heroDefeated':
+      return { tag: m.tags.defeat, text: m.effects.defeated };
     case 'purchased':
       return {
         tag: m.tags.purchased,
@@ -183,6 +185,11 @@ function effectPortrait(effect: ActionEffect, state: GameState): string {
       entityAsset(findEntityById(effect.enemyId), state),
       'defeated',
     );
+  if (effect.kind === 'heroDefeated')
+    return renderPortrait(
+      entityAsset(findEntityById(effect.enemyId), state),
+      'enemy',
+    );
   return '';
 }
 
@@ -197,11 +204,12 @@ function renderEncounter(
   const enemy = findEntityById(pending.enemyId);
   const assetKey = entityAsset(enemy, state);
   const portrait = renderPortrait(assetKey, 'enemy');
-  const { hp, attack, defense } = m.statLabels;
+  const { hp, attack, defense, agility } = m.statLabels;
   const stats =
     enemy?.kind === 'enemy'
-      ? `<p class="encounter-stats"><span>${hp} ${enemy.stats.hp}</span><span>${attack} ${enemy.stats.attack}</span><span>${defense} ${enemy.stats.defense}</span></p>`
+      ? `<p class="encounter-stats"><span>${hp} ${enemy.stats.hp}</span><span>${attack} ${enemy.stats.attack}</span><span>${defense} ${enemy.stats.defense}</span><span>${agility} ${enemy.stats.agility}</span></p>`
       : '';
+  const { heroHit, enemyHit } = pending.preview;
   const name = assetKey ? pick(m.enemies, assetKey, m.ui.enemy) : m.ui.enemy;
   const hpAfter = state.player.hp - pending.preview.hpLoss;
   return `<section class="encounter" data-testid="combat-prompt" aria-label="${m.ui.combat}">
@@ -209,11 +217,20 @@ function renderEncounter(
     <div class="encounter-info">
       <div class="encounter-head"><span class="message-tag">${name}</span>${stats}</div>
       <p class="encounter-cost"><span data-testid="combat-hp-loss">${m.ui.hpLoss(pending.preview.hpLoss)}</span> <span class="encounter-after">${m.ui.leavesYouAt(hpAfter)}</span></p>
+      <p class="encounter-stats" data-testid="combat-hit-chances">${m.ui.hitChances(percent(heroHit), percent(enemyHit))}</p>
     </div>
     <div class="encounter-actions">
       ${promptButtons(`${ICONS.sword}${m.ui.fight}`, m.ui.cancel)}
     </div>
   </section>`;
+}
+
+const percent = (chance: number): number => Math.round(chance * 100);
+
+function blowText(blow: Blow, m: Messages): string {
+  if (blow.by === 'hero')
+    return blow.hit ? m.ui.youStrike(blow.damage) : m.ui.youMiss;
+  return blow.hit ? m.ui.enemyStrikes(blow.damage) : m.ui.enemyMisses;
 }
 
 // The encounter card again while the fight plays: the enemy's HP draining
@@ -234,7 +251,7 @@ function renderBattle(
     <div class="encounter-info">
       <div class="encounter-head"><span class="message-tag">${name}</span><p class="encounter-stats"><span data-testid="battle-enemy-hp" data-hp="${enemyHp}">${m.statLabels.hp} ${enemyHp}/${maxHp}</span></p></div>
       <div class="battle-bar" aria-hidden="true"><span style="width: ${left}%"></span></div>
-      <p class="encounter-cost" data-blow="${blow.by}">${blow.by === 'hero' ? m.ui.youStrike(blow.damage) : m.ui.enemyStrikes(blow.damage)}</p>
+      <p class="encounter-cost" data-blow="${blow.by}" data-hit="${blow.hit}">${blowText(blow, m)}</p>
     </div>
     <div class="encounter-actions">
       <button type="button" class="button" data-action="skip" aria-keyshortcuts="Enter Escape">${m.ui.skip} <kbd aria-hidden="true">Enter</kbd></button>

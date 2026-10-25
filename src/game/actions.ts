@@ -140,6 +140,7 @@ export function interactWithEntity(
             enemyId: entity.id,
             hpLost: 0,
             gold: 0,
+            blows: [],
           },
         };
       const preview = previewCombat(state.player, entity.stats);

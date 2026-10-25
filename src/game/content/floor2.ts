@@ -57,7 +57,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-service-guard',
       tile: { x: 4, y: 15 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 22, attack: 7, defense: 4 },
+      stats: { hp: 22, attack: 7, defense: 4, agility: 3 },
       gold: 8,
     },
     // The East Service Wing.
@@ -84,7 +84,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-nook-mite-1',
       tile: { x: 17, y: 7 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 14, attack: 5, defense: 2 },
+      stats: { hp: 14, attack: 5, defense: 2, agility: 4 },
       gold: 4,
     },
     {
@@ -92,7 +92,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-nook-mite-2',
       tile: { x: 17, y: 6 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 14, attack: 5, defense: 2 },
+      stats: { hp: 14, attack: 5, defense: 2, agility: 4 },
       gold: 4,
     },
     {
@@ -109,7 +109,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-service-prowler',
       tile: { x: 21, y: 3 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 8, defense: 4 },
+      stats: { hp: 24, attack: 8, defense: 4, agility: 6 },
       gold: 9,
     },
     {
@@ -126,7 +126,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-service-lurker',
       tile: { x: 21, y: 13 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 7, defense: 4 },
+      stats: { hp: 24, attack: 7, defense: 4, agility: 4 },
       gold: 8,
     },
     {
@@ -143,7 +143,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-stack-mite-1',
       tile: { x: 23, y: 6 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 14, attack: 5, defense: 2 },
+      stats: { hp: 14, attack: 5, defense: 2, agility: 4 },
       gold: 4,
     },
     {
@@ -151,7 +151,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-stack-mite-2',
       tile: { x: 23, y: 5 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 14, attack: 5, defense: 2 },
+      stats: { hp: 14, attack: 5, defense: 2, agility: 4 },
       gold: 4,
     },
     {
@@ -159,7 +159,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-stack-mite-3',
       tile: { x: 23, y: 4 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 14, attack: 5, defense: 2 },
+      stats: { hp: 14, attack: 5, defense: 2, agility: 4 },
       gold: 4,
     },
     {
@@ -175,7 +175,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-east-sentry',
       tile: { x: 17, y: 3 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 28, attack: 9, defense: 5 },
+      stats: { hp: 28, attack: 9, defense: 5, agility: 2 },
       gold: 12,
     },
     {
@@ -207,7 +207,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-hall-sentry',
       tile: { x: 11, y: 5 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 8, defense: 5 },
+      stats: { hp: 26, attack: 8, defense: 5, agility: 3 },
       gold: 10,
     },
     {
@@ -239,7 +239,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-hall-mite-1',
       tile: { x: 15, y: 4 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 14, attack: 5, defense: 2 },
+      stats: { hp: 14, attack: 5, defense: 2, agility: 4 },
       gold: 4,
     },
     {
@@ -247,7 +247,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-hall-lurker',
       tile: { x: 15, y: 5 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 8, defense: 4 },
+      stats: { hp: 24, attack: 8, defense: 4, agility: 4 },
       gold: 8,
     },
     {
@@ -255,7 +255,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-hall-mite-2',
       tile: { x: 15, y: 6 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 14, attack: 5, defense: 2 },
+      stats: { hp: 14, attack: 5, defense: 2, agility: 4 },
       gold: 4,
     },
     {
@@ -272,7 +272,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-stair-warden',
       tile: { x: 13, y: 5 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 28, attack: 8, defense: 5 },
+      stats: { hp: 28, attack: 8, defense: 5, agility: 2 },
       gold: 12,
     },
     {
@@ -294,7 +294,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-archive-lurker',
       tile: { x: 1, y: 6 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 7, defense: 4 },
+      stats: { hp: 24, attack: 7, defense: 4, agility: 4 },
       gold: 8,
     },
     {
@@ -311,7 +311,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-archive-prowler',
       tile: { x: 5, y: 8 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 8, defense: 4 },
+      stats: { hp: 24, attack: 8, defense: 4, agility: 6 },
       gold: 9,
     },
     {
@@ -328,7 +328,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-stack-mite-4',
       tile: { x: 1, y: 4 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 14, attack: 5, defense: 2 },
+      stats: { hp: 14, attack: 5, defense: 2, agility: 4 },
       gold: 4,
     },
     {
@@ -336,7 +336,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-stack-lurker',
       tile: { x: 1, y: 3 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 22, attack: 7, defense: 4 },
+      stats: { hp: 22, attack: 7, defense: 4, agility: 4 },
       gold: 8,
     },
     {
@@ -344,7 +344,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-stack-mite-5',
       tile: { x: 1, y: 2 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 14, attack: 5, defense: 2 },
+      stats: { hp: 14, attack: 5, defense: 2, agility: 4 },
       gold: 4,
     },
     {
@@ -376,7 +376,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-stack-prowler',
       tile: { x: 7, y: 3 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 8, defense: 4 },
+      stats: { hp: 24, attack: 8, defense: 4, agility: 6 },
       gold: 9,
     },
     {
@@ -428,7 +428,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-reading-wisp-1',
       tile: { x: 15, y: 12 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 44, attack: 32, defense: 18 },
+      stats: { hp: 44, attack: 32, defense: 18, agility: 8 },
       gold: 12,
     },
     {
@@ -436,7 +436,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-reading-wisp-2',
       tile: { x: 15, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 44, attack: 32, defense: 18 },
+      stats: { hp: 44, attack: 32, defense: 18, agility: 8 },
       gold: 12,
     },
     {
@@ -444,7 +444,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-reading-room-warden',
       tile: { x: 15, y: 10 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 70, attack: 36, defense: 20 },
+      stats: { hp: 70, attack: 36, defense: 20, agility: 1 },
       gold: 25,
     },
     {
@@ -470,7 +470,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-archive-brute',
       tile: { x: 9, y: 4 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 28, attack: 8, defense: 5 },
+      stats: { hp: 28, attack: 8, defense: 5, agility: 1 },
       gold: 12,
     },
     {
