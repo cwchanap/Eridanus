@@ -46,3 +46,31 @@ test('a held arrow key walks one tile per step, not one per repeat', async ({
     })
     .toBeGreaterThan(16);
 });
+
+// WASD moves like the arrow keys; Ctrl/Cmd with a letter stays the
+// browser's shortcut.
+test('WASD walks the hero like the arrow keys', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'village',
+  );
+
+  // From the village start (15,10), east is open floor.
+  await page.keyboard.press('d');
+  await expect.poll(() => savedTileX(page)).toBe(16);
+  await page.keyboard.press('D');
+  await expect.poll(() => savedTileX(page)).toBe(17);
+  await page.keyboard.press('a', { delay: 50 });
+  await expect.poll(() => savedTileX(page)).toBe(16);
+
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'd', ctrlKey: true }),
+    ),
+  );
+  await page.keyboard.press('a');
+  await expect.poll(() => savedTileX(page)).toBe(15);
+});
