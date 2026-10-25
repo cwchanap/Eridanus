@@ -31,7 +31,15 @@ export const village: MapDefinition = {
     '#################################',
   ],
   entities: [
-    { kind: 'recovery', id: 'village-recovery', tile: { x: 16, y: 8 } },
+    {
+      kind: 'reward',
+      id: 'village-waystone',
+      tile: { x: 16, y: 8 },
+      assetId: 'recovery-waystone',
+      grant: 'stat',
+      stat: 'hp',
+      amount: 20,
+    },
     {
       kind: 'npc',
       id: 'village-warden',
@@ -146,19 +154,19 @@ export const village: MapDefinition = {
         {
           itemId: 'vitality-charm',
           price: 10,
-          stat: 'maxHp',
+          stat: 'hp',
           amount: 5,
         },
         {
           itemId: 'heart-amulet',
           price: 30,
-          stat: 'maxHp',
+          stat: 'hp',
           amount: 10,
         },
         {
           itemId: 'life-crystal',
           price: 70,
-          stat: 'maxHp',
+          stat: 'hp',
           amount: 20,
         },
       ],

@@ -12,8 +12,6 @@
   --text: #ece5d3;
   --text-dim: #aaa293;
   --text-mute: #736d62;
-  --hp-high: #5fd07c;
-  --hp-mid: #e9b553;
   --hp-low: #e3564b;
   --attack: #f08b5b;
   --defense: #82b6ea;
@@ -316,39 +314,6 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
-.hp-bar {
-  display: flex;
-  height: 10px;
-  margin-top: 6px;
-  border: 1px solid rgba(0, 0, 0, 0.8);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: 0 0 0 1px rgba(230, 189, 106, 0.2);
-  overflow: hidden;
-}
-
-.hp-bar > span {
-  flex: none;
-  height: 100%;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent 60%),
-    var(--hp-high);
-}
-
-.hp-bar[data-level='mid'] > span:not(.hp-cost) {
-  background-color: var(--hp-mid);
-}
-
-.hp-bar[data-level='low'] > span:not(.hp-cost) {
-  background-color: var(--hp-low);
-}
-
-/* The HP an open fight would cost, after what it leaves. */
-.hp-bar > .hp-cost {
-  background: var(--hp-low);
-  opacity: 0.55;
-}
-
 .stat-chips {
   display: flex;
   flex-wrap: wrap;
@@ -620,10 +585,6 @@ kbd {
 .message[data-effect='clue'] .message-text {
   font-style: italic;
   color: #d8f3f8;
-}
-
-.message[data-effect='healed'] .message-tag {
-  color: var(--success);
 }
 
 .message[data-effect='enemyDefeated'] .message-tag {
@@ -1145,11 +1106,6 @@ kbd {
   .hero .portrait,
   .hud-name {
     display: none;
-  }
-
-  .hp-bar {
-    height: 6px;
-    margin-top: 3px;
   }
 
   .stat-chips {

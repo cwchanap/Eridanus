@@ -66,11 +66,10 @@ describe('shops', () => {
     });
   });
 
-  it('a max HP ware also raises current HP', () => {
+  it('an HP ware adds to HP with no cap', () => {
     const result = resolvePurchase(atSmith, merchant.wares[0]!);
     expect(result.ok && result.state.player).toMatchObject({
       hp: 35,
-      maxHp: 35,
       gold: 10,
     });
   });

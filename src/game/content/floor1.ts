@@ -119,7 +119,7 @@ export const floor1: MapDefinition = {
       tile: { x: 1, y: 13 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 4,
     },
     // The Upper Gallery.
@@ -153,7 +153,7 @@ export const floor1: MapDefinition = {
       tile: { x: 5, y: 1 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -192,7 +192,7 @@ export const floor1: MapDefinition = {
       tile: { x: 11, y: 9 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 6,
     },
     // The Sigil Vault.
@@ -210,7 +210,7 @@ export const floor1: MapDefinition = {
       tile: { x: 5, y: 7 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 3,
     },
     {
@@ -252,7 +252,7 @@ export const floor1: MapDefinition = {
       tile: { x: 13, y: 1 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 4,
     },
     {
@@ -294,7 +294,7 @@ export const floor1: MapDefinition = {
       tile: { x: 15, y: 5 },
       assetId: 'chest-relic-closed',
       grant: 'stat',
-      stat: 'maxHp',
+      stat: 'hp',
       amount: 2,
     },
     {

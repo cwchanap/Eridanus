@@ -89,7 +89,6 @@ export function isEntityBlocking(entity: Entity, state: GameState): boolean {
       return !state.openedShortcutIds.includes(entity.id);
     case 'clue':
     case 'lever':
-    case 'recovery':
     case 'npc':
     case 'sealed':
     case 'shop':

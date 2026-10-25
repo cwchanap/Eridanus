@@ -27,7 +27,7 @@ export const en = {
     // Combat encounter card
     combat: 'Combat',
     hpLoss: (loss: number) => `HP loss: ${loss}`,
-    leavesYouAt: (hp: number, maxHp: number) => `leaves you at ${hp}/${maxHp}`,
+    leavesYouAt: (hp: number) => `leaves you at ${hp}`,
     fight: 'Fight',
     cancel: 'Cancel',
     // Shop card
@@ -63,24 +63,22 @@ export const en = {
     autosave: 'Progress saves automatically.',
     tip: 'Start by talking to the Warden in the teal cloak.',
   },
-  // HUD chips and the shop card's stat chip. Max HP only ever appears there.
+  // HUD chips and the shop card's stat chip.
   statLabels: {
     hp: 'HP',
     attack: 'ATK',
     defense: 'DEF',
     gold: 'Gold',
-    maxHp: 'Max HP',
   },
   statNames: {
     attack: 'Attack',
     defense: 'Defense',
-    maxHp: 'Max HP',
+    hp: 'HP',
   } satisfies Record<Stat, string>,
   // The tag on a message's nameplate; speech uses the speaker's name instead.
   tags: {
     clue: 'Clue',
     powerUp: 'Power up',
-    restored: 'Restored',
     shortcut: 'Shortcut',
     sealed: 'Sealed',
     victory: 'Victory',
@@ -90,7 +88,6 @@ export const en = {
   },
   effects: {
     statUp: (stat: string, amount: number) => `${stat} increased by ${amount}.`,
-    healed: (hp: number) => `Recovered to ${hp} HP.`,
     latchOpened: 'The latch opens. The shortcut is now usable from both sides.',
     latchGuarded: (remaining: number) =>
       `Guards hold this latch shut. Defeat ${remaining} more to open it.`,

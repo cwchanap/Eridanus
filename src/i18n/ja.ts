@@ -17,7 +17,7 @@ export const ja: Messages = {
     enemy: '敵',
     combat: '戦闘',
     hpLoss: (loss) => `失うHP：${loss}`,
-    leavesYouAt: (hp, maxHp) => `戦闘後 ${hp}/${maxHp}`,
+    leavesYouAt: (hp) => `戦闘後 ${hp}`,
     fight: '戦う',
     cancel: 'やめる',
     shop: 'お店',
@@ -55,17 +55,15 @@ export const ja: Messages = {
     attack: '攻撃',
     defense: '防御',
     gold: 'ゴールド',
-    maxHp: '最大HP',
   },
   statNames: {
     attack: '攻撃力',
     defense: '防御力',
-    maxHp: '最大HP',
+    hp: 'HP',
   },
   tags: {
     clue: '手がかり',
     powerUp: 'パワーアップ',
-    restored: '回復',
     shortcut: '近道',
     sealed: '封鎖',
     victory: '勝利',
@@ -75,7 +73,6 @@ export const ja: Messages = {
   },
   effects: {
     statUp: (stat, amount) => `${stat}が${amount}上がった。`,
-    healed: (hp) => `HPが${hp}まで回復した。`,
     latchOpened: 'かんぬきが外れた。この近道は両側から通れるようになった。',
     latchGuarded: (remaining) =>
       `衛兵がこのかんぬきを閉ざしている。あと${remaining}体倒すと開く。`,

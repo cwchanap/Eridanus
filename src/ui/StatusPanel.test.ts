@@ -18,34 +18,19 @@ describe('renderStatus', () => {
     const html = renderStatus(
       {
         ...createInitialGameState(),
-        player: { hp: 22, maxHp: 30, attack: 12, defense: 4, gold: 17 },
+        player: { hp: 22, attack: 12, defense: 4, gold: 17 },
       },
       m,
     );
-    expect(statText(html, 'hp')).toBe('HP 22/30');
+    expect(statText(html, 'hp')).toBe('HP 22');
     expect(statText(html, 'attack')).toBe('ATK 12');
     expect(statText(html, 'defense')).toBe('DEF 4');
     expect(statText(html, 'gold')).toBe('Gold 17');
   });
 
-  it('colors the HP bar by how much health is left', () => {
-    const at = (hp: number) =>
-      renderStatus(
-        {
-          ...createInitialGameState(),
-          player: { hp, maxHp: 40, attack: 10, defense: 2, gold: 0 },
-        },
-        m,
-      );
-    expect(at(40)).toContain('data-level="high"');
-    expect(at(20)).toContain('data-level="mid"');
-    expect(at(10)).toContain('data-level="low"');
-  });
-
-  it('previews a fight cost on the bar without changing the HP text', () => {
+  it('previews a fight cost beside HP without changing the HP text', () => {
     const html = renderStatus(createInitialGameState(), m, 8);
-    expect(statText(html, 'hp')).toBe('HP 30/30');
-    expect(html).toContain('<span class="hp-cost" style="width: 27%">');
+    expect(statText(html, 'hp')).toBe('HP 30');
     expect(html).toContain('−8');
     expect(renderStatus(createInitialGameState(), m)).not.toContain('hp-cost');
   });

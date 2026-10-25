@@ -110,9 +110,9 @@ describe('isEntityBlocking', () => {
     ).toBe(false);
   });
 
-  it('blocks clues, recoveries, and active npcs', () => {
+  it('blocks clues, undrunk waystones, and active npcs', () => {
     expect(isEntityBlocking(entity('floor1-route-mark'), state)).toBe(true);
-    expect(isEntityBlocking(entity('village-recovery'), state)).toBe(true);
+    expect(isEntityBlocking(entity('village-waystone'), state)).toBe(true);
     expect(isEntityBlocking(npc('village-warden'), state)).toBe(true);
   });
 
@@ -154,7 +154,7 @@ describe('authored content', () => {
     expect(findEntityById('floor5-core-guardian')?.kind).toBe('enemy');
     expect(findEntityById('floor5-restoration-core')?.kind).toBe('reward');
     expect(findEntityById('floor3-heart-shortcut')?.kind).toBe('latch');
-    expect(findEntityById('floor3-heart-waystone')?.kind).toBe('recovery');
+    expect(findEntityById('floor3-heart-waystone')?.kind).toBe('reward');
     expect(findEntityById('floor3-keeper-final-record')?.kind).toBe('clue');
   });
 
@@ -656,12 +656,12 @@ describe('validateContent failure branches', () => {
     const maps = villageWith([
       {
         kind: 'clue',
-        id: 'village-recovery',
+        id: 'village-waystone',
         tile: { x: 9, y: 3 },
       },
     ]);
     expect(validateContent(maps)).toEqual([
-      'duplicate entity id: village-recovery',
+      'duplicate entity id: village-waystone',
     ]);
   });
 
