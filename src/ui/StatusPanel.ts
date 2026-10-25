@@ -1,6 +1,5 @@
-import { findShopWareByItemId } from '../game/content';
 import type { GameState } from '../game/types';
-import { pick, type Messages } from '../i18n/messages';
+import type { Messages } from '../i18n/messages';
 import { PORTRAIT_SIZE, resolvePortraitPath } from '../phaser/assets';
 import { renderEquipment } from './EquipmentPanel';
 import { ICONS } from './icons';
@@ -45,9 +44,8 @@ export function renderStatus(
   </section>`;
 }
 
-// The menu's hero tab: the same stats, larger, then the gear worn and the
-// key items carried. The stats here carry no data-stat, so the HUD's stay
-// the only ones.
+// The menu's hero tab: the same stats, larger, then the gear worn. The stats
+// here carry no data-stat, so the HUD's stay the only ones.
 export function renderHeroSheet(state: GameState, m: Messages): string {
   const { hp, attack, defense, gold } = state.player;
   const { statLabels: label } = m;
@@ -64,21 +62,5 @@ export function renderHeroSheet(state: GameState, m: Messages): string {
       </ul>
     </div>
     ${renderEquipment(state, m)}
-    ${renderKeyItems(state, m)}
-  </div>`;
-}
-
-// Found items (a sigil, a core) are carried; wares are worn, so they show
-// in the equipment instead.
-export function renderKeyItems(state: GameState, m: Messages): string {
-  const keys = state.itemIds.filter((id) => !findShopWareByItemId(id));
-  if (keys.length === 0) return '';
-  const rows = keys.map(
-    (id) =>
-      `<li data-item="${id}">${ICONS.relic}<span>${pick(m.items, id)}</span></li>`,
-  );
-  return `<div class="items" data-items="key">
-    <h3>${m.ui.keyItems}</h3>
-    <ul>${rows.join('')}</ul>
   </div>`;
 }

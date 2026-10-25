@@ -371,6 +371,13 @@ kbd {
   border-top: 1px solid rgba(230, 189, 106, 0.18);
 }
 
+/* Opening a tab, the first group needs no rule above it. */
+.menu-panel > .items:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 .items h3 {
   margin: 0 0 6px;
   font: 700 11px/1 var(--display);

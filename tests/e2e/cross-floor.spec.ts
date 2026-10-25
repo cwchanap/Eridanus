@@ -272,6 +272,8 @@ const REQUIRED: readonly Chapter[] = [
         await expect(menu).toBeVisible();
         await expect(menu).toHaveAttribute('data-tab', 'hero');
         await page.keyboard.press('ArrowRight');
+        await expect(menu).toHaveAttribute('data-tab', 'items');
+        await page.keyboard.press('ArrowRight');
         await expect(menu).toHaveAttribute('data-tab', 'quests');
         await expect(menu.locator('[data-lead="find-sigil"]')).toBeVisible();
         await page.keyboard.press('Escape');

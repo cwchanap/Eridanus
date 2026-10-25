@@ -3,7 +3,7 @@ import type { EquipSlot, GameState } from '../game/types';
 import { pick, type Messages } from '../i18n/messages';
 import { ICONS } from './icons';
 
-const SLOT_ICONS: Readonly<Record<EquipSlot, string>> = {
+export const SLOT_ICONS: Readonly<Record<EquipSlot, string>> = {
   weapon: ICONS.sword,
   armor: ICONS.shield,
   accessory: ICONS.relic,

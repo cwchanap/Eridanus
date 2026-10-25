@@ -7,8 +7,11 @@ export const zhHant: Messages = {
   ui: {
     playerStatus: '玩家狀態',
     hero: '勇者',
+    items: '道具',
+    noItems: '目前還沒有找到任何東西。',
     equipment: '裝備',
     slotEmpty: '無',
+    unequipped: '未裝備',
     keyItems: '重要道具',
     location: '所在位置',
     messages: '訊息',
