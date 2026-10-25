@@ -124,3 +124,18 @@ test('the menu holds the shop counter still under it', async ({ page }) => {
   await expect(page.getByTestId('menu')).toBeHidden();
   await expect(page.getByTestId('purchase-prompt')).toBeVisible();
 });
+
+test('Enter on the focused Menu button opens the menu, not the sale', async ({
+  page,
+}) => {
+  await bootInVillage(page, { x: 11, y: 12 }, 20);
+  await press(page, 'ArrowDown');
+  await expect(page.getByTestId('purchase-prompt')).toBeVisible();
+
+  await page.locator('[data-action="open-menu"]').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('menu')).toBeVisible();
+  await expect(page.getByTestId('purchase-prompt')).toBeVisible();
+  await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 20');
+  await expect(page.locator('[data-item="iron-sword"]')).toHaveCount(0);
+});
