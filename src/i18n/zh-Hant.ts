@@ -118,7 +118,7 @@ export const zhHant: Messages = {
     'interaction-pending': '請先完成目前的互動。',
     'latch-closed-front': '這道門閂只能從另一側打開。',
     'combat-unwinnable': '你的攻擊無法對這個敵人造成傷害。',
-    'combat-lethal': '這場戰鬥會讓你倒下。',
+    'combat-lethal': '這場戰鬥多半會讓你倒下。',
     'reward-already-taken': '這份獎勵已經領取過了。',
     'not-enough-gold': '你的金幣還不夠。',
   },

@@ -142,7 +142,7 @@ export const en = {
     'interaction-pending': 'Finish the current interaction first.',
     'latch-closed-front': 'The latch only opens from the other side.',
     'combat-unwinnable': 'Your attack cannot damage this enemy.',
-    'combat-lethal': 'This fight would defeat you.',
+    'combat-lethal': 'This fight would likely defeat you.',
     'reward-already-taken': 'The reward has already been claimed.',
     'not-enough-gold': 'You do not have enough gold for that yet.',
   } satisfies Record<BlockedReason, string>,
