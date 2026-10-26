@@ -298,7 +298,7 @@ function renderTrade(
   const choices = trader.offers
     .map((offer, index) => {
       const key = index + 1;
-      return `<button type="button" class="button button-fight" data-action="choose" data-index="${index}" data-stat="${offer.stat}" aria-keyshortcuts="${key}">${ICONS.coin}${m.statLabels[offer.stat]} +${offer.amount} <kbd aria-hidden="true">${key}</kbd></button>`;
+      return `<button type="button" class="button button-fight" data-action="choose" data-index="${index}" data-offer-stat="${offer.stat}" aria-keyshortcuts="${key}">${ICONS.coin}${m.statLabels[offer.stat]} +${offer.amount} <kbd aria-hidden="true">${key}</kbd></button>`;
     })
     .join('');
   return `<section class="encounter" data-kind="shop" data-testid="trade-prompt" aria-label="${m.ui.trade}">
