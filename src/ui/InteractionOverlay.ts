@@ -305,7 +305,7 @@ function renderTrade(
     ${renderPortrait(entityAsset(trader, state), 'npc')}
     <div class="encounter-info">
       <div class="encounter-head"><span class="message-tag">${pick(m.shops, pending.traderId, m.ui.shop)}</span></div>
-      <p class="encounter-cost"><span data-testid="trade-price">${m.ui.price(price)}</span> <span class="encounter-after">${
+      <p class="encounter-cost"><span data-testid="trade-price" data-price="${price}">${m.ui.price(price)}</span> <span class="encounter-after">${
         gold < price ? m.ui.youHave(gold) : m.ui.leavesYou(gold - price)
       }</span></p>
       <div class="encounter-choices">${choices}${cancelButton(m.ui.leave)}</div>
