@@ -122,7 +122,7 @@ export const ja: Messages = {
     'interaction-pending': '先に今のやり取りを終わらせよう。',
     'latch-closed-front': 'このかんぬきは反対側からしか開かない。',
     'combat-unwinnable': '今の攻撃力では、この敵にダメージを与えられない。',
-    'combat-lethal': 'この戦いでは倒されてしまう。',
+    'combat-lethal': 'この戦いでは倒されてしまいそうだ。',
     'reward-already-taken': 'この報酬はすでに受け取っている。',
     'not-enough-gold': 'ゴールドがまだ足りない。',
   },
