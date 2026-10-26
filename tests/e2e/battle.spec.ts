@@ -118,9 +118,9 @@ test('a battle shows each hit land before the HP drops', async ({ page }) => {
 test('a missed blow shows as a miss and costs nothing', async ({ page }) => {
   await fixRolls(page, 0.95);
   await standBeside(page, 'floor1-west-sentry', { hp: 30 });
-  await expect(page.getByTestId('combat-hit-chances')).toHaveText(
-    'You hit 100% · It hits 90%',
-  );
+  const chances = page.getByTestId('combat-hit-chances');
+  await expect(chances).toHaveAttribute('data-hero-hit', '100');
+  await expect(chances).toHaveAttribute('data-enemy-hit', '90');
   await recordBlows(page);
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('effect')).toHaveAttribute(
