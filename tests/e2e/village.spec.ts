@@ -131,6 +131,8 @@ test('the status trader sells points at a price that rises', async ({
     'data-price',
     '30',
   );
+  // The offer buttons must not shadow the HUD's stat readouts.
+  await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 10');
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('trade-prompt')).toHaveCount(0);
   await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 100');
@@ -155,7 +157,9 @@ test('the status trader sells points at a price that rises', async ({
     'data-price',
     '40',
   );
-  await page.locator('[data-action="choose"][data-stat="defense"]').click();
+  await page
+    .locator('[data-action="choose"][data-offer-stat="defense"]')
+    .click();
   await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 3');
   await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 30');
   await page.keyboard.press('Escape');
