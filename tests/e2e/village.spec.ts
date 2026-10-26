@@ -127,7 +127,10 @@ test('the status trader sells points at a price that rises', async ({
   // Down: the stall quotes the first price; Escape leaves without trading.
   await press(page, 'ArrowDown');
   await expect(page.getByTestId('trade-prompt')).toBeVisible();
-  await expect(page.getByTestId('trade-price')).toHaveText('Price: 30 gold');
+  await expect(page.getByTestId('trade-price')).toHaveAttribute(
+    'data-price',
+    '30',
+  );
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('trade-prompt')).toHaveCount(0);
   await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 100');
@@ -148,7 +151,10 @@ test('the status trader sells points at a price that rises', async ({
 
   // The second point costs 40; its button buys +1 DEF.
   await press(page, 'ArrowDown');
-  await expect(page.getByTestId('trade-price')).toHaveText('Price: 40 gold');
+  await expect(page.getByTestId('trade-price')).toHaveAttribute(
+    'data-price',
+    '40',
+  );
   await page.locator('[data-action="choose"][data-stat="defense"]').click();
   await expect(page.locator('[data-stat="defense"]')).toHaveText('DEF 3');
   await expect(page.locator('[data-stat="gold"]')).toHaveText('Gold 30');
@@ -156,7 +162,10 @@ test('the status trader sells points at a price that rises', async ({
 
   // The third costs 50, more than the purse: refused, prompt still open.
   await press(page, 'ArrowDown');
-  await expect(page.getByTestId('trade-price')).toHaveText('Price: 50 gold');
+  await expect(page.getByTestId('trade-price')).toHaveAttribute(
+    'data-price',
+    '50',
+  );
   await page.keyboard.press('3');
   await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
     'data-reason',
@@ -170,7 +179,10 @@ test('the status trader sells points at a price that rises', async ({
   await page.reload();
   await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 11');
   await press(page, 'ArrowDown');
-  await expect(page.getByTestId('trade-price')).toHaveText('Price: 50 gold');
+  await expect(page.getByTestId('trade-price')).toHaveAttribute(
+    'data-price',
+    '50',
+  );
 });
 
 test('a sealed maze entrance turns the hero back and saves nothing', async ({
