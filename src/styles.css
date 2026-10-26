@@ -1291,6 +1291,26 @@ kbd {
   }
 }
 
+/* Four tabs and the Esc button outgrow the menu's header on the narrowest
+   phones, so tighten them there. */
+@media (max-width: 399px) {
+  .menu-head {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+
+  .menu-tabs {
+    gap: 0;
+    min-width: 0;
+  }
+
+  .menu-tab {
+    padding-inline: 5px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+}
+
 /* Short windows (a landscape phone, or a small laptop zoomed to 200%) leave
    the capped row no height at all, which would hide every stat. Where the
    window is wide enough, the hero card and quest tracker flank the banner

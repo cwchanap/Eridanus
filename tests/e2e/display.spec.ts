@@ -236,3 +236,30 @@ test.describe('at a fractional device pixel ratio', () => {
     await expectHeroClearOfHud(page, view, FLOOR3_ARRIVAL);
   });
 });
+
+// Four tabs and the Esc button must share the menu's header on the narrowest
+// phones, whichever language's labels they carry.
+for (const locale of ['en', 'zh-Hant', 'ja']) {
+  test(`keeps the menu's tabs and close button inside it at 320px in ${locale}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.goto('/');
+    await page.evaluate(
+      (code) => localStorage.setItem('eridanus.locale', code),
+      locale,
+    );
+    await page.reload();
+    await page.locator('[data-action="open-menu"]').click();
+    await expect(page.getByTestId('menu')).toBeVisible();
+
+    const menu = await page.getByRole('dialog').boundingBox();
+    const close = await page
+      .locator('[data-action="close-menu"]')
+      .boundingBox();
+    const last = await page.getByRole('tab').last().boundingBox();
+    if (!menu || !close || !last) throw new Error('menu is not on screen');
+    expect(close.x + close.width).toBeLessThanOrEqual(menu.x + menu.width);
+    expect(last.x + last.width).toBeLessThanOrEqual(close.x);
+  });
+}
