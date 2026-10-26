@@ -217,7 +217,7 @@ function renderEncounter(
     <div class="encounter-info">
       <div class="encounter-head"><span class="message-tag">${name}</span>${stats}</div>
       <p class="encounter-cost"><span data-testid="combat-hp-loss">${m.ui.hpLoss(pending.preview.hpLoss)}</span> <span class="encounter-after">${m.ui.leavesYouAt(hpAfter)}</span></p>
-      <p class="encounter-stats" data-testid="combat-hit-chances">${m.ui.hitChances(percent(heroHit), percent(enemyHit))}</p>
+      <p class="encounter-stats" data-testid="combat-hit-chances" data-hero-hit="${percent(heroHit)}" data-enemy-hit="${percent(enemyHit)}">${m.ui.hitChances(percent(heroHit), percent(enemyHit))}</p>
     </div>
     <div class="encounter-actions">
       ${promptButtons(`${ICONS.sword}${m.ui.fight}`, m.ui.cancel)}
