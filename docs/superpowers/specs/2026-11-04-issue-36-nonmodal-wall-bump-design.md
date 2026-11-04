@@ -25,14 +25,14 @@ Use **sound-only feedback** for routine terrain collisions. This is the smaller 
 
 ### Input/feedback contract
 
-| Scenario | Gameplay/session response | UI feedback | Keys |
-| --- | --- | --- | --- |
-| Move into a wall or beyond the map | Reject; hero tile and save unchanged | Existing `bump` SFX (subject to mute); no interaction-log message or dismiss button | Next fresh arrow/WASD press is treated as movement immediately; Escape may open menu |
-| Valid move after a collision | Move once as usual | Standard movement SFX; no stale collision/message | No preliminary cancel/dismiss press |
-| Blocked by an open combat/shop/trade prompt | Reject as `interaction-pending` | Existing prompt and blocked reason | Prompt remains modal until answered; no movement underneath |
-| Denied by a latch, unwinnable combat, insufficient gold, etc. | Existing rules unchanged | Existing blocked message | Existing dismiss/answer semantics |
-| Story clue, dialogue, reward, result message | Existing effect | Existing message | Enter/Escape dismisses; direction keys continue to use current gameplay rules |
-| Battle replay or menu open | Existing input gating | Existing battle/menu UI | No movement beneath the battle/menu |
+| Scenario                                                      | Gameplay/session response            | UI feedback                                                                         | Keys                                                                                 |
+| ------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Move into a wall or beyond the map                            | Reject; hero tile and save unchanged | Existing `bump` SFX (subject to mute); no interaction-log message or dismiss button | Next fresh arrow/WASD press is treated as movement immediately; Escape may open menu |
+| Valid move after a collision                                  | Move once as usual                   | Standard movement SFX; no stale collision/message                                   | No preliminary cancel/dismiss press                                                  |
+| Blocked by an open combat/shop/trade prompt                   | Reject as `interaction-pending`      | Existing prompt and blocked reason                                                  | Prompt remains modal until answered; no movement underneath                          |
+| Denied by a latch, unwinnable combat, insufficient gold, etc. | Existing rules unchanged             | Existing blocked message                                                            | Existing dismiss/answer semantics                                                    |
+| Story clue, dialogue, reward, result message                  | Existing effect                      | Existing message                                                                    | Enter/Escape dismisses; direction keys continue to use current gameplay rules        |
+| Battle replay or menu open                                    | Existing input gating                | Existing battle/menu UI                                                             | No movement beneath the battle/menu                                                  |
 
 ### Minimal implementation seam
 
