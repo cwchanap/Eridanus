@@ -2,7 +2,7 @@
 
 ## Status
 
-Planning only. GitHub issue: [#36 — Wall-bump message swallows the next movement input](https://github.com/cwchanap/Eridanus/issues/36). Implement and validate the fix on **this same PR** after reviewing the design; do not open a second implementation PR.
+Implementation and tests are on this same PR. GitHub issue: [#36 — Wall-bump message swallows the next movement input](https://github.com/cwchanap/Eridanus/issues/36). The fix was implemented and validated on **this same PR** after the design review; do not open a second implementation PR.
 
 ## Goal
 
