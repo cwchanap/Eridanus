@@ -201,6 +201,12 @@ function handleInput(input: InputCommand): void {
     blocked = null;
     if (session.game !== previousGame)
       saveGame(window.localStorage, session.game);
+  } else if (
+    transition.reason === 'wall' ||
+    transition.reason === 'out-of-bounds'
+  ) {
+    effect = null;
+    blocked = null;
   } else {
     blocked = transition.reason;
   }
