@@ -1,42 +1,42 @@
-# Issue #36 — Non-modal Wall-Bump Implementation Plan
+# Issue #36 — Sound-only Wall-Bump UX Implementation Plan
 
 **Issue:** [Eridanus #36](https://github.com/cwchanap/Eridanus/issues/36)
 
 **Design:** [2026-11-04-issue-36-nonmodal-wall-bump-design.md](../specs/2026-11-04-issue-36-nonmodal-wall-bump-design.md)
 
-**PR scope:** One PR only, currently **planning-only**. Implement the small fix and tests on the same branch/PR after design review. No new art or SFX tasks are needed because the existing `bump` cue is reused.
+**PR scope:** One PR only, currently **planning-only**. Implement and test on this same branch/PR once the design is accepted. No new SFX, art, UI framework, save migration, or input abstraction.
 
-**Architecture:** Pure movement/session rules stay as they are. Suppress only the *presentation* of routine `wall` and `out-of-bounds` failures at `main.ts::handleInput` while still passing the original transition to `cuesFor`.
+**Baseline established by [the PR design reviewer](https://github.com/cwchanap/Eridanus/pull/38#issuecomment-6647098378):** On `main` at `fedcdcc`, the fourth ArrowLeft at the village wall does not move the hero, and one subsequent ArrowRight **already moves immediately** to `(13,10)`; WASD behaves likewise. The original issue's claim that a movement key is swallowed is not reproducible there. Escape after the bump **does** dismiss the wall message instead of opening the menu. Treat this as a **non-modal feedback UX change**, not a keyboard-routing fix.
 
-## Task 1 — Reproduce and pin input behavior
+**Architecture:** The existing pure movement/session rules and `WorldScene` are unchanged. Only the presentation boundary in `src/main.ts::handleInput` suppresses `wall` and `out-of-bounds` blocked messages while `cuesFor` still receives the original rejected transition and plays the existing `bump` sound.
 
-**File:** `tests/e2e/movement.spec.ts`
+## Task 1 — Extend regression coverage (tests first)
 
-- [ ] Add a browser regression using the existing fresh-save village start and `savedTileX` helper. From `(15,10)`, three ArrowLeft presses reach `(12,10)`; a fourth hits the wall at `(11,10)` without changing the saved tile.
-- [ ] Assert that one subsequent ArrowRight moves immediately to `(13,10)`, and test an equivalent `a` / `d` path. Do not insert Escape/Enter between collision and movement.
-- [ ] Run the new test **before** changing implementation to establish whether the claimed swallowed movement key reproduces. Current `WorldScene.handleKeyDown` suggests it may already pass.
-- [ ] If the movement assertion actually fails at baseline, diagnose the observed key event / pending / menu / repeat behavior first and amend this design rather than blindly changing `WorldScene`.
+**Files:** `tests/e2e/sound.spec.ts`, `tests/e2e/movement.spec.ts`
 
-## Task 2 — Make routine terrain collisions sound-only
+- [ ] **Extend the existing sound test**, not a separate wall-bump test. It already walks from `(15,10)` to `(12,10)` and bumps the wall at `(11,10)`. Replace its `data-reason="wall"` assertion with the conjunction: saved tile remains `(12,10)`, wall message and dismiss button are absent, and `audioStarts` increased. The unchanged position is necessary: audio increment alone would also pass for a successful step.
+- [ ] After the test mutes sound, assert **one** ArrowRight advances the saved tile to `(13,10)`, leaves the log hidden, and makes no new audio starts. Use the existing exported `savedGame(page)` helper from `tests/e2e/journey.ts` (e.g. `await expect.poll(() => savedGame(page)).toMatchObject({ tile: { x: 12, y: 10 } })`).
+- [ ] **Add just one focused stale-effect/menu test** to `movement.spec.ts`: from a fresh village, press `←←←↑←` to `(11,9)`, then `↑` to interact with the artisan at `(11,8)`; assert `effect[data-effect="dialogue"]`. Press `↓` toward wall `(11,10)`. Assert saved tile stays `(11,9)`, `effect` and `blocked-reason` have count 0, `[data-action="dismiss"]` has count 0, and the interaction log is hidden. Press Escape: `menu[data-open="true"]` is visible. Press Escape again: menu closes. Then one `→` moves to `(12,9)`.
+- [ ] Run the tests against the existing baseline first; **expect** the newly specified absence/menu checks to fail. The reviewer already established that the one-press move assertion passes before the fix. Do not add redundant `a`/`d` coverage because `src/phaser/keys.ts` maps it to the same movement command and `movement.spec.ts` already tests WASD.
+
+## Task 2 — Make routine collisions sound-only
 
 **File:** `src/main.ts`
 
-- [ ] In the failed `dispatchInput` branch, when `input.kind === 'move'` and `transition.reason` is `wall` or `out-of-bounds`, set `blocked = null` and `effect = null`. Leave all other failures untouched.
-- [ ] Keep `cuesFor(input, transition)` and `sfx.play(cues)` using the original rejection, preserving the existing `bump` sound.
-- [ ] Keep the success path, `redraw()`, scene key bindings, session pending gate, and game save behavior unchanged.
+- [ ] In `handleInput`'s failed-transition branch, check directly for `transition.reason === 'wall' || transition.reason === 'out-of-bounds'`. For these two reasons set **both** `effect = null` and `blocked = null`; for other rejected transitions retain `blocked = transition.reason`.
+- [ ] Do not add an `input.kind === 'move'` guard: these two reasons only originate from `attemptMove`, which `dispatchInput` calls only for a movement without a pending interaction.
+- [ ] Preserve the original `transition` for `cuesFor(input, transition)`, retaining the existing `bump` SFX. Do not change `WorldScene`, `dispatchInput`, `attemptMove`, the UI overlay, save logic, or localized reason tables.
 
-## Task 3 — Assert presentation and avoid regressions
+## Task 3 — Update existing tests and project guidance
 
-**Files:** `tests/e2e/movement.spec.ts`, `tests/e2e/sound.spec.ts`
+**Files:** `src/ui/InteractionOverlay.test.ts`, `CLAUDE.md`
 
-- [ ] After the wall bump, assert no `blocked-reason`, dismiss control, or visible interaction log; test that one fresh movement press works.
-- [ ] Update the existing sound test's `data-reason="wall"` expectation to the absent-message behavior while retaining the bump-audio increment check, mute assertions, and menu behavior.
-- [ ] Assert Escape opens the menu immediately after an ordinary collision when no pending prompt is open, then close it and confirm movement still works.
-- [ ] Ensure existing `tests/e2e/cross-floor.spec.ts` coverage still proves `interaction-pending` visibly blocks a move while Fight/Cancel remains reachable; existing shop denial tests in `village.spec.ts` stay green.
-- [ ] Optionally cover a previous dialogue/effect followed by a wall bump if the regression is easy to express without a test-only game API. In all cases, `effect` must not reappear after the suppressed collision.
-- [ ] Avoid adding new UI hooks or new `src/game` unit tests for a change confined to the application presentation boundary.
+- [ ] Change `showsMessage(null, 'wall', m)` to `showsMessage(null, 'latch-closed-front', m)`. The overlay helper itself is not changing; this unit assertion should describe a reason that the application still shows.
+- [ ] **Required:** Add one sentence to the `src/main.ts` architecture bullet in `CLAUDE.md`: `A wall or map-edge bump is sound-only: handleInput clears the message instead of setting blocked.` Do this **when the implementation lands**, not ahead of runtime behavior.
+- [ ] Re-run existing pending-interaction, encounter/purchase and keyboard-repeat tests. A pending combat/shop/trade interaction must remain blocking and actionable denials must still display.
+- [ ] Leave `reasons.wall` and `reasons['out-of-bounds']` in the three locale tables. Do not introduce a `ShownReason` union or a `Record<BlockedReason, boolean>` policy table.
 
-## Task 4 — Final verification on this PR
+## Task 4 — Verify and complete this PR
 
 - [ ] `bun run typecheck`
 - [ ] `bun run lint`
@@ -44,10 +44,9 @@
 - [ ] `bun run test:unit`
 - [ ] `bun run test:e2e`
 - [ ] `bun run build`
-- [ ] Manually confirm a collision and a one-press turn-away at desktop and mobile widths, both muted and unmuted.
-- [ ] If the implementation changes the documented behavior, update the input/overlay guidance in `CLAUDE.md`; keep the scope to this issue.
-- [ ] Update PR body with actual results and switch to ready-for-review only once the implementation (not just these docs) is complete.
+- [ ] Manually confirm: unmuted bump plays existing sound; muted bump still turns hero toward wall; Escape opens menu without a preliminary dismissal; mobile and desktop layouts show no routine wall message.
+- [ ] Update PR body with real test results, then mark ready only when this same PR includes code and tests.
 
 ## Completion criteria
 
-The submitted fix should remove routine collision messages, keep existing bump sound, require **zero** extra dismiss presses between a wall bump and movement, and preserve all legitimate modal prompts and refusals. No additional PRs are needed.
+The change eliminates persistent wall/map-edge messages and the Escape-to-dismiss detour, without claiming to fix a movement-key bug already disproven by baseline browser testing. One existing sound test and one new movement test capture the behavior. No additional PRs are needed.
