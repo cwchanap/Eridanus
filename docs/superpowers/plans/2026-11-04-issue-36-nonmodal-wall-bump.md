@@ -4,7 +4,7 @@
 
 **Design:** [2026-11-04-issue-36-nonmodal-wall-bump-design.md](../specs/2026-11-04-issue-36-nonmodal-wall-bump-design.md)
 
-**PR scope:** One PR only, currently **planning-only**. Implement and test on this same branch/PR once the design is accepted. No new SFX, art, UI framework, save migration, or input abstraction.
+**PR scope:** One PR only. Implementation and tests are on this same branch/PR. No new SFX, art, UI framework, save migration, or input abstraction.
 
 **Baseline established by [the PR design reviewer](https://github.com/cwchanap/Eridanus/pull/38#issuecomment-6647098378):** On `main` at `fedcdcc`, the fourth ArrowLeft at the village wall does not move the hero, and one subsequent ArrowRight **already moves immediately** to `(13,10)`; WASD behaves likewise. The original issue's claim that a movement key is swallowed is not reproducible there. Escape after the bump **does** dismiss the wall message instead of opening the menu. Treat this as a **non-modal feedback UX change**, not a keyboard-routing fix.
 
