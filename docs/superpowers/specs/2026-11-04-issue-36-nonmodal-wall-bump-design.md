@@ -69,7 +69,7 @@ No changes are expected in `WorldScene`, `dispatchInput`, `attemptMove`, `cuesFo
 ## Acceptance criteria
 
 1. The existing sound journey proves the wall bump keeps the saved tile at `(12,10)` and **one** subsequent ArrowRight advances to `(13,10)` without a dismiss press; existing WASD coverage remains green (no duplicate `a`/`d` scenario).
-2. Neither `wall` nor `out-of-bounds` creates `[data-testid="blocked-reason"]`, a message dismiss button, or a visible interaction log. The **required** clue → actionable latch denial → wall collision test begins with *both* `effect` and `blocked` non-null. The wall must clear both fields; omitting either assignment fails the regression.
+2. Neither `wall` nor `out-of-bounds` creates `[data-testid="blocked-reason"]`, a message dismiss button, or a visible interaction log. The **required** clue → actionable latch denial → wall collision test begins with _both_ `effect` and `blocked` non-null. The wall must clear both fields; omitting either assignment fails the regression.
 3. An unmuted collision still plays `bump`; muted remains silent. Movement and its save semantics are unaffected.
 4. Escape immediately opens the menu after a plain wall collision (provided no prompt/menu/battle is open); Enter is not required.
 5. Combat/shop/trade pending interactions still block movement; `interaction-pending` and actionable denial messages still display correctly.
