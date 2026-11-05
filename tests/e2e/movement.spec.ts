@@ -1,5 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { createInitialGameState } from '../../src/game/state';
+import type { GameState } from '../../src/game/types';
+import { savedGame } from './journey';
+
 // The hero's tile as the autosave last wrote it.
 function savedTileX(page: Page): Promise<number | undefined> {
   return page.evaluate(() => {
@@ -73,4 +77,55 @@ test('WASD walks the hero like the arrow keys', async ({ page }) => {
   );
   await page.keyboard.press('a');
   await expect.poll(() => savedTileX(page)).toBe(15);
+});
+
+test('a wall bump clears stale messages and frees Escape for the menu', async ({
+  page,
+}) => {
+  const save: GameState = {
+    ...createInitialGameState(),
+    mapId: 'floor1',
+    tile: { x: 13, y: 14 },
+  };
+  await page.goto('/');
+  await page.evaluate(
+    (json) => localStorage.setItem('eridanus.save', JSON.stringify(json)),
+    save,
+  );
+  await page.reload();
+  await expect(page.getByTestId('map-name')).toHaveAttribute(
+    'data-map-id',
+    'floor1',
+  );
+
+  await page.keyboard.press('ArrowDown');
+  await expect(
+    page.locator('[data-testid="effect"][data-effect="clue"]'),
+  ).toBeVisible();
+  await page.keyboard.press('ArrowUp');
+  await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
+    'data-reason',
+    'latch-closed-front',
+  );
+
+  await page.keyboard.press('ArrowRight');
+  await expect
+    .poll(() => savedGame(page))
+    .toMatchObject({ tile: { x: 13, y: 14 } });
+  await expect(page.locator('[data-testid="effect"]')).toHaveCount(0);
+  await expect(page.locator('[data-testid="blocked-reason"]')).toHaveCount(0);
+  await expect(page.locator('[data-action="dismiss"]')).toHaveCount(0);
+  await expect(page.getByTestId('interaction')).toBeHidden();
+
+  await page.keyboard.press('Escape');
+  await expect(
+    page.locator('[data-testid="menu"][data-open="true"]'),
+  ).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('menu')).toBeHidden();
+
+  await page.keyboard.press('ArrowLeft');
+  await expect
+    .poll(() => savedGame(page))
+    .toMatchObject({ tile: { x: 12, y: 14 } });
 });

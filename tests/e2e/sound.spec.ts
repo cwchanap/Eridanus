@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { savedGame } from './journey';
+
 type Counted = { audioStarts: number };
 type Starter = { start: (...args: unknown[]) => void };
 
@@ -48,10 +50,11 @@ test('moves and bumps play sounds, and a mute survives a reload', async ({
   await press(page, 'ArrowLeft');
   const beforeBump = await audioStarts(page);
   await press(page, 'ArrowLeft');
-  await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
-    'data-reason',
-    'wall',
-  );
+  await expect
+    .poll(() => savedGame(page))
+    .toMatchObject({ tile: { x: 12, y: 10 } });
+  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+  await expect(page.locator('[data-action="dismiss"]')).toHaveCount(0);
   expect(await audioStarts(page)).toBeGreaterThan(beforeBump);
 
   // Muted, a step makes no sound, and the choice outlives a reload.
@@ -59,7 +62,10 @@ test('moves and bumps play sounds, and a mute survives a reload', async ({
   await expect(toggle).toHaveAttribute('data-muted', 'true');
   const muted = await audioStarts(page);
   await press(page, 'ArrowRight');
-  await expect(page.getByTestId('blocked-reason')).toHaveCount(0);
+  await expect
+    .poll(() => savedGame(page))
+    .toMatchObject({ tile: { x: 13, y: 10 } });
+  await expect(page.getByTestId('interaction')).toBeHidden();
   expect(await audioStarts(page)).toBe(muted);
   await page.reload();
   await expect(toggle).toHaveAttribute('data-muted', 'true');
