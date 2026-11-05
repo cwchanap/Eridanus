@@ -9,7 +9,7 @@ describe('showsMessage', () => {
     expect(
       showsMessage({ kind: 'clue', clueId: 'floor1-route-mark' }, null, m),
     ).toBe(true);
-    expect(showsMessage(null, 'wall', m)).toBe(true);
+    expect(showsMessage(null, 'latch-closed-front', m)).toBe(true);
   });
 
   it('is false while the box shows only the explore hint', () => {
