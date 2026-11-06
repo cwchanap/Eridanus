@@ -8,7 +8,7 @@
 
 **Baseline established by [the PR design reviewer](https://github.com/cwchanap/Eridanus/pull/38#issuecomment-6647098378):** On `main` at `fedcdcc`, the fourth ArrowLeft at the village wall does not move the hero, and one subsequent ArrowRight **already moves immediately** to `(13,10)`; WASD behaves likewise. The original issue's claim that a movement key is swallowed is not reproducible there. Escape after the bump **does** dismiss the wall message instead of opening the menu. Treat this as a **non-modal feedback UX change**, not a keyboard-routing fix.
 
-**Architecture:** The existing pure movement/session rules and `WorldScene` are unchanged. Only the presentation boundary in `src/main.ts::handleInput` suppresses `wall` and `out-of-bounds` blocked messages while `cuesFor` still receives the original rejected transition and plays the existing `bump` sound.
+**Architecture:** The existing pure movement/session rules and `WorldScene`'s key routing are unchanged. Only the presentation boundary in `src/main.ts::handleInput` suppresses `wall` and `out-of-bounds` blocked messages while `cuesFor` still receives the original rejected transition and plays the existing `bump` sound. Review added one scoped `WorldScene` seam — `bumpAt`/`canRepeat` pacing held-key repeats after a move that goes nowhere (see Review follow-ups).
 
 ## Task 1 — Extend regression coverage (tests first)
 
@@ -25,7 +25,7 @@
 
 - [x] In `handleInput`'s failed-transition branch, check directly for `transition.reason === 'wall' || transition.reason === 'out-of-bounds'`. For these two reasons set **both** `effect = null` and `blocked = null`; for other rejected transitions retain `blocked = transition.reason`.
 - [x] Do not add an `input.kind === 'move'` guard: these two reasons only originate from `attemptMove`, which `dispatchInput` calls only for a movement without a pending interaction.
-- [x] Preserve the original `transition` for `cuesFor(input, transition)`, retaining the existing `bump` SFX. Do not change `WorldScene`, `dispatchInput`, `attemptMove`, the UI overlay, save logic, or localized reason tables.
+- [x] Preserve the original `transition` for `cuesFor(input, transition)`, retaining the existing `bump` SFX. `dispatchInput`, `attemptMove`, the UI overlay, save logic, and localized reason tables stay unchanged; `WorldScene` kept its key routing and later gained the `bumpAt`/`canRepeat` repeat pacing recorded under Review follow-ups.
 
 ## Task 3 — Update existing tests and project guidance
 
