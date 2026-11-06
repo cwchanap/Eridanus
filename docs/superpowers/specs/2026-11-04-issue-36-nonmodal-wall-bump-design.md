@@ -17,7 +17,7 @@ Routine terrain collisions should not leave a persistent message or consume the 
 - `src/audio/cues.ts` already maps both `wall` and `out-of-bounds` to the existing `bump` cue (`public/assets/sfx/bump.wav`). No new SFX or artwork is needed.
 - `tests/e2e/sound.spec.ts` currently expects the persistent `wall` message. This assertion must be updated with the intended UX.
 
-**Baseline browser verification (PR #38 design review, 2026-11-05 UTC):** The [reviewer ran a scratch Playwright reproduction](https://github.com/cwchanap/Eridanus/pull/38#issuecomment-6647098378) against `fedcdcc`: from the village start `(15,10)`, three ArrowLeft presses reach `(12,10)`, the fourth bumps the wall at `(11,10)`, and **one** ArrowRight immediately reaches `(13,10)` and clears the message. `a`/`d` works the same way. The reported swallowed **movement** key is therefore not reproducible on that revision. The **confirmed friction** is that Escape after a wall bump dismisses the persistent wall message instead of opening the menu. This is a UX change, not an input-routing bug fix; avoid touching `WorldScene`.
+**Baseline browser verification (PR #38 design review, 2026-11-05 UTC):** The [reviewer ran a scratch Playwright reproduction](https://github.com/cwchanap/Eridanus/pull/38#issuecomment-6647098378) against `fedcdcc`: from the village start `(15,10)`, three ArrowLeft presses reach `(12,10)`, the fourth bumps the wall at `(11,10)`, and **one** ArrowRight immediately reaches `(13,10)` and clears the message. `a`/`d` works the same way. The reported swallowed **movement** key is therefore not reproducible on that revision. The **confirmed friction** is that Escape after a wall bump dismisses the persistent wall message instead of opening the menu. This is a UX change, not an input-routing bug fix; `WorldScene`'s key routing stays untouched (it later gained only held-key repeat pacing — see the implementation seams).
 
 ## Decision
 
@@ -34,9 +34,9 @@ Use **sound-only feedback** for routine terrain collisions: retain the existing 
 | Story clue, dialogue, reward, result message                  | Existing effect                      | Existing message                                                                    | Enter/Escape dismisses; direction keys continue to use current gameplay rules        |
 | Battle replay or menu open                                    | Existing input gating                | Existing battle/menu UI                                                             | No movement beneath the battle/menu                                                  |
 
-### Minimal implementation seam
+### Minimal implementation seams
 
-Change only the failed-transition presentation branch in `src/main.ts::handleInput`:
+The sound-only change lives in the failed-transition presentation branch in `src/main.ts::handleInput`:
 
 ```ts
 if (transition.ok) {
@@ -57,7 +57,9 @@ if (transition.ok) {
 
 This retains the **original failed transition** for `cuesFor`, so the bump still plays. It clears both `blocked` **and** `effect` for these collisions: otherwise an earlier dialogue/reward could reappear when the collision is deliberately hidden. `redraw()` then hides the interaction log naturally.
 
-No changes are expected in `WorldScene`, `dispatchInput`, `attemptMove`, `cuesFor`, `showsMessage`, `GameState`, or save serialization. The `input.kind` guard is unnecessary: these two blocked reasons originate only from `attemptMove`, reached only for movement without a pending interaction. Keeping the classification at the `main.ts` presentation boundary avoids duplicating it in `showsMessage` and `renderMessage`. Retain the localized `reasons.wall`/`reasons['out-of-bounds']` strings and the closed `BlockedReason` union rather than adding a second reason type or deleting strings solely because they become unreachable in normal rendering.
+Review added one more scoped seam in `WorldScene` — not to reroute keys, but to pace held-key repeats. `canRepeat` already made auto-repeats wait for the current step to land, yet a move that went nowhere — a wall, a map edge, a latch denial, a move rejected under a prompt — started no step to wait on, so a held direction key replayed `bump` and redrew the whole scene at key-repeat speed. `WorldScene` now stamps `bumpAt` when a dispatched move starts no step, and `canRepeat` additionally waits one step's beat (`STEP_MS`) after it. Fresh presses are unaffected.
+
+No changes are expected in `dispatchInput`, `attemptMove`, `cuesFor`, `showsMessage`, `GameState`, or save serialization. The `input.kind` guard is unnecessary: these two blocked reasons originate only from `attemptMove`, reached only for movement without a pending interaction. Keeping the classification at the `main.ts` presentation boundary avoids duplicating it in `showsMessage` and `renderMessage`. Retain the localized `reasons.wall`/`reasons['out-of-bounds']` strings and the closed `BlockedReason` union rather than adding a second reason type or deleting strings solely because they become unreachable in normal rendering.
 
 ## Review-informed test strategy
 
