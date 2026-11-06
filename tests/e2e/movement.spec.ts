@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { createInitialGameState } from '../../src/game/state';
+import { STEP_MS } from '../../src/phaser/animation';
 import type { GameState } from '../../src/game/types';
-import { savedGame } from './journey';
+import { audioStarts, countAudioStarts, savedGame } from './journey';
 
 // The hero's tile as the autosave last wrote it.
 function savedTileX(page: Page): Promise<number | undefined> {
@@ -17,6 +18,7 @@ function savedTileX(page: Page): Promise<number | undefined> {
 test('a held arrow key walks one tile per step, not one per repeat', async ({
   page,
 }) => {
+  await countAudioStarts(page);
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -49,6 +51,42 @@ test('a held arrow key walks one tile per step, not one per repeat', async ({
       return savedTileX(page);
     })
     .toBeGreaterThan(16);
+
+  // Held into the east wall at (21,10), each repeat that lands bumps —
+  // paced at a step's length, not buzzing at key-repeat speed.
+  await expect
+    .poll(async () => {
+      await page.evaluate(() =>
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowRight', repeat: true }),
+        ),
+      );
+      return savedTileX(page);
+    })
+    .toBe(20);
+  // Let the last step land first; while it slides the step itself paces
+  // repeats, so only a settled bump shows the bump pacing.
+  await page.waitForTimeout(STEP_MS * 2);
+  const bumps = await audioStarts(page);
+  await page.evaluate(() => {
+    const press = (repeat: boolean) =>
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowRight', repeat }),
+      );
+    press(false);
+    for (let i = 0; i < 6; i++) press(true);
+  });
+  expect(await audioStarts(page)).toBe(bumps + 1);
+  await expect
+    .poll(async () => {
+      await page.evaluate(() =>
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowRight', repeat: true }),
+        ),
+      );
+      return audioStarts(page);
+    })
+    .toBe(bumps + 2);
 });
 
 // WASD moves like the arrow keys; Ctrl/Cmd with a letter stays the
@@ -107,6 +145,15 @@ test('a wall bump clears stale messages and frees Escape for the menu', async ({
     'data-reason',
     'latch-closed-front',
   );
+
+  // Denied again with the message up: a direction key still reaches the
+  // rules — were it swallowed as a dismissal, the log would clear.
+  await page.keyboard.press('ArrowUp');
+  await expect(page.getByTestId('blocked-reason')).toHaveAttribute(
+    'data-reason',
+    'latch-closed-front',
+  );
+  await expect(page.getByTestId('interaction')).toBeVisible();
 
   await page.keyboard.press('ArrowRight');
   await expect

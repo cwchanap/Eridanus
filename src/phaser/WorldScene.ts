@@ -120,6 +120,9 @@ export class WorldScene extends Phaser.Scene {
   // from a stair or a load.
   private shown: Readonly<{ mapId: MapId; tile: Tile }> | null = null;
   private step: Step = AT_REST;
+  // When the last move that went nowhere landed: it starts no step, so
+  // it paces key repeats itself (canRepeat).
+  private bumpAt = -Infinity;
   private follow = { top: 0, strip: 0, zoom: 1 };
   // The battle blow on show, when it started, and the enemy fighting it.
   private strike: Strike | null = null;
@@ -131,14 +134,21 @@ export class WorldScene extends Phaser.Scene {
     const direction = keyDirection(event);
     if (direction !== undefined) {
       event.preventDefault();
-      // A held key repeats far faster than a step plays, so its repeats wait
-      // for the map to draw and the current step to land; fresh presses
-      // always go through.
+      // A held key repeats far faster than a step plays, so its repeats
+      // wait for the current step to land — or, when the last move went
+      // nowhere and started no step, for one step's beat (canRepeat).
+      // Fresh presses always go through.
       if (event.repeat && !this.canRepeat()) return;
       // A playing battle takes no moves, so it must not turn the hero either.
       if (this.deps.getStrike()) return;
       this.playerFacing = direction;
       this.deps.onInput({ kind: 'move', direction });
+      // onInput redrew the map. A move that went nowhere — a wall, a
+      // latch, a prompt — started no step for the next repeat to wait
+      // on, so it paces repeats itself or a held key buzzes at
+      // key-repeat speed.
+      if (this.ready && stepProgress(this.time.now, this.step.start) >= 1)
+        this.bumpAt = this.time.now;
       return;
     }
     // 1-9 pick an offer on an open trade prompt, and do nothing otherwise.
@@ -400,7 +410,11 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private canRepeat(): boolean {
-    return this.ready && stepProgress(this.time.now, this.step.start) >= 1;
+    return (
+      this.ready &&
+      stepProgress(this.time.now, this.step.start) >= 1 &&
+      stepProgress(this.time.now, this.bumpAt) >= 1
+    );
   }
 
   // Moves everything that animates to where it stands at `time`: every
