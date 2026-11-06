@@ -1,30 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { savedGame } from './journey';
-
-type Counted = { audioStarts: number };
-type Starter = { start: (...args: unknown[]) => void };
+import { audioStarts, countAudioStarts, savedGame } from './journey';
 
 // Count every sound the page starts, synth note or recording, by wrapping
 // the browser's own WebAudio start methods: no speakers or game hooks needed.
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    const counted = window as unknown as Counted;
-    counted.audioStarts = 0;
-    const protos = [OscillatorNode.prototype, AudioBufferSourceNode.prototype];
-    for (const proto of protos as unknown as Starter[]) {
-      const start = proto.start;
-      proto.start = function (this: unknown, ...args: unknown[]) {
-        counted.audioStarts += 1;
-        start.apply(this, args);
-      };
-    }
-  });
-});
-
-function audioStarts(page: Page): Promise<number> {
-  return page.evaluate(() => (window as unknown as Counted).audioStarts);
-}
+test.beforeEach(async ({ page }) => countAudioStarts(page));
 
 async function press(page: Page, key: string): Promise<void> {
   await page.keyboard.press(key, { delay: 50 });

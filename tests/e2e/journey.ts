@@ -56,6 +56,31 @@ export async function savedGame(page: Page): Promise<unknown> {
   );
 }
 
+type Counted = { audioStarts: number };
+type Starter = { start: (...args: unknown[]) => void };
+
+// Counts every sound the page starts, synth note or recording, by wrapping
+// the browser's own WebAudio start methods: no speakers or game hooks
+// needed. Install before the page loads; it survives reloads.
+export async function countAudioStarts(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const counted = window as unknown as Counted;
+    counted.audioStarts = 0;
+    const protos = [OscillatorNode.prototype, AudioBufferSourceNode.prototype];
+    for (const proto of protos as unknown as Starter[]) {
+      const start = proto.start;
+      proto.start = function (this: unknown, ...args: unknown[]) {
+        counted.audioStarts += 1;
+        start.apply(this, args);
+      };
+    }
+  });
+}
+
+export function audioStarts(page: Page): Promise<number> {
+  return page.evaluate(() => (window as unknown as Counted).audioStarts);
+}
+
 // A walk through the authored maps, named by what it bumps rather than by
 // counted key presses. Each step plans the shortest open walk with the real
 // rules (never across a stair it is not taking), replays it on a pure
