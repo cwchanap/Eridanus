@@ -186,6 +186,7 @@ export const ja: Messages = {
     floor4: '塔 4階',
     floor5: '塔 5階',
     floor6: '塔 6階',
+    floor7: '塔 7階',
   },
   sections: {
     'village-square': '村の広場',
@@ -241,6 +242,12 @@ export const ja: Messages = {
     'floor6-pump-room': 'ポンプ室',
     'floor6-east-tank': '東の水槽',
     'floor6-outflow': '放水口',
+    'floor7-north-west-wing': '北西の棟',
+    'floor7-north-east-wing': '北東の棟',
+    'floor7-south-east-wing': '南東の棟',
+    'floor7-south-west-wing': '南西の棟',
+    'floor7-cloister-walk': '回廊',
+    'floor7-reliquary': '聖櫃',
   },
   npcs: {
     'village-warden': '守衛長',
@@ -323,6 +330,9 @@ export const ja: Messages = {
       '泥まみれの記録：「水槽の水は、下の根へと流れ込む。」',
     'floor6-sluice-log': '管理人の日誌：「根が流れを飲んでいる。」',
     'floor6-outflow-notice': '管理人の掲示：「下への階段は回廊へ通じている。」',
+    'floor7-bell-rope':
+      '結ばれた鐘の綱：「四つの鐘は一本の綱に吊られている——一つ引けば、次の鐘も揺れる。」',
+    'floor7-reliquary-record': '聖櫃の記録：鐘撞きたちは心臓を眠らせなかった。',
   },
   access: {
     'village-lift-to-floor5':
@@ -370,6 +380,7 @@ export const ja: Messages = {
       '5階の至聖所の下に、深部の水槽群へ続く封じられた階段がある。村が立ち直るまでは開かない。',
     'floor5-depth-stairs-used':
       '5階の至聖所の下の深部への階段は、6階の水槽群に通じている。',
+    'floor6-depth-stairs-used': '放水口の階段は7階の回廊に通じている。',
   },
   dialogue: {
     'warden-main-lead': '1階を探して、下への階段を開く紋章を見つけてくれ。',

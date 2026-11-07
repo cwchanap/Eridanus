@@ -535,6 +535,14 @@ export const floor6: MapDefinition = {
       stats: { hp: 44, attack: 50, defense: 37, agility: 2 },
       gold: 25,
     },
+    {
+      kind: 'portal',
+      id: 'floor6-to-floor7',
+      tile: { x: 29, y: 5 },
+      assetId: 'stairs-down',
+      target: { mapId: 'floor7', tile: { x: 1, y: 1 } },
+      factId: 'floor6-depth-stairs-used',
+    },
   ],
   sections: [
     {

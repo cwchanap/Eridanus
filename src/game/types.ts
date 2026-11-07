@@ -1,7 +1,14 @@
 import type { FactId } from './content/facts';
 
 export type MapId =
-  'village' | 'floor1' | 'floor2' | 'floor3' | 'floor4' | 'floor5' | 'floor6';
+  | 'village'
+  | 'floor1'
+  | 'floor2'
+  | 'floor3'
+  | 'floor4'
+  | 'floor5'
+  | 'floor6'
+  | 'floor7';
 export type Direction = 'north' | 'south' | 'east' | 'west';
 export type Stat = 'attack' | 'defense' | 'hp';
 export type EquipSlot = 'weapon' | 'armor' | 'accessory';

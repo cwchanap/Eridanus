@@ -214,6 +214,7 @@ export const en = {
     floor4: 'Tower Floor 4',
     floor5: 'Tower Floor 5',
     floor6: 'Tower Floor 6',
+    floor7: 'Tower Floor 7',
   } satisfies Record<MapId, string>,
   sections: {
     'village-square': 'Village Square',
@@ -269,6 +270,12 @@ export const en = {
     'floor6-pump-room': 'Pump Room',
     'floor6-east-tank': 'East Tank',
     'floor6-outflow': 'Outflow',
+    'floor7-north-west-wing': 'North-west Wing',
+    'floor7-north-east-wing': 'North-east Wing',
+    'floor7-south-east-wing': 'South-east Wing',
+    'floor7-south-west-wing': 'South-west Wing',
+    'floor7-cloister-walk': 'Cloister Walk',
+    'floor7-reliquary': 'Reliquary',
   },
   npcs: {
     'village-warden': 'Warden',
@@ -353,6 +360,10 @@ export const en = {
     'floor6-sluice-log': 'A keeper\'s log: "The roots drink the flow."',
     'floor6-outflow-notice':
       'A keeper\'s notice: "The stair below leads to the cloister."',
+    'floor7-bell-rope':
+      'A knotted bell-rope: "The four bells hang on one rope — each pull swings the next one too."',
+    'floor7-reliquary-record':
+      'A reliquary record: the bell-ringers kept the heart awake.',
   },
   // Shown when a sealed entrance or a locked portal is bumped.
   access: {
@@ -401,6 +412,8 @@ export const en = {
       'A sealed stair beneath the Floor 5 sanctum leads to the deep cisterns; it opens only once the village is restored.',
     'floor5-depth-stairs-used':
       'The deep stair beneath the Floor 5 sanctum reaches the cisterns on Floor 6.',
+    'floor6-depth-stairs-used':
+      'The outflow stair reaches the cloister on Floor 7.',
   } satisfies Record<ObservationFactId, string>,
   dialogue: {
     'warden-main-lead':

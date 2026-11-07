@@ -141,6 +141,7 @@ describe('authored content', () => {
       'floor4',
       'floor5',
       'floor6',
+      'floor7',
       'village',
     ]);
   });
@@ -720,6 +721,106 @@ describe('authored content', () => {
       'floor6-settling-bulwark',
     ])
       expect(reachable.has(tileKey(entity(id).tile)), id).toBe(true);
+  });
+
+  it('pairs the floor six descent stair with the floor seven arrival', () => {
+    const stair = portal('floor6-to-floor7');
+    expect(stair.tile).toEqual({ x: 29, y: 5 });
+    expect(stair.target).toEqual({
+      mapId: 'floor7',
+      tile: { x: 1, y: 1 },
+    });
+    expect(stair.factId).toBe('floor6-depth-stairs-used');
+    const arrival = portal('floor7-to-floor6');
+    expect(arrival.tile).toEqual({ x: 1, y: 1 });
+    expect(arrival.target).toEqual({
+      mapId: 'floor6',
+      tile: { x: 29, y: 5 },
+    });
+  });
+
+  it('labels each floor seven threshold with its own area only', () => {
+    const homeByEntity: Record<string, string> = {
+      'floor7-to-floor6': 'floor7-north-west-wing',
+      'floor7-wing-guard': 'floor7-north-west-wing',
+      'floor7-north-east-bulwark': 'floor7-north-east-wing',
+      'floor7-south-west-bulwark': 'floor7-south-west-wing',
+      'floor7-south-east-door-guard': 'floor7-south-east-wing',
+      'floor7-reliquary-hatch': 'floor7-reliquary',
+    };
+    for (const [id, home] of Object.entries(homeByEntity))
+      expect(
+        findSectionsAt('floor7', entity(id).tile).map(({ id }) => id),
+        id,
+      ).toEqual([home]);
+  });
+
+  it('places every floor seven floor tile in exactly one section', () => {
+    for (let y = 0; y < MAPS.floor7.layout.length; y++) {
+      const row = MAPS.floor7.layout[y]!;
+      for (let x = 0; x < row.length; x++)
+        if (row[x] === '.')
+          expect(findSectionsAt('floor7', { x, y }).length, `${x},${y}`).toBe(
+            1,
+          );
+    }
+  });
+
+  it('gates the floor seven reliquary behind its required fights', () => {
+    const map = MAPS.floor7;
+    const flood = (ids: readonly string[], shortcuts: readonly string[]) => {
+      const state = {
+        ...createInitialGameState(),
+        mapId: 'floor7' as const,
+        defeatedEnemyIds: ids,
+        openedRewardIds: ids,
+        openedShortcutIds: shortcuts,
+      };
+      return floodFloor(
+        map,
+        [portal('floor7-to-floor6').tile],
+        (tile) =>
+          map.layout[tile.y]?.[tile.x] === '.' &&
+          !isTileBlockedByEntity(state, tile),
+      );
+    };
+    const reliquary = tileKey({ x: 15, y: 17 });
+    const cleared = [
+      'floor7-wing-guard',
+      'floor7-south-east-door-guard',
+      'floor7-south-east-warden',
+    ];
+    expect(flood([], []).has(reliquary)).toBe(false);
+    expect(flood(cleared, []).has(reliquary)).toBe(false);
+    expect(flood(cleared, ['floor7-reliquary-hatch']).has(reliquary)).toBe(
+      true,
+    );
+  });
+
+  it('reaches every floor seven entity once the floor is cleared', () => {
+    const everything = MAPS.floor7.entities.map(({ id }) => id);
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor7' as const,
+      defeatedEnemyIds: everything,
+      openedRewardIds: everything,
+      openedShortcutIds: everything,
+    };
+    const reachable = floodFloor(
+      MAPS.floor7,
+      [portal('floor7-to-floor6').tile],
+      (tile) =>
+        MAPS.floor7.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(state, tile),
+    );
+    for (const entity of MAPS.floor7.entities) {
+      const found =
+        entity.kind === 'clue' || entity.kind === 'lever'
+          ? hasAdjacentApproach(reachable, entity.tile)
+          : reachable.has(tileKey(entity.tile));
+      expect(found, entity.id).toBe(true);
+    }
+    expect(MAPS.floor7.sections).toHaveLength(6);
   });
 
   it('lets only the old shaft into the sealed blocks on floors 2 to 4', () => {
