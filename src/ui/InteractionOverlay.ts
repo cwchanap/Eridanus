@@ -194,8 +194,6 @@ function effectPortrait(effect: ActionEffect, state: GameState): string {
   return '';
 }
 
-// An enemy's traits as chips on the card, so the player can weigh them
-// before committing: the hp-loss forecast already prices them in.
 function enemyTraits(
   stats: EnemyEntity['stats'],
   m: Messages,
