@@ -22,6 +22,9 @@ export type LeadId =
   | 'reach-heart-chamber'
   | 'claim-restoration-core'
   | 'return-restoration-core'
+  | 'descend-below-floor5'
+  | 'return-heartwood'
+  | 'taproot-quieted'
   | 'story-complete'
   | 'ledger-resolved';
 
@@ -42,7 +45,10 @@ function knows(factIds: readonly string[], id: string): boolean {
 }
 
 function mainLead(state: GameState): LeadId {
-  if (knows(state.factIds, 'main-village-restored')) return 'story-complete';
+  if (knows(state.factIds, 'main-heartwood-returned')) return 'taproot-quieted';
+  if (state.itemIds.includes('tower-heartwood')) return 'return-heartwood';
+  if (knows(state.factIds, 'main-village-restored'))
+    return 'descend-below-floor5';
   if (state.itemIds.includes('tower-restoration-core'))
     return 'return-restoration-core';
   if (state.defeatedEnemyIds.includes('floor5-core-guardian'))

@@ -174,6 +174,10 @@ export const ja: Messages = {
       '塔の下層が開いた。3階のハッチにつながるレバーを3本とも下ろし、5階の塔の心臓部まで戦い進もう。',
     'claim-restoration-core': 'コアの守護者を倒した。復元コアを回収しよう。',
     'return-restoration-core': '復元コアを村の守衛長のもとへ持ち帰る。',
+    'descend-below-floor5':
+      '村はよみがえった。だが主根は裂谷の下で流れを飲み続けている。9階を抜け、根の層へ降りよう。',
+    'return-heartwood': '心木を村の守衛長のもとへ持ち帰る。',
+    'taproot-quieted': '心木は村に戻った。主根は静まり、村は完全になった。',
     'story-complete': '復元コアは村に戻った。塔を復旧できる。',
     'ledger-resolved':
       '管理人の最後の記録が、守護者の隔離不具合の理由を明らかにした。',
@@ -189,6 +193,7 @@ export const ja: Messages = {
     floor7: '塔 7階',
     floor8: '塔 8階',
     floor9: '塔 9階',
+    floor10: '塔 10階',
   },
   sections: {
     'village-square': '村の広場',
@@ -258,6 +263,12 @@ export const ja: Messages = {
     'floor9-top-band': '上段の通路',
     'floor9-middle-band': '中段の通路',
     'floor9-bottom-band': '下段の通路',
+    'floor10-trunk': '降りの本道',
+    'floor10-upper-roots': '上層の根',
+    'floor10-middle-root': '中段の根',
+    'floor10-west-root': '西の根',
+    'floor10-east-root': '東の根',
+    'floor10-heart': '根の心',
   },
   npcs: {
     'village-warden': '守衛長',
@@ -290,6 +301,7 @@ export const ja: Messages = {
     'tower-depth-sigil': '塔の紋章',
     'tower-restoration-core': '復元コア',
     'rift-key': '裂谷の鍵',
+    'tower-heartwood': '心木',
   },
   clues: {
     'floor1-treasury-overlook':
@@ -350,10 +362,14 @@ export const ja: Messages = {
     'floor9-crossings-notice':
       '管理人の掲示：「各通路帯には三つの渡りがある。どれか一つでよい。」',
     'floor9-middle-record': '管理人の点簿：誰がどこを渡ったかの記録。',
+    'floor10-taproot-notice':
+      '管理人の掲示：「二体の根の番人が心のハッチを守っている。両方倒し、心木を取り、リフトで帰れ。」',
   },
   access: {
     'village-lift-to-floor5':
       '昇降機の籠が縦坑の中で動かずにぶら下がっている。その差し込み口は動力コアの形をしている。',
+    'village-lift-to-floor10':
+      'もう一つの昇降機の籠が道の端で動かずにぶら下がっている。その差し込み口は心木の塊の形をしている。',
     'village-mine-entrance':
       '倒れた木材が古い鉱山の坑道をふさいでいる。今は入れない。',
     'village-crypt-entrance':
@@ -404,6 +420,9 @@ export const ja: Messages = {
     'floor8-depth-seal-seen':
       '裂谷の西半分に、9階へ下りる閂のかかった階段がある。開くには裂谷の鍵がいる。',
     'floor8-depth-stairs-used': '裂谷の鍵の階段は9階の十字路に通じている。',
+    'floor9-depth-stairs-used': '最後の階段は10階の根の層へ降りている。',
+    'village-heartwood-lift-seen':
+      '塔の道の西の端にもう一つの昇降機の籠が吊られている。その差し込み口は心木の塊の形をしている。',
   },
   dialogue: {
     'warden-main-lead': '1階を探して、下への階段を開く紋章を見つけてくれ。',
@@ -441,6 +460,8 @@ export const ja: Messages = {
       '復元コアがあれば、村の暮らしを支える塔の流れを再び動かせる。守護者の封鎖は破られた。ついにこの仕組みを復旧できる。',
     'warden-restoration-ending-ledger':
       '復元コアがあれば、村への供給を再開できる。管理人の記録は不具合の理由も教えてくれた。対になった解放装置が守護者の制御不具合を隔離したが、その隔離は解除されないままだったのだ。真実を損なわずに、この仕組みを復旧できる。',
+    'warden-heartwood-ending':
+      '心木か——主根を切り離して、持ち帰ってくれたのだな。塔は最深の根まで静まり、村は完全になった。探検者よ、恩に着る。',
     'scribe-final-ledger-read':
       'その最後の記録で、記録簿は完結しました。守護者たちは緊急の隔離状態に閉じ込められ、村は彼らが守っていたのと同じ仕組みに頼り続けていたのです。',
     'elder-sealed-crypt':

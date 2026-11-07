@@ -52,6 +52,14 @@ export const floor9: MapDefinition = {
       target: { mapId: 'floor8', tile: { x: 3, y: 15 } },
     },
     {
+      kind: 'portal',
+      id: 'floor9-to-floor10',
+      tile: { x: 25, y: 17 },
+      assetId: 'stairs-down',
+      target: { mapId: 'floor10', tile: { x: 15, y: 1 } },
+      factId: 'floor9-depth-stairs-used',
+    },
+    {
       kind: 'clue',
       id: 'floor9-crossings-notice',
       tile: { x: 15, y: 7 },

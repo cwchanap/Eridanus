@@ -5,6 +5,7 @@ const RESOLVED_LEADS: ReadonlySet<LeadId> = new Set([
   'heirloom-resolved',
   'route-resolved',
   'ledger-resolved',
+  'taproot-quieted',
   'story-complete',
 ]);
 

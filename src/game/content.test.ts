@@ -136,6 +136,7 @@ describe('authored content', () => {
   it('defines all current maps', () => {
     expect(Object.keys(MAPS).sort()).toEqual([
       'floor1',
+      'floor10',
       'floor2',
       'floor3',
       'floor4',
@@ -1156,6 +1157,155 @@ describe('authored content', () => {
       expect(found, entity.id).toBe(true);
     }
     expect(MAPS.floor9.sections).toHaveLength(4);
+  });
+
+  it('pairs the floor nine descent stair with the floor ten arrival', () => {
+    const stair = portal('floor9-to-floor10');
+    expect(stair.tile).toEqual({ x: 25, y: 17 });
+    expect(stair.target).toEqual({
+      mapId: 'floor10',
+      tile: { x: 15, y: 1 },
+    });
+    expect(stair.factId).toBe('floor9-depth-stairs-used');
+    const arrival = portal('floor10-to-floor9');
+    expect(arrival.tile).toEqual({ x: 15, y: 1 });
+    expect(arrival.target).toEqual({
+      mapId: 'floor9',
+      tile: { x: 25, y: 17 },
+    });
+  });
+
+  it('pairs the heartwood lift between floor ten and the village', () => {
+    const lift = portal('village-lift-to-floor10');
+    expect(lift.tile).toEqual({ x: 11, y: 1 });
+    expect(lift.target).toEqual({
+      mapId: 'floor10',
+      tile: { x: 21, y: 19 },
+    });
+    expect(lift.lock).toEqual({
+      kind: 'item',
+      requiresItemId: 'tower-heartwood',
+      lockedFactId: 'village-heartwood-lift-seen',
+    });
+    const back = portal('floor10-lift-to-village');
+    expect(back.tile).toEqual({ x: 21, y: 19 });
+    expect(back.lock).toBeUndefined();
+    expect(back.target).toEqual({
+      mapId: 'village',
+      tile: { x: 11, y: 1 },
+    });
+  });
+
+  it('labels each floor ten threshold with its own area only', () => {
+    const homeByEntity: Record<string, string> = {
+      'floor10-to-floor9': 'floor10-trunk',
+      'floor10-taproot-notice': 'floor10-upper-roots',
+      'floor10-heart-hatch': 'floor10-trunk',
+      'floor10-middle-cache': 'floor10-middle-root',
+      'floor10-west-waystone': 'floor10-west-root',
+      'floor10-east-waystone': 'floor10-east-root',
+      'floor10-heart-waystone': 'floor10-heart',
+      'floor10-taproot': 'floor10-heart',
+      'floor10-heartwood': 'floor10-heart',
+      'floor10-lift-to-village': 'floor10-heart',
+    };
+    for (const [id, home] of Object.entries(homeByEntity))
+      expect(
+        findSectionsAt('floor10', entity(id).tile).map(({ id }) => id),
+        id,
+      ).toEqual([home]);
+  });
+
+  it('places every floor ten floor tile in exactly one section', () => {
+    for (let y = 0; y < MAPS.floor10.layout.length; y++) {
+      const row = MAPS.floor10.layout[y]!;
+      for (let x = 0; x < row.length; x++)
+        if (row[x] === '.')
+          expect(findSectionsAt('floor10', { x, y }).length, `${x},${y}`).toBe(
+            1,
+          );
+    }
+  });
+
+  it('hangs the floor ten heart hatch on both root wardens', () => {
+    const hatch = latch('floor10-heart-hatch');
+    expect(hatch.tile).toEqual({ x: 15, y: 18 });
+    expect('guardIds' in hatch && hatch.guardIds).toEqual([
+      'floor10-west-warden',
+      'floor10-east-warden',
+    ]);
+    const taproot = entity('floor10-taproot');
+    if (taproot.kind !== 'enemy') throw new Error('floor10-taproot missing');
+    expect(taproot.stats).toEqual({
+      hp: 96,
+      attack: 59,
+      defense: 41,
+      agility: 3,
+      firstStrike: true,
+      pierce: 4,
+    });
+    expect(findItemRewardByItemId('tower-heartwood')?.id).toBe(
+      'floor10-heartwood',
+    );
+  });
+
+  it('holds the floor ten heart until both wardens fall and the hatch opens', () => {
+    const map = MAPS.floor10;
+    const flood = (ids: readonly string[]) => {
+      const state = {
+        ...createInitialGameState(),
+        mapId: 'floor10' as const,
+        defeatedEnemyIds: ids,
+        openedRewardIds: ids,
+        openedShortcutIds: ids,
+      };
+      return floodFloor(
+        map,
+        [portal('floor10-to-floor9').tile],
+        (tile) =>
+          map.layout[tile.y]?.[tile.x] === '.' &&
+          !isTileBlockedByEntity(state, tile),
+      );
+    };
+    const heart = [
+      'floor10-heart-waystone',
+      'floor10-taproot',
+      'floor10-heartwood',
+      'floor10-lift-to-village',
+    ].map((id) => tileKey(entity(id).tile));
+    const clearedOutside = map.entities
+      .map(({ id }) => id)
+      .filter((id) => id !== 'floor10-heart-hatch');
+    const barred = flood(clearedOutside);
+    for (const tile of heart) expect(barred.has(tile), tile).toBe(false);
+    const open = flood([...clearedOutside, 'floor10-heart-hatch']);
+    for (const tile of heart) expect(open.has(tile), tile).toBe(true);
+  });
+
+  it('reaches every floor ten entity once the floor is cleared', () => {
+    const everything = MAPS.floor10.entities.map(({ id }) => id);
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor10' as const,
+      defeatedEnemyIds: everything,
+      openedRewardIds: everything,
+      openedShortcutIds: everything,
+    };
+    const reachable = floodFloor(
+      MAPS.floor10,
+      [portal('floor10-to-floor9').tile],
+      (tile) =>
+        MAPS.floor10.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(state, tile),
+    );
+    for (const entity of MAPS.floor10.entities) {
+      const found =
+        entity.kind === 'clue'
+          ? hasAdjacentApproach(reachable, entity.tile)
+          : reachable.has(tileKey(entity.tile));
+      expect(found, entity.id).toBe(true);
+    }
+    expect(MAPS.floor10.sections).toHaveLength(6);
   });
 
   it('lets only the old shaft into the sealed blocks on floors 2 to 4', () => {

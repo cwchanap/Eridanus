@@ -6,6 +6,12 @@ export function resolveNpcInteraction(
 ): NpcInteractionResolution {
   switch (npcId) {
     case 'village-warden':
+      if (state.itemIds.includes('tower-heartwood')) {
+        return {
+          lineId: 'warden-heartwood-ending',
+          factId: 'main-heartwood-returned',
+        };
+      }
       if (state.itemIds.includes('tower-restoration-core')) {
         return {
           lineId: state.factIds.includes('floor3-keeper-final-record-read')

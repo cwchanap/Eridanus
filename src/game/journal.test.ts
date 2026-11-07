@@ -57,7 +57,46 @@ describe('restoration ending', () => {
     expect(reloaded).toEqual({ kind: 'loaded', state: ending.state });
     if (reloaded.kind !== 'loaded') return;
     expect(reloaded.state.factIds).toContain('main-village-restored');
-    expect(buildJournalView(reloaded.state).main.lead).toBe('story-complete');
+    expect(buildJournalView(reloaded.state).main.lead).toBe(
+      'descend-below-floor5',
+    );
+  });
+
+  it('persists the heartwood ending fact and resolves the main lead after a reload', () => {
+    const state = {
+      ...createInitialGameState(),
+      defeatedEnemyIds: ['floor10-taproot'],
+      openedRewardIds: ['floor10-heartwood'],
+      itemIds: ['tower-heartwood'],
+      factIds: ['main-village-restored'],
+    };
+    const ending = interactWithEntity(state, warden, warden.tile);
+    expect(ending.ok).toBe(true);
+    if (!ending.ok) return;
+    expect(ending.effect).toEqual({
+      kind: 'dialogue',
+      speakerId: warden.id,
+      lineId: 'warden-heartwood-ending',
+    });
+    expect(
+      ending.state.factIds.filter((id) => id === 'main-heartwood-returned'),
+    ).toHaveLength(1);
+
+    const storage: Storage = {
+      getItem: () => JSON.stringify(ending.state),
+      setItem() {},
+      removeItem() {},
+      clear() {},
+      key: () => null,
+      get length() {
+        return 0;
+      },
+    };
+    const reloaded = loadGame(storage);
+    expect(reloaded).toEqual({ kind: 'loaded', state: ending.state });
+    if (reloaded.kind !== 'loaded') return;
+    expect(reloaded.state.factIds).toContain('main-heartwood-returned');
+    expect(buildJournalView(reloaded.state).main.lead).toBe('taproot-quieted');
   });
 
   it('adds no second ending flag when the final record precedes the warden', () => {
@@ -306,7 +345,19 @@ describe('buildJournalView', () => {
         itemIds: ['tower-restoration-core'],
         factIds: ['main-village-restored'],
       }),
-    ).toBe('story-complete');
+    ).toBe('descend-below-floor5');
+    expect(
+      main({
+        itemIds: ['tower-heartwood'],
+        factIds: ['main-village-restored'],
+      }),
+    ).toBe('return-heartwood');
+    expect(
+      main({
+        itemIds: ['tower-heartwood'],
+        factIds: ['main-village-restored', 'main-heartwood-returned'],
+      }),
+    ).toBe('taproot-quieted');
   });
 
   it('resolves the ledger lead from the final record regardless of evidence order', () => {

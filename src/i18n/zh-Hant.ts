@@ -169,6 +169,10 @@ export const zhHant: Messages = {
       '下層的塔已經開通。拉下連著第 3 層活門的三根拉桿，一路殺到第 5 層的塔心。',
     'claim-restoration-core': '核心守護者已被擊敗。取回修復核心。',
     'return-restoration-core': '把修復核心帶回給村莊的守望長。',
+    'descend-below-floor5':
+      '村莊已重獲新生，但主根仍在裂谷之下吸食能流。下到第 9 層更深處，前往根層。',
+    'return-heartwood': '把心木帶回給村莊的守望長。',
+    'taproot-quieted': '心木已回到家鄉。主根沉寂了，村莊也完整了。',
     'story-complete': '修復核心已回到村莊。這座塔可以修復了。',
     'ledger-resolved': '守塔人的最終記錄解釋了守護者隔離故障的來龍去脈。',
   },
@@ -183,6 +187,7 @@ export const zhHant: Messages = {
     floor7: '高塔 第 7 層',
     floor8: '高塔 第 8 層',
     floor9: '高塔 第 9 層',
+    floor10: '高塔 第 10 層',
   },
   sections: {
     'village-square': '村莊廣場',
@@ -252,6 +257,12 @@ export const zhHant: Messages = {
     'floor9-top-band': '上層橫廊',
     'floor9-middle-band': '中層橫廊',
     'floor9-bottom-band': '下層橫廊',
+    'floor10-trunk': '下行幹道',
+    'floor10-upper-roots': '上層根系',
+    'floor10-middle-root': '中層根脈',
+    'floor10-west-root': '西側根脈',
+    'floor10-east-root': '東側根脈',
+    'floor10-heart': '根心',
   },
   npcs: {
     'village-warden': '守望長',
@@ -284,6 +295,7 @@ export const zhHant: Messages = {
     'tower-depth-sigil': '塔之徽記',
     'tower-restoration-core': '修復核心',
     'rift-key': '裂谷鑰匙',
+    'tower-heartwood': '心木',
   },
   clues: {
     'floor1-treasury-overlook':
@@ -343,10 +355,14 @@ export const zhHant: Messages = {
     'floor9-crossings-notice':
       '守塔人的告示：「每條橫廊有三處通道，走哪一處都行。」',
     'floor9-middle-record': '守塔人留下的名冊：誰從哪裡過的廊。',
+    'floor10-taproot-notice':
+      '守塔人的告示：「兩名根衛鎮守著根心活門。將其擊倒，取走心木，乘升降籠回家。」',
   },
   access: {
     'village-lift-to-floor5':
       '一座升降籠癱在井道中，動彈不得。它的插槽正好嵌得下一顆動力核心。',
+    'village-lift-to-floor10':
+      '又一座升降籠癱在路的盡頭，動彈不得。它的插槽正好嵌得下一枚心木結。',
     'village-mine-entrance': '倒塌的木樑堵住了舊礦坑的入口。目前無法進入。',
     'village-crypt-entrance':
       '一道鐵柵擋住了墓窖的階梯，鎖已鏽死。目前無法進入。',
@@ -391,6 +407,9 @@ export const zhHant: Messages = {
     'floor8-depth-seal-seen':
       '裂谷西半部有一道閂死的階梯通往第 9 層，只有裂谷鑰匙能打開。',
     'floor8-depth-stairs-used': '裂谷鑰匙的階梯通往第 9 層的十字廊道。',
+    'floor9-depth-stairs-used': '最後一道階梯通往第 10 層的根層。',
+    'village-heartwood-lift-seen':
+      '高塔之路西端還吊著一座升降籠。它的插槽是為一枚心木結打造的。',
   },
   dialogue: {
     'warden-main-lead': '到第一層去找能打開下層樓梯的徽記吧。',
@@ -426,6 +445,8 @@ export const zhHant: Messages = {
       '修復核心能重啟為我們村莊供應補給的塔內能流。守護者的封鎖已經解除，我們終於可以修復這套系統了。',
     'warden-restoration-ending-ledger':
       '修復核心能重啟村莊的補給。守塔人的記錄也說明了故障的原因：成對的機關隔離了一次守護者控制故障，但隔離從未被解除。我們能在真相完整的情況下修復這套系統。',
+    'warden-heartwood-ending':
+      '心木——你把主根斬斷，還把它帶回了家。這座塔直到最深的根都沉寂了，村莊也完整了。探險者，我們欠你一切。',
     'scribe-final-ledger-read':
       '那份最終記錄為記錄冊畫下了句點。守護者們被困在緊急隔離狀態裡，而村莊依賴的，正是它們所守衛的同一套系統。',
     'elder-sealed-crypt':
