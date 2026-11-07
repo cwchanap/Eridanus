@@ -181,6 +181,8 @@ export const zhHant: Messages = {
     floor5: '高塔 第 5 層',
     floor6: '高塔 第 6 層',
     floor7: '高塔 第 7 層',
+    floor8: '高塔 第 8 層',
+    floor9: '高塔 第 9 層',
   },
   sections: {
     'village-square': '村莊廣場',
@@ -242,6 +244,14 @@ export const zhHant: Messages = {
     'floor7-south-west-wing': '西南棟',
     'floor7-cloister-walk': '迴廊步道',
     'floor7-reliquary': '聖物龕',
+    'floor8-west-tangle': '西側纏廊',
+    'floor8-lower-tangle': '下層纏廊',
+    'floor8-rift-bridge': '裂谷橋',
+    'floor8-east-gallery': '東側長廊',
+    'floor9-underpass': '地下通道',
+    'floor9-top-band': '上層橫廊',
+    'floor9-middle-band': '中層橫廊',
+    'floor9-bottom-band': '下層橫廊',
   },
   npcs: {
     'village-warden': '守望長',
@@ -273,6 +283,7 @@ export const zhHant: Messages = {
     'ledger-fragment-1': '記錄冊殘頁',
     'tower-depth-sigil': '塔之徽記',
     'tower-restoration-core': '修復核心',
+    'rift-key': '裂谷鑰匙',
   },
   clues: {
     'floor1-treasury-overlook':
@@ -327,6 +338,11 @@ export const zhHant: Messages = {
     'floor7-bell-rope':
       '一條打了結的鐘繩：「四口鐘掛在同一條繩上——每拉一下，下一口也會跟著擺動。」',
     'floor7-reliquary-record': '聖物龕的記錄：敲鐘人讓塔心保持清醒。',
+    'floor8-rift-notice': '守塔人的告示：「橋門從另一側拴死了。」',
+    'floor8-rift-record': '一份測量員的記錄：根系把樓板扯開，裂成了這道深谷。',
+    'floor9-crossings-notice':
+      '守塔人的告示：「每條橫廊有三處通道，走哪一處都行。」',
+    'floor9-middle-record': '守塔人留下的名冊：誰從哪裡過的廊。',
   },
   access: {
     'village-lift-to-floor5':
@@ -343,6 +359,7 @@ export const zhHant: Messages = {
       '升降籠癱在原地。它的插槽正好嵌得下一顆動力核心。',
     'floor5-depth-to-floor6':
       '一道被封住的階梯向聖所之下延伸。在村莊重獲新生之前，它不會開啟。',
+    'floor8-to-floor9': '一道閂死的階梯通往十字廊道。它的鎖在等待裂谷鑰匙。',
   },
   notes: {
     'village-tower-stairs-used': '階梯連接著村莊與第 1 層。',
@@ -370,6 +387,10 @@ export const zhHant: Messages = {
     'floor5-depth-stairs-used':
       '第 5 層聖所之下的深層階梯通往第 6 層的水槽群。',
     'floor6-depth-stairs-used': '出水口的階梯通往第 7 層的迴廊。',
+    'floor7-depth-stairs-used': '聖物龕的階梯通往第 8 層的裂谷。',
+    'floor8-depth-seal-seen':
+      '裂谷西半部有一道閂死的階梯通往第 9 層，只有裂谷鑰匙能打開。',
+    'floor8-depth-stairs-used': '裂谷鑰匙的階梯通往第 9 層的十字廊道。',
   },
   dialogue: {
     'warden-main-lead': '到第一層去找能打開下層樓梯的徽記吧。',

@@ -8,7 +8,9 @@ export type MapId =
   | 'floor4'
   | 'floor5'
   | 'floor6'
-  | 'floor7';
+  | 'floor7'
+  | 'floor8'
+  | 'floor9';
 export type Direction = 'north' | 'south' | 'east' | 'west';
 export type Stat = 'attack' | 'defense' | 'hp';
 export type EquipSlot = 'weapon' | 'armor' | 'accessory';

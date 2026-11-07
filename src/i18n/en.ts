@@ -215,6 +215,8 @@ export const en = {
     floor5: 'Tower Floor 5',
     floor6: 'Tower Floor 6',
     floor7: 'Tower Floor 7',
+    floor8: 'Tower Floor 8',
+    floor9: 'Tower Floor 9',
   } satisfies Record<MapId, string>,
   sections: {
     'village-square': 'Village Square',
@@ -276,6 +278,14 @@ export const en = {
     'floor7-south-west-wing': 'South-west Wing',
     'floor7-cloister-walk': 'Cloister Walk',
     'floor7-reliquary': 'Reliquary',
+    'floor8-west-tangle': 'West Tangle',
+    'floor8-lower-tangle': 'Lower Tangle',
+    'floor8-rift-bridge': 'Rift Bridge',
+    'floor8-east-gallery': 'East Gallery',
+    'floor9-underpass': 'Underpass',
+    'floor9-top-band': 'Top Band',
+    'floor9-middle-band': 'Middle Band',
+    'floor9-bottom-band': 'Bottom Band',
   },
   npcs: {
     'village-warden': 'Warden',
@@ -307,6 +317,7 @@ export const en = {
     'ledger-fragment-1': 'Ledger Fragment',
     'tower-depth-sigil': 'Tower Sigil',
     'tower-restoration-core': 'Restoration Core',
+    'rift-key': 'Rift Key',
   },
   clues: {
     'floor1-treasury-overlook':
@@ -364,6 +375,13 @@ export const en = {
       'A knotted bell-rope: "The four bells hang on one rope — each pull swings the next one too."',
     'floor7-reliquary-record':
       'A reliquary record: the bell-ringers kept the heart awake.',
+    'floor8-rift-notice':
+      'A keeper\'s notice: "The bridge gate is barred from the far side."',
+    'floor8-rift-record':
+      "A surveyor's record: the chasm opened when the roots pulled the floor apart.",
+    'floor9-crossings-notice':
+      'A keeper\'s notice: "Three ways cross each band; any one will do."',
+    'floor9-middle-record': "The keepers' tally of who crossed where.",
   },
   // Shown when a sealed entrance or a locked portal is bumped.
   access: {
@@ -382,6 +400,8 @@ export const en = {
       'The lift cage hangs dead. Its socket is shaped for a power core.',
     'floor5-depth-to-floor6':
       'A sealed stair drops beneath the sanctum. It will not open until the village is restored.',
+    'floor8-to-floor9':
+      'A barred stair drops toward the crossways. Its lock waits for the rift key.',
   },
   notes: {
     'village-tower-stairs-used': 'Stairs connect the village and Floor 1.',
@@ -414,6 +434,12 @@ export const en = {
       'The deep stair beneath the Floor 5 sanctum reaches the cisterns on Floor 6.',
     'floor6-depth-stairs-used':
       'The outflow stair reaches the cloister on Floor 7.',
+    'floor7-depth-stairs-used':
+      'The reliquary stair reaches the rift on Floor 8.',
+    'floor8-depth-seal-seen':
+      "A barred stair in the rift's west half drops toward Floor 9; only the rift key opens it.",
+    'floor8-depth-stairs-used':
+      'The rift-key stair reaches the crossways on Floor 9.',
   } satisfies Record<ObservationFactId, string>,
   dialogue: {
     'warden-main-lead':

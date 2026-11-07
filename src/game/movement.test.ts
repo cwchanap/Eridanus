@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { attemptMove } from './movement';
-import { findEntityById, getEntityAt, isLayoutFloor } from './content';
+import {
+  findEntityById,
+  getEntityAt,
+  isLayoutFloor,
+  isTileBlockedByEntity,
+} from './content';
 import { tileInDirection } from './geometry';
 import type { Direction, GameState, Tile } from './types';
 
@@ -609,6 +614,291 @@ describe('attemptMove', () => {
       ok: true,
       effect: { kind: 'latchWired', thrown: 0, total: 4 },
     });
+  });
+
+  it('the floor seven depth stair travels to floor eight and records its fact', () => {
+    const { tile, move } = beside('floor7-to-floor8', 'north');
+    const onFloor7 = { ...base, mapId: 'floor7' as const, tile };
+    const result = attemptMove(onFloor7, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor8' });
+    expect(result.state).toMatchObject(portalTarget('floor7-to-floor8'));
+    expect(result.state.factIds).toContain('floor7-depth-stairs-used');
+    expect(result.state.discoveredSectionIds).toEqual(['floor8-west-tangle']);
+  });
+
+  it('the floor eight arrival stair returns to the floor seven reliquary', () => {
+    const { tile, move } = beside('floor8-to-floor7', 'west');
+    const onFloor8 = { ...base, mapId: 'floor8' as const, tile };
+    const result = attemptMove(onFloor8, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor7' });
+    expect(result.state).toMatchObject(portalTarget('floor8-to-floor7'));
+    expect(result.state.discoveredSectionIds).toContain('floor7-reliquary');
+  });
+
+  it('the rift stair stays barred without the rift key and travels with it', () => {
+    const { tile, move } = beside('floor8-to-floor9', 'east');
+    const sealed = { ...base, mapId: 'floor8' as const, tile };
+    const locked = attemptMove(sealed, move);
+    expect(locked.ok).toBe(true);
+    if (!locked.ok) return;
+    expect(locked.effect).toEqual({
+      kind: 'accessLocked',
+      entityId: 'floor8-to-floor9',
+    });
+    expect(locked.state.mapId).toBe('floor8');
+    expect(locked.state.tile).toEqual(tile);
+    expect(locked.state.factIds).toContain('floor8-depth-seal-seen');
+    expect(locked.state.itemIds).toEqual([]);
+
+    const carrying = { ...sealed, itemIds: ['rift-key'] };
+    const open = attemptMove(carrying, move);
+    expect(open.ok).toBe(true);
+    if (!open.ok) return;
+    expect(open.effect).toEqual({ kind: 'traveled', mapId: 'floor9' });
+    expect(open.state).toMatchObject(portalTarget('floor8-to-floor9'));
+    expect(open.state.factIds).toContain('floor8-depth-stairs-used');
+    expect(open.state.discoveredSectionIds).toEqual(['floor9-top-band']);
+  });
+
+  it('the floor nine return stair climbs to the floor eight lower tangle', () => {
+    const { tile, move } = beside('floor9-to-floor8', 'east');
+    const onFloor9 = { ...base, mapId: 'floor9' as const, tile };
+    const result = attemptMove(onFloor9, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor8' });
+    expect(result.state).toMatchObject(portalTarget('floor9-to-floor8'));
+    expect(result.state.discoveredSectionIds).toEqual(['floor8-lower-tangle']);
+  });
+
+  it('the floor eight landing stair drops to the sealed underpass', () => {
+    const { tile, move } = beside('floor8-to-landing', 'south');
+    const onFloor8 = { ...base, mapId: 'floor8' as const, tile };
+    const result = attemptMove(onFloor8, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor9' });
+    expect(result.state).toMatchObject(portalTarget('floor8-to-landing'));
+    expect(result.state.discoveredSectionIds).toEqual(['floor9-underpass']);
+  });
+
+  it('the west underpass stair climbs back to the floor eight lower tangle', () => {
+    const { tile, move } = beside('floor9-underpass-west', 'north');
+    const onFloor9 = { ...base, mapId: 'floor9' as const, tile };
+    const result = attemptMove(onFloor9, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor8' });
+    expect(result.state).toMatchObject(portalTarget('floor9-underpass-west'));
+    expect(result.state.discoveredSectionIds).toEqual(['floor8-lower-tangle']);
+  });
+
+  it('the east underpass stair climbs to the floor eight east gallery', () => {
+    const { tile, move } = beside('floor9-underpass-east', 'east');
+    const onFloor9 = { ...base, mapId: 'floor9' as const, tile };
+    const result = attemptMove(onFloor9, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor8' });
+    expect(result.state).toMatchObject(portalTarget('floor9-underpass-east'));
+    expect(result.state.discoveredSectionIds).toEqual(['floor8-east-gallery']);
+  });
+
+  it('the gallery landing stair drops back to the underpass', () => {
+    const { tile, move } = beside('floor8-from-landing', 'west');
+    const onFloor8 = { ...base, mapId: 'floor8' as const, tile };
+    const result = attemptMove(onFloor8, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor9' });
+    expect(result.state).toMatchObject(portalTarget('floor8-from-landing'));
+    expect(result.state.discoveredSectionIds).toEqual(['floor9-underpass']);
+  });
+
+  it('the bridge gate is barred from the west and lifts from the east', () => {
+    const front = { ...base, mapId: 'floor8' as const, tile: { x: 16, y: 13 } };
+    expect(attemptMove(front, 'east')).toEqual({
+      ok: false,
+      reason: 'latch-closed-front',
+    });
+    const rear = { ...base, mapId: 'floor8' as const, tile: { x: 18, y: 13 } };
+    const result = attemptMove(rear, 'west');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({
+      kind: 'latchOpened',
+      id: 'floor8-bridge-gate',
+    });
+    expect(result.state.tile).toEqual({ x: 18, y: 13 });
+    expect(result.state.openedShortcutIds).toContain('floor8-bridge-gate');
+    const onto = attemptMove(result.state, 'west');
+    expect(onto.ok && onto.state.tile).toEqual({ x: 17, y: 13 });
+  });
+
+  it('reaches the east rift key through the floor nine underpass while its stair is still locked', () => {
+    const routeMoves = (state: GameState, to: Tile): readonly Direction[] => {
+      const key = (tile: Tile) => `${tile.x},${tile.y}`;
+      const came = new Map<string, { from: Tile; move: Direction }>();
+      const queue: Tile[] = [state.tile];
+      const seen = new Set([key(state.tile)]);
+      while (queue.length > 0) {
+        const tile = queue.shift()!;
+        if (tile.x === to.x && tile.y === to.y) {
+          const moves: Direction[] = [];
+          let current = tile;
+          for (
+            let step = came.get(key(current));
+            step;
+            step = came.get(key(current))
+          ) {
+            moves.unshift(step.move);
+            current = step.from;
+          }
+          return moves;
+        }
+        for (const [move, dx, dy] of [
+          ['west', -1, 0],
+          ['east', 1, 0],
+          ['north', 0, -1],
+          ['south', 0, 1],
+        ] as const) {
+          const next = { x: tile.x + dx, y: tile.y + dy };
+          if (
+            seen.has(key(next)) ||
+            !isLayoutFloor(state.mapId, next) ||
+            isTileBlockedByEntity(state, next) ||
+            getEntityAt(state.mapId, next)?.kind === 'portal'
+          )
+            continue;
+          seen.add(key(next));
+          came.set(key(next), { from: tile, move });
+          queue.push(next);
+        }
+      }
+      throw new Error(`no route from ${key(state.tile)} to ${key(to)}`);
+    };
+    const replay = (state: GameState, moves: readonly Direction[]) => {
+      let current = state;
+      for (const move of moves) {
+        const result = attemptMove(current, move);
+        if (!result.ok)
+          throw new Error(
+            `replay blocked (${result.reason}) at ${current.tile.x},${current.tile.y} moving ${move}`,
+          );
+        current = result.state;
+      }
+      return current;
+    };
+    const route = (to: Tile) => {
+      state = replay(state, routeMoves(state, to));
+    };
+    const fight = (from: Tile, move: Direction, enemyId: string) => {
+      const prompt = attemptMove({ ...state, tile: from }, move);
+      expect(prompt.ok && prompt.effect).toMatchObject({
+        kind: 'combatPrompt',
+        enemyId,
+      });
+      state = {
+        ...state,
+        tile: from,
+        defeatedEnemyIds: [...state.defeatedEnemyIds, enemyId],
+      };
+    };
+    let state: GameState = {
+      ...base,
+      mapId: 'floor8',
+      tile: { x: 3, y: 1 },
+      player: { hp: 600, attack: 45, defense: 45, agility: 5, gold: 0 },
+      discoveredSectionIds: ['floor8-west-tangle'],
+    };
+
+    route({ x: 3, y: 11 });
+    fight({ x: 3, y: 11 }, 'south', 'floor8-west-lancer');
+
+    route({ x: 4, y: 15 });
+    const locked = attemptMove(state, 'west');
+    expect(locked.ok && locked.effect).toEqual({
+      kind: 'accessLocked',
+      entityId: 'floor8-to-floor9',
+    });
+    if (locked.ok) {
+      expect(locked.state.tile).toEqual({ x: 4, y: 15 });
+      expect(locked.state.factIds).toContain('floor8-depth-seal-seen');
+      expect(locked.state.itemIds).toEqual([]);
+      state = locked.state;
+    }
+
+    route({ x: 11, y: 23 });
+    fight({ x: 11, y: 23 }, 'west', 'floor8-stair-guard');
+    route({ x: 9, y: 22 });
+    const down = attemptMove(state, 'north');
+    expect(down.ok && down.effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor9',
+    });
+    if (down.ok) state = down.state;
+    expect(state.tile).toEqual({ x: 1, y: 3 });
+    expect(state.discoveredSectionIds).toContain('floor9-underpass');
+
+    route({ x: 6, y: 1 });
+    const up = attemptMove(state, 'west');
+    expect(up.ok && up.effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor8',
+    });
+    if (up.ok) state = up.state;
+    expect(state.tile).toEqual({ x: 31, y: 1 });
+    expect(state.discoveredSectionIds).toContain('floor8-east-gallery');
+
+    route({ x: 25, y: 11 });
+    fight({ x: 25, y: 11 }, 'east', 'floor8-rift-knight');
+    const onto = attemptMove(state, 'east');
+    expect(onto.ok && onto.effect).toEqual({ kind: 'moved' });
+    if (onto.ok) state = onto.state;
+    expect(state.tile).toEqual({ x: 26, y: 11 });
+    const keyChest = attemptMove(state, 'east');
+    expect(keyChest.ok && keyChest.effect).toEqual({
+      kind: 'itemReward',
+      itemId: 'rift-key',
+    });
+    if (keyChest.ok) state = keyChest.state;
+    expect(state.itemIds).toContain('rift-key');
+
+    route({ x: 18, y: 13 });
+    const bar = attemptMove(state, 'west');
+    expect(bar.ok && bar.effect).toEqual({
+      kind: 'latchOpened',
+      id: 'floor8-bridge-gate',
+    });
+    if (bar.ok) state = bar.state;
+    expect(state.openedShortcutIds).toContain('floor8-bridge-gate');
+
+    route({ x: 4, y: 15 });
+    const open = attemptMove(state, 'west');
+    expect(open.ok && open.effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor9',
+    });
+    if (open.ok) state = open.state;
+    expect(state.tile).toEqual({ x: 1, y: 5 });
+    expect(state.factIds).toContain('floor8-depth-stairs-used');
+    expect(state.discoveredSectionIds).toContain('floor9-top-band');
+
+    const stepOff = attemptMove(state, 'east');
+    if (stepOff.ok) state = stepOff.state;
+    expect(state.tile).toEqual({ x: 2, y: 5 });
+    const back = attemptMove(state, 'west');
+    expect(back.ok && back.effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor8',
+    });
+    if (back.ok) state = back.state;
+    expect(state.tile).toEqual({ x: 3, y: 15 });
+    expect(state.discoveredSectionIds).toContain('floor8-lower-tangle');
   });
 
   it('returns through the treasury stair, records the fact, and discovers the workshop treasury', () => {

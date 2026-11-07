@@ -23,6 +23,9 @@ export const FACTS = {
   'floor5-deep-stair-seen': { observation: true },
   'floor5-depth-stairs-used': { observation: true },
   'floor6-depth-stairs-used': { observation: true },
+  'floor7-depth-stairs-used': { observation: true },
+  'floor8-depth-seal-seen': { observation: true },
+  'floor8-depth-stairs-used': { observation: true },
 } as const satisfies Record<string, { observation?: true }>;
 
 export type FactId = keyof typeof FACTS;
