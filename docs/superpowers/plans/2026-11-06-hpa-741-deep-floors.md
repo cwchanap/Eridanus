@@ -37,7 +37,7 @@ The approved five annotated maps and `/mnt/project-files/floors-6-10/tools/f6.py
 
 **Modify together:** `src/game/types.ts`, `src/game/content.ts`, `src/game/content/floor5.ts`, `src/game/content/facts.ts`, `src/phaser/assets.ts`, **all three** `src/i18n` language tables, `src/game/content.test.ts` and `src/game/movement.test.ts`.
 
-- [ ] Author the approved nine disconnected tanks, their exact paired same-floor sluice portals, enemies, waystones, sections and stairs. A `portal` already supports these pads; no new entity kind or teleport engine.
+- [ ] Author the approved nine disconnected tanks, their exact paired same-floor sluice portals, enemies, waystones, sections and **upstream Floor 5 ↔ 6 stair**. A `portal` already supports these pads; no new entity kind or teleport engine. **Stage forward connections:** do not author Floor 6 → 7 until Floor 7 exists in the next checkpoint (likewise Floor 7 → 8 and Floor 9 → 10). Add both ends of each new reciprocal connection in the **same** checkpoint, so `MapId` and `validateContent()` stay green throughout.
 - [ ] Move `floor5-heart-waystone` `(11,9) → (10,9)`. Add a fact-locked Floor 5 → Floor 6 stair at `(11,9)` requiring `main-village-restored`, with `lockedFactId: 'floor5-deep-stair-seen'` and reciprocal Floor 6 arrival at `(5,15)`. Register the sighting fact and EN/繁中/日本語 note + access strings.
 - [ ] Cherry-pick `2bec23f` **once** (it contains exactly the existing 12 PNGs for the six new enemy sprites and portraits). Register all six enemy art/portrait paths, a stable `enemy-taproot` placeholder alias to the ruin-sentinel sprite **and portrait**, and a stable `sluice-pad` placeholder alias. Do not generate new art in this PR.
 - [ ] Add `floor6` to `MapId`, `MAPS`, `TERRAIN_BY_MAP`, EN/繁中/日本語 map/section/clue/enemy/item tables **in the same commit**. Keep assets and localization compile-complete; no `Record<MapId, ...>` holes.
@@ -51,7 +51,7 @@ The approved five annotated maps and `/mnt/project-files/floors-6-10/tools/f6.py
 **Modify together:** `MapId`, `MAPS`, `TERRAIN_BY_MAP`, EN/繁中/日本語 tables, `src/game/content.test.ts` and relevant existing movement tests.
 
 - [ ] Use approved layout: quarter-rotated wings, bell levers and reliquary. Configure `lever.links` and wired `latch.leverIds` rather than a special puzzle rule.
-- [ ] Record the two opposite lever bumps that leave all four thrown; reuse the existing gate/lever regression cases. Connect reciprocal stairs with Floor 6.
+- [ ] Record the two opposite lever bumps that leave all four thrown; reuse the existing gate/lever regression cases. **Add Floor 6 ↔ 7 portal endpoints together**; defer the Floor 7 ↔ 8 pair to the next checkpoint.
 - [ ] Verify: `bun run typecheck && bun run test:unit`.
 
 ## Checkpoint 4 — Floors 8 **and** 9 in one green slice
@@ -60,7 +60,7 @@ The approved five annotated maps and `/mnt/project-files/floors-6-10/tools/f6.py
 
 **Modify together:** `MapId`, `MAPS`, `TERRAIN_BY_MAP`, EN/繁中/日本語 tables, `src/game/content.test.ts` and `src/game/movement.test.ts`.
 
-- [ ] Commit these two floors **together**, since their Rift underpass is one connected feature and half a reciprocal pair would fail validation. Transcribe approved chasm, two-sided bridge, east-side key, item-locked stair, and three-by-three guarded Crossways bands.
+- [ ] Commit these two floors **together**, since their Rift underpass is one connected feature and half a reciprocal pair would fail validation. **Add Floor 7 ↔ 8**, all Floor 8 ↔ 9 underpass/regular reciprocal pairs, and their approved layouts together; defer Floor 9 ↔ 10 until Checkpoint 5. Transcribe the chasm, two-sided bridge, east-side key, item-locked stair, and three-by-three guarded Crossways bands.
 - [ ] Preserve the intended alternative crossing paths (one guard choice per band), the bridge's `rearSide` east unlock and the key's natural discovery order. No new portal/latch runtime variant.
 - [ ] Extend the existing `content.test.ts` gate/rear-latch table with `frontStair.floor8` and add one **actual rules-driven cross-floor replay** that travels via the Floor 9 underpass to the east-side key **while the key-gated stair is still locked**. Check the bridge can subsequently open from the east. A mere per-map flood fill cannot prove this.
 - [ ] Pin reciprocal portals, lock-notice facts and texts in all three languages and test both locked/unlocked travel.
@@ -72,7 +72,7 @@ The approved five annotated maps and `/mnt/project-files/floors-6-10/tools/f6.py
 
 **Modify together:** `src/game/types.ts`, `src/game/content.ts`, `src/game/content/village.ts`, `src/game/content/facts.ts`, `src/game/dialogue.ts`, `src/game/journal.ts`, `src/ui/JournalPanel.ts`, `src/phaser/assets.ts`, the three `src/i18n` tables and applicable unit tests.
 
-- [ ] Author the Taproot root maze, two root wardens' guarded hatch, heartwood reward, boss (HP **96**, ATK **59**, DEF **41**, AGI **3**, `firstStrike`, `pierce: 4`) and Floor 10 → village lift from the approved map.
+- [ ] Author the Taproot root maze, two root wardens' guarded hatch, heartwood reward, boss (HP **96**, ATK **59**, DEF **41**, AGI **3**, `firstStrike`, `pierce: 4`) and Floor 10 → village lift from the approved map. **Add the reciprocal Floor 9 ↔ 10 pair here** to close the last staged forward connection.
 - [ ] Make the village return-lift endpoint reciprocal **but item-locked on `tower-heartwood`**, with `lockedFactId: 'village-heartwood-lift-seen'`. Keep the Floor 10 → village return side usable. Add EN/繁中/日本語 `access` and observation `notes` entries. Add a fresh-save movement assertion: bumping the village lift returns `accessLocked` and never travels.
 - [ ] Add the rift key and heartwood as existing item rewards. Give `village-warden` a highest-priority heartwood dialogue that records a new **idempotent** final fact. Keep `main-village-restored` and both old Restoration Core lines intact.
 - [ ] Extend **the same** `mainLead` with ordered cases: second ending → final resolved lead; heartwood owned → return to Warden; first ending fact → descend below Floor 5. Add the final id to `RESOLVED_LEADS`. No new `JournalEntry` type or quest subsystem. Update the existing release journeys' `endStory` assertions from `story-complete` to the truthful deep-floor main lead while retaining all **dialogue and first-ending fact** checks.
