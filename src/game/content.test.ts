@@ -142,6 +142,8 @@ describe('authored content', () => {
       'floor5',
       'floor6',
       'floor7',
+      'floor8',
+      'floor9',
       'village',
     ]);
   });
@@ -823,6 +825,339 @@ describe('authored content', () => {
     expect(MAPS.floor7.sections).toHaveLength(6);
   });
 
+  it('pairs the floor seven descent stair with the floor eight arrival', () => {
+    const stair = portal('floor7-to-floor8');
+    expect(stair.tile).toEqual({ x: 15, y: 17 });
+    expect(stair.target).toEqual({
+      mapId: 'floor8',
+      tile: { x: 3, y: 1 },
+    });
+    expect(stair.factId).toBe('floor7-depth-stairs-used');
+    const arrival = portal('floor8-to-floor7');
+    expect(arrival.tile).toEqual({ x: 3, y: 1 });
+    expect(arrival.target).toEqual({
+      mapId: 'floor7',
+      tile: { x: 15, y: 17 },
+    });
+  });
+
+  it('pairs the rift stairs and the underpass with their twins', () => {
+    const locked = portal('floor8-to-floor9');
+    expect(locked.tile).toEqual({ x: 3, y: 15 });
+    expect(locked.target).toEqual({
+      mapId: 'floor9',
+      tile: { x: 1, y: 5 },
+    });
+    expect(locked.lock).toEqual({
+      kind: 'item',
+      requiresItemId: 'rift-key',
+      lockedFactId: 'floor8-depth-seal-seen',
+    });
+    expect(locked.factId).toBe('floor8-depth-stairs-used');
+    const back = portal('floor9-to-floor8');
+    expect(back.tile).toEqual({ x: 1, y: 5 });
+    expect(back.target).toEqual({
+      mapId: 'floor8',
+      tile: { x: 3, y: 15 },
+    });
+    const west = portal('floor8-to-landing');
+    expect(west.tile).toEqual({ x: 9, y: 21 });
+    expect(west.target).toEqual({
+      mapId: 'floor9',
+      tile: { x: 1, y: 3 },
+    });
+    const westBack = portal('floor9-underpass-west');
+    expect(westBack.tile).toEqual({ x: 1, y: 3 });
+    expect(westBack.target).toEqual({
+      mapId: 'floor8',
+      tile: { x: 9, y: 21 },
+    });
+    const east = portal('floor8-from-landing');
+    expect(east.tile).toEqual({ x: 31, y: 1 });
+    expect(east.target).toEqual({
+      mapId: 'floor9',
+      tile: { x: 5, y: 1 },
+    });
+    const eastBack = portal('floor9-underpass-east');
+    expect(eastBack.tile).toEqual({ x: 5, y: 1 });
+    expect(eastBack.target).toEqual({
+      mapId: 'floor8',
+      tile: { x: 31, y: 1 },
+    });
+  });
+
+  it('labels each floor eight threshold with its own area only', () => {
+    const homeByEntity: Record<string, string> = {
+      'floor8-to-floor7': 'floor8-west-tangle',
+      'floor8-west-waystone': 'floor8-west-tangle',
+      'floor8-west-lancer': 'floor8-west-tangle',
+      'floor8-to-floor9': 'floor8-lower-tangle',
+      'floor8-to-landing': 'floor8-lower-tangle',
+      'floor8-bridge-gate': 'floor8-rift-bridge',
+      'floor8-from-landing': 'floor8-east-gallery',
+      'floor8-rift-key': 'floor8-east-gallery',
+    };
+    for (const [id, home] of Object.entries(homeByEntity))
+      expect(
+        findSectionsAt('floor8', entity(id).tile).map(({ id }) => id),
+        id,
+      ).toEqual([home]);
+  });
+
+  it('labels each floor nine threshold with its own area only', () => {
+    const homeByEntity: Record<string, string> = {
+      'floor9-underpass-west': 'floor9-underpass',
+      'floor9-underpass-east': 'floor9-underpass',
+      'floor9-to-floor8': 'floor9-top-band',
+      'floor9-crossings-notice': 'floor9-top-band',
+      'floor9-top-ravager': 'floor9-top-band',
+      'floor9-middle-waystone': 'floor9-middle-band',
+      'floor9-middle-ambusher': 'floor9-middle-band',
+      'floor9-bottom-waystone': 'floor9-bottom-band',
+      'floor9-crossways-warden': 'floor9-bottom-band',
+    };
+    for (const [id, home] of Object.entries(homeByEntity))
+      expect(
+        findSectionsAt('floor9', entity(id).tile).map(({ id }) => id),
+        id,
+      ).toEqual([home]);
+  });
+
+  it('places every floor eight floor tile in exactly one section', () => {
+    for (let y = 0; y < MAPS.floor8.layout.length; y++) {
+      const row = MAPS.floor8.layout[y]!;
+      for (let x = 0; x < row.length; x++)
+        if (row[x] === '.')
+          expect(findSectionsAt('floor8', { x, y }).length, `${x},${y}`).toBe(
+            1,
+          );
+    }
+  });
+
+  it('places every floor nine floor tile in exactly one section', () => {
+    for (let y = 0; y < MAPS.floor9.layout.length; y++) {
+      const row = MAPS.floor9.layout[y]!;
+      for (let x = 0; x < row.length; x++)
+        if (row[x] === '.')
+          expect(findSectionsAt('floor9', { x, y }).length, `${x},${y}`).toBe(
+            1,
+          );
+    }
+  });
+
+  it('gates the floor eight underpass stair behind its required fights', () => {
+    const map = MAPS.floor8;
+    const flood = (ids: readonly string[]) => {
+      const state = {
+        ...createInitialGameState(),
+        mapId: 'floor8' as const,
+        defeatedEnemyIds: ids,
+        openedRewardIds: ids,
+        openedShortcutIds: ids,
+      };
+      return floodFloor(
+        map,
+        [portal('floor8-to-floor7').tile],
+        (tile) =>
+          map.layout[tile.y]?.[tile.x] === '.' &&
+          !isTileBlockedByEntity(state, tile),
+      );
+    };
+    const stairApproach = tileKey({ x: 4, y: 15 });
+    const landing = tileKey(portal('floor8-to-landing').tile);
+    expect(flood([]).has(stairApproach)).toBe(false);
+    expect(flood([]).has(landing)).toBe(false);
+    expect(flood(['floor8-west-lancer']).has(stairApproach)).toBe(true);
+    expect(flood(['floor8-west-lancer']).has(landing)).toBe(false);
+    expect(
+      flood(['floor8-west-lancer', 'floor8-stair-guard']).has(landing),
+    ).toBe(true);
+  });
+
+  it('holds the floor eight east half beyond the barred bridge', () => {
+    const map = MAPS.floor8;
+    const flood = (shortcuts: readonly string[]) => {
+      const everything = map.entities.map(({ id }) => id);
+      const state = {
+        ...createInitialGameState(),
+        mapId: 'floor8' as const,
+        defeatedEnemyIds: everything,
+        openedRewardIds: everything,
+        openedShortcutIds: shortcuts,
+      };
+      return floodFloor(
+        map,
+        [portal('floor8-to-floor7').tile],
+        (tile) =>
+          map.layout[tile.y]?.[tile.x] === '.' &&
+          !isTileBlockedByEntity(state, tile),
+      );
+    };
+    const eastTiles = [
+      'floor8-from-landing',
+      'floor8-east-waystone',
+      'floor8-rift-knight',
+      'floor8-rift-key',
+      'floor8-gallery-warden',
+      'floor8-gallery-guard',
+    ].map((id) => tileKey(entity(id).tile));
+    const barred = flood(
+      map.entities
+        .filter(({ id }) => id !== 'floor8-bridge-gate')
+        .map(({ id }) => id),
+    );
+    for (const tile of eastTiles) expect(barred.has(tile), tile).toBe(false);
+    const open = flood(
+      map.entities
+        .filter(({ id }) => id !== 'floor8-bridge-gate')
+        .map(({ id }) => id)
+        .concat('floor8-bridge-gate'),
+    );
+    for (const tile of eastTiles) expect(open.has(tile), tile).toBe(true);
+  });
+
+  it('reaches every floor eight entity once the floor is cleared', () => {
+    const everything = MAPS.floor8.entities.map(({ id }) => id);
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor8' as const,
+      defeatedEnemyIds: everything,
+      openedRewardIds: everything,
+      openedShortcutIds: everything,
+    };
+    const reachable = floodFloor(
+      MAPS.floor8,
+      [portal('floor8-to-floor7').tile, portal('floor8-from-landing').tile],
+      (tile) =>
+        MAPS.floor8.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(state, tile),
+    );
+    for (const entity of MAPS.floor8.entities) {
+      const found =
+        entity.kind === 'clue'
+          ? hasAdjacentApproach(reachable, entity.tile)
+          : reachable.has(tileKey(entity.tile));
+      expect(found, entity.id).toBe(true);
+    }
+    expect(MAPS.floor8.sections).toHaveLength(4);
+  });
+
+  it('crosses each floor nine band through any one of its three guards', () => {
+    const map = MAPS.floor9;
+    const flood = (ids: readonly string[]) => {
+      const state = {
+        ...createInitialGameState(),
+        mapId: 'floor9' as const,
+        defeatedEnemyIds: ids,
+        openedRewardIds: ids,
+        openedShortcutIds: ids,
+      };
+      return floodFloor(
+        map,
+        [portal('floor9-to-floor8').tile],
+        (tile) =>
+          map.layout[tile.y]?.[tile.x] === '.' &&
+          !isTileBlockedByEntity(state, tile),
+      );
+    };
+    const middle = tileKey({ x: 1, y: 11 });
+    const bottom = tileKey({ x: 3, y: 20 });
+    const descent = tileKey({ x: 25, y: 17 });
+    expect(flood([]).has(middle)).toBe(false);
+    for (const crossing of [
+      'floor9-top-bulwark',
+      'floor9-top-darter',
+      'floor9-top-ravager',
+    ])
+      expect(flood([crossing]).has(middle), crossing).toBe(true);
+    expect(flood(['floor9-top-ravager']).has(bottom)).toBe(false);
+    for (const crossing of [
+      'floor9-middle-ambusher',
+      'floor9-middle-twin-crossing',
+      'floor9-middle-lancer',
+    ]) {
+      expect(
+        flood(['floor9-top-ravager', crossing]).has(bottom),
+        crossing,
+      ).toBe(true);
+      expect(
+        flood(['floor9-top-ravager', crossing]).has(descent),
+        `${crossing} without the warden`,
+      ).toBe(false);
+      expect(
+        flood(['floor9-top-ravager', crossing, 'floor9-crossways-warden']).has(
+          descent,
+        ),
+        `${crossing} with the warden`,
+      ).toBe(true);
+    }
+  });
+
+  it('seals the floor nine underpass off from the crossways', () => {
+    const everything = MAPS.floor9.entities.map(({ id }) => id);
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor9' as const,
+      defeatedEnemyIds: everything,
+      openedRewardIds: everything,
+      openedShortcutIds: everything,
+    };
+    const canStand = (tile: Tile) =>
+      MAPS.floor9.layout[tile.y]?.[tile.x] === '.' &&
+      !isTileBlockedByEntity(state, tile);
+    const main = floodFloor(
+      MAPS.floor9,
+      [portal('floor9-to-floor8').tile],
+      canStand,
+    );
+    for (const id of ['floor9-underpass-west', 'floor9-underpass-east'])
+      expect(main.has(tileKey(portal(id).tile)), id).toBe(false);
+    const strip = floodFloor(
+      MAPS.floor9,
+      [portal('floor9-underpass-west').tile],
+      canStand,
+    );
+    expect(strip.has(tileKey(portal('floor9-underpass-east').tile))).toBe(true);
+    expect(strip.has(tileKey(portal('floor9-to-floor8').tile))).toBe(false);
+  });
+
+  it('reaches every floor nine entity once the floor is cleared', () => {
+    const everything = MAPS.floor9.entities.map(({ id }) => id);
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor9' as const,
+      defeatedEnemyIds: everything,
+      openedRewardIds: everything,
+      openedShortcutIds: everything,
+    };
+    const canStand = (tile: Tile) =>
+      MAPS.floor9.layout[tile.y]?.[tile.x] === '.' &&
+      !isTileBlockedByEntity(state, tile);
+    const main = floodFloor(
+      MAPS.floor9,
+      [portal('floor9-to-floor8').tile],
+      canStand,
+    );
+    const strip = floodFloor(
+      MAPS.floor9,
+      [portal('floor9-underpass-west').tile],
+      canStand,
+    );
+    const underpass = new Set([
+      'floor9-underpass-west',
+      'floor9-underpass-east',
+    ]);
+    for (const entity of MAPS.floor9.entities) {
+      const source = underpass.has(entity.id) ? strip : main;
+      const found =
+        entity.kind === 'clue'
+          ? hasAdjacentApproach(source, entity.tile)
+          : source.has(tileKey(entity.tile));
+      expect(found, entity.id).toBe(true);
+    }
+    expect(MAPS.floor9.sections).toHaveLength(4);
+  });
+
   it('lets only the old shaft into the sealed blocks on floors 2 to 4', () => {
     // Fully cleared, with every hatch open except the rear latches (those
     // open only from the sealed side), no other stair reaches a shaft stair.
@@ -867,6 +1202,7 @@ describe('authored content', () => {
       floor1: 'floor1-to-village',
       floor2: 'floor2-front-to-floor1',
       floor3: 'floor3-to-floor2',
+      floor8: 'floor8-to-floor7',
     };
     for (const map of Object.values(MAPS)) {
       for (const candidate of map.entities) {

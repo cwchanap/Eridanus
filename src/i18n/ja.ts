@@ -187,6 +187,8 @@ export const ja: Messages = {
     floor5: '塔 5階',
     floor6: '塔 6階',
     floor7: '塔 7階',
+    floor8: '塔 8階',
+    floor9: '塔 9階',
   },
   sections: {
     'village-square': '村の広場',
@@ -248,6 +250,14 @@ export const ja: Messages = {
     'floor7-south-west-wing': '南西の棟',
     'floor7-cloister-walk': '回廊',
     'floor7-reliquary': '聖櫃',
+    'floor8-west-tangle': '西の迷道',
+    'floor8-lower-tangle': '下の迷道',
+    'floor8-rift-bridge': '裂谷の橋',
+    'floor8-east-gallery': '東の回廊',
+    'floor9-underpass': '地下道',
+    'floor9-top-band': '上段の通路',
+    'floor9-middle-band': '中段の通路',
+    'floor9-bottom-band': '下段の通路',
   },
   npcs: {
     'village-warden': '守衛長',
@@ -279,6 +289,7 @@ export const ja: Messages = {
     'ledger-fragment-1': '記録簿の断片',
     'tower-depth-sigil': '塔の紋章',
     'tower-restoration-core': '復元コア',
+    'rift-key': '裂谷の鍵',
   },
   clues: {
     'floor1-treasury-overlook':
@@ -333,6 +344,12 @@ export const ja: Messages = {
     'floor7-bell-rope':
       '結ばれた鐘の綱：「四つの鐘は一本の綱に吊られている——一つ引けば、次の鐘も揺れる。」',
     'floor7-reliquary-record': '聖櫃の記録：鐘撞きたちは心臓を眠らせなかった。',
+    'floor8-rift-notice':
+      '管理人の掲示：「橋の門は向こう側から閂がかかっている。」',
+    'floor8-rift-record': '測量員の記録：根が床を引き裂き、この深谷ができた。',
+    'floor9-crossings-notice':
+      '管理人の掲示：「各通路帯には三つの渡りがある。どれか一つでよい。」',
+    'floor9-middle-record': '管理人の点簿：誰がどこを渡ったかの記録。',
   },
   access: {
     'village-lift-to-floor5':
@@ -351,6 +368,8 @@ export const ja: Messages = {
       '昇降機の籠は動かずにぶら下がっている。その差し込み口は動力コアの形をしている。',
     'floor5-depth-to-floor6':
       '封じられた階段が至聖所の下へと延びている。村が立ち直るまでは開かない。',
+    'floor8-to-floor9':
+      '閂のかかった階段が十字路へ下りている。その錠は裂谷の鍵を待っている。',
   },
   notes: {
     'village-tower-stairs-used': '階段が村と1階をつないでいる。',
@@ -381,6 +400,10 @@ export const ja: Messages = {
     'floor5-depth-stairs-used':
       '5階の至聖所の下の深部への階段は、6階の水槽群に通じている。',
     'floor6-depth-stairs-used': '放水口の階段は7階の回廊に通じている。',
+    'floor7-depth-stairs-used': '聖櫃の階段は8階の裂谷に通じている。',
+    'floor8-depth-seal-seen':
+      '裂谷の西半分に、9階へ下りる閂のかかった階段がある。開くには裂谷の鍵がいる。',
+    'floor8-depth-stairs-used': '裂谷の鍵の階段は9階の十字路に通じている。',
   },
   dialogue: {
     'warden-main-lead': '1階を探して、下への階段を開く紋章を見つけてくれ。',
