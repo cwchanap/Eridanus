@@ -37,6 +37,48 @@ const portalTarget = (id: string) => {
   return found.target;
 };
 
+const routeMoves = (state: GameState, to: Tile): readonly Direction[] => {
+  const key = (tile: Tile) => `${tile.x},${tile.y}`;
+  const came = new Map<string, { from: Tile; move: Direction }>();
+  const queue: Tile[] = [state.tile];
+  const seen = new Set([key(state.tile)]);
+  while (queue.length > 0) {
+    const tile = queue.shift()!;
+    if (tile.x === to.x && tile.y === to.y) {
+      const moves: Direction[] = [];
+      let current = tile;
+      for (
+        let step = came.get(key(current));
+        step;
+        step = came.get(key(current))
+      ) {
+        moves.unshift(step.move);
+        current = step.from;
+      }
+      return moves;
+    }
+    for (const [move, dx, dy] of [
+      ['west', -1, 0],
+      ['east', 1, 0],
+      ['north', 0, -1],
+      ['south', 0, 1],
+    ] as const) {
+      const next = { x: tile.x + dx, y: tile.y + dy };
+      if (
+        seen.has(key(next)) ||
+        !isLayoutFloor(state.mapId, next) ||
+        isTileBlockedByEntity(state, next) ||
+        getEntityAt(state.mapId, next)?.kind === 'portal'
+      )
+        continue;
+      seen.add(key(next));
+      came.set(key(next), { from: tile, move });
+      queue.push(next);
+    }
+  }
+  throw new Error(`no route from ${key(state.tile)} to ${key(to)}`);
+};
+
 const latchEntity = findEntityById('floor1-rear-latch');
 if (latchEntity?.kind !== 'latch' || !('rearSide' in latchEntity))
   throw new Error('floor1-rear-latch missing');
@@ -743,47 +785,6 @@ describe('attemptMove', () => {
   });
 
   it('reaches the east rift key through the floor nine underpass while its stair is still locked', () => {
-    const routeMoves = (state: GameState, to: Tile): readonly Direction[] => {
-      const key = (tile: Tile) => `${tile.x},${tile.y}`;
-      const came = new Map<string, { from: Tile; move: Direction }>();
-      const queue: Tile[] = [state.tile];
-      const seen = new Set([key(state.tile)]);
-      while (queue.length > 0) {
-        const tile = queue.shift()!;
-        if (tile.x === to.x && tile.y === to.y) {
-          const moves: Direction[] = [];
-          let current = tile;
-          for (
-            let step = came.get(key(current));
-            step;
-            step = came.get(key(current))
-          ) {
-            moves.unshift(step.move);
-            current = step.from;
-          }
-          return moves;
-        }
-        for (const [move, dx, dy] of [
-          ['west', -1, 0],
-          ['east', 1, 0],
-          ['north', 0, -1],
-          ['south', 0, 1],
-        ] as const) {
-          const next = { x: tile.x + dx, y: tile.y + dy };
-          if (
-            seen.has(key(next)) ||
-            !isLayoutFloor(state.mapId, next) ||
-            isTileBlockedByEntity(state, next) ||
-            getEntityAt(state.mapId, next)?.kind === 'portal'
-          )
-            continue;
-          seen.add(key(next));
-          came.set(key(next), { from: tile, move });
-          queue.push(next);
-        }
-      }
-      throw new Error(`no route from ${key(state.tile)} to ${key(to)}`);
-    };
     const allLands: Rng = () => 0;
     let session: SessionState = {
       game: {
@@ -1020,47 +1021,6 @@ describe('attemptMove', () => {
   });
 
   it('clears the floor ten route and carries the heartwood home to the warden', () => {
-    const routeMoves = (state: GameState, to: Tile): readonly Direction[] => {
-      const key = (tile: Tile) => `${tile.x},${tile.y}`;
-      const came = new Map<string, { from: Tile; move: Direction }>();
-      const queue: Tile[] = [state.tile];
-      const seen = new Set([key(state.tile)]);
-      while (queue.length > 0) {
-        const tile = queue.shift()!;
-        if (tile.x === to.x && tile.y === to.y) {
-          const moves: Direction[] = [];
-          let current = tile;
-          for (
-            let step = came.get(key(current));
-            step;
-            step = came.get(key(current))
-          ) {
-            moves.unshift(step.move);
-            current = step.from;
-          }
-          return moves;
-        }
-        for (const [move, dx, dy] of [
-          ['west', -1, 0],
-          ['east', 1, 0],
-          ['north', 0, -1],
-          ['south', 0, 1],
-        ] as const) {
-          const next = { x: tile.x + dx, y: tile.y + dy };
-          if (
-            seen.has(key(next)) ||
-            !isLayoutFloor(state.mapId, next) ||
-            isTileBlockedByEntity(state, next) ||
-            getEntityAt(state.mapId, next)?.kind === 'portal'
-          )
-            continue;
-          seen.add(key(next));
-          came.set(key(next), { from: tile, move });
-          queue.push(next);
-        }
-      }
-      throw new Error(`no route from ${key(state.tile)} to ${key(to)}`);
-    };
     const allLands: Rng = () => 0;
     let session: SessionState = {
       game: {
