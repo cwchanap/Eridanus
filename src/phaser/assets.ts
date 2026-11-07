@@ -28,9 +28,17 @@ export const ASSET_PATHS = {
   'enemy-ruin-guard': 'assets/enemies/ruin-guard.png',
   'enemy-ruin-sentinel': 'assets/enemies/ruin-sentinel.png',
   'enemy-core-guardian': 'assets/enemies/core-guardian.png',
+  'enemy-ambusher': 'assets/enemies/ambusher.png',
+  'enemy-bulwark': 'assets/enemies/bulwark.png',
+  'enemy-darter': 'assets/enemies/darter.png',
+  'enemy-lancer': 'assets/enemies/lancer.png',
+  'enemy-ravager': 'assets/enemies/ravager.png',
+  'enemy-twinblade': 'assets/enemies/twinblade.png',
+  'enemy-taproot': 'assets/enemies/ruin-sentinel.png',
   'stairs-up': 'assets/interactables/stairs-up.png',
   'stairs-down': 'assets/interactables/stairs-down.png',
   'stairs-sealed': 'assets/interactables/stairs-sealed.png',
+  'sluice-pad': 'assets/interactables/stairs-down.png',
   'recovery-waystone': 'assets/interactables/recovery-waystone.png',
   'clue-runes': 'assets/interactables/clue-runes.png',
   'shortcut-gate-closed': 'assets/interactables/shortcut-gate-closed.png',
@@ -101,6 +109,13 @@ export const PORTRAIT_PATHS: Partial<Record<AssetKey, string>> = {
   'enemy-ruin-guard': 'assets/portraits/enemy-ruin-guard.png',
   'enemy-ruin-sentinel': 'assets/portraits/enemy-ruin-sentinel.png',
   'enemy-core-guardian': 'assets/portraits/enemy-core-guardian.png',
+  'enemy-ambusher': 'assets/portraits/enemy-ambusher.png',
+  'enemy-bulwark': 'assets/portraits/enemy-bulwark.png',
+  'enemy-darter': 'assets/portraits/enemy-darter.png',
+  'enemy-lancer': 'assets/portraits/enemy-lancer.png',
+  'enemy-ravager': 'assets/portraits/enemy-ravager.png',
+  'enemy-twinblade': 'assets/portraits/enemy-twinblade.png',
+  'enemy-taproot': 'assets/portraits/enemy-ruin-sentinel.png',
 };
 
 // `edge` is the colour WorldScene outlines walls with, matched to each wall
@@ -129,6 +144,7 @@ const TERRAIN_BY_MAP: Record<MapId, TerrainAssets> = {
   floor3: DUNGEON,
   floor4: DUNGEON,
   floor5: DUNGEON,
+  floor6: DUNGEON,
 };
 
 const PLAYER_BY_DIRECTION: Record<Direction, AssetKey> = {

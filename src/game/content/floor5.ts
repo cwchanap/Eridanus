@@ -391,11 +391,24 @@ export const floor5: MapDefinition = {
     {
       kind: 'reward',
       id: 'floor5-heart-waystone',
-      tile: { x: 11, y: 9 },
+      tile: { x: 10, y: 9 },
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
       amount: 25,
+    },
+    {
+      kind: 'portal',
+      id: 'floor5-depth-to-floor6',
+      tile: { x: 11, y: 9 },
+      assetId: 'stairs-down',
+      target: { mapId: 'floor6', tile: { x: 5, y: 15 } },
+      factId: 'floor5-depth-stairs-used',
+      lock: {
+        kind: 'fact',
+        requiresFactId: 'main-village-restored',
+        lockedFactId: 'floor5-deep-stair-seen',
+      },
     },
     {
       kind: 'enemy',

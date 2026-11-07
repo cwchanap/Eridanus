@@ -126,6 +126,13 @@ export const zhHant: Messages = {
     'enemy-ruin-guard': '遺跡守衛',
     'enemy-ruin-sentinel': '遺跡哨兵',
     'enemy-core-guardian': '核心守護者',
+    'enemy-ambusher': '伏擊者',
+    'enemy-bulwark': '壁壘衛士',
+    'enemy-darter': '疾行者',
+    'enemy-lancer': '槍兵',
+    'enemy-ravager': '掠奪者',
+    'enemy-twinblade': '雙刃衛士',
+    'enemy-taproot': '主根',
   },
   traits: {
     firstStrike: '會在你的第一擊之前出手。',
@@ -172,6 +179,7 @@ export const zhHant: Messages = {
     floor3: '高塔 第 3 層',
     floor4: '高塔 第 4 層',
     floor5: '高塔 第 5 層',
+    floor6: '高塔 第 6 層',
   },
   sections: {
     'village-square': '村莊廣場',
@@ -218,6 +226,15 @@ export const zhHant: Messages = {
     'floor5-inner-ring': '內環',
     'floor5-sanctum': '聖所',
     'floor5-old-shaft': '舊豎井',
+    'floor6-inlet': '入水口',
+    'floor6-north-tank': '北水槽',
+    'floor6-settling-tank': '沉澱槽',
+    'floor6-sluice-house': '水閘房',
+    'floor6-south-tank': '南水槽',
+    'floor6-silt-pit': '淤泥坑',
+    'floor6-pump-room': '泵房',
+    'floor6-east-tank': '東水槽',
+    'floor6-outflow': '出水口',
   },
   npcs: {
     'village-warden': '守望長',
@@ -294,6 +311,12 @@ export const zhHant: Messages = {
       '階梯旁有刻痕：「三名看守分別在西、南、東守護聖所的封印。只要其中任何一人還站著，塔心就始終緊閉。」',
     'floor5-lattice-record':
       '守護格網仍迴盪著古老的隔離指令。格網後方，修復核心靜靜躺在一座失去動力的升降井上方。',
+    'floor6-pad-notice':
+      '守塔人的告示：「水閘踏板成對運作——踏上其中一塊，它就會把你送到與之成對的那一塊。沉澱槽的壁壘衛士幾乎不懼普通的刀劍；先取得泵房看守的攻擊 +2 寶藏，再與它交手。」',
+    'floor6-silt-record':
+      '一份沾滿淤泥的記錄：「這些水槽的水，會排進下方的根系。」',
+    'floor6-sluice-log': '守塔人的日誌：「根系在吸取水流。」',
+    'floor6-outflow-notice': '守塔人的告示：「下方的階梯通往迴廊。」',
   },
   access: {
     'village-lift-to-floor5':
@@ -308,6 +331,8 @@ export const zhHant: Messages = {
       '下層的守塔人封印不會鬆動，除非失蹤者帶著來自下方的警告回來。',
     'floor5-lift-to-village':
       '升降籠癱在原地。它的插槽正好嵌得下一顆動力核心。',
+    'floor5-depth-to-floor6':
+      '一道被封住的階梯向聖所之下延伸。在村莊重獲新生之前，它不會開啟。',
   },
   notes: {
     'village-tower-stairs-used': '階梯連接著村莊與第 1 層。',
@@ -330,6 +355,10 @@ export const zhHant: Messages = {
     'floor4-depth-stairs-used': '鑄造場的樓梯通往第 5 層，也就是塔心。',
     'tower-lift-seen':
       '一座報廢的升降籠連接著村莊與塔心。它的插槽是為動力核心打造的。',
+    'floor5-deep-stair-seen':
+      '第 5 層聖所之下有一道被封住的階梯，通往深處的水槽群；只有村莊重獲新生之後才會開啟。',
+    'floor5-depth-stairs-used':
+      '第 5 層聖所之下的深層階梯通往第 6 層的水槽群。',
   },
   dialogue: {
     'warden-main-lead': '到第一層去找能打開下層樓梯的徽記吧。',

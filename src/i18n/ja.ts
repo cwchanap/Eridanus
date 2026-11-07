@@ -130,6 +130,13 @@ export const ja: Messages = {
     'enemy-ruin-guard': '遺跡の衛兵',
     'enemy-ruin-sentinel': '遺跡の歩哨',
     'enemy-core-guardian': 'コアの守護者',
+    'enemy-ambusher': '伏兵',
+    'enemy-bulwark': '防壁兵',
+    'enemy-darter': '疾駆兵',
+    'enemy-lancer': '槍兵',
+    'enemy-ravager': '破壊者',
+    'enemy-twinblade': '双剣兵',
+    'enemy-taproot': '主根',
   },
   traits: {
     firstStrike: 'こちらの初撃の前に攻撃してくる。',
@@ -178,6 +185,7 @@ export const ja: Messages = {
     floor3: '塔 3階',
     floor4: '塔 4階',
     floor5: '塔 5階',
+    floor6: '塔 6階',
   },
   sections: {
     'village-square': '村の広場',
@@ -224,6 +232,15 @@ export const ja: Messages = {
     'floor5-inner-ring': '内環',
     'floor5-sanctum': '至聖所',
     'floor5-old-shaft': '古い縦坑',
+    'floor6-inlet': '取水口',
+    'floor6-north-tank': '北の水槽',
+    'floor6-settling-tank': '沈殿槽',
+    'floor6-sluice-house': '水門室',
+    'floor6-south-tank': '南の水槽',
+    'floor6-silt-pit': '泥溜め',
+    'floor6-pump-room': 'ポンプ室',
+    'floor6-east-tank': '東の水槽',
+    'floor6-outflow': '放水口',
   },
   npcs: {
     'village-warden': '守衛長',
@@ -300,6 +317,12 @@ export const ja: Messages = {
       '階段の脇に刻まれている。「三人の番人が、西・南・東で至聖所の封印を守っている。一人でも立っている限り、心臓部は閉ざされたままだ。」',
     'floor5-lattice-record':
       '守護の格子は、いまも古い隔離命令を唸らせている。その奥では、動かなくなった昇降機の縦坑の上で復元コアが待っている。',
+    'floor6-pad-notice':
+      '管理人の掲示：「水門の踏み板は対になっている——どれか一つに乗れば、対のもう一つへ運ばれる。沈殿槽の防壁兵には生の刃がほとんど通らない。ポンプ室の番人が守る攻撃+2の宝を取ってから挑め。」',
+    'floor6-silt-record':
+      '泥まみれの記録：「水槽の水は、下の根へと流れ込む。」',
+    'floor6-sluice-log': '管理人の日誌：「根が流れを飲んでいる。」',
+    'floor6-outflow-notice': '管理人の掲示：「下への階段は回廊へ通じている。」',
   },
   access: {
     'village-lift-to-floor5':
@@ -316,6 +339,8 @@ export const ja: Messages = {
       '下の管理人の封印は、行方不明者が下からの警告を持って戻るまで外れない。',
     'floor5-lift-to-village':
       '昇降機の籠は動かずにぶら下がっている。その差し込み口は動力コアの形をしている。',
+    'floor5-depth-to-floor6':
+      '封じられた階段が至聖所の下へと延びている。村が立ち直るまでは開かない。',
   },
   notes: {
     'village-tower-stairs-used': '階段が村と1階をつないでいる。',
@@ -341,6 +366,10 @@ export const ja: Messages = {
     'floor4-depth-stairs-used': '鋳造所の階段は5階、塔の心臓部に通じている。',
     'tower-lift-seen':
       '動かない昇降機の籠が、村と塔の心臓部をつないでいる。その差し込み口は動力コアの形をしている。',
+    'floor5-deep-stair-seen':
+      '5階の至聖所の下に、深部の水槽群へ続く封じられた階段がある。村が立ち直るまでは開かない。',
+    'floor5-depth-stairs-used':
+      '5階の至聖所の下の深部への階段は、6階の水槽群に通じている。',
   },
   dialogue: {
     'warden-main-lead': '1階を探して、下への階段を開く紋章を見つけてくれ。',
