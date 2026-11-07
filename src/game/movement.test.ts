@@ -192,6 +192,74 @@ describe('attemptMove', () => {
     expect(result.state.factIds).toContain('floor2-depth-stairs-used');
   });
 
+  const floor5Deep = beside('floor5-depth-to-floor6', 'west');
+
+  it('the floor5 deep stair stays sealed until the village is restored', () => {
+    const sealed = {
+      ...base,
+      mapId: 'floor5' as const,
+      tile: floor5Deep.tile,
+      openedRewardIds: ['floor5-heart-waystone'],
+    };
+    const result = attemptMove(sealed, floor5Deep.move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({
+      kind: 'accessLocked',
+      entityId: 'floor5-depth-to-floor6',
+    });
+    expect(result.state.mapId).toBe('floor5');
+    expect(result.state.tile).toEqual(floor5Deep.tile);
+    expect(result.state.factIds).toContain('floor5-deep-stair-seen');
+    expect(result.state.factIds).not.toContain('main-village-restored');
+  });
+
+  it('the restored deep stair travels to floor six and records its fact', () => {
+    const released = {
+      ...base,
+      mapId: 'floor5' as const,
+      tile: floor5Deep.tile,
+      openedRewardIds: ['floor5-heart-waystone'],
+      factIds: ['main-village-restored'],
+    };
+    const result = attemptMove(released, floor5Deep.move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor6' });
+    expect(result.state).toMatchObject(portalTarget('floor5-depth-to-floor6'));
+    expect(result.state.factIds).toContain('floor5-depth-stairs-used');
+    expect(result.state.discoveredSectionIds).toContain('floor6-inlet');
+  });
+
+  it('a sluice pad carries the step to its paired tank', () => {
+    const onPad = {
+      ...base,
+      mapId: 'floor6' as const,
+      tile: { x: 5, y: 8 },
+      defeatedEnemyIds: ['floor6-inlet-darter'],
+    };
+    const result = attemptMove(onPad, 'north');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor6' });
+    expect(result.state).toMatchObject({
+      mapId: 'floor6',
+      tile: { x: 1, y: 7 },
+    });
+    expect(result.state.discoveredSectionIds).toContain('floor6-north-tank');
+  });
+
+  it('the floor6 inlet stair returns to the floor five sanctum', () => {
+    const { tile, move } = beside('floor6-to-floor5', 'west');
+    const onFloor6 = { ...base, mapId: 'floor6' as const, tile };
+    const result = attemptMove(onFloor6, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor5' });
+    expect(result.state).toMatchObject(portalTarget('floor6-to-floor5'));
+    expect(result.state.discoveredSectionIds).toContain('floor5-sanctum');
+  });
+
   it('descending the rear floor2 stair records the rear stair fact', () => {
     const { tile, move } = beside('floor2-rear-to-floor1', 'south');
     const state = { ...base, mapId: 'floor2' as const, tile };

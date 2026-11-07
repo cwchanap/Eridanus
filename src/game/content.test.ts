@@ -19,6 +19,7 @@ import type {
   MapId,
   NpcEntity,
   NpcId,
+  PortalEntity,
   Tile,
 } from './types';
 
@@ -138,6 +139,7 @@ describe('authored content', () => {
       'floor3',
       'floor4',
       'floor5',
+      'floor6',
       'village',
     ]);
   });
@@ -180,27 +182,44 @@ describe('authored content', () => {
     starts: readonly Tile[],
     canStand: (tile: Tile) => boolean = (tile) =>
       map.layout[tile.y]?.[tile.x] === '.',
+    canCross?: (portal: PortalEntity) => boolean,
   ): Set<string> => {
     const startTiles = starts.filter((tile) => canStand(tile));
-    const startKeys = new Set(startTiles.map(tileKey));
-    const portals = new Set(
+    const arrivals = new Set(startTiles.map(tileKey));
+    const portals = new Map(
       map.entities
-        .filter((entity) => entity.kind === 'portal')
-        .map((entity) => tileKey(entity.tile)),
+        .filter((entity): entity is PortalEntity => entity.kind === 'portal')
+        .map((entity) => [tileKey(entity.tile), entity]),
     );
     const reachable = new Set<string>();
+    const disembarked = new Set<string>();
     const queue = [...startTiles];
     while (queue.length > 0) {
       const tile = queue.pop()!;
       const key = tileKey(tile);
-      if (reachable.has(key)) continue;
+      const isArrival = arrivals.has(key);
+      if (reachable.has(key) && (!isArrival || disembarked.has(key))) continue;
       reachable.add(key);
+      const portal = portals.get(key);
       // A portal is a destination, never a corridor: an open portal carries
       // the step off the map, and a locked one refuses the step outright
       // (the player stays on the previous tile), so the flood stops there
       // either way. Arrival starts are the exception — the flood disembarks
       // from them.
-      if (portals.has(key) && !startKeys.has(key)) continue;
+      if (portal) {
+        const twin = portal.target.tile;
+        if (
+          canCross?.(portal) &&
+          portal.target.mapId === map.id &&
+          canStand(twin) &&
+          !arrivals.has(tileKey(twin))
+        ) {
+          arrivals.add(tileKey(twin));
+          queue.push(twin);
+        }
+        if (!isArrival) continue;
+      }
+      disembarked.add(key);
       for (const next of [
         { x: tile.x - 1, y: tile.y },
         { x: tile.x + 1, y: tile.y },
@@ -484,6 +503,186 @@ describe('authored content', () => {
           hasAdjacentApproach(reachable, entity.tile),
         entity.id,
       ).toBe(true);
+  });
+
+  it('places the deep stair and the moved waystone in the floor five sanctum', () => {
+    expect(entity('floor5-heart-waystone').tile).toEqual({ x: 10, y: 9 });
+    const stair = portal('floor5-depth-to-floor6');
+    expect(stair.tile).toEqual({ x: 11, y: 9 });
+    expect(stair.target).toEqual({
+      mapId: 'floor6',
+      tile: { x: 5, y: 15 },
+    });
+    expect(stair.lock).toEqual({
+      kind: 'fact',
+      requiresFactId: 'main-village-restored',
+      lockedFactId: 'floor5-deep-stair-seen',
+    });
+    expect(portal('floor6-to-floor5').target).toEqual({
+      mapId: 'floor5',
+      tile: { x: 11, y: 9 },
+    });
+  });
+
+  it('pairs every floor six sluice pad with its twin tank', () => {
+    const pads = MAPS.floor6.entities.filter(
+      (entity): entity is PortalEntity =>
+        entity.kind === 'portal' && entity.id.endsWith('-pad'),
+    );
+    expect(pads).toHaveLength(16);
+    for (const pad of pads) {
+      expect(pad.target.mapId, pad.id).toBe('floor6');
+      const twin = MAPS.floor6.entities.find(
+        (other) =>
+          other.tile.x === pad.target.tile.x &&
+          other.tile.y === pad.target.tile.y,
+      );
+      expect(twin?.kind, pad.id).toBe('portal');
+      if (twin?.kind !== 'portal') continue;
+      expect(twin.target, pad.id).toEqual({
+        mapId: 'floor6',
+        tile: pad.tile,
+      });
+    }
+  });
+
+  it('confines the floor six flood to the inlet without the sluice pads', () => {
+    const everything = MAPS.floor6.entities.map(({ id }) => id);
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor6' as const,
+      defeatedEnemyIds: everything,
+      openedRewardIds: everything,
+      openedShortcutIds: everything,
+    };
+    const reachable = floodFloor(
+      MAPS.floor6,
+      [portal('floor6-to-floor5').tile],
+      (tile) =>
+        MAPS.floor6.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(state, tile),
+    );
+    const inletIds = [
+      'floor6-inlet-pad',
+      'floor6-inlet-east-pad',
+      'floor6-to-floor5',
+      'floor6-inlet-waystone',
+      'floor6-pad-notice',
+      'floor6-inlet-mite',
+      'floor6-inlet-cache',
+      'floor6-inlet-guard',
+      'floor6-inlet-darter',
+    ];
+    for (const entity of MAPS.floor6.entities) {
+      // A clue is read by bumping it, so its own tile never stands in the
+      // flood; a reachable neighbour is what reaches it.
+      const found =
+        entity.kind === 'clue'
+          ? [
+              { x: entity.tile.x - 1, y: entity.tile.y },
+              { x: entity.tile.x + 1, y: entity.tile.y },
+              { x: entity.tile.x, y: entity.tile.y - 1 },
+              { x: entity.tile.x, y: entity.tile.y + 1 },
+            ].some((tile) => reachable.has(tileKey(tile)))
+          : reachable.has(tileKey(entity.tile));
+      expect(found, entity.id).toBe(inletIds.includes(entity.id));
+    }
+  });
+
+  it('reaches all nine floor six tanks through the unlocked sluice pads', () => {
+    const everything = MAPS.floor6.entities.map(({ id }) => id);
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor6' as const,
+      defeatedEnemyIds: everything,
+      openedRewardIds: everything,
+      openedShortcutIds: everything,
+      factIds: ['main-village-restored'],
+    };
+    const reachable = floodFloor(
+      MAPS.floor6,
+      [portal('floor6-to-floor5').tile],
+      (tile) =>
+        MAPS.floor6.layout[tile.y]?.[tile.x] === '.' &&
+        !isTileBlockedByEntity(state, tile),
+      (portal) =>
+        !portal.lock ||
+        (portal.lock.kind === 'fact'
+          ? state.factIds.includes(portal.lock.requiresFactId)
+          : state.itemIds.includes(portal.lock.requiresItemId)),
+    );
+    for (const entity of MAPS.floor6.entities) {
+      const found =
+        entity.kind === 'clue'
+          ? [
+              { x: entity.tile.x - 1, y: entity.tile.y },
+              { x: entity.tile.x + 1, y: entity.tile.y },
+              { x: entity.tile.x, y: entity.tile.y - 1 },
+              { x: entity.tile.x, y: entity.tile.y + 1 },
+            ].some((tile) => reachable.has(tileKey(tile)))
+          : reachable.has(tileKey(entity.tile));
+      expect(found, entity.id).toBe(true);
+    }
+    expect(MAPS.floor6.sections).toHaveLength(9);
+  });
+
+  it('keeps a tank sealed off when its sluice pad is locked', () => {
+    const sealed: MapDefinition = {
+      ...MAPS.floor6,
+      entities: MAPS.floor6.entities.map((entity) =>
+        entity.id === 'floor6-inlet-pad' && entity.kind === 'portal'
+          ? {
+              ...entity,
+              lock: {
+                kind: 'fact' as const,
+                requiresFactId: 'main-village-restored',
+                lockedFactId: 'floor5-deep-stair-seen',
+              },
+            }
+          : entity,
+      ),
+    };
+    const everything = MAPS.floor6.entities.map(({ id }) => id);
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor6' as const,
+      defeatedEnemyIds: everything,
+      openedRewardIds: everything,
+      openedShortcutIds: everything,
+      factIds: [] as readonly string[],
+    };
+    const canStand = (tile: Tile) =>
+      sealed.layout[tile.y]?.[tile.x] === '.' &&
+      !isTileBlockedByEntity(state, tile);
+    const padCrossable = (portal: PortalEntity) =>
+      !portal.lock ||
+      (portal.lock.kind === 'fact'
+        ? state.factIds.includes(portal.lock.requiresFactId)
+        : state.itemIds.includes(portal.lock.requiresItemId));
+    const reachable = floodFloor(
+      sealed,
+      [portal('floor6-to-floor5').tile],
+      canStand,
+      padCrossable,
+    );
+    for (const id of [
+      'floor6-north-tank-pad',
+      'floor6-north-darter',
+      'floor6-north-mite',
+      'floor6-north-cache',
+      'floor6-north-store',
+    ])
+      expect(reachable.has(tileKey(entity(id).tile)), id).toBe(false);
+    for (const id of [
+      'floor6-outflow-sentinel',
+      'floor6-sluice-waystone',
+      'floor6-silt-cache',
+      'floor6-pump-warden',
+      'floor6-east-twinblade',
+      'floor6-south-ambusher',
+      'floor6-settling-bulwark',
+    ])
+      expect(reachable.has(tileKey(entity(id).tile)), id).toBe(true);
   });
 
   it('lets only the old shaft into the sealed blocks on floors 2 to 4', () => {

@@ -151,6 +151,13 @@ export const en = {
     'enemy-ruin-guard': 'Ruin Guard',
     'enemy-ruin-sentinel': 'Ruin Sentinel',
     'enemy-core-guardian': 'Core Guardian',
+    'enemy-ambusher': 'Ambusher',
+    'enemy-bulwark': 'Bulwark',
+    'enemy-darter': 'Darter',
+    'enemy-lancer': 'Lancer',
+    'enemy-ravager': 'Ravager',
+    'enemy-twinblade': 'Twinblade',
+    'enemy-taproot': 'Taproot',
   },
   traits: {
     firstStrike: 'Strikes first, before your opening blow.',
@@ -206,6 +213,7 @@ export const en = {
     floor3: 'Tower Floor 3',
     floor4: 'Tower Floor 4',
     floor5: 'Tower Floor 5',
+    floor6: 'Tower Floor 6',
   } satisfies Record<MapId, string>,
   sections: {
     'village-square': 'Village Square',
@@ -252,6 +260,15 @@ export const en = {
     'floor5-inner-ring': 'Inner Ring',
     'floor5-sanctum': 'Sanctum',
     'floor5-old-shaft': 'Old Shaft',
+    'floor6-inlet': 'Inlet',
+    'floor6-north-tank': 'North Tank',
+    'floor6-settling-tank': 'Settling Tank',
+    'floor6-sluice-house': 'Sluice House',
+    'floor6-south-tank': 'South Tank',
+    'floor6-silt-pit': 'Silt Pit',
+    'floor6-pump-room': 'Pump Room',
+    'floor6-east-tank': 'East Tank',
+    'floor6-outflow': 'Outflow',
   },
   npcs: {
     'village-warden': 'Warden',
@@ -329,6 +346,13 @@ export const en = {
       'Scratched beside the stair: "Three wardens keep the sanctum seal, west, south and east. While any of them stands, the heart stays closed."',
     'floor5-lattice-record':
       'The guardian lattice still hums with the old isolation order. Behind it, the Restoration Core waits above a dead lift shaft.',
+    'floor6-pad-notice':
+      'A keeper\'s notice: "The sluice pads run in pairs — step onto one and it carries you to its twin. The Bulwark in the Settling Tank barely feels a bare blade; claim the pump warden\'s ATK +2 cache before you face it."',
+    'floor6-silt-record':
+      'A silt-stained record: "The tanks drain into the roots below."',
+    'floor6-sluice-log': 'A keeper\'s log: "The roots drink the flow."',
+    'floor6-outflow-notice':
+      'A keeper\'s notice: "The stair below leads to the cloister."',
   },
   // Shown when a sealed entrance or a locked portal is bumped.
   access: {
@@ -345,6 +369,8 @@ export const en = {
       'The lower keeper seal will not release until the missing subject returns with the warning from below.',
     'floor5-lift-to-village':
       'The lift cage hangs dead. Its socket is shaped for a power core.',
+    'floor5-depth-to-floor6':
+      'A sealed stair drops beneath the sanctum. It will not open until the village is restored.',
   },
   notes: {
     'village-tower-stairs-used': 'Stairs connect the village and Floor 1.',
@@ -371,6 +397,10 @@ export const en = {
       'The foundry stair reaches Floor 5, the tower heart.',
     'tower-lift-seen':
       'A dead lift cage links the village to the tower heart. Its socket is shaped for a power core.',
+    'floor5-deep-stair-seen':
+      'A sealed stair beneath the Floor 5 sanctum leads to the deep cisterns; it opens only once the village is restored.',
+    'floor5-depth-stairs-used':
+      'The deep stair beneath the Floor 5 sanctum reaches the cisterns on Floor 6.',
   } satisfies Record<ObservationFactId, string>,
   dialogue: {
     'warden-main-lead':
