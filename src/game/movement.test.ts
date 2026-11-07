@@ -228,7 +228,7 @@ describe('attemptMove', () => {
     expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor6' });
     expect(result.state).toMatchObject(portalTarget('floor5-depth-to-floor6'));
     expect(result.state.factIds).toContain('floor5-depth-stairs-used');
-    expect(result.state.discoveredSectionIds).toContain('floor6-inlet');
+    expect(result.state.discoveredSectionIds).toEqual(['floor6-inlet']);
   });
 
   it('a sluice pad carries the step to its paired tank', () => {
@@ -246,7 +246,7 @@ describe('attemptMove', () => {
       mapId: 'floor6',
       tile: { x: 1, y: 7 },
     });
-    expect(result.state.discoveredSectionIds).toContain('floor6-north-tank');
+    expect(result.state.discoveredSectionIds).toEqual(['floor6-north-tank']);
   });
 
   it('the floor6 inlet stair returns to the floor five sanctum', () => {

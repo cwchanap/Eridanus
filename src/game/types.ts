@@ -179,6 +179,7 @@ export type MapSection = Readonly<{
     minY: number;
     maxY: number;
   }>;
+  excludedTiles?: readonly Tile[];
   factIds?: readonly string[];
 }>;
 export type MapDefinition = Readonly<{

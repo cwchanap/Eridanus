@@ -2,12 +2,6 @@ import type { MapDefinition } from '../types';
 
 export const floor6: MapDefinition = {
   id: 'floor6',
-  // The Cisterns: nine walled tanks in a 3x3 grid with no path between
-  // them. The paired sluice pads are the only way across — each pad carries
-  // the step to its twin in another tank. Arrival is the inlet stair from
-  // the Floor 5 sanctum; the way down to Floor 7 waits in the Outflow. The
-  // Settling Tank's Bulwark is only cheap after the Pump Room's ATK+2
-  // cache, and the Ambusher holds the pad to the Pump Room.
   layout: [
     '###############################',
     '#...#.#.###.........#...#.....#',
@@ -36,7 +30,6 @@ export const floor6: MapDefinition = {
     '###############################',
   ],
   entities: [
-    // The Inlet: the arrival stair from the Floor 5 sanctum.
     {
       kind: 'portal',
       id: 'floor6-to-floor5',
@@ -106,7 +99,6 @@ export const floor6: MapDefinition = {
       stats: { hp: 26, attack: 50, defense: 34, agility: 11 },
       gold: 16,
     },
-    // The North Tank, an optional tank behind its darter pad guard.
     {
       kind: 'portal',
       id: 'floor6-north-tank-pad',
@@ -148,7 +140,6 @@ export const floor6: MapDefinition = {
       stat: 'hp',
       amount: 8,
     },
-    // The Settling Tank.
     {
       kind: 'portal',
       id: 'floor6-settling-west-pad',
@@ -209,7 +200,6 @@ export const floor6: MapDefinition = {
       stat: 'hp',
       amount: 6,
     },
-    // The South Tank.
     {
       kind: 'portal',
       id: 'floor6-south-north-pad',
@@ -294,7 +284,6 @@ export const floor6: MapDefinition = {
       stat: 'hp',
       amount: 3,
     },
-    // The Silt Pit, an optional tank behind its ravager pad guard.
     {
       kind: 'portal',
       id: 'floor6-silt-pad',
@@ -343,7 +332,6 @@ export const floor6: MapDefinition = {
       stat: 'hp',
       amount: 3,
     },
-    // The Pump Room: the waystone and the ATK+2 cache the Bulwark wants.
     {
       kind: 'portal',
       id: 'floor6-pump-west-pad',
@@ -401,7 +389,6 @@ export const floor6: MapDefinition = {
       stats: { hp: 26, attack: 50, defense: 34, agility: 11 },
       gold: 16,
     },
-    // The East Tank, an optional tank behind its twinblade pad guard.
     {
       kind: 'portal',
       id: 'floor6-east-tank-pad',
@@ -441,7 +428,6 @@ export const floor6: MapDefinition = {
       stat: 'hp',
       amount: 10,
     },
-    // The Sluice House.
     {
       kind: 'portal',
       id: 'floor6-sluice-south-pad',
@@ -511,7 +497,6 @@ export const floor6: MapDefinition = {
       stats: { hp: 36, attack: 49, defense: 36, agility: 3 },
       gold: 15,
     },
-    // The Outflow, where the sentinel guards the stair down.
     {
       kind: 'portal',
       id: 'floor6-outflow-pad',
@@ -555,38 +540,64 @@ export const floor6: MapDefinition = {
     {
       id: 'floor6-north-tank',
       bounds: { minX: 1, maxX: 7, minY: 1, maxY: 7 },
+      excludedTiles: [{ x: 5, y: 7 }],
     },
     {
       id: 'floor6-sluice-house',
       bounds: { minX: 11, maxX: 21, minY: 1, maxY: 7 },
+      excludedTiles: [
+        { x: 15, y: 7 },
+        { x: 21, y: 1 },
+      ],
     },
     {
       id: 'floor6-outflow',
       bounds: { minX: 21, maxX: 29, minY: 1, maxY: 5 },
+      excludedTiles: [{ x: 21, y: 3 }],
     },
     {
       id: 'floor6-inlet',
       bounds: { minX: 1, maxX: 9, minY: 7, maxY: 15 },
+      excludedTiles: [
+        { x: 1, y: 7 },
+        { x: 9, y: 11 },
+      ],
     },
     {
       id: 'floor6-settling-tank',
       bounds: { minX: 9, maxX: 19, minY: 7, maxY: 17 },
+      excludedTiles: [
+        { x: 9, y: 13 },
+        { x: 17, y: 7 },
+        { x: 17, y: 17 },
+      ],
     },
     {
       id: 'floor6-east-tank',
       bounds: { minX: 23, maxX: 29, minY: 9, maxY: 17 },
+      excludedTiles: [{ x: 27, y: 17 }],
     },
     {
       id: 'floor6-south-tank',
       bounds: { minX: 9, maxX: 21, minY: 17, maxY: 23 },
+      excludedTiles: [
+        { x: 9, y: 23 },
+        { x: 13, y: 17 },
+        { x: 21, y: 19 },
+      ],
     },
     {
       id: 'floor6-pump-room',
       bounds: { minX: 21, maxX: 29, minY: 17, maxY: 23 },
+      excludedTiles: [
+        { x: 21, y: 21 },
+        { x: 25, y: 17 },
+      ],
     },
     {
       id: 'floor6-silt-pit',
       bounds: { minX: 1, maxX: 9, minY: 19, maxY: 23 },
+      excludedTiles: [{ x: 9, y: 21 }],
     },
   ],
 };
