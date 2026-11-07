@@ -201,6 +201,11 @@ export const en = {
       'The core guardian is defeated. Recover the Restoration Core.',
     'return-restoration-core':
       'Bring the Restoration Core back to the village warden.',
+    'descend-below-floor5':
+      'The village is restored, but the taproot still drinks the flow below the rift. Descend past Floor 9 to the root floor.',
+    'return-heartwood': 'Carry the heartwood home to the village warden.',
+    'taproot-quieted':
+      'The heartwood is home. The taproot is quiet and the village is whole.',
     'story-complete':
       'The Restoration Core is back in the village. The tower can be restored.',
     'ledger-resolved':
@@ -217,6 +222,7 @@ export const en = {
     floor7: 'Tower Floor 7',
     floor8: 'Tower Floor 8',
     floor9: 'Tower Floor 9',
+    floor10: 'Tower Floor 10',
   } satisfies Record<MapId, string>,
   sections: {
     'village-square': 'Village Square',
@@ -286,6 +292,12 @@ export const en = {
     'floor9-top-band': 'Top Band',
     'floor9-middle-band': 'Middle Band',
     'floor9-bottom-band': 'Bottom Band',
+    'floor10-trunk': 'Descent Trunk',
+    'floor10-upper-roots': 'Upper Roots',
+    'floor10-middle-root': 'Middle Root',
+    'floor10-west-root': 'West Root',
+    'floor10-east-root': 'East Root',
+    'floor10-heart': 'Root Heart',
   },
   npcs: {
     'village-warden': 'Warden',
@@ -318,6 +330,7 @@ export const en = {
     'tower-depth-sigil': 'Tower Sigil',
     'tower-restoration-core': 'Restoration Core',
     'rift-key': 'Rift Key',
+    'tower-heartwood': 'Heartwood',
   },
   clues: {
     'floor1-treasury-overlook':
@@ -382,11 +395,15 @@ export const en = {
     'floor9-crossings-notice':
       'A keeper\'s notice: "Three ways cross each band; any one will do."',
     'floor9-middle-record': "The keepers' tally of who crossed where.",
+    'floor10-taproot-notice':
+      'A keeper\'s notice: "Twin root wardens hold the heart hatch. Fell both, take the heartwood, and ride the lift home."',
   },
   // Shown when a sealed entrance or a locked portal is bumped.
   access: {
     'village-lift-to-floor5':
       'A lift cage hangs dead in its shaft. Its socket is shaped for a power core.',
+    'village-lift-to-floor10':
+      "A second lift cage hangs dead at the road's end. Its socket is shaped for a knot of heartwood.",
     'village-mine-entrance':
       'Fallen timbers choke the old mine shaft. The way in is sealed for now.',
     'village-crypt-entrance':
@@ -440,6 +457,10 @@ export const en = {
       "A barred stair in the rift's west half drops toward Floor 9; only the rift key opens it.",
     'floor8-depth-stairs-used':
       'The rift-key stair reaches the crossways on Floor 9.',
+    'floor9-depth-stairs-used':
+      'The last stair drops to the root floor on Floor 10.',
+    'village-heartwood-lift-seen':
+      'A second lift cage hangs at the west end of the tower road. Its socket is shaped for a knot of heartwood.',
   } satisfies Record<ObservationFactId, string>,
   dialogue: {
     'warden-main-lead':
@@ -478,6 +499,8 @@ export const en = {
       'The Restoration Core can restart the tower flow that keeps our village supplied. The guardian lock is broken; we can restore the system at last.',
     'warden-restoration-ending-ledger':
       'The Restoration Core can restart the village supply. The keeper record explains the failure too: the paired releases isolated a guardian control fault, but the isolation was never cleared. We can restore the system with the truth intact.',
+    'warden-heartwood-ending':
+      'The heartwood — you cut the taproot loose and carried it home. The tower is quiet to its deepest root now, and the village is whole. We owe you everything, explorer.',
     'scribe-final-ledger-read':
       'That final record closes the ledger. The guardians were trapped in an emergency isolation state, and the village kept depending on the same system they were defending.',
     'elder-sealed-crypt':

@@ -138,6 +138,28 @@ describe('resolveNpcInteraction', () => {
     });
   });
 
+  it('leads with the heartwood ending ahead of the restoration ending', () => {
+    expect(
+      resolveNpcInteraction('village-warden', {
+        ...createInitialGameState(),
+        itemIds: ['tower-restoration-core', 'tower-heartwood'],
+      }),
+    ).toEqual({
+      lineId: 'warden-heartwood-ending',
+      factId: 'main-heartwood-returned',
+    });
+    expect(
+      resolveNpcInteraction('village-warden', {
+        ...createInitialGameState(),
+        itemIds: ['tower-heartwood'],
+        factIds: ['floor3-keeper-final-record-read'],
+      }),
+    ).toEqual({
+      lineId: 'warden-heartwood-ending',
+      factId: 'main-heartwood-returned',
+    });
+  });
+
   it('reads the scribe final-ledger line once the final keeper record is known', () => {
     expect(
       resolveNpcInteraction('village-scribe', {

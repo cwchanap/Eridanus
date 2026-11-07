@@ -238,13 +238,13 @@ async function endStory(
   await j.check(async (page) => {
     await expectLine(page, endingLineId);
     expect(await messageBox(page)).toEqual(box);
-    await shows(page, 'lead', 'story-complete');
+    await shows(page, 'lead', 'descend-below-floor5');
     await page.reload();
     await expect(page.getByTestId('map-name')).toHaveAttribute(
       'data-map-id',
       'village',
     );
-    await shows(page, 'lead', 'story-complete');
+    await shows(page, 'lead', 'descend-below-floor5');
   });
 }
 

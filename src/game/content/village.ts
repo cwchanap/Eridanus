@@ -214,6 +214,18 @@ export const village: MapDefinition = {
       },
     },
     {
+      kind: 'portal',
+      id: 'village-lift-to-floor10',
+      tile: { x: 11, y: 1 },
+      assetId: 'stairs-down',
+      target: { mapId: 'floor10', tile: { x: 21, y: 19 } },
+      lock: {
+        kind: 'item',
+        requiresItemId: 'tower-heartwood',
+        lockedFactId: 'village-heartwood-lift-seen',
+      },
+    },
+    {
       kind: 'sealed',
       id: 'village-mine-entrance',
       tile: { x: 1, y: 7 },

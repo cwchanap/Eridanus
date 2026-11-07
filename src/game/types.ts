@@ -10,7 +10,8 @@ export type MapId =
   | 'floor6'
   | 'floor7'
   | 'floor8'
-  | 'floor9';
+  | 'floor9'
+  | 'floor10';
 export type Direction = 'north' | 'south' | 'east' | 'west';
 export type Stat = 'attack' | 'defense' | 'hp';
 export type EquipSlot = 'weapon' | 'armor' | 'accessory';
@@ -50,6 +51,7 @@ export type DialogueLineId =
   | 'scribe-floor2-ledger-read'
   | 'warden-restoration-ending'
   | 'warden-restoration-ending-ledger'
+  | 'warden-heartwood-ending'
   | 'scribe-final-ledger-read'
   | 'elder-sealed-crypt'
   | 'guard-sealed-mine'
