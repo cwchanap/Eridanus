@@ -18,6 +18,8 @@ const MIN_HIT_PERCENT = 50;
 // A fight that has not ended by now is called lost, so a stuck Rng cannot
 // spin forever.
 const MAX_ROUNDS = 200;
+// A doubleStrike enemy's chance of a second swing each enemy turn.
+const DOUBLE_STRIKE_CHANCE = 0.4;
 
 export function hitChance(
   strikerAgility: number,
@@ -28,8 +30,11 @@ export function hitChance(
 }
 
 // The fight's cost on average. Misses make the real one vary around it: the
-// hero swings first, the enemy answers every swing but the last, and the hero
-// needs hitsNeeded / heroHit swings on average to land hitsNeeded hits.
+// hero swings first (unless the enemy has firstStrike, which adds one opening
+// enemy turn), the enemy answers every swing but the last — doubleStrike
+// adds a 40% follow-up to each answer — and the hero needs hitsNeeded /
+// heroHit swings on average to land hitsNeeded hits. Pierce shaves the
+// hero's DEF for the enemy's blows only.
 export function previewCombat(
   player: PlayerStats,
   enemy: EnemyEntity['stats'],
@@ -40,16 +45,23 @@ export function previewCombat(
   const hitsNeeded = Math.ceil(enemy.hp / playerDamage);
   const heroHit = hitChance(player.agility, enemy.agility);
   const enemyHit = hitChance(enemy.agility, player.agility);
-  const enemyDamage = Math.max(0, enemy.attack - player.defense);
+  const enemyDamage = Math.max(
+    0,
+    enemy.attack - Math.max(0, player.defense - (enemy.pierce ?? 0)),
+  );
+  const enemyTurns = hitsNeeded / heroHit - 1 + (enemy.firstStrike ? 1 : 0);
+  const swingsPerTurn = 1 + (enemy.doubleStrike ? DOUBLE_STRIKE_CHANCE : 0);
   const hpLoss = Math.round(
-    (hitsNeeded / heroHit - 1) * enemyHit * enemyDamage,
+    enemyTurns * swingsPerTurn * enemyHit * enemyDamage,
   );
   if (hpLoss >= player.hp) return { winnable: false, reason: 'combat-lethal' };
   return { winnable: true, hitsNeeded, hpLoss, heroHit, enemyHit };
 }
 
-// Plays a fight out blow by blow, hero first, the two trading until one side
-// is down. A blow lands when its roll falls under the striker's hit chance.
+// Plays a fight out blow by blow — the enemy opening it when it has
+// firstStrike — the two trading until one side is down. A blow lands when
+// its roll falls under the striker's hit chance, and pierce shaves the
+// hero's DEF for the enemy's blows only.
 export function simulateFight(
   player: PlayerStats,
   enemy: EnemyEntity['stats'],
@@ -58,10 +70,41 @@ export function simulateFight(
   const heroHit = hitChance(player.agility, enemy.agility);
   const enemyHit = hitChance(enemy.agility, player.agility);
   const heroDamage = Math.max(0, player.attack - enemy.defense);
-  const enemyDamage = Math.max(0, enemy.attack - player.defense);
+  const enemyDamage = Math.max(
+    0,
+    enemy.attack - Math.max(0, player.defense - (enemy.pierce ?? 0)),
+  );
   let heroHp = player.hp;
   let enemyHp = enemy.hp;
   const blows: Blow[] = [];
+  // One enemy turn: a strike, then — when it can strike twice — a 40% roll
+  // for a follow-up with its own hit check. Returns false if the hero fell.
+  const enemyTurn = (): boolean => {
+    const enemyLands = rng() < enemyHit;
+    if (enemyLands) heroHp = Math.max(0, heroHp - enemyDamage);
+    blows.push({
+      by: 'enemy',
+      hit: enemyLands,
+      damage: enemyLands ? enemyDamage : 0,
+      heroHp,
+      enemyHp,
+    });
+    if (heroHp === 0) return false;
+    if (enemy.doubleStrike && rng() < DOUBLE_STRIKE_CHANCE) {
+      const followUpLands = rng() < enemyHit;
+      if (followUpLands) heroHp = Math.max(0, heroHp - enemyDamage);
+      blows.push({
+        by: 'enemy',
+        hit: followUpLands,
+        damage: followUpLands ? enemyDamage : 0,
+        heroHp,
+        enemyHp,
+      });
+      if (heroHp === 0) return false;
+    }
+    return true;
+  };
+  if (enemy.firstStrike && !enemyTurn()) return { blows, won: false };
   for (let round = 0; round < MAX_ROUNDS; round++) {
     const heroLands = rng() < heroHit;
     if (heroLands) enemyHp = Math.max(0, enemyHp - heroDamage);
@@ -73,16 +116,7 @@ export function simulateFight(
       enemyHp,
     });
     if (enemyHp === 0) return { blows, won: true };
-    const enemyLands = rng() < enemyHit;
-    if (enemyLands) heroHp = Math.max(0, heroHp - enemyDamage);
-    blows.push({
-      by: 'enemy',
-      hit: enemyLands,
-      damage: enemyLands ? enemyDamage : 0,
-      heroHp,
-      enemyHp,
-    });
-    if (heroHp === 0) return { blows, won: false };
+    if (!enemyTurn()) return { blows, won: false };
   }
   return { blows, won: false };
 }

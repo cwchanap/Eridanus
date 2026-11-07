@@ -127,6 +127,11 @@ export const zhHant: Messages = {
     'enemy-ruin-sentinel': '遺跡哨兵',
     'enemy-core-guardian': '核心守護者',
   },
+  traits: {
+    firstStrike: '會在你的第一擊之前出手。',
+    doubleStrike: '每回合可能攻擊兩次。',
+    pierce: (pierce) => `最多無視你 ${pierce} 點防禦。`,
+  },
   leadTitles: {
     main: '主線任務',
     heirloom: '傳家寶',

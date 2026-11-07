@@ -131,6 +131,11 @@ export const ja: Messages = {
     'enemy-ruin-sentinel': '遺跡の歩哨',
     'enemy-core-guardian': 'コアの守護者',
   },
+  traits: {
+    firstStrike: 'こちらの初撃の前に攻撃してくる。',
+    doubleStrike: '1ターンに2回攻撃することがある。',
+    pierce: (pierce) => `こちらの防御を最大${pierce}無視する。`,
+  },
   leadTitles: {
     main: 'メインクエスト',
     heirloom: '家宝',
