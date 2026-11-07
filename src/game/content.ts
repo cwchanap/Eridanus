@@ -111,11 +111,14 @@ export function findSectionsAt(
   tile: Tile,
 ): readonly MapSection[] {
   return MAPS[mapId].sections.filter(
-    ({ bounds }) =>
+    ({ bounds, excludedTiles }) =>
       tile.x >= bounds.minX &&
       tile.x <= bounds.maxX &&
       tile.y >= bounds.minY &&
-      tile.y <= bounds.maxY,
+      tile.y <= bounds.maxY &&
+      !(excludedTiles ?? []).some(
+        (excluded) => excluded.x === tile.x && excluded.y === tile.y,
+      ),
   );
 }
 
@@ -212,9 +215,12 @@ export function validateContent(
         if (!hasFact(factId))
           errors.push(`${section.id}: unknown fact id: ${factId}`);
       }
+      const excluded = new Set(
+        (section.excludedTiles ?? []).map(({ x, y }) => `${x},${y}`),
+      );
       for (let y = section.bounds.minY; y <= section.bounds.maxY; y++) {
         for (let x = section.bounds.minX; x <= section.bounds.maxX; x++)
-          covered.add(`${x},${y}`);
+          if (!excluded.has(`${x},${y}`)) covered.add(`${x},${y}`);
       }
     }
     const uncovered: string[] = [];

@@ -4,6 +4,7 @@ import {
   findEntityById,
   findItemRewardByItemId,
   findSectionById,
+  findSectionsAt,
   getActiveEntities,
   isEntityBlocking,
   isEntityPresent,
@@ -546,6 +547,44 @@ describe('authored content', () => {
     }
   });
 
+  it('labels each floor six pad and the stair with its own tank only', () => {
+    const homeByEntity: Record<string, string> = {
+      'floor6-to-floor5': 'floor6-inlet',
+      'floor6-inlet-pad': 'floor6-inlet',
+      'floor6-north-tank-pad': 'floor6-north-tank',
+      'floor6-inlet-east-pad': 'floor6-inlet',
+      'floor6-settling-west-pad': 'floor6-settling-tank',
+      'floor6-settling-north-pad': 'floor6-settling-tank',
+      'floor6-sluice-south-pad': 'floor6-sluice-house',
+      'floor6-settling-south-pad': 'floor6-settling-tank',
+      'floor6-south-north-pad': 'floor6-south-tank',
+      'floor6-south-west-pad': 'floor6-south-tank',
+      'floor6-silt-pad': 'floor6-silt-pit',
+      'floor6-south-east-pad': 'floor6-south-tank',
+      'floor6-pump-west-pad': 'floor6-pump-room',
+      'floor6-pump-north-pad': 'floor6-pump-room',
+      'floor6-east-tank-pad': 'floor6-east-tank',
+      'floor6-sluice-east-pad': 'floor6-sluice-house',
+      'floor6-outflow-pad': 'floor6-outflow',
+    };
+    for (const [id, home] of Object.entries(homeByEntity))
+      expect(
+        findSectionsAt('floor6', entity(id).tile).map(({ id }) => id),
+        id,
+      ).toEqual([home]);
+  });
+
+  it('places every floor six floor tile in exactly one section', () => {
+    for (let y = 0; y < MAPS.floor6.layout.length; y++) {
+      const row = MAPS.floor6.layout[y]!;
+      for (let x = 0; x < row.length; x++)
+        if (row[x] === '.')
+          expect(findSectionsAt('floor6', { x, y }).length, `${x},${y}`).toBe(
+            1,
+          );
+    }
+  });
+
   it('confines the floor six flood to the inlet without the sluice pads', () => {
     const everything = MAPS.floor6.entities.map(({ id }) => id);
     const state = {
@@ -574,8 +613,6 @@ describe('authored content', () => {
       'floor6-inlet-darter',
     ];
     for (const entity of MAPS.floor6.entities) {
-      // A clue is read by bumping it, so its own tile never stands in the
-      // flood; a reachable neighbour is what reaches it.
       const found =
         entity.kind === 'clue'
           ? [
