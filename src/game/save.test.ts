@@ -521,6 +521,212 @@ describe('floor five completion occupancy', () => {
   });
 });
 
+describe('deep-floor occupancy', () => {
+  it.each([
+    ['floor6', { x: 5, y: 15 }],
+    ['floor7', { x: 1, y: 1 }],
+    ['floor8', { x: 3, y: 1 }],
+    ['floor8', { x: 31, y: 1 }],
+    ['floor9', { x: 1, y: 5 }],
+    ['floor9', { x: 5, y: 1 }],
+    ['floor10', { x: 15, y: 1 }],
+    ['floor10', { x: 21, y: 19 }],
+  ] as const)(
+    'loads a save standing on the %s stair arrival',
+    (mapId, tile) => {
+      const state = { ...createInitialGameState(), mapId, tile };
+      storage.setItem('eridanus.save', JSON.stringify(state));
+      expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+    },
+  );
+
+  it('rejects a save standing on the undefeated taproot', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        mapId: 'floor10',
+        tile: tileOf('floor10-taproot'),
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+  });
+
+  it('accepts a save standing on the defeated taproot', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor10' as const,
+      tile: tileOf('floor10-taproot'),
+      defeatedEnemyIds: ['floor10-taproot'],
+    };
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('rejects a save standing on the shut heart hatch, accepts it opened', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        mapId: 'floor10',
+        tile: tileOf('floor10-heart-hatch'),
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'floor10' as const,
+      tile: tileOf('floor10-heart-hatch'),
+      openedShortcutIds: ['floor10-heart-hatch'],
+    };
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('rejects a save standing on a bell lever, thrown or not', () => {
+    for (const openedShortcutIds of [
+      [] as readonly string[],
+      ['floor7-north-west-lever'],
+    ]) {
+      storage.setItem(
+        'eridanus.save',
+        JSON.stringify({
+          ...createInitialGameState(),
+          mapId: 'floor7',
+          tile: tileOf('floor7-north-west-lever'),
+          openedShortcutIds,
+        }),
+      );
+      expect(loadGame(storage)).toEqual({
+        kind: 'invalid',
+        reason: 'invalid-content',
+      });
+    }
+  });
+
+  it('keeps the heartwood and its chest consistent in both directions', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        itemIds: ['tower-heartwood'],
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        openedRewardIds: ['floor10-heartwood'],
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+    const state = {
+      ...createInitialGameState(),
+      openedRewardIds: ['floor10-heartwood'],
+      itemIds: ['tower-heartwood'],
+    };
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('keeps the rift key and its chest consistent', () => {
+    storage.setItem(
+      'eridanus.save',
+      JSON.stringify({
+        ...createInitialGameState(),
+        itemIds: ['rift-key'],
+      }),
+    );
+    expect(loadGame(storage)).toEqual({
+      kind: 'invalid',
+      reason: 'invalid-content',
+    });
+    const state = {
+      ...createInitialGameState(),
+      openedRewardIds: ['floor8-rift-key'],
+      itemIds: ['rift-key'],
+    };
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('round-trips the heartwood run’s ending state', () => {
+    const state = {
+      ...createInitialGameState(),
+      mapId: 'village' as const,
+      tile: { x: 11, y: 1 },
+      player: { hp: 30, attack: 49, defense: 49, agility: 5, gold: 773 },
+      openedRewardIds: ['floor8-rift-key', 'floor10-heartwood'],
+      defeatedEnemyIds: [
+        'floor10-west-warden',
+        'floor10-east-warden',
+        'floor10-taproot',
+      ],
+      openedShortcutIds: [
+        'floor7-north-west-lever',
+        'floor7-north-east-lever',
+        'floor7-south-east-lever',
+        'floor7-south-west-lever',
+        'floor7-reliquary-hatch',
+        'floor8-bridge-gate',
+        'floor10-heart-hatch',
+      ],
+      itemIds: ['rift-key', 'tower-heartwood'],
+      factIds: [
+        'main-village-restored',
+        'floor6-depth-stairs-used',
+        'floor7-depth-stairs-used',
+        'floor8-depth-seal-seen',
+        'floor8-depth-stairs-used',
+        'floor9-depth-stairs-used',
+        'village-heartwood-lift-seen',
+        'main-heartwood-returned',
+      ],
+      discoveredSectionIds: [
+        'village-tower-road',
+        'floor6-inlet',
+        'floor6-settling-tank',
+        'floor6-south-tank',
+        'floor6-pump-room',
+        'floor6-sluice-house',
+        'floor6-outflow',
+        'floor7-north-west-wing',
+        'floor7-south-east-wing',
+        'floor7-reliquary',
+        'floor8-west-tangle',
+        'floor8-lower-tangle',
+        'floor9-underpass',
+        'floor8-east-gallery',
+        'floor8-rift-bridge',
+        'floor9-top-band',
+        'floor9-middle-band',
+        'floor9-bottom-band',
+        'floor10-trunk',
+        'floor10-middle-root',
+        'floor10-west-root',
+        'floor10-east-root',
+        'floor10-heart',
+      ],
+      trades: 9,
+    };
+    saveGame(storage, state);
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+});
+
 describe('storage failures', () => {
   it('starts fresh when getItem throws', () => {
     expect(loadGame(new ThrowingStorage())).toEqual({

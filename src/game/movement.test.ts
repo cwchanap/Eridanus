@@ -335,6 +335,190 @@ describe('attemptMove', () => {
     expect(result.state.discoveredSectionIds).toContain('floor6-outflow');
   });
 
+  it('clears the floor six tank chain and climbs to floor seven', () => {
+    // The canonical deep-entry state: the hero steps off the Floor 5 heart
+    // at 4 HP with the full clear's ATK 43 / DEF 43 behind it. Every fight
+    // below is the route's worst case, and the waystones carry it through.
+    const allLands: Rng = () => 0;
+    let session: SessionState = {
+      game: {
+        ...base,
+        mapId: 'floor6',
+        tile: { x: 5, y: 15 },
+        player: { hp: 4, attack: 43, defense: 43, agility: 5, gold: 134 },
+        discoveredSectionIds: ['floor6-inlet'],
+      },
+      pending: null,
+    };
+    const step = (direction: Direction) => {
+      const result = dispatchInput(
+        session,
+        { kind: 'move', direction },
+        allLands,
+      );
+      if (!result.ok)
+        throw new Error(
+          `step blocked (${result.reason}) at ${session.game.tile.x},${session.game.tile.y} moving ${direction}`,
+        );
+      session = result.session;
+      return result;
+    };
+    const replay = (moves: readonly Direction[]) => {
+      for (const move of moves)
+        expect(step(move).effect).toEqual({ kind: 'moved' });
+    };
+    const route = (to: Tile) => replay(routeMoves(session.game, to));
+    const fight = (
+      move: Direction,
+      enemyId: string,
+      hpLost: number,
+      gold: number,
+    ) => {
+      expect(step(move).effect).toMatchObject({
+        kind: 'combatPrompt',
+        enemyId,
+      });
+      expect(session.pending).toMatchObject({ kind: 'combat', enemyId });
+      const won = dispatchInput(session, { kind: 'confirm' }, allLands);
+      expect(won.ok).toBe(true);
+      if (!won.ok) return;
+      session = won.session;
+      expect(won.effect).toMatchObject({
+        kind: 'enemyDefeated',
+        enemyId,
+        hpLost,
+        gold,
+      });
+      expect(session.pending).toBeNull();
+      expect(session.game.defeatedEnemyIds).toContain(enemyId);
+    };
+    const game = () => session.game;
+
+    route({ x: 4, y: 11 });
+    expect(step('west').effect).toEqual({
+      kind: 'reward',
+      stat: 'hp',
+      amount: 100,
+    });
+    expect(game().player.hp).toBe(104);
+
+    route({ x: 7, y: 13 });
+    fight('east', 'floor6-inlet-guard', 30, 15);
+    expect(game().player.hp).toBe(74);
+    expect(step('east').effect).toEqual({ kind: 'moved' });
+    expect(step('east').effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor6',
+    });
+    expect(game().tile).toEqual({ x: 9, y: 11 });
+    expect(game().discoveredSectionIds).toContain('floor6-settling-tank');
+
+    route({ x: 13, y: 15 });
+    fight('south', 'floor6-settling-guard', 30, 15);
+    expect(game().player.hp).toBe(44);
+    expect(step('south').effect).toEqual({ kind: 'moved' });
+    expect(step('south').effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor6',
+    });
+    expect(game().tile).toEqual({ x: 17, y: 17 });
+
+    route({ x: 19, y: 21 });
+    fight('east', 'floor6-south-ambusher', 36, 18);
+    expect(game().player.hp).toBe(8);
+    expect(step('east').effect).toEqual({ kind: 'moved' });
+    expect(step('east').effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor6',
+    });
+    expect(game().tile).toEqual({ x: 21, y: 19 });
+
+    route({ x: 29, y: 20 });
+    expect(step('north').effect).toEqual({
+      kind: 'reward',
+      stat: 'hp',
+      amount: 85,
+    });
+    expect(game().player.hp).toBe(93);
+
+    route({ x: 27, y: 23 });
+    fight('east', 'floor6-pump-warden', 49, 25);
+    expect(game().player.hp).toBe(44);
+    expect(step('east').effect).toEqual({ kind: 'moved' });
+    expect(step('east').effect).toEqual({
+      kind: 'reward',
+      stat: 'attack',
+      amount: 2,
+    });
+    expect(game().player.attack).toBe(45);
+
+    route({ x: 22, y: 19 });
+    expect(step('west').effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor6',
+    });
+    expect(game().tile).toEqual({ x: 21, y: 21 });
+    route({ x: 17, y: 18 });
+    expect(step('north').effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor6',
+    });
+    expect(game().tile).toEqual({ x: 13, y: 17 });
+    expect(step('north').effect).toEqual({ kind: 'moved' });
+    expect(game().tile).toEqual({ x: 13, y: 16 });
+
+    route({ x: 15, y: 9 });
+    fight('north', 'floor6-settling-bulwark', 36, 20);
+    expect(game().player.hp).toBe(8);
+    expect(step('north').effect).toEqual({ kind: 'moved' });
+    expect(step('north').effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor6',
+    });
+    expect(game().tile).toEqual({ x: 17, y: 7 });
+
+    route({ x: 12, y: 5 });
+    expect(step('west').effect).toEqual({
+      kind: 'reward',
+      stat: 'hp',
+      amount: 110,
+    });
+    expect(game().player.hp).toBe(118);
+
+    route({ x: 19, y: 3 });
+    fight('east', 'floor6-sluice-guard', 18, 15);
+    expect(game().player.hp).toBe(100);
+    expect(step('east').effect).toEqual({ kind: 'moved' });
+    expect(step('east').effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor6',
+    });
+    expect(game().tile).toEqual({ x: 21, y: 1 });
+    expect(game().discoveredSectionIds).toContain('floor6-outflow');
+
+    route({ x: 29, y: 3 });
+    fight('south', 'floor6-outflow-sentinel', 35, 25);
+    expect(game().player.hp).toBe(65);
+    expect(step('south').effect).toEqual({ kind: 'moved' });
+    expect(step('south').effect).toEqual({
+      kind: 'traveled',
+      mapId: 'floor7',
+    });
+    expect(game().tile).toEqual({ x: 1, y: 1 });
+    expect(game().factIds).toContain('floor6-depth-stairs-used');
+    expect(game().discoveredSectionIds).toContain('floor7-north-west-wing');
+    expect(game().defeatedEnemyIds).toEqual([
+      'floor6-inlet-guard',
+      'floor6-settling-guard',
+      'floor6-south-ambusher',
+      'floor6-pump-warden',
+      'floor6-settling-bulwark',
+      'floor6-sluice-guard',
+      'floor6-outflow-sentinel',
+    ]);
+    expect(game().player.gold).toBe(267);
+  });
+
   it('descending the rear floor2 stair records the rear stair fact', () => {
     const { tile, move } = beside('floor2-rear-to-floor1', 'south');
     const state = { ...base, mapId: 'floor2' as const, tile };

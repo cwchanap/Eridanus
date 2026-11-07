@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { ASSET_PATHS } from '../../src/phaser/assets';
+import { ASSET_PATHS, PORTRAIT_PATHS } from '../../src/phaser/assets';
 import { journeyChapters, type Chapter, type Journey } from './journey';
 
 // The message box floats over the map at a fixed size, so no message may
@@ -472,7 +472,10 @@ const EXPLORER: readonly Chapter[] = [
 ];
 
 test('serves every runtime image in the asset catalog', async ({ request }) => {
-  for (const path of Object.values(ASSET_PATHS)) {
+  for (const path of [
+    ...Object.values(ASSET_PATHS),
+    ...Object.values(PORTRAIT_PATHS),
+  ]) {
     const response = await request.get(path);
     expect(response.ok(), `${path} should be served`).toBe(true);
     expect(response.headers()['content-type']).toContain('image/png');

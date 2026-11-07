@@ -7,7 +7,7 @@ import {
   resolveCombat,
   simulateFight,
 } from './combat';
-import type { EnemyEntity, Rng } from './types';
+import type { Blow, EnemyEntity, PlayerStats, Rng, Stat } from './types';
 
 const enemy = findEntityById('floor1-gatekeeper');
 if (!enemy || enemy.kind !== 'enemy') throw new Error('test enemy missing');
@@ -27,6 +27,41 @@ const rolls =
 
 // The gatekeeper has AGI 3, so a hero at 3 trades blows with it on even terms.
 const even = { hp: 30, attack: 10, defense: 2, agility: 3, gold: 0 };
+
+// Replays a route's bumps through the rules that spend or grant stats:
+// stat rewards add their amount, enemies are previewed then fought with
+// every blow landing; any other authored stop (a pad, lever, latch or
+// stair) just marks the path. Returns the stats the walk ends on, each
+// fight's blows and cost, and each stat reward's grant.
+const walkRoute = (route: readonly string[], start: PlayerStats) => {
+  let player = start;
+  const fights: { id: string; blows: readonly Blow[]; cost: number }[] = [];
+  const grants: { id: string; stat: Stat; amount: number }[] = [];
+  for (const id of route) {
+    const entity = findEntityById(id);
+    if (!entity) throw new Error(`${id} is not authored`);
+    if (entity.kind === 'reward') {
+      if (entity.grant !== 'stat') continue;
+      player = {
+        ...player,
+        [entity.stat]: player[entity.stat] + entity.amount,
+      };
+      grants.push({ id, stat: entity.stat, amount: entity.amount });
+      continue;
+    }
+    if (entity.kind !== 'enemy') continue;
+    const preview = previewCombat(player, entity.stats);
+    expect(preview.winnable, id).toBe(true);
+    if (!preview.winnable) throw new Error(`${id} is unwinnable`);
+    expect(preview.heroHit, id).toBe(1);
+    const { blows, won } = simulateFight(player, entity.stats, hits);
+    expect(won, id).toBe(true);
+    const cost = player.hp - blows[blows.length - 1]!.heroHp;
+    player = { ...player, hp: blows[blows.length - 1]!.heroHp };
+    fights.push({ id, blows, cost });
+  }
+  return { player, fights, grants };
+};
 
 describe('hit chance', () => {
   it('lands every blow unless the target is quicker', () => {
@@ -178,26 +213,189 @@ describe('combat', () => {
       'floor5-heart-waystone',
       'floor5-core-guardian',
     ];
-    let player = createInitialGameState().player;
-    for (const step of route) {
-      const entity = findEntityById(step);
-      if (entity?.kind === 'reward' && entity.grant === 'stat') {
-        player = {
-          ...player,
-          [entity.stat]: player[entity.stat] + entity.amount,
-        };
-        continue;
-      }
-      if (entity?.kind !== 'enemy') throw new Error(`${step} is not an enemy`);
-      const preview = previewCombat(player, entity.stats);
-      expect(preview.winnable, step).toBe(true);
-      if (!preview.winnable) return;
-      expect(preview.heroHit, step).toBe(1);
-      const { blows, won } = simulateFight(player, entity.stats, hits);
-      expect(won, step).toBe(true);
-      player = { ...player, hp: blows[blows.length - 1]!.heroHp };
-    }
+    const { player } = walkRoute(route, createInitialGameState().player);
     expect(player).toMatchObject({ hp: 4, attack: 16, defense: 6 });
+  });
+
+  it('keeps the required deep route winnable to the taproot at 4 HP', () => {
+    // The deep route starts where a full clear leaves the hero: on the
+    // Floor 5 heart tile at 4 HP, ATK 43 / DEF 43 — the stats every chest,
+    // waystone, ware and trade on Floors 1–5 plus the one ninth trade the
+    // leftover gold affords end on. Each waystone is sized for the fights
+    // after it, and the run's only item find is the rift key. With every
+    // blow landing the 25 fights cost 1,159 HP against 1,185 HP granted,
+    // so the taproot dies leaving exactly 30 HP.
+    const route = [
+      'floor6-inlet-waystone',
+      'floor6-inlet-guard',
+      'floor6-inlet-east-pad',
+      'floor6-settling-guard',
+      'floor6-settling-south-pad',
+      'floor6-south-ambusher',
+      'floor6-south-east-pad',
+      'floor6-pump-waystone',
+      'floor6-pump-warden',
+      'floor6-pump-cache',
+      'floor6-pump-west-pad',
+      'floor6-south-north-pad',
+      'floor6-settling-bulwark',
+      'floor6-settling-north-pad',
+      'floor6-sluice-waystone',
+      'floor6-sluice-guard',
+      'floor6-sluice-east-pad',
+      'floor6-outflow-sentinel',
+      'floor6-to-floor7',
+      'floor7-north-west-lever',
+      'floor7-wing-guard',
+      'floor7-south-east-door-guard',
+      'floor7-south-east-lever',
+      'floor7-south-east-waystone',
+      'floor7-south-east-warden',
+      'floor7-south-east-cache',
+      'floor7-reliquary-hatch',
+      'floor7-to-floor8',
+      'floor8-west-waystone',
+      'floor8-west-lancer',
+      'floor8-stair-guard',
+      'floor8-to-landing',
+      'floor9-underpass-east',
+      'floor8-east-waystone',
+      'floor8-gallery-warden',
+      'floor8-gallery-cache',
+      'floor8-rift-knight',
+      'floor8-rift-key',
+      'floor8-gallery-guard',
+      'floor8-gallery-armory',
+      'floor8-bridge-gate',
+      'floor8-to-floor9',
+      'floor9-top-waystone',
+      'floor9-top-warden',
+      'floor9-top-cache',
+      'floor9-top-ravager',
+      'floor9-middle-waystone',
+      'floor9-middle-ambusher',
+      'floor9-bottom-waystone',
+      'floor9-crossways-warden',
+      'floor9-to-floor10',
+      'floor10-root-waystone',
+      'floor10-middle-guard',
+      'floor10-middle-cache',
+      'floor10-west-ambusher',
+      'floor10-west-waystone',
+      'floor10-west-warden',
+      'floor10-east-lancer',
+      'floor10-east-waystone',
+      'floor10-east-warden',
+      'floor10-heart-hatch',
+      'floor10-heart-waystone',
+      'floor10-taproot',
+    ];
+    const { player, fights, grants } = walkRoute(route, {
+      hp: 4,
+      attack: 43,
+      defense: 43,
+      agility: 5,
+      gold: 134,
+    });
+    expect(fights.map(({ id }) => id)).toEqual([
+      'floor6-inlet-guard',
+      'floor6-settling-guard',
+      'floor6-south-ambusher',
+      'floor6-pump-warden',
+      'floor6-settling-bulwark',
+      'floor6-sluice-guard',
+      'floor6-outflow-sentinel',
+      'floor7-wing-guard',
+      'floor7-south-east-door-guard',
+      'floor7-south-east-warden',
+      'floor8-west-lancer',
+      'floor8-stair-guard',
+      'floor8-gallery-warden',
+      'floor8-rift-knight',
+      'floor8-gallery-guard',
+      'floor9-top-warden',
+      'floor9-top-ravager',
+      'floor9-middle-ambusher',
+      'floor9-crossways-warden',
+      'floor10-middle-guard',
+      'floor10-west-ambusher',
+      'floor10-west-warden',
+      'floor10-east-lancer',
+      'floor10-east-warden',
+      'floor10-taproot',
+    ]);
+    expect(fights.map(({ cost }) => cost)).toEqual([
+      30, 30, 36, 49, 36, 18, 35, 28, 28, 48, 55, 35, 64, 78, 28, 72, 0, 35, 48,
+      40, 36, 56, 50, 56, 168,
+    ]);
+    // A first-striker opens; everyone else answers the hero's blow. Under
+    // the route's all-land roll every blow connects, so each cost above is
+    // the fight's worst case.
+    for (const { id, blows } of fights) {
+      const fought = findEntityById(id) as EnemyEntity;
+      expect(blows[0]!.by, id).toBe(
+        fought.stats.firstStrike ? 'enemy' : 'hero',
+      );
+      expect(
+        blows.every((blow) => blow.hit),
+        id,
+      ).toBe(true);
+    }
+    expect(grants.map(({ stat, amount }) => [stat, amount])).toEqual([
+      ['hp', 100],
+      ['hp', 85],
+      ['attack', 2],
+      ['hp', 110],
+      ['hp', 50],
+      ['defense', 2],
+      ['hp', 90],
+      ['hp', 170],
+      ['attack', 2],
+      ['defense', 2],
+      ['hp', 75],
+      ['attack', 2],
+      ['hp', 35],
+      ['hp', 50],
+      ['hp', 80],
+      ['defense', 2],
+      ['hp', 110],
+      ['hp', 60],
+      ['hp', 170],
+    ]);
+    expect(player).toMatchObject({ hp: 30, attack: 49, defense: 49 });
+  });
+
+  it('pins the taproot as the authored final boss', () => {
+    const taproot = findEntityById('floor10-taproot');
+    if (taproot?.kind !== 'enemy') throw new Error('floor10-taproot missing');
+    expect(taproot.stats).toEqual({
+      hp: 96,
+      attack: 59,
+      defense: 41,
+      agility: 3,
+      firstStrike: true,
+      pierce: 4,
+    });
+    expect(taproot.gold).toBe(60);
+  });
+
+  it('walls a floor-five-clear hero out of the deep floors', () => {
+    // The required-only route ends at ATK 16 / DEF 6; each of Floor 6's
+    // first gates has DEF of at least 34, so its blows bounce off and the
+    // descent stair stays shut for a hero that never explored.
+    const spent = { hp: 4, attack: 16, defense: 6, agility: 5, gold: 0 };
+    for (const id of [
+      'floor6-inlet-mite',
+      'floor6-inlet-guard',
+      'floor6-inlet-darter',
+    ]) {
+      const gate = findEntityById(id);
+      if (gate?.kind !== 'enemy') throw new Error(`${id} missing`);
+      expect(previewCombat(spent, gate.stats), id).toEqual({
+        winnable: false,
+        reason: 'combat-unwinnable',
+      });
+    }
   });
 
   it('resolution commits the blows it played', () => {
