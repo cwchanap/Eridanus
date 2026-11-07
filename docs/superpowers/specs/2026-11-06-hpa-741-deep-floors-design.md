@@ -4,7 +4,7 @@
 >
 > **Linear:** https://linear.app/cwchanap/issue/HPA-741/tower-maze-build-floors-6-10-the-deep-floors-below-the-heart
 >
-> **Delivery:** One HPA-741 PR, initially docs-only and subsequently extended with implementation on the *same branch/PR*. New Taproot/sluice artwork belongs to HPA-742, not this PR.
+> **Delivery:** One HPA-741 PR, initially docs-only and subsequently extended with implementation on the _same branch/PR_. New Taproot/sluice artwork belongs to HPA-742, not this PR.
 
 ## Goal and player experience
 
@@ -36,13 +36,13 @@ Extend closed unions and registries where needed; **do not** introduce a new wor
 
 ### Floor-by-floor design contracts
 
-| Floor | Required play shape | Existing primitive / minimal extension |
-| --- | --- | --- |
-| **6 — Cisterns** | Nine isolated tanks; only paired sluice pads connect tanks. | Reciprocal `portal` pairs with `target.mapId: 'floor6'`; a `sluice-pad` asset key temporarily points at existing art. No new teleport entity or portal rule. |
-| **7 — Cloister** | Four quarter-turned wings surrounding a cloister; four linked bells control the central reliquary; two opposite pulls can leave all four thrown. | Existing `lever.links`, `openedShortcutIds` and `latch.leverIds`; preserve the approved links and placement exactly. |
-| **8 — Rift** | Chasm divides west/east. Travel through a Floor 9 underpass to reach the other side; open bridge gate from the east; item-gated lower stair uses a rift key found in the east. | Reciprocal cross-floor `portal` pairs, item `PortalLock`, `reward` for key, rear-side `latch` for the bridge. No one-way portal extension unless the approved source proves it indispensable. |
-| **9 — Crossways** | Three horizontal bands, each with three crossings guarded by different enemy types. One crossing per band suffices. Includes the Rift underpass. | Authored layout and ordinary enemy blockers, with reciprocal stairs between floors. Do not invent an additional dependency on defeating all three guards. |
-| **10 — Taproot** | Root-shaped passages; defeat two root wardens to unlock the heart hatch; Taproot boss guards heartwood and the lift home. | `latch.guardIds`, ordinary `EnemyEntity` with traits, `reward` item, reciprocal lift `portal`. |
+| Floor             | Required play shape                                                                                                                                                            | Existing primitive / minimal extension                                                                                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **6 — Cisterns**  | Nine isolated tanks; only paired sluice pads connect tanks.                                                                                                                    | Reciprocal `portal` pairs with `target.mapId: 'floor6'`; a `sluice-pad` asset key temporarily points at existing art. No new teleport entity or portal rule.                                  |
+| **7 — Cloister**  | Four quarter-turned wings surrounding a cloister; four linked bells control the central reliquary; two opposite pulls can leave all four thrown.                               | Existing `lever.links`, `openedShortcutIds` and `latch.leverIds`; preserve the approved links and placement exactly.                                                                          |
+| **8 — Rift**      | Chasm divides west/east. Travel through a Floor 9 underpass to reach the other side; open bridge gate from the east; item-gated lower stair uses a rift key found in the east. | Reciprocal cross-floor `portal` pairs, item `PortalLock`, `reward` for key, rear-side `latch` for the bridge. No one-way portal extension unless the approved source proves it indispensable. |
+| **9 — Crossways** | Three horizontal bands, each with three crossings guarded by different enemy types. One crossing per band suffices. Includes the Rift underpass.                               | Authored layout and ordinary enemy blockers, with reciprocal stairs between floors. Do not invent an additional dependency on defeating all three guards.                                     |
+| **10 — Taproot**  | Root-shaped passages; defeat two root wardens to unlock the heart hatch; Taproot boss guards heartwood and the lift home.                                                      | `latch.guardIds`, ordinary `EnemyEntity` with traits, `reward` item, reciprocal lift `portal`.                                                                                                |
 
 **Floor 8 progression invariant:** The ticket says the rift key is in the east half but a Floor 8 stair down needs that key. When Floors 8 and 9 are authored together, the **executable** cross-floor route test must reach the east-side rift key via an unlocked path (e.g. the Floor 9 underpass) **before** attempting that locked stair. If the approved layout fails the test, surface the concrete cycle for map review; do not silently move the key or invent a new portal rule.
 

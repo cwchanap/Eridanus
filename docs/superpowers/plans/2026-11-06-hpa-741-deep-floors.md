@@ -16,7 +16,7 @@ The approved five annotated maps and `/mnt/project-files/floors-6-10/tools/f6.py
 
 - [ ] Obtain the five HPA-741 approved annotated PNGs and, if available, the authoring tools `f6.py`–`f10.py`, `chain.py`, `explore.py`, `lib.py`. Use `lib.py emit()` once if helpful. Do **not** invent layout details or install these scripts as a runtime dependency.
 - [ ] Transcribe the authoritative data into reviewable `src/game/content/floor6.ts` … `floor10.ts` files **through the vertical slices below**. Review entity coordinates, stats and grants in those diffs. The committed map definitions, `validateContent()`, named reachability checks and route test are the durable records; **not a comment or commit message**.
-- [ ] Verify the complete cross-floor dependency graph with actual authored content. In particular Floor 8's east-side rift key must be accessible *before* its item-locked stair (possibly through Floor 9's underpass). If that test fails, report the exact approved-map conflict rather than silently changing the puzzle.
+- [ ] Verify the complete cross-floor dependency graph with actual authored content. In particular Floor 8's east-side rift key must be accessible _before_ its item-locked stair (possibly through Floor 9's underpass). If that test fails, report the exact approved-map conflict rather than silently changing the puzzle.
 - [ ] Establish one canonical, fixed-RNG fully upgraded Floor 6 entry state with explicit `HP_ENTRY`, `ATK 43`, `DEF 43`. Pin `HP_ENTRY` as a **number** after the approved route/budget data are available. **Never guess it from the unrelated required-only previous ending at HP 4.**
 - [ ] Check for source changes on `main` before adding runtime commits, especially Floor 5, combat, and release journeys.
 
