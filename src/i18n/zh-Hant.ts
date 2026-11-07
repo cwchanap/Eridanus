@@ -180,6 +180,7 @@ export const zhHant: Messages = {
     floor4: '高塔 第 4 層',
     floor5: '高塔 第 5 層',
     floor6: '高塔 第 6 層',
+    floor7: '高塔 第 7 層',
   },
   sections: {
     'village-square': '村莊廣場',
@@ -235,6 +236,12 @@ export const zhHant: Messages = {
     'floor6-pump-room': '泵房',
     'floor6-east-tank': '東水槽',
     'floor6-outflow': '出水口',
+    'floor7-north-west-wing': '西北棟',
+    'floor7-north-east-wing': '東北棟',
+    'floor7-south-east-wing': '東南棟',
+    'floor7-south-west-wing': '西南棟',
+    'floor7-cloister-walk': '迴廊步道',
+    'floor7-reliquary': '聖物龕',
   },
   npcs: {
     'village-warden': '守望長',
@@ -317,6 +324,9 @@ export const zhHant: Messages = {
       '一份沾滿淤泥的記錄：「這些水槽的水，會排進下方的根系。」',
     'floor6-sluice-log': '守塔人的日誌：「根系在吸取水流。」',
     'floor6-outflow-notice': '守塔人的告示：「下方的階梯通往迴廊。」',
+    'floor7-bell-rope':
+      '一條打了結的鐘繩：「四口鐘掛在同一條繩上——每拉一下，下一口也會跟著擺動。」',
+    'floor7-reliquary-record': '聖物龕的記錄：敲鐘人讓塔心保持清醒。',
   },
   access: {
     'village-lift-to-floor5':
@@ -359,6 +369,7 @@ export const zhHant: Messages = {
       '第 5 層聖所之下有一道被封住的階梯，通往深處的水槽群；只有村莊重獲新生之後才會開啟。',
     'floor5-depth-stairs-used':
       '第 5 層聖所之下的深層階梯通往第 6 層的水槽群。',
+    'floor6-depth-stairs-used': '出水口的階梯通往第 7 層的迴廊。',
   },
   dialogue: {
     'warden-main-lead': '到第一層去找能打開下層樓梯的徽記吧。',

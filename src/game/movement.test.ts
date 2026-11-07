@@ -260,6 +260,31 @@ describe('attemptMove', () => {
     expect(result.state.discoveredSectionIds).toContain('floor5-sanctum');
   });
 
+  it('the floor six depth stair travels to floor seven and records its fact', () => {
+    const { tile, move } = beside('floor6-to-floor7', 'south');
+    const onFloor6 = { ...base, mapId: 'floor6' as const, tile };
+    const result = attemptMove(onFloor6, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor7' });
+    expect(result.state).toMatchObject(portalTarget('floor6-to-floor7'));
+    expect(result.state.factIds).toContain('floor6-depth-stairs-used');
+    expect(result.state.discoveredSectionIds).toEqual([
+      'floor7-north-west-wing',
+    ]);
+  });
+
+  it('the floor seven arrival stair returns to the floor six outflow', () => {
+    const { tile, move } = beside('floor7-to-floor6', 'south');
+    const onFloor7 = { ...base, mapId: 'floor7' as const, tile };
+    const result = attemptMove(onFloor7, move);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.effect).toEqual({ kind: 'traveled', mapId: 'floor6' });
+    expect(result.state).toMatchObject(portalTarget('floor7-to-floor6'));
+    expect(result.state.discoveredSectionIds).toContain('floor6-outflow');
+  });
+
   it('descending the rear floor2 stair records the rear stair fact', () => {
     const { tile, move } = beside('floor2-rear-to-floor1', 'south');
     const state = { ...base, mapId: 'floor2' as const, tile };
@@ -511,6 +536,78 @@ describe('attemptMove', () => {
     expect(attemptMove({ ...inARow, tile }, move)).toMatchObject({
       ok: true,
       effect: { kind: 'latchWired', thrown: 2, total: 4 },
+    });
+  });
+
+  const bellLever = (wing: string) => `floor7-${wing}-lever`;
+  const pullBell = (
+    state: GameState,
+    wing: string,
+    side: Direction,
+  ): GameState => {
+    const { tile, move } = beside(bellLever(wing), side);
+    const result = attemptMove({ ...state, tile }, move);
+    if (!result.ok || result.effect.kind !== 'leverPulled')
+      throw new Error(`could not pull ${bellLever(wing)}`);
+    return result.state;
+  };
+  const onFloor7: GameState = { ...base, mapId: 'floor7' };
+
+  it('a bell lever swings the next wing lever with it', () => {
+    const { tile, move } = beside(bellLever('north-west'), 'north');
+    const result = attemptMove({ ...onFloor7, tile }, move);
+    expect(result.ok && result.effect).toEqual({
+      kind: 'leverPulled',
+      id: bellLever('north-west'),
+      thrown: true,
+      linked: 1,
+    });
+    expect(result.ok && [...result.state.openedShortcutIds].sort()).toEqual([
+      bellLever('north-east'),
+      bellLever('north-west'),
+    ]);
+  });
+
+  it('the reliquary hatch opens once two opposite bell levers are pulled', () => {
+    const { tile, move } = beside('floor7-reliquary-hatch', 'north');
+    const below = { ...onFloor7, tile };
+    expect(attemptMove(below, move)).toEqual({
+      ok: true,
+      state: below,
+      effect: {
+        kind: 'latchWired',
+        id: 'floor7-reliquary-hatch',
+        thrown: 0,
+        total: 4,
+      },
+    });
+    const pulled = pullBell(
+      pullBell(onFloor7, 'north-west', 'north'),
+      'south-east',
+      'south',
+    );
+    expect([...pulled.openedShortcutIds].sort()).toEqual([
+      bellLever('north-east'),
+      bellLever('north-west'),
+      bellLever('south-east'),
+      bellLever('south-west'),
+    ]);
+    const result = attemptMove({ ...pulled, tile }, move);
+    expect(result.ok && result.effect).toEqual({
+      kind: 'latchOpened',
+      id: 'floor7-reliquary-hatch',
+    });
+    const inARow = (
+      [
+        ['north-west', 'north'],
+        ['north-east', 'east'],
+        ['south-east', 'south'],
+        ['south-west', 'west'],
+      ] as const
+    ).reduce((state, [wing, side]) => pullBell(state, wing, side), onFloor7);
+    expect(attemptMove({ ...inARow, tile }, move)).toMatchObject({
+      ok: true,
+      effect: { kind: 'latchWired', thrown: 0, total: 4 },
     });
   });
 
