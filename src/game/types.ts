@@ -93,9 +93,9 @@ export type EnemyEntity = BaseEntity &
       attack: number;
       defense: number;
       agility: number;
-      firstStrike?: true; // enemy takes the opening turn
-      doubleStrike?: true; // uses the one fixed 40% rule
-      pierce?: number; // ignores up to N hero DEF
+      firstStrike?: true;
+      doubleStrike?: true;
+      pierce?: number;
     }>;
     gold: number;
   }>;

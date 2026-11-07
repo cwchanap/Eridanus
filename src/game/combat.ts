@@ -18,7 +18,6 @@ const MIN_HIT_PERCENT = 50;
 // A fight that has not ended by now is called lost, so a stuck Rng cannot
 // spin forever.
 const MAX_ROUNDS = 200;
-// A doubleStrike enemy's chance of a second swing each enemy turn.
 const DOUBLE_STRIKE_CHANCE = 0.4;
 
 export function hitChance(
@@ -30,11 +29,8 @@ export function hitChance(
 }
 
 // The fight's cost on average. Misses make the real one vary around it: the
-// hero swings first (unless the enemy has firstStrike, which adds one opening
-// enemy turn), the enemy answers every swing but the last — doubleStrike
-// adds a 40% follow-up to each answer — and the hero needs hitsNeeded /
-// heroHit swings on average to land hitsNeeded hits. Pierce shaves the
-// hero's DEF for the enemy's blows only.
+// hero swings first, the enemy answers every swing but the last, and the hero
+// needs hitsNeeded / heroHit swings on average to land hitsNeeded hits.
 export function previewCombat(
   player: PlayerStats,
   enemy: EnemyEntity['stats'],
@@ -58,10 +54,8 @@ export function previewCombat(
   return { winnable: true, hitsNeeded, hpLoss, heroHit, enemyHit };
 }
 
-// Plays a fight out blow by blow — the enemy opening it when it has
-// firstStrike — the two trading until one side is down. A blow lands when
-// its roll falls under the striker's hit chance, and pierce shaves the
-// hero's DEF for the enemy's blows only.
+// Plays a fight out blow by blow, hero first, the two trading until one side
+// is down. A blow lands when its roll falls under the striker's hit chance.
 export function simulateFight(
   player: PlayerStats,
   enemy: EnemyEntity['stats'],
@@ -77,8 +71,6 @@ export function simulateFight(
   let heroHp = player.hp;
   let enemyHp = enemy.hp;
   const blows: Blow[] = [];
-  // One enemy turn: a strike, then — when it can strike twice — a 40% roll
-  // for a follow-up with its own hit check. Returns false if the hero fell.
   const enemyTurn = (): boolean => {
     const enemyLands = rng() < enemyHit;
     if (enemyLands) heroHp = Math.max(0, heroHp - enemyDamage);
