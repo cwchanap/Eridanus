@@ -11,17 +11,23 @@ import {
   isTileBlockedByEntity,
   validateContent,
 } from './content';
+import { equippedWares } from './equipment';
 import { createInitialGameState } from './state';
 import { tileInDirection } from './geometry';
 import { village } from './content/village';
 import type {
+  EnemyEntity,
   Entity,
   MapDefinition,
   MapId,
   NpcEntity,
   NpcId,
   PortalEntity,
+  RewardEntity,
+  ShopEntity,
+  Stat,
   Tile,
+  TraderEntity,
 } from './types';
 
 const entity = (id: string): Entity => {
@@ -1429,6 +1435,107 @@ describe('authored content', () => {
       tile.y <= section.bounds.maxY;
     expect(inBounds(pocketPortal.tile)).toBe(true);
     expect(inBounds(entity('floor1-future-treasury').tile)).toBe(true);
+  });
+});
+
+describe('the floors one-to-five spending budget', () => {
+  const cleared = [
+    MAPS.village,
+    MAPS.floor1,
+    MAPS.floor2,
+    MAPS.floor3,
+    MAPS.floor4,
+    MAPS.floor5,
+  ].flatMap((map) => map.entities);
+  const enemies = cleared.filter(
+    (candidate): candidate is EnemyEntity => candidate.kind === 'enemy',
+  );
+  const chests = cleared.filter(
+    (candidate): candidate is RewardEntity & { grant: 'stat' } =>
+      candidate.kind === 'reward' && candidate.grant === 'stat',
+  );
+  const grants = (stat: Stat): number =>
+    chests
+      .filter((chest) => chest.stat === stat)
+      .reduce((total, chest) => total + chest.amount, 0);
+  const wares = cleared
+    .filter((candidate): candidate is ShopEntity => candidate.kind === 'shop')
+    .flatMap((shop) => shop.wares);
+  const trader = cleared.find(
+    (candidate): candidate is TraderEntity => candidate.kind === 'trader',
+  );
+  if (!trader) throw new Error('no trader authored');
+  const worn = equippedWares(wares.map((ware) => ware.itemId));
+  const priceAt = (made: number) => trader.basePrice + trader.priceStep * made;
+  const purse =
+    enemies.reduce((total, enemy) => total + enemy.gold, 0) -
+    wares.reduce((total, ware) => total + ware.price, 0) -
+    Array.from({ length: 8 }, (_, made) => priceAt(made)).reduce(
+      (total, price) => total + price,
+      0,
+    );
+
+  it('drops all its gold from exactly 118 enemies', () => {
+    expect(enemies).toHaveLength(118);
+    expect(enemies.reduce((total, enemy) => total + enemy.gold, 0)).toBe(1054);
+  });
+
+  it('grants +22 attack and +30 defense from its chests', () => {
+    expect(grants('attack')).toBe(22);
+    expect(grants('defense')).toBe(30);
+  });
+
+  it('sells nine wares for 400 gold, the last pair worn worth +7/+7', () => {
+    expect(wares).toHaveLength(9);
+    expect(wares.reduce((total, ware) => total + ware.price, 0)).toBe(400);
+    expect(worn.weapon).toMatchObject({ stat: 'attack', amount: 7 });
+    expect(worn.armor).toMatchObject({ stat: 'defense', amount: 7 });
+  });
+
+  it('prices eight trades at 30 through 100, leaving 134 gold', () => {
+    expect(Array.from({ length: 8 }, (_, made) => priceAt(made))).toEqual([
+      30, 40, 50, 60, 70, 80, 90, 100,
+    ]);
+    expect(purse).toBe(134);
+  });
+
+  it('lands the four-and-four split on 43 attack and 43 defense', () => {
+    const base = createInitialGameState().player;
+    expect(base.attack + grants('attack') + worn.weapon!.amount + 4).toBe(43);
+    expect(base.defense + grants('defense') + worn.armor!.amount + 4).toBe(43);
+  });
+
+  it('leaves a ninth trade affordable to correct a short stat', () => {
+    expect(priceAt(8)).toBe(110);
+    expect(purse).toBeGreaterThanOrEqual(priceAt(8));
+    const base = createInitialGameState().player;
+    const attack = base.attack + grants('attack') + worn.weapon!.amount;
+    const defense = base.defense + grants('defense') + worn.armor!.amount;
+    expect({ attack: attack + 5, defense: defense + 3 }).toEqual({
+      attack: 44,
+      defense: 42,
+    });
+    expect({ attack: attack + 5, defense: defense + 4 }).toEqual({
+      attack: 44,
+      defense: 43,
+    });
+    expect({ attack: attack + 3, defense: defense + 5 }).toEqual({
+      attack: 42,
+      defense: 44,
+    });
+    expect({ attack: attack + 4, defense: defense + 5 }).toEqual({
+      attack: 43,
+      defense: 44,
+    });
+  });
+
+  it('banks 656 hp against the 652 the full clear spends', () => {
+    const pool =
+      createInitialGameState().player.hp +
+      grants('hp') +
+      (worn.accessory?.stat === 'hp' ? worn.accessory.amount : 0);
+    expect(pool).toBe(656);
+    expect(pool - 652).toBe(4);
   });
 });
 

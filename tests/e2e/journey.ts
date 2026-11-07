@@ -193,17 +193,25 @@ export class Journey {
     if (!page || !effect) return;
     if (effect.kind === 'combatPrompt')
       await expect(page.getByTestId('combat-prompt')).toBeVisible();
+    else if (effect.kind === 'purchasePrompt')
+      await expect(page.getByTestId('purchase-prompt')).toBeVisible();
+    else if (effect.kind === 'tradePrompt')
+      await expect(page.getByTestId('trade-prompt')).toBeVisible();
     else if (effect.kind === 'traveled')
       await expect(page.getByTestId('map-name')).toHaveAttribute(
         'data-map-id',
         effect.mapId,
       );
-    else if (effect.kind !== 'moved' && effect.kind !== 'purchasePrompt')
+    else if (effect.kind !== 'moved')
       await expect(page.getByTestId('effect')).toHaveAttribute(
         'data-effect',
         effect.kind,
       );
-    if (effect.kind !== 'combatPrompt' && effect.kind !== 'purchasePrompt')
+    if (
+      effect.kind !== 'combatPrompt' &&
+      effect.kind !== 'purchasePrompt' &&
+      effect.kind !== 'tradePrompt'
+    )
       await this.expectInSync();
   }
 
@@ -292,15 +300,15 @@ export class Journey {
     via: string,
     key: string,
     button: string,
-  ): Promise<void> {
+  ): Promise<ActionEffect | null> {
     if (via === key) {
-      await this.input(command, key);
-      return;
+      return this.input(command, key);
     }
     const result = dispatchInput(this.session, command, hits);
     if (!result.ok) throw new Error(`${button}: ${result.reason}`);
     this.session = result.session;
     await this.page?.getByRole('button', { name: button }).click();
+    return result.effect;
   }
 
   async fight(
@@ -310,6 +318,36 @@ export class Journey {
   ): Promise<void> {
     await this.prompt(id);
     await this.confirm(via, skip);
+  }
+
+  async buy(id: string, via: 'Enter' | 'click' = 'Enter'): Promise<void> {
+    await this.expectBump(id, 'purchasePrompt');
+    const effect = await this.answer({ kind: 'confirm' }, via, 'Enter', 'Buy');
+    if (effect?.kind !== 'purchased')
+      throw new Error(`${id}: expected purchased, got ${effect?.kind}`);
+    if (this.session.pending) throw new Error('the purchase did not resolve');
+    await this.check(async (page) => {
+      await expect(page.getByTestId('effect')).toHaveAttribute(
+        'data-effect',
+        'purchased',
+      );
+    });
+    await this.expectInSync();
+  }
+
+  async trade(id: string, index: number): Promise<void> {
+    await this.expectBump(id, 'tradePrompt');
+    const effect = await this.input({ kind: 'choose', index }, `${index + 1}`);
+    if (effect?.kind !== 'traded')
+      throw new Error(`${id}: expected traded, got ${effect?.kind}`);
+    if (this.session.pending) throw new Error('the trade did not resolve');
+    await this.check(async (page) => {
+      await expect(page.getByTestId('effect')).toHaveAttribute(
+        'data-effect',
+        'traded',
+      );
+    });
+    await this.expectInSync();
   }
 
   // With nothing pending, Enter just closes the shown message.
