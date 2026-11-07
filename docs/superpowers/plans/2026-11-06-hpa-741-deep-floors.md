@@ -1,6 +1,6 @@
 # HPA-741 — Floors 6–10 Implementation Plan
 
-> **Status:** Revised draft after PR #39 design review; implementation has **not** started.
+> **Status:** Design approved in PR #39 re-review; both non-blocking test-helper notes are covered below. Implementation has **not** started.
 >
 > **Design:** `docs/superpowers/specs/2026-11-06-hpa-741-deep-floors-design.md`
 >
