@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { attemptMove } from './movement';
+import { dispatchInput } from './session';
 import {
   findEntityById,
   getEntityAt,
@@ -7,7 +8,7 @@ import {
   isTileBlockedByEntity,
 } from './content';
 import { tileInDirection } from './geometry';
-import type { Direction, GameState, Tile } from './types';
+import type { Direction, GameState, Rng, SessionState, Tile } from './types';
 
 const OPPOSITE: Record<Direction, Direction> = {
   north: 'south',
@@ -781,124 +782,136 @@ describe('attemptMove', () => {
       }
       throw new Error(`no route from ${key(state.tile)} to ${key(to)}`);
     };
-    const replay = (state: GameState, moves: readonly Direction[]) => {
-      let current = state;
-      for (const move of moves) {
-        const result = attemptMove(current, move);
-        if (!result.ok)
-          throw new Error(
-            `replay blocked (${result.reason}) at ${current.tile.x},${current.tile.y} moving ${move}`,
-          );
-        current = result.state;
-      }
-      return current;
+    const allLands: Rng = () => 0;
+    let session: SessionState = {
+      game: {
+        ...base,
+        mapId: 'floor8',
+        tile: { x: 3, y: 1 },
+        player: { hp: 600, attack: 45, defense: 45, agility: 5, gold: 0 },
+        discoveredSectionIds: ['floor8-west-tangle'],
+      },
+      pending: null,
     };
-    const route = (to: Tile) => {
-      state = replay(state, routeMoves(state, to));
+    const step = (direction: Direction) => {
+      const result = dispatchInput(
+        session,
+        { kind: 'move', direction },
+        allLands,
+      );
+      if (!result.ok)
+        throw new Error(
+          `step blocked (${result.reason}) at ${session.game.tile.x},${session.game.tile.y} moving ${direction}`,
+        );
+      session = result.session;
+      return result;
     };
-    const fight = (from: Tile, move: Direction, enemyId: string) => {
-      const prompt = attemptMove({ ...state, tile: from }, move);
-      expect(prompt.ok && prompt.effect).toMatchObject({
+    const replay = (moves: readonly Direction[]) => {
+      for (const move of moves)
+        expect(step(move).effect).toEqual({ kind: 'moved' });
+    };
+    const route = (to: Tile) => replay(routeMoves(session.game, to));
+    const fight = (
+      move: Direction,
+      enemyId: string,
+      hpLost: number,
+      gold: number,
+    ) => {
+      expect(step(move).effect).toMatchObject({
         kind: 'combatPrompt',
         enemyId,
       });
-      state = {
-        ...state,
-        tile: from,
-        defeatedEnemyIds: [...state.defeatedEnemyIds, enemyId],
-      };
+      expect(session.pending).toMatchObject({ kind: 'combat', enemyId });
+      const won = dispatchInput(session, { kind: 'confirm' }, allLands);
+      expect(won.ok).toBe(true);
+      if (!won.ok) return;
+      session = won.session;
+      expect(won.effect).toMatchObject({
+        kind: 'enemyDefeated',
+        enemyId,
+        hpLost,
+        gold,
+      });
+      expect(session.pending).toBeNull();
+      expect(session.game.defeatedEnemyIds).toContain(enemyId);
     };
-    let state: GameState = {
-      ...base,
-      mapId: 'floor8',
-      tile: { x: 3, y: 1 },
-      player: { hp: 600, attack: 45, defense: 45, agility: 5, gold: 0 },
-      discoveredSectionIds: ['floor8-west-tangle'],
-    };
+    const game = () => session.game;
 
     route({ x: 3, y: 11 });
-    fight({ x: 3, y: 11 }, 'south', 'floor8-west-lancer');
+    fight('south', 'floor8-west-lancer', 55, 20);
+    expect(game().player.hp).toBe(545);
 
     route({ x: 4, y: 15 });
-    const locked = attemptMove(state, 'west');
-    expect(locked.ok && locked.effect).toEqual({
+    expect(step('west').effect).toEqual({
       kind: 'accessLocked',
       entityId: 'floor8-to-floor9',
     });
-    if (locked.ok) {
-      expect(locked.state.tile).toEqual({ x: 4, y: 15 });
-      expect(locked.state.factIds).toContain('floor8-depth-seal-seen');
-      expect(locked.state.itemIds).toEqual([]);
-      state = locked.state;
-    }
+    expect(game().tile).toEqual({ x: 4, y: 15 });
+    expect(game().factIds).toContain('floor8-depth-seal-seen');
+    expect(game().itemIds).toEqual([]);
 
     route({ x: 11, y: 23 });
-    fight({ x: 11, y: 23 }, 'west', 'floor8-stair-guard');
+    fight('west', 'floor8-stair-guard', 35, 20);
+    expect(game().player.hp).toBe(510);
     route({ x: 9, y: 22 });
-    const down = attemptMove(state, 'north');
-    expect(down.ok && down.effect).toEqual({
+    expect(step('north').effect).toEqual({
       kind: 'traveled',
       mapId: 'floor9',
     });
-    if (down.ok) state = down.state;
-    expect(state.tile).toEqual({ x: 1, y: 3 });
-    expect(state.discoveredSectionIds).toContain('floor9-underpass');
+    expect(game().tile).toEqual({ x: 1, y: 3 });
+    expect(game().discoveredSectionIds).toContain('floor9-underpass');
 
     route({ x: 6, y: 1 });
-    const up = attemptMove(state, 'west');
-    expect(up.ok && up.effect).toEqual({
+    expect(step('west').effect).toEqual({
       kind: 'traveled',
       mapId: 'floor8',
     });
-    if (up.ok) state = up.state;
-    expect(state.tile).toEqual({ x: 31, y: 1 });
-    expect(state.discoveredSectionIds).toContain('floor8-east-gallery');
+    expect(game().tile).toEqual({ x: 31, y: 1 });
+    expect(game().discoveredSectionIds).toContain('floor8-east-gallery');
 
     route({ x: 25, y: 11 });
-    fight({ x: 25, y: 11 }, 'east', 'floor8-rift-knight');
-    const onto = attemptMove(state, 'east');
-    expect(onto.ok && onto.effect).toEqual({ kind: 'moved' });
-    if (onto.ok) state = onto.state;
-    expect(state.tile).toEqual({ x: 26, y: 11 });
-    const keyChest = attemptMove(state, 'east');
-    expect(keyChest.ok && keyChest.effect).toEqual({
+    fight('east', 'floor8-rift-knight', 104, 32);
+    expect(game().player.hp).toBe(406);
+    expect(step('east').effect).toEqual({ kind: 'moved' });
+    expect(game().tile).toEqual({ x: 26, y: 11 });
+    expect(step('east').effect).toEqual({
       kind: 'itemReward',
       itemId: 'rift-key',
     });
-    if (keyChest.ok) state = keyChest.state;
-    expect(state.itemIds).toContain('rift-key');
+    expect(game().itemIds).toContain('rift-key');
 
     route({ x: 18, y: 13 });
-    const bar = attemptMove(state, 'west');
-    expect(bar.ok && bar.effect).toEqual({
+    expect(step('west').effect).toEqual({
       kind: 'latchOpened',
       id: 'floor8-bridge-gate',
     });
-    if (bar.ok) state = bar.state;
-    expect(state.openedShortcutIds).toContain('floor8-bridge-gate');
+    expect(game().tile).toEqual({ x: 18, y: 13 });
+    expect(game().openedShortcutIds).toContain('floor8-bridge-gate');
 
     route({ x: 4, y: 15 });
-    const open = attemptMove(state, 'west');
-    expect(open.ok && open.effect).toEqual({
+    expect(step('west').effect).toEqual({
       kind: 'traveled',
       mapId: 'floor9',
     });
-    if (open.ok) state = open.state;
-    expect(state.tile).toEqual({ x: 1, y: 5 });
-    expect(state.factIds).toContain('floor8-depth-stairs-used');
-    expect(state.discoveredSectionIds).toContain('floor9-top-band');
+    expect(game().tile).toEqual({ x: 1, y: 5 });
+    expect(game().factIds).toContain('floor8-depth-stairs-used');
+    expect(game().discoveredSectionIds).toContain('floor9-top-band');
 
-    const stepOff = attemptMove(state, 'east');
-    if (stepOff.ok) state = stepOff.state;
-    expect(state.tile).toEqual({ x: 2, y: 5 });
-    const back = attemptMove(state, 'west');
-    expect(back.ok && back.effect).toEqual({
+    expect(step('east').effect).toEqual({ kind: 'moved' });
+    expect(game().tile).toEqual({ x: 2, y: 5 });
+    expect(step('west').effect).toEqual({
       kind: 'traveled',
       mapId: 'floor8',
     });
-    if (back.ok) state = back.state;
-    expect(state.tile).toEqual({ x: 3, y: 15 });
-    expect(state.discoveredSectionIds).toContain('floor8-lower-tangle');
+    expect(game().tile).toEqual({ x: 3, y: 15 });
+    expect(game().discoveredSectionIds).toContain('floor8-lower-tangle');
+    expect(game().defeatedEnemyIds).toEqual([
+      'floor8-west-lancer',
+      'floor8-stair-guard',
+      'floor8-rift-knight',
+    ]);
+    expect(game().player.hp).toBe(406);
+    expect(game().player.gold).toBe(72);
   });
 
   it('returns through the treasury stair, records the fact, and discovers the workshop treasury', () => {
