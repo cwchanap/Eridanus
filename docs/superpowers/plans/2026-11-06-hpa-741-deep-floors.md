@@ -1,92 +1,107 @@
 # HPA-741 — Floors 6–10 Implementation Plan
 
-> **Status:** Draft; implementation has not started. Follow the approved HPA-741 maps rather than inventing a new layout.
+> **Status:** Revised draft after PR #39 design review; implementation has **not** started.
 >
-> **Spec:** `docs/superpowers/specs/2026-11-06-hpa-741-deep-floors-design.md`
+> **Design:** `docs/superpowers/specs/2026-11-06-hpa-741-deep-floors-design.md`
 >
-> **Workflow:** **One ticket, one PR.** Add implementation commits to this draft PR after review; do **not** create a separate implementation PR or split this ticket into per-floor PRs. HPA-742 remains a separate art-generation task/PR.
+> **Workflow:** **One HPA-741 ticket = one PR.** Add code commits to this existing draft PR after reviewing the design. Each stage below is a **commit/checkpoint**, not a separate ticket or PR. New Taproot/sluice art belongs exclusively to HPA-742.
 
-## Before writing map code: source and proof checks
+## Verified base and blockers
 
-- [ ] Retrieve the five annotated maps from HPA-741 (Floor 6–10), plus `/mnt/project-files/floors-6-10/tools/` if available to the implementing worker. These files are **not in the repository** at drafting time; the Linear attachments are the fallback source. Do not start by guessing map rows from the ticket description.
-- [ ] Re-run or inspect `chain.py` and `explore.py` if the tools are available; record the 25 encounter sequence, every stat grant/waystone, coordinates/IDs, staircase pair, and expected end HP in the implementation commit. Treat `f6.py`–`f10.py` and the approved annotated PNGs as authoritative.
-- [ ] **Resolve the Floor 8 dependency graph before implementation**: verify a player can reach the *east* key via a pre-key Floor 9 underpass/other approved route, then unlock the item-gated Floor 8 stair. If this is impossible in the approved maps, report the concrete cycle in the PR and have the source corrected; do not silently improvise a different maze.
-- [ ] Trace the existing optional stat sources/shops/trades and the intended start state to substantiate the **ATK 43 / DEF 43** Floor 6 entry baseline. The existing required-only route ends at ATK 16 / DEF 6 / HP 4, so it is **not** the hero used to balance the second act.
-- [ ] Inspect current `main` immediately before implementation for changes to combat, Floor 5, the content registry or release tests, and update the plan only where source has changed.
+The current `main` already has `MAPS`/`MapId`, reciprocal portals (including same-floor portals), fact/item `PortalLock`, linked levers, guarded/rear latches, one-time items and HP grants, idempotent fact progression, and replay from ordered `Blow[]`. Reuse these without adding new game systems.
 
-## Task 1 — Combat traits first (pure rules, tested)
+The approved five annotated maps and `/mnt/project-files/floors-6-10/tools/f6.py` … `f10.py` are referenced in Linear HPA-741, **not stored in this repo**. No exact map coordinates, encounter list or Floor 6 **entry HP** have been independently verified in the docs-only branch. Map-data approval remains **conditional** until these values are committed as authored TypeScript and checked by tests.
 
-**Modify:** `src/game/types.ts`, `src/game/combat.ts`, `src/game/combat.test.ts`.
+**Preimplementation checks**
 
-- [ ] Add `firstStrike?: boolean`, `doubleStrike?: number`, `pierce?: number` to enemy stats. Document units (follow-up probability in [0,1]; pierce nonnegative DEF points) and validate authored values, without inventing a trait registry.
-- [ ] Keep `hitChance`, `Rng`, the `Blow[]` contract and `resolveCombat` outcome ownership. Implement an enemy-turn helper: attempt a normal enemy strike; roll for an optional second strike; each strike gets its own hit roll and ends the fight immediately if HP reaches zero. Handle the initial enemy turn for first strike before hero attack.
-- [ ] Use the same mechanics in `previewCombat`'s estimated HP loss. In the trait-free case retain the existing calculation exactly so all previous preview fixtures pass. For first strike, include the enemy's opening turn; for double strike, include its expected extra rate; for pierce, reduce effective hero DEF by at most `pierce`.
-- [ ] Add focused fixtures for: traitless baseline; first-strike opening even if the hero would kill in one blow; Twinblade 0%, 40% and deterministic proc/no-proc paths; independent follow-up hit rolls; pierce when DEF is below/above 4; combined first-strike + pierce boss; lethal preview; loss/replay consistency; RNG sequence. Ensure zero-damage rounds still obey the current maximum-round guard.
-- [ ] Verify: `bunx vitest run src/game/combat.test.ts`.
+- [ ] Obtain the five HPA-741 approved annotated PNGs and, if available, the authoring tools `f6.py`–`f10.py`, `chain.py`, `explore.py`, `lib.py`. Use `lib.py emit()` once if helpful. Do **not** invent layout details or install these scripts as a runtime dependency.
+- [ ] Transcribe the authoritative data into reviewable `src/game/content/floor6.ts` … `floor10.ts` files **through the vertical slices below**. Review entity coordinates, stats and grants in those diffs. The committed map definitions, `validateContent()`, named reachability checks and route test are the durable records; **not a comment or commit message**.
+- [ ] Verify the complete cross-floor dependency graph with actual authored content. In particular Floor 8's east-side rift key must be accessible *before* its item-locked stair (possibly through Floor 9's underpass). If that test fails, report the exact approved-map conflict rather than silently changing the puzzle.
+- [ ] Establish one canonical, fixed-RNG fully upgraded Floor 6 entry state with explicit `HP_ENTRY`, `ATK 43`, `DEF 43`. Pin `HP_ENTRY` as a **number** after the approved route/budget data are available. **Never guess it from the unrelated required-only previous ending at HP 4.**
+- [ ] Check for source changes on `main` before adding runtime commits, especially Floor 5, combat, and release journeys.
 
-**Design constraint:** no second combat engine, no special boss scene, no new `GameState` fields and no unrelated rebalancing.
+## Checkpoint 1 — Combat traits, no floor code
 
-## Task 2 — Author the approved floor maps and portals
+**Modify:** `src/game/types.ts`, `src/game/combat.ts`, `src/game/combat.test.ts`. Optionally make the minimal preview-card change in `src/ui/InteractionOverlay.ts` in this checkpoint; full translations land alongside the first floor/enemy content that references them.
 
-**Add:** `src/game/content/floor6.ts` through `floor10.ts`.
+- [ ] Extend enemy stats with `firstStrike?: true`, `doubleStrike?: true`, `pierce?: number`. `doubleStrike` is a capability **flag**, with `DOUBLE_STRIKE_CHANCE = 0.4` in `combat.ts`. No probability registry/range validator is warranted for a single rate. Validate only nonnegative `pierce` in the existing content validator.
+- [ ] An enemy turn is: roll the first blow's hit check; stop on hero death; if `doubleStrike`, roll `rng() < 0.4` **after** the first hit roll; if true, roll the follow-up hit and append another `Blow`. Run an opening enemy turn for `firstStrike`. Preserve hit/miss and existing `MAX_ROUNDS` behavior.
+- [ ] Use effective hero DEF `max(0, hero.defense - (pierce ?? 0))` for incoming damage. Keep the old trait-free combat preview math **exactly** and add first-strike opening loss / expected follow-up count / pierce damage to traited forecasts.
+- [ ] Test first-strike order (including when the hero could kill in one blow), independent first/follow-up hit checks, proc and no-proc rolls, `() => 0` always proccing + landing the follow-up, combined Taproot traits, low/high DEF pierce, preview/lethality, win/loss, and replay `Blow[]` order.
+- [ ] Keep battle replay on the existing `Blow[]` path in `main.ts`/`WorldScene`. The decision-time preview shows localized trait descriptions. Replay conveys first strikes, follow-ups and piercing through the actual blow order/damage, **not new redundant static trait badges**.
+- [ ] Verify: `bun run typecheck && bun run test:unit` (and formatter before committing).
 
-**Modify:** `src/game/types.ts` (`MapId`), `src/game/content.ts` (`MAPS`), `src/game/content/floor5.ts`, `src/game/content/village.ts`, `src/game/content/facts.ts`, and associated content tests.
+## Checkpoint 2 — Floor 5 stair + Floor 6 vertical slice
 
-- [ ] Transcribe each approved ASCII layout, sections and entity list; if `lib.py emit()` helps, use its output as a **one-time authoring aid** and review the generated TS. Do not add a runtime Python or map-generation dependency.
-- [ ] **Floor 6:** Build all nine isolated tanks, paired same-floor reciprocal sluice-pad portals and approved rewards/fights. Use the temporary `sluice-pad` art key; no new entity kind.
-- [ ] **Floor 7:** Build quarter-rotated wings and four linked levers; the two documented opposite pulls must throw all four and release the reliquary latch. Use the current lever/wired-latch semantics.
-- [ ] **Floor 8:** Build split chasm, cross-floor underpass via Floor 9, east-side bridge latch, item-requiring stair and east-half rift-key reward. Pin the valid unlock/traversal order in tests.
-- [ ] **Floor 9:** Build three horizontal bands with three independently guarded crossing choices per band. Author the required choice rather than changing the rule so each guard becomes globally mandatory. Connect its ordinary stairs and underpass reciprocity.
-- [ ] **Floor 10:** Build two root-warden guards, guarded heart hatch, Taproot enemy, heartwood item and reciprocal village lift.
-- [ ] **Floor 5:** Move the existing heart waystone `(11,9) → (10,9)`; add a fact-gated stair at `(11,9)` with `requiresFactId: 'main-village-restored'`, pointing to Floor 6 `(5,15)`. Keep old core guardian, Restoration Core and Floor 5 lift untouched.
-- [ ] **Village:** Add the new reciprocal Floor 10 lift on an unoccupied floor tile, preserving `village-lift-to-floor5`. Pick the approved position and update its section if needed.
-- [ ] Extend the existing content validator only when a *real* rule invariant is missing (e.g., nonnegative trait values); no generic condition language. Assert section coverage, no duplicate tile/ID, valid facts and items, and portal reciprocity.
-- [ ] Verify: `bunx vitest run src/game/content.test.ts src/game/movement.test.ts`.
+**Add:** `src/game/content/floor6.ts`.
 
-**Source-of-truth rule:** do not replace exact coordinates/stat grants in the approved maps with “roughly equivalent” placements. Every expected entity ID/coordinate and route gate comes from the maps/tools.
+**Modify together:** `src/game/types.ts`, `src/game/content.ts`, `src/game/content/floor5.ts`, `src/game/content/facts.ts`, `src/phaser/assets.ts`, **all three** `src/i18n` language tables, `src/game/content.test.ts` and `src/game/movement.test.ts`.
 
-## Task 3 — Wire enemy art and trait presentation
+- [ ] Author the approved nine disconnected tanks, their exact paired same-floor sluice portals, enemies, waystones, sections and stairs. A `portal` already supports these pads; no new entity kind or teleport engine.
+- [ ] Move `floor5-heart-waystone` `(11,9) → (10,9)`. Add a fact-locked Floor 5 → Floor 6 stair at `(11,9)` requiring `main-village-restored`, with `lockedFactId: 'floor5-deep-stair-seen'` and reciprocal Floor 6 arrival at `(5,15)`. Register the sighting fact and EN/繁中/日本語 note + access strings.
+- [ ] Cherry-pick `2bec23f` **once** (it contains exactly the existing 12 PNGs for the six new enemy sprites and portraits). Register all six enemy art/portrait paths, a stable `enemy-taproot` placeholder alias to the ruin-sentinel sprite **and portrait**, and a stable `sluice-pad` placeholder alias. Do not generate new art in this PR.
+- [ ] Add `floor6` to `MapId`, `MAPS`, `TERRAIN_BY_MAP`, EN/繁中/日本語 map/section/clue/enemy/item tables **in the same commit**. Keep assets and localization compile-complete; no `Record<MapId, ...>` holes.
+- [ ] Extend existing `validateContent()` and `content.test.ts` rather than duplicating validation. Pin all nine reachable tanks via reciprocal pads and require the Floor 5 fact gate to deny/allow as authored.
+- [ ] Verify: `bun run typecheck && bun run test:unit`.
 
-**Modify:** `src/phaser/assets.ts`, `src/ui/InteractionOverlay.ts`, `src/phaser/assets.test.ts`, related presentational tests as appropriate.
+## Checkpoint 3 — Floor 7 vertical slice
 
-- [ ] Selectively bring the existing **12** completed enemy PNG files from Git commit `2bec23f`: six map sprites under `public/assets/enemies/` and six portraits under `public/assets/portraits/`. Do not merge the whole art branch.
-- [ ] Register six enemy keys and portrait paths. Add a stable `enemy-taproot` key temporarily pointing at the existing ruin-sentinel files, and `sluice-pad` temporarily pointing at a current floor interactable. Leave replacement art for HPA-742.
-- [ ] Map Floors 6–10 to existing dungeon terrain, and add English/Chinese/Japanese enemy names via the current asset-key lookup.
-- [ ] Show localized first-strike/follow-up/pierce indicators in `renderEncounter` **and** `renderBattle` using the enemy's authored stats. Keep one existing encounter card and replay pipeline; ordered `Blow[]` already drives visible first and consecutive strikes.
-- [ ] Assert the UI accurately labels each trait and the replay displays enemy opening/follow-up blows and piercing effects. Avoid new overlay state or a trait-specific animation subsystem.
-- [ ] Verify asset paths are served and portrait sizing remains within the established 96×96 map / 64×64 portrait contract.
+**Add:** `src/game/content/floor7.ts`.
 
-## Task 4 — Items, story, journal, and three languages
+**Modify together:** `MapId`, `MAPS`, `TERRAIN_BY_MAP`, EN/繁中/日本語 tables, `src/game/content.test.ts` and relevant existing movement tests.
 
-**Modify:** `src/game/dialogue.ts`, `src/game/journal.ts`, `src/game/content/facts.ts`, `src/i18n/en.ts`, `src/i18n/zh-Hant.ts`, `src/i18n/ja.ts` and their unit tests.
+- [ ] Use approved layout: quarter-rotated wings, bell levers and reliquary. Configure `lever.links` and wired `latch.leverIds` rather than a special puzzle rule.
+- [ ] Record the two opposite lever bumps that leave all four thrown; reuse the existing gate/lever regression cases. Connect reciprocal stairs with Floor 6.
+- [ ] Verify: `bun run typecheck && bun run test:unit`.
 
-- [ ] Use existing reward and item arrays for rift key and heartwood, with stable unique IDs in maps and locale tables. The rift key is the Floor 8 portal requirement; the heartwood is the new Warden ending prerequisite.
-- [ ] Extend the Warden's state-derived dialogue with a **highest-priority heartwood** case, recording exactly one new fact for the second ending. Do not remove or repurpose `main-village-restored`; re-talking to the Warden is idempotent.
-- [ ] Preserve the main quest's existing `story-complete` after the first restoration. Add one small derived second-act journal objective (explore the lower stair → recover heartwood → return to Warden → completed), based only on the existing fact and item arrays.
-- [ ] Add all player-visible strings in **en**, **zh-Hant**, and **ja**: five maps, sections, items, clues, lock notices, six enemy types, trait descriptions, Warden lines and journal objectives. Use existing `messages.test.ts` coverage rather than a new localization framework.
-- [ ] Verify existing Restoration Core dialogue variants and first-ending save/reload tests still pass, plus new heartwood branch and persistence tests.
+## Checkpoint 4 — Floors 8 **and** 9 in one green slice
 
-## Task 5 — Prove route integrity and balance
+**Add:** `src/game/content/floor8.ts` and `floor9.ts`.
 
-**Modify:** `src/game/combat.test.ts`, `src/game/content.test.ts`, `src/game/movement.test.ts`, `src/game/dialogue.test.ts`, `src/game/journal.test.ts`, `src/game/save.test.ts` (only where applicable).
+**Modify together:** `MapId`, `MAPS`, `TERRAIN_BY_MAP`, EN/繁中/日本語 tables, `src/game/content.test.ts` and `src/game/movement.test.ts`.
 
-- [ ] Add table-driven reachability checks for each floor's defining trick: isolated Floor 6 tanks reachable only through portal pairs; Floor 7 lever pairing; Floor 8 key-before-stair progression and bridge from east; Floor 9 alternate guarded crossings; Floor 10 two-warden gate. Use actual content/rules rather than an invented traversal implementation.
-- [ ] Write a **second-act required route** test with the approved entry-state stats and the exact 25 named fights/grants. Simulate with `() => 0` (all attacks land; the chance-trait enemies are off this route). Pin total fights, every step winnable, waystone consumption and **30 HP** at the end. Assert Taproot authored stats exactly as HPA-741.
-- [ ] Verify optional evasive/double-strike enemies produce bounded/accurate previews and that a prematurely arrived required-only Floors 1–5 hero cannot damage the intended Floor 6 gatekeepers.
-- [ ] Add locked/unlocked stair tests and save validity for newly added floor IDs, portal arrival tiles, opened rewards, gate state and the second-ending fact. Keep the current save schema, and do not add backward-compatibility migrations.
+- [ ] Commit these two floors **together**, since their Rift underpass is one connected feature and half a reciprocal pair would fail validation. Transcribe approved chasm, two-sided bridge, east-side key, item-locked stair, and three-by-three guarded Crossways bands.
+- [ ] Preserve the intended alternative crossing paths (one guard choice per band), the bridge's `rearSide` east unlock and the key's natural discovery order. No new portal/latch runtime variant.
+- [ ] Extend the existing `content.test.ts` gate/rear-latch table with `frontStair.floor8` and add one **actual rules-driven cross-floor replay** that travels via the Floor 9 underpass to the east-side key **while the key-gated stair is still locked**. Check the bridge can subsequently open from the east. A mere per-map flood fill cannot prove this.
+- [ ] Pin reciprocal portals, lock-notice facts and texts in all three languages and test both locked/unlocked travel.
+- [ ] Verify: `bun run typecheck && bun run test:unit`.
 
-## Task 6 — One real browser journey; preserve both releases
+## Checkpoint 5 — Floor 10, return lift, and second ending
 
-**Modify:** `tests/e2e/cross-floor.spec.ts` and/or add `tests/e2e/deep-floors.spec.ts` using existing `Journey` and `journeyChapters`. No test-only game API.
+**Add:** `src/game/content/floor10.ts`.
 
-- [ ] Keep the existing **required-only** and **explorer** release journeys intact and green. Reuse their `Journey` helpers; if the new test needs a complete upgraded hero, replay earlier authored chapters and legitimately collect/buy the requisite upgrades, rather than injecting made-up state via an internal hook.
-- [ ] Add a deep-floor journey expressed as `j.travel(id)`, `j.fight(id)`, `j.drink(id)`, `j.expectBump(id, kind)`, etc., never tile-by-tile key counts. Cover unlocking Floor 5 stair, all five floors' distinguishing mechanics, Taproot, heartwood, new lift and Warden's second ending.
-- [ ] Check trait badges in both combat prompt and battle replay, correct enemy blow order, and one post-ending reload with preserved state.
-- [ ] Where earlier chapters are pure-state setup, use `replayOnly` rather than repeating slow browser steps. Avoid gratuitous changes to the working release journeys.
+**Modify together:** `src/game/types.ts`, `src/game/content.ts`, `src/game/content/village.ts`, `src/game/content/facts.ts`, `src/game/dialogue.ts`, `src/game/journal.ts`, `src/ui/JournalPanel.ts`, `src/phaser/assets.ts`, the three `src/i18n` tables and applicable unit tests.
 
-## Final same-PR verification
+- [ ] Author the Taproot root maze, two root wardens' guarded hatch, heartwood reward, boss (HP **96**, ATK **59**, DEF **41**, AGI **3**, `firstStrike`, `pierce: 4`) and Floor 10 → village lift from the approved map.
+- [ ] Make the village return-lift endpoint reciprocal **but item-locked on `tower-heartwood`**, with `lockedFactId: 'village-heartwood-lift-seen'`. Keep the Floor 10 → village return side usable. Add EN/繁中/日本語 `access` and observation `notes` entries. Add a fresh-save movement assertion: bumping the village lift returns `accessLocked` and never travels.
+- [ ] Add the rift key and heartwood as existing item rewards. Give `village-warden` a highest-priority heartwood dialogue that records a new **idempotent** final fact. Keep `main-village-restored` and both old Restoration Core lines intact.
+- [ ] Extend **the same** `mainLead` with ordered cases: second ending → final resolved lead; heartwood owned → return to Warden; first ending fact → descend below Floor 5. Add the final id to `RESOLVED_LEADS`. No new `JournalEntry` type or quest subsystem. Update the existing release journeys' `endStory` assertions from `story-complete` to the truthful deep-floor main lead while retaining all **dialogue and first-ending fact** checks.
+- [ ] Add every new map/item/section/clue/enemy/trait/access/note/dialogue/lead string in **English, Traditional Chinese and Japanese**, and update `messages.test.ts` as needed.
+- [ ] Extend `assets.test.ts`/existing runtime asset-serving e2e test rather than building another asset checker.
+- [ ] Verify: `bun run typecheck && bun run test:unit`.
 
-Run the full existing quality gates (all must be green):
+## Checkpoint 6 — Reusable full-clear **pure-rules** setup and economy proof
+
+**Modify/add as appropriate:** `src/game/combat.test.ts`, `src/game/content.test.ts`, and a small reusable fixture/helper under `tests/e2e/` using current `Journey`/`dispatchInput`. This **is a separate work step inside HPA-741**, not a separate ticket or PR.
+
+- [ ] Derive the Floors 1–5 spending budget **from authored content**, not hardcoded totals: sum 118 enemy gold drops (currently **1,054**), stat chests (+22 ATK / +30 DEF), last equipped wares (+7/+7), and ladder cost (**400** across nine wares). Eight trader purchases cost `30 + 40 + ... + 100 = 520`, leaving **134**. Assert the 4-ATK / 4-DEF split yields **43/43** from base 10/2, and the ninth trade costs 110 (allowing 42/44 or 44/42 to correct their deficient stat). The guaranteed deep route remains **43/43 only**; do not re-stat enemies for alternative splits.
+- [ ] Build a reusable **real-rules, non-browser** progression setup to earn the necessary gold, collect the stat rewards, buy the wares, make eight trades, complete the first ending, and arrive beside the Floor 5 → 6 stair. This may require most/all 118 optional enemies: plan the encounters and purchases intentionally, without a fake save or a test-only game endpoint. Run it through the pure game `Journey` or extracted rule helpers rather than 118 unnecessary browser battles.
+- [ ] Pin its exact **`HP_ENTRY` integer**, `ATK 43`, `DEF 43`, and acquired prerequisite facts/items, with `rng = () => 0` for reproducibility. Do not guess HP_ENTRY from the required-only 4-HP ending.
+- [ ] Reuse the **same resulting legitimate save** to seed the deep-floor Playwright journey through the existing localStorage load path; verify the hero's actual HUD stats at the Floor 5 stair.
+
+## Checkpoint 7 — Combat balance, route test, new e2e journey, release regressions
+
+**Modify:** `src/game/combat.test.ts`, `src/game/content.test.ts`, `src/game/movement.test.ts`, `src/game/save.test.ts`, `tests/e2e/cross-floor.spec.ts`; add `tests/e2e/deep-floors.spec.ts` only if that keeps the journeys clearer.
+
+- [ ] Reuse/refactor the existing fixed-roll `combat.test.ts` route helper rather than copy its combat loop. Feed the canonical **HP_ENTRY, ATK 43, DEF 43** state into the 25 approved **named** fights and exact per-waystone grants. Assert every combat is winnable, the boss stats, total fight count **25**, opening/follow-up ordering when relevant, and final HP **30**. Chance-trait enemies stay off the required route. Every enemy blow must land under `() => 0`.
+- [ ] Confirm the old required-only Floor 5 hero (ATK 16/DEF 6) cannot damage the intended initial Floor 6 gates. Validate save/reload for new map IDs, items, defeated enemies, portal arrivals, gate states, and second-ending fact. No save migrations.
+- [ ] Add an **entity-named** deep-floor `Journey` with `j.travel(id)`, `j.fight(id)`, `j.drink(id)`, `j.expectBump(id, kind)` and rules-driven paths. Cover all five defining mechanics, the locked village lift, Taproot, heartwood, return lift, Warden dialogue and persisted ending. Test trait descriptions on the **preview** and actual ordering/damage in the **replay**; skip duplicate static replay badges.
+- [ ] Use earlier pure-rules setup/replay without browser wherever possible. Preserve the two existing **required-only** and **explorer** journey story outcomes; only their main-tracker expectations change because the new act follows the first ending.
+- [ ] Verify exact authored art/portrait filenames are served through existing asset tests and the browser has no missing textures.
+
+## Final gates (one PR)
+
+Every implementation checkpoint should finish with green typecheck/unit tests. Before marking PR #39 ready for review, run all gates and verify manually the Floor 6 portals, Floor 7 levers, Floor 8/9 route and key sequence, Floor 10 gate, one-point economy recovery, combat preview/replay and both endings:
 
 ```sh
 bun run typecheck
@@ -97,18 +112,16 @@ bun run test:unit
 bun run test:e2e
 ```
 
-Then verify manually in browser the five distinctive room designs, the sound/readability of multi-blow replays, the distinct temporary pad/boss art, the 43/43 full-exploration entry and the final Warden interaction.
+### Done when
 
-### Acceptance checklist
+- [ ] Approved Floor 6–10 grids, coords and route costs exist as reviewable TypeScript; no unverifiable “source only on a machine” dependency remains.
+- [ ] All five floors reachable using their authored puzzles; Floor 8 key-before-stair rule proven across Floor 9.
+- [ ] Locked village → Floor 10 lift prevents a fresh-run sequence break.
+- [ ] 43/43 budget test and canonical **entry HP** are pinned; the **25-fight** all-hits-land route ends with **30 HP**.
+- [ ] First Warden ending and new second ending both persist; HUD shows the next objective instead of a premature completed quest.
+- [ ] All new player-facing content is translated in EN / 繁中 / 日本語; six existing enemy arts load and temporary Taproot/sluice keys work.
+- [ ] Existing required-only/explorer release journeys and new deep journey are green; PR remains **one implementation PR** for HPA-741.
 
-- [ ] Approved Floor 6–10 authored maps faithfully shipped; all required paths traversable and each floor's mechanic recognizable.
-- [ ] Floor 5 unlock/waystone adjustment and Floor 10 village lift reciprocal; original first ending unchanged.
-- [ ] Six new enemy arts available, traits behave and display in preview + replay; no new art generation in HPA-741.
-- [ ] 25-fight fixed-roll route finishes with 30 HP, and under-upgraded hero is gated by damage.
-- [ ] Second-ending fact persists and produces localized dialogue in EN / 繁中 / 日本語.
-- [ ] New e2e deep journey and both existing release journeys green.
-- [ ] Everything implemented on this **same** HPA-741 PR, which can be marked ready for review only after verification.
+## Out of scope
 
-## Deferred work
-
-**HPA-742** generates and integrates the final 96×96 Taproot map sprite, 64×64 Taproot portrait, and 96×96 sluice-pad sprite in its **own PR**. Once the stable asset keys from this ticket exist, that task should require only asset files/path updates—not gameplay code.
+Do not generate new boss/pad art or SFX. [HPA-742](https://linear.app/cwchanap/issue/HPA-742/tower-maze-art-for-the-taproot-boss-and-the-sluice-pad) will replace the temporary `enemy-taproot` sprite/portrait and `sluice-pad` texture after this feature lands. Also no enemy re-statting on Floors 1–5, AGI upgrades, event/puzzle engines, procedural maps, new persistence schema, or backward-compatibility migrations.
