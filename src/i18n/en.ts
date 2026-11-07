@@ -152,6 +152,13 @@ export const en = {
     'enemy-ruin-sentinel': 'Ruin Sentinel',
     'enemy-core-guardian': 'Core Guardian',
   },
+  // Enemy traits, listed on the encounter card: the forecast already
+  // prices them into the HP loss, these say what the enemy does.
+  traits: {
+    firstStrike: 'Strikes first, before your opening blow.',
+    doubleStrike: 'May strike twice in a turn.',
+    pierce: (pierce: number) => `Ignores up to ${pierce} of your DEF.`,
+  },
   leadTitles: {
     main: 'Main quest',
     heirloom: 'Heirloom',

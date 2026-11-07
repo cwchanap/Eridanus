@@ -7,7 +7,7 @@ import {
   resolveCombat,
   simulateFight,
 } from './combat';
-import type { Rng } from './types';
+import type { EnemyEntity, Rng } from './types';
 
 const enemy = findEntityById('floor1-gatekeeper');
 if (!enemy || enemy.kind !== 'enemy') throw new Error('test enemy missing');
@@ -311,5 +311,372 @@ describe('combat', () => {
     const harmless = { hp: 10, attack: 1, defense: 0, agility: 9 };
     const hero = { hp: 30, attack: 10, defense: 2, agility: 5, gold: 0 };
     expect(simulateFight(hero, harmless, () => 0.99).won).toBe(false);
+  });
+});
+
+// The deep floors' enemies carry three optional stats traits: firstStrike
+// takes the opening turn, doubleStrike rolls a fixed 40% follow-up each
+// enemy turn, and pierce ignores that much hero DEF.
+describe('combat traits', () => {
+  // One hero blow would kill it outright.
+  const striker = {
+    hp: 10,
+    attack: 7,
+    defense: 0,
+    agility: 5,
+    firstStrike: true as const,
+  };
+  const hero = { hp: 30, attack: 20, defense: 0, agility: 5, gold: 0 };
+  const twin = {
+    hp: 60,
+    attack: 6,
+    defense: 0,
+    agility: 5,
+    doubleStrike: true as const,
+  };
+  const strong = { hp: 100, attack: 20, defense: 0, agility: 5, gold: 0 };
+
+  it('lets a first-strike enemy open even against a one-blow kill', () => {
+    const { blows, won } = simulateFight(hero, striker, hits);
+    expect(won).toBe(true);
+    expect(blows).toEqual([
+      { by: 'enemy', hit: true, damage: 7, heroHp: 23, enemyHp: 10 },
+      { by: 'hero', hit: true, damage: 20, heroHp: 23, enemyHp: 0 },
+    ]);
+  });
+
+  it('runs the opening turn once, then resumes hero-first rounds', () => {
+    // 5 damage needs two hits: the opening strike, one answer, then out.
+    const { blows, won } = simulateFight({ ...hero, attack: 5 }, striker, hits);
+    expect(won).toBe(true);
+    expect(blows).toEqual([
+      { by: 'enemy', hit: true, damage: 7, heroHp: 23, enemyHp: 10 },
+      { by: 'hero', hit: true, damage: 5, heroHp: 23, enemyHp: 5 },
+      { by: 'enemy', hit: true, damage: 7, heroHp: 16, enemyHp: 5 },
+      { by: 'hero', hit: true, damage: 5, heroHp: 16, enemyHp: 0 },
+    ]);
+  });
+
+  it('loses outright when the opening turn fells the hero', () => {
+    const { blows, won } = simulateFight({ ...hero, hp: 7 }, striker, hits);
+    expect(won).toBe(false);
+    expect(blows).toEqual([
+      { by: 'enemy', hit: true, damage: 7, heroHp: 0, enemyHp: 10 },
+    ]);
+  });
+
+  it('appends a follow-up blow only when the 40% roll procs', () => {
+    // 20 damage against 60 hp needs three hits; the enemy answers twice,
+    // and each answer rolls hit check, then proc check, then hit check.
+    const noProc = simulateFight(strong, twin, rolls(0, 0, 0.5, 0, 0, 0.5, 0));
+    expect(noProc.blows.map((blow) => blow.by)).toEqual([
+      'hero',
+      'enemy',
+      'hero',
+      'enemy',
+      'hero',
+    ]);
+    const proc = simulateFight(
+      strong,
+      twin,
+      rolls(0, 0, 0.39, 0, 0, 0, 0.39, 0, 0),
+    );
+    expect(proc.blows.map((blow) => blow.by)).toEqual([
+      'hero',
+      'enemy',
+      'enemy',
+      'hero',
+      'enemy',
+      'enemy',
+      'hero',
+    ]);
+  });
+
+  it('does not proc at exactly the 40% boundary', () => {
+    const { blows } = simulateFight(
+      strong,
+      twin,
+      rolls(0, 0, 0.4, 0, 0, 0.4, 0),
+    );
+    expect(blows.map((blow) => blow.by)).toEqual([
+      'hero',
+      'enemy',
+      'hero',
+      'enemy',
+      'hero',
+    ]);
+  });
+
+  it('gives the follow-up its own hit check, which can miss alone', () => {
+    // The hero (AGI 8) is quicker, so the enemy lands 85 blows in 100: the
+    // .9 roll misses only the follow-up it belongs to.
+    const quick = { hp: 100, attack: 20, defense: 0, agility: 8, gold: 0 };
+    const { blows } = simulateFight(
+      quick,
+      twin,
+      rolls(0, 0, 0.3, 0.9, 0, 0, 0.5, 0),
+    );
+    expect(blows.slice(0, 3).map((blow) => [blow.by, blow.hit])).toEqual([
+      ['hero', true],
+      ['enemy', true],
+      ['enemy', false],
+    ]);
+    expect(blows[2]).toMatchObject({ damage: 0, heroHp: 94 });
+  });
+
+  it('still rolls the follow-up check after the first blow misses', () => {
+    const quick = { hp: 100, attack: 20, defense: 0, agility: 8, gold: 0 };
+    const { blows } = simulateFight(quick, twin, rolls(0, 0.9, 0.3, 0));
+    expect(blows.map((blow) => [blow.by, blow.hit])).toEqual([
+      ['hero', true],
+      ['enemy', false],
+      ['enemy', true],
+      ['hero', true],
+      ['enemy', true],
+      ['enemy', true],
+      ['hero', true],
+    ]);
+  });
+
+  it('makes () => 0 the worst case: every follow-up procs and lands', () => {
+    const { blows, won } = simulateFight(strong, { ...twin, hp: 30 }, hits);
+    expect(won).toBe(true);
+    expect(blows).toEqual([
+      { by: 'hero', hit: true, damage: 20, heroHp: 100, enemyHp: 10 },
+      { by: 'enemy', hit: true, damage: 6, heroHp: 94, enemyHp: 10 },
+      { by: 'enemy', hit: true, damage: 6, heroHp: 88, enemyHp: 10 },
+      { by: 'hero', hit: true, damage: 20, heroHp: 88, enemyHp: 0 },
+    ]);
+  });
+
+  it('pierces only up to the hero DEF, never below zero', () => {
+    const lancer = { hp: 40, attack: 10, defense: 0, agility: 5, pierce: 4 };
+    // DEF 3 under pierce 4 reads as 0: the answer lands for the full 10.
+    const low = simulateFight(
+      { hp: 100, attack: 10, defense: 3, agility: 5, gold: 0 },
+      lancer,
+      hits,
+    );
+    expect(low.blows[1]).toMatchObject({ by: 'enemy', damage: 10, heroHp: 90 });
+    // DEF 6 over pierce 4 leaves 2: the answer lands for 8.
+    const high = simulateFight(
+      { hp: 100, attack: 10, defense: 6, agility: 5, gold: 0 },
+      lancer,
+      hits,
+    );
+    expect(high.blows[1]).toMatchObject({ by: 'enemy', damage: 8, heroHp: 92 });
+  });
+
+  it('combines the taproot traits: an opening pierced turn, then answers', () => {
+    // The pinned Taproot stats: first strike and pierce 4.
+    const taproot = {
+      hp: 96,
+      attack: 59,
+      defense: 41,
+      agility: 3,
+      firstStrike: true as const,
+      pierce: 4,
+    };
+    // The balanced 43/43 hero: 59 - (43 - 4) = 20 a blow, 2 damage a swing.
+    const hero = { hp: 1000, attack: 43, defense: 43, agility: 3, gold: 0 };
+    const { blows, won } = simulateFight(hero, taproot, hits);
+    expect(won).toBe(true);
+    expect(blows[0]).toEqual({
+      by: 'enemy',
+      hit: true,
+      damage: 20,
+      heroHp: 980,
+      enemyHp: 96,
+    });
+    expect(blows[1]).toEqual({
+      by: 'hero',
+      hit: true,
+      damage: 2,
+      heroHp: 980,
+      enemyHp: 94,
+    });
+    expect(blows).toHaveLength(96);
+    expect(blows[95]).toEqual({
+      by: 'hero',
+      hit: true,
+      damage: 2,
+      heroHp: 40,
+      enemyHp: 0,
+    });
+  });
+
+  it('folds opening turns, follow-ups and pierce into the preview', () => {
+    const hero = { hp: 100, attack: 12, defense: 4, agility: 5, gold: 0 };
+    const base = { hp: 30, attack: 12, defense: 2, agility: 5 };
+    // Traitless parity: two answers of 8 average 16.
+    expect(previewCombat(hero, base)).toEqual({
+      winnable: true,
+      hitsNeeded: 3,
+      hpLoss: 16,
+      heroHit: 1,
+      enemyHit: 1,
+    });
+    // firstStrike adds one opening enemy turn.
+    expect(previewCombat(hero, { ...base, firstStrike: true })).toMatchObject({
+      hpLoss: 24,
+    });
+    // doubleStrike adds the expected 0.4 follow-up to each enemy turn.
+    expect(previewCombat(hero, { ...base, doubleStrike: true })).toMatchObject({
+      hpLoss: 22,
+    });
+    // pierce 2 leaves DEF 2: 10 a blow.
+    expect(previewCombat(hero, { ...base, pierce: 2 })).toMatchObject({
+      hpLoss: 20,
+    });
+    // More pierce than DEF still caps damage at the full 12.
+    expect(previewCombat(hero, { ...base, pierce: 9 })).toMatchObject({
+      hpLoss: 24,
+    });
+    // All three together: three turns of 1.4 blows at 12.
+    expect(
+      previewCombat(hero, {
+        ...base,
+        firstStrike: true,
+        doubleStrike: true,
+        pierce: 4,
+      }),
+    ).toMatchObject({ hpLoss: 50 });
+    // Pierce never touches the hero's side of the ledger.
+    expect(
+      previewCombat({ ...hero, attack: 2 }, { ...base, pierce: 4 }),
+    ).toEqual({ winnable: false, reason: 'combat-unwinnable' });
+  });
+
+  it('gates a traited forecast lethal where the plain one survives', () => {
+    const hero = { hp: 20, attack: 12, defense: 4, agility: 5, gold: 0 };
+    const base = { hp: 30, attack: 12, defense: 2, agility: 5 };
+    expect(previewCombat(hero, base)).toMatchObject({ winnable: true });
+    expect(previewCombat(hero, { ...base, firstStrike: true })).toEqual({
+      winnable: false,
+      reason: 'combat-lethal',
+    });
+    expect(previewCombat(hero, { ...base, pierce: 4 })).toEqual({
+      winnable: false,
+      reason: 'combat-lethal',
+    });
+  });
+
+  it('prices the taproot at 48 expected blows of 20', () => {
+    const taproot = {
+      hp: 96,
+      attack: 59,
+      defense: 41,
+      agility: 3,
+      firstStrike: true as const,
+      pierce: 4,
+    };
+    const hero = { hp: 961, attack: 43, defense: 43, agility: 3, gold: 0 };
+    expect(previewCombat(hero, taproot)).toMatchObject({
+      winnable: true,
+      hitsNeeded: 48,
+      hpLoss: 960,
+    });
+    expect(previewCombat({ ...hero, hp: 960 }, taproot)).toEqual({
+      winnable: false,
+      reason: 'combat-lethal',
+    });
+  });
+
+  const stateAt = (player: typeof hero) => ({
+    ...createInitialGameState(),
+    mapId: 'floor1' as const,
+    player,
+  });
+  const entityWith = (
+    id: string,
+    stats: EnemyEntity['stats'],
+  ): EnemyEntity => ({
+    kind: 'enemy',
+    id,
+    tile: { x: 0, y: 0 },
+    stats,
+    gold: 4,
+  });
+
+  it('commits a first-strike replay through resolveCombat', () => {
+    const result = resolveCombat(stateAt(hero), entityWith('a', striker), hits);
+    if (!result.ok || result.effect.kind !== 'enemyDefeated')
+      throw new Error('expected a win');
+    // The replay shows the enemy's opening blow ahead of the hero's.
+    expect(result.effect.blows.map((blow) => blow.by)).toEqual([
+      'enemy',
+      'hero',
+    ]);
+    expect(result.effect.hpLost).toBe(7);
+    expect(result.state.player).toMatchObject({ hp: 23, gold: 4 });
+  });
+
+  it('beats the hero back when the opening blow lands for the worst case', () => {
+    // The 85% average says 17 of 20 HP, survivable; every blow landing is
+    // the 20 it costs.
+    const ambusher = entityWith('b', {
+      hp: 10,
+      attack: 20,
+      defense: 0,
+      agility: 5,
+      firstStrike: true,
+    });
+    const result = resolveCombat(
+      stateAt({ hp: 20, attack: 20, defense: 0, agility: 8, gold: 0 }),
+      ambusher,
+      hits,
+    );
+    if (!result.ok || result.effect.kind !== 'heroDefeated')
+      throw new Error('expected a defeat');
+    expect(result.effect.blows).toEqual([
+      { by: 'enemy', hit: true, damage: 20, heroHp: 0, enemyHp: 10 },
+    ]);
+    const home = createInitialGameState();
+    expect(result.state).toMatchObject({ mapId: home.mapId, tile: home.tile });
+  });
+
+  it('replays follow-up blows through resolveCombat', () => {
+    const result = resolveCombat(
+      stateAt({ hp: 100, attack: 10, defense: 0, agility: 5, gold: 0 }),
+      entityWith('c', {
+        hp: 30,
+        attack: 6,
+        defense: 0,
+        agility: 5,
+        doubleStrike: true,
+      }),
+      hits,
+    );
+    if (!result.ok || result.effect.kind !== 'enemyDefeated')
+      throw new Error('expected a win');
+    expect(result.effect.blows.map((blow) => blow.by)).toEqual([
+      'hero',
+      'enemy',
+      'enemy',
+      'hero',
+      'enemy',
+      'enemy',
+      'hero',
+    ]);
+    expect(result.effect.hpLost).toBe(24);
+  });
+
+  it('keeps the stored defense when pierce shaves it for a fight', () => {
+    const result = resolveCombat(
+      stateAt({ hp: 30, attack: 20, defense: 6, agility: 5, gold: 0 }),
+      entityWith('d', {
+        hp: 25,
+        attack: 10,
+        defense: 0,
+        agility: 5,
+        pierce: 4,
+      }),
+      hits,
+    );
+    if (!result.ok || result.effect.kind !== 'enemyDefeated')
+      throw new Error('expected a win');
+    // Effective DEF 2, so the answer lands for 8 — and defense stays 6.
+    expect(result.effect.hpLost).toBe(8);
+    expect(result.state.player).toMatchObject({ hp: 22, defense: 6 });
   });
 });

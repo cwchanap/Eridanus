@@ -275,6 +275,8 @@ export function validateContent(
             );
         }
       }
+      if (entity.kind === 'enemy' && (entity.stats.pierce ?? 0) < 0)
+        errors.push(`${entity.id}: pierce must not be negative`);
       if (entity.kind === 'clue' && entity.factId && !hasFact(entity.factId))
         errors.push(`${entity.id}: unknown fact id: ${entity.factId}`);
       if (entity.kind === 'reward' && entity.grant === 'item') {

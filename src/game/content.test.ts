@@ -652,6 +652,21 @@ describe('validateContent failure branches', () => {
     ]);
   });
 
+  it('flags an enemy with negative pierce', () => {
+    const maps = villageWith([
+      {
+        kind: 'enemy',
+        id: 'bad-pierce',
+        tile: { x: 9, y: 3 },
+        stats: { hp: 10, attack: 5, defense: 0, agility: 3, pierce: -1 },
+        gold: 1,
+      },
+    ]);
+    expect(validateContent(maps)).toEqual([
+      'bad-pierce: pierce must not be negative',
+    ]);
+  });
+
   it('flags a trader with no offers, no price or an empty offer', () => {
     const maps = villageWith([
       {

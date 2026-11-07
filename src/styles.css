@@ -711,6 +711,12 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* Trait chips share the stats' size and wrap but flag the threat in the
+   card's danger colour. */
+.encounter-traits {
+  color: var(--danger);
+}
+
 .encounter-cost {
   margin: 0;
   font-size: 15px;

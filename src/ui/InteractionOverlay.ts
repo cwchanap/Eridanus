@@ -2,6 +2,7 @@ import type {
   ActionEffect,
   Blow,
   BlockedReason,
+  EnemyEntity,
   Entity,
   GameState,
   MapSection,
@@ -193,6 +194,22 @@ function effectPortrait(effect: ActionEffect, state: GameState): string {
   return '';
 }
 
+// An enemy's traits as chips on the card, so the player can weigh them
+// before committing: the hp-loss forecast already prices them in.
+function enemyTraits(
+  stats: EnemyEntity['stats'],
+  m: Messages,
+): readonly { id: string; text: string }[] {
+  const traits: { id: string; text: string }[] = [];
+  if (stats.firstStrike)
+    traits.push({ id: 'firstStrike', text: m.traits.firstStrike });
+  if (stats.doubleStrike)
+    traits.push({ id: 'doubleStrike', text: m.traits.doubleStrike });
+  if (stats.pierce !== undefined)
+    traits.push({ id: 'pierce', text: m.traits.pierce(stats.pierce) });
+  return traits;
+}
+
 // A refused input while the prompt is open renders below the card, not
 // inside it: the card's contents and height stay fixed, so .log-body's
 // top-pinning keeps Fight/Cancel from shifting mid-prompt.
@@ -209,6 +226,13 @@ function renderEncounter(
     enemy?.kind === 'enemy'
       ? `<p class="encounter-stats"><span>${hp} ${enemy.stats.hp}</span><span>${attack} ${enemy.stats.attack}</span><span>${defense} ${enemy.stats.defense}</span><span>${agility} ${enemy.stats.agility}</span></p>`
       : '';
+  const traits = enemy?.kind === 'enemy' ? enemyTraits(enemy.stats, m) : [];
+  const traitChips =
+    traits.length === 0
+      ? ''
+      : `<p class="encounter-stats encounter-traits" data-testid="combat-traits">${traits
+          .map(({ id, text }) => `<span data-trait="${id}">${text}</span>`)
+          .join('')}</p>`;
   const { heroHit, enemyHit } = pending.preview;
   const name = assetKey ? pick(m.enemies, assetKey, m.ui.enemy) : m.ui.enemy;
   const hpAfter = state.player.hp - pending.preview.hpLoss;
@@ -216,6 +240,7 @@ function renderEncounter(
     ${portrait}
     <div class="encounter-info">
       <div class="encounter-head"><span class="message-tag">${name}</span>${stats}</div>
+      ${traitChips}
       <p class="encounter-cost"><span data-testid="combat-hp-loss">${m.ui.hpLoss(pending.preview.hpLoss)}</span> <span class="encounter-after">${m.ui.leavesYouAt(hpAfter)}</span></p>
       <p class="encounter-stats" data-testid="combat-hit-chances" data-hero-hit="${percent(heroHit)}" data-enemy-hit="${percent(enemyHit)}">${m.ui.hitChances(percent(heroHit), percent(enemyHit))}</p>
     </div>
