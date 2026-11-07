@@ -732,6 +732,73 @@ describe('authored content', () => {
       expect(reachable.has(tileKey(entity(id).tile)), id).toBe(true);
   });
 
+  it('gates the floor six descent stair behind its required fights', () => {
+    const map = MAPS.floor6;
+    const flood = (ids: readonly string[]) => {
+      const state = {
+        ...createInitialGameState(),
+        mapId: 'floor6' as const,
+        defeatedEnemyIds: ids,
+        openedRewardIds: ids,
+        openedShortcutIds: ids,
+      };
+      return floodFloor(
+        map,
+        [portal('floor6-to-floor5').tile],
+        (tile) =>
+          map.layout[tile.y]?.[tile.x] === '.' &&
+          !isTileBlockedByEntity(state, tile),
+        () => true,
+      );
+    };
+    const stair = tileKey({ x: 29, y: 5 });
+    const required = [
+      'floor6-inlet-guard',
+      'floor6-settling-guard',
+      'floor6-south-ambusher',
+      'floor6-pump-warden',
+      'floor6-settling-bulwark',
+      'floor6-sluice-guard',
+      'floor6-outflow-sentinel',
+    ];
+    expect(flood([]).has(stair)).toBe(false);
+    expect(flood(required).has(stair)).toBe(true);
+    // Four of the seven hold the descent itself: the inlet door, the
+    // sluice-pad watch, the sluice door and the outflow sentinel. The
+    // other three hold the pump room — its waystone and +2 ATK cache are
+    // what the route needs to survive the rest.
+    for (const gate of [
+      'floor6-inlet-guard',
+      'floor6-settling-bulwark',
+      'floor6-sluice-guard',
+      'floor6-outflow-sentinel',
+    ])
+      expect(flood(required.filter((id) => id !== gate)).has(stair), gate).toBe(
+        false,
+      );
+    const pumpWaystone = hasAdjacentApproach(
+      flood(['floor6-inlet-guard', 'floor6-settling-guard']),
+      entity('floor6-pump-waystone').tile,
+    );
+    expect(pumpWaystone).toBe(false);
+    expect(
+      hasAdjacentApproach(
+        flood([
+          'floor6-inlet-guard',
+          'floor6-settling-guard',
+          'floor6-south-ambusher',
+        ]),
+        entity('floor6-pump-waystone').tile,
+      ),
+    ).toBe(true);
+    expect(
+      hasAdjacentApproach(
+        flood(required.filter((id) => id !== 'floor6-pump-warden')),
+        entity('floor6-pump-cache').tile,
+      ),
+    ).toBe(false);
+  });
+
   it('pairs the floor six descent stair with the floor seven arrival', () => {
     const stair = portal('floor6-to-floor7');
     expect(stair.tile).toEqual({ x: 29, y: 5 });
