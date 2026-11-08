@@ -30,10 +30,10 @@ This is the **separate artwork task** created after HPA-741's completed gameplay
 
 - [ ] Export the map images with the existing tools, which already recognize the keys. **Pass explicit output paths until the catalog is updated**, or the default output would overwrite the borrowed ruin-sentinel and stairs-down art:
 
-~~~sh
+```sh
 bun run sprite enemy-taproot path/to/raw-taproot.png public/assets/enemies/taproot.png
 bun run sprite sluice-pad path/to/raw-sluice.png public/assets/interactables/sluice-pad.png
-~~~
+```
 - [ ] Check the map exports for transparent corners, centered composition, bottom-centered boss feet, and absence of magenta fringes. If outlines carry blended magenta, clean the source edge pixels to solid key color and re-export as described in HPA-742.
 - [ ] Process the bust to **64×64** with the established portrait method in docs/art/style-guide.md (key background, square crop, limited palette, downscale without dithering, hard alpha). The sprite command is **not** a portrait exporter; do not modify it for one image.
 - [ ] Inspect all three at native size. Do not commit raw experiments, extra candidates, generators, or new dependencies.
@@ -50,7 +50,7 @@ bun run sprite sluice-pad path/to/raw-sluice.png public/assets/interactables/slu
 
 Suggested narrow test (add near the other catalog tests):
 
-~~~ts
+```ts
 it('uses dedicated Taproot and sluice-pad art', () => {
   expect(ASSET_PATHS['enemy-taproot']).toBe('assets/enemies/taproot.png');
   expect(PORTRAIT_PATHS['enemy-taproot']).toBe(
@@ -67,20 +67,20 @@ it('uses dedicated Taproot and sluice-pad art', () => {
   );
   expect(ASSET_PATHS['sluice-pad']).not.toBe(ASSET_PATHS['stairs-down']);
 });
-~~~
+```
 
 ## Checkpoint 4 — Validate and attach visual proof
 
 - [ ] Run the normal quality gates locally:
 
-~~~sh
+```sh
 bun run typecheck
 bun run lint
 bun run format:check
 bun run test:unit
 bun run test:e2e
 bun run build
-~~~
+```
 
 - [ ] In the running game, inspect several Floor 6 sluice pads at desktop and narrow-window zoom. Confirm pad legibility against dungeon floor and against stairs, waystones and clue-runes. Verify travel still happens on stepping onto a pad.
 - [ ] Inspect the Floor 10 Taproot sprite beside ordinary enemies and its distinct 64×64 bust in the actual combat card. Verify no clipping, texture fallback, transparency fringe or neighboring-cell overlap.
@@ -89,7 +89,7 @@ bun run build
 
 ## Expected final diff
 
-~~~text
+```text
 ADD    public/assets/enemies/taproot.png
 ADD    public/assets/portraits/enemy-taproot.png
 ADD    public/assets/interactables/sluice-pad.png
@@ -97,6 +97,6 @@ MODIFY src/phaser/assets.ts                  (3 path values)
 MODIFY src/phaser/assets.test.ts             (1 focused test)
 ADD    docs/superpowers/specs/2026-11-08-hpa-742-taproot-sluice-art-design.md
 ADD    docs/superpowers/plans/2026-11-08-hpa-742-taproot-sluice-art.md
-~~~
+```
 
 **Out of scope:** Any gameplay/map/stat/save/i18n change, unrelated art such as HPA-829 clue-runes, new animations, renderer effects, generic asset tooling, or a second PR.
