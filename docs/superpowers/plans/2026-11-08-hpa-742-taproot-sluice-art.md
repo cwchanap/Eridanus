@@ -28,7 +28,12 @@ This is the **separate artwork task** created after HPA-741's completed gameplay
 - public/assets/portraits/enemy-taproot.png — 64×64, transparent, 0/255 alpha.
 - public/assets/interactables/sluice-pad.png — 96×96, transparent, 0/255 alpha.
 
-- [ ] Export the map images with the existing tools, which already recognize the two keys: **bun run sprite enemy-taproot path/to/raw-taproot.png** and **bun run sprite sluice-pad path/to/raw-sluice.png**.
+- [ ] Export the map images with the existing tools, which already recognize the keys. **Pass explicit output paths until the catalog is updated**, or the default output would overwrite the borrowed ruin-sentinel and stairs-down art:
+
+~~~sh
+bun run sprite enemy-taproot path/to/raw-taproot.png public/assets/enemies/taproot.png
+bun run sprite sluice-pad path/to/raw-sluice.png public/assets/interactables/sluice-pad.png
+~~~
 - [ ] Check the map exports for transparent corners, centered composition, bottom-centered boss feet, and absence of magenta fringes. If outlines carry blended magenta, clean the source edge pixels to solid key color and re-export as described in HPA-742.
 - [ ] Process the bust to **64×64** with the established portrait method in docs/art/style-guide.md (key background, square crop, limited palette, downscale without dithering, hard alpha). The sprite command is **not** a portrait exporter; do not modify it for one image.
 - [ ] Inspect all three at native size. Do not commit raw experiments, extra candidates, generators, or new dependencies.
