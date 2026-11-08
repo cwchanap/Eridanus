@@ -28,11 +28,6 @@ const rolls =
 // The gatekeeper has AGI 3, so a hero at 3 trades blows with it on even terms.
 const even = { hp: 30, attack: 10, defense: 2, agility: 3, gold: 0 };
 
-// Replays a route's bumps through the rules that spend or grant stats:
-// stat rewards add their amount, enemies are previewed then fought with
-// every blow landing; any other authored stop (a pad, lever, latch or
-// stair) just marks the path. Returns the stats the walk ends on, each
-// fight's blows and cost, and each stat reward's grant.
 const walkRoute = (route: readonly string[], start: PlayerStats) => {
   let player = start;
   const fights: { id: string; blows: readonly Blow[]; cost: number }[] = [];
@@ -218,13 +213,6 @@ describe('combat', () => {
   });
 
   it('keeps the required deep route winnable to the taproot at 4 HP', () => {
-    // The deep route starts where a full clear leaves the hero: on the
-    // Floor 5 heart tile at 4 HP, ATK 43 / DEF 43 — the stats every chest,
-    // waystone, ware and trade on Floors 1–5 plus the one ninth trade the
-    // leftover gold affords end on. Each waystone is sized for the fights
-    // after it, and the run's only item find is the rift key. With every
-    // blow landing the 25 fights cost 1,159 HP against 1,185 HP granted,
-    // so the taproot dies leaving exactly 30 HP.
     const route = [
       'floor6-inlet-waystone',
       'floor6-inlet-guard',
@@ -328,9 +316,6 @@ describe('combat', () => {
       30, 30, 36, 49, 36, 18, 35, 28, 28, 48, 55, 35, 64, 78, 28, 72, 0, 35, 48,
       40, 36, 56, 50, 56, 168,
     ]);
-    // A first-striker opens; everyone else answers the hero's blow. Under
-    // the route's all-land roll every blow connects, so each cost above is
-    // the fight's worst case.
     for (const { id, blows } of fights) {
       const fought = findEntityById(id) as EnemyEntity;
       expect(blows[0]!.by, id).toBe(
@@ -380,9 +365,6 @@ describe('combat', () => {
   });
 
   it('walls a floor-five-clear hero out of the deep floors', () => {
-    // The required-only route ends at ATK 16 / DEF 6; each of Floor 6's
-    // first gates has DEF of at least 34, so its blows bounce off and the
-    // descent stair stays shut for a hero that never explored.
     const spent = { hp: 4, attack: 16, defense: 6, agility: 5, gold: 0 };
     for (const id of [
       'floor6-inlet-mite',

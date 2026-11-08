@@ -336,9 +336,6 @@ describe('attemptMove', () => {
   });
 
   it('clears the floor six tank chain and climbs to floor seven', () => {
-    // The canonical deep-entry state: the hero steps off the Floor 5 heart
-    // at 4 HP with the full clear's ATK 43 / DEF 43 behind it. Every fight
-    // below is the route's worst case, and the waystones carry it through.
     const allLands: Rng = () => 0;
     let session: SessionState = {
       game: {

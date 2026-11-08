@@ -12,18 +12,54 @@ async function expectLine(page: Page, lineId: string): Promise<void> {
   await expect(page.getByTestId('effect')).toHaveAttribute('data-line', lineId);
 }
 
-// Every blow the battle card shows, in order, however briefly: who struck
-// and whether it landed — the same observer battle.spec.ts uses.
+type ReplayFrame = {
+  by: 'hero' | 'enemy';
+  hit: boolean;
+  damage: number | null;
+  heroHp: number | null;
+  enemyHp: number | null;
+};
+
 async function recordBlows(page: Page): Promise<void> {
   await page.evaluate(() => {
-    const seen: string[] = [];
-    (window as unknown as { blows: string[] }).blows = seen;
+    const seen: {
+      by: 'hero' | 'enemy';
+      hit: boolean;
+      damage: number | null;
+      heroHp: number | null;
+      enemyHp: number | null;
+    }[] = [];
+    (window as unknown as { replay: typeof seen }).replay = seen;
+    const digits = (value: string | null) => {
+      const found = value?.match(/\d+/);
+      return found ? Number(found[0]) : null;
+    };
     new MutationObserver(() => {
       const blow = document.querySelector('[data-testid="battle"] [data-blow]');
-      const text =
-        blow &&
-        `${blow.getAttribute('data-blow')}:${blow.getAttribute('data-hit')}`;
-      if (text && seen.at(-1) !== text) seen.push(text);
+      if (!blow) return;
+      const frame = {
+        by: blow.getAttribute('data-blow') as 'hero' | 'enemy',
+        hit: blow.getAttribute('data-hit') === 'true',
+        damage: digits(blow.textContent),
+        heroHp: digits(
+          document.querySelector('[data-stat="hp"]')?.textContent ?? null,
+        ),
+        enemyHp: digits(
+          document
+            .querySelector('[data-testid="battle-enemy-hp"]')
+            ?.getAttribute('data-hp') ?? null,
+        ),
+      };
+      const last = seen.at(-1);
+      if (
+        !last ||
+        last.by !== frame.by ||
+        last.hit !== frame.hit ||
+        last.damage !== frame.damage ||
+        last.heroHp !== frame.heroHp ||
+        last.enemyHp !== frame.enemyHp
+      )
+        seen.push(frame);
     }).observe(document.querySelector('#ui')!, {
       childList: true,
       subtree: true,
@@ -31,12 +67,12 @@ async function recordBlows(page: Page): Promise<void> {
   });
 }
 
-async function blowsSeen(page: Page): Promise<string[]> {
-  return page.evaluate(() => (window as unknown as { blows: string[] }).blows);
+async function replayFrames(page: Page): Promise<ReplayFrame[]> {
+  return page.evaluate(
+    () => (window as unknown as { replay: ReplayFrame[] }).replay ?? [],
+  );
 }
 
-// The menu's language chip cycles en → zh-Hant → ja → en; the pending
-// encounter card re-renders in each, and the rules never see any of it.
 async function expectTraitsAcrossLocales(page: Page): Promise<void> {
   const trait = page.locator('[data-trait="firstStrike"]');
   await expect(trait).toHaveText(MESSAGES.en.traits.firstStrike);
@@ -55,20 +91,28 @@ async function expectTraitsAcrossLocales(page: Page): Promise<void> {
 }
 
 test.describe('deep floors', () => {
-  // Every texture the scenes ask for — sprite, frame or portrait — must
-  // exist: a failed fetch in any chapter means a missing file, not a
-  // wrong route. Reloads revalidate cached images, so only real errors
-  // count, not 304s.
   const missing: string[] = [];
   test.beforeEach(({ page }) => {
     page.on('response', (response) => {
       if (response.url().endsWith('.png') && response.status() >= 400)
         missing.push(response.url());
     });
+    page.on('requestfailed', (request) => {
+      if (request.url().endsWith('.png')) missing.push(request.url());
+    });
   });
   test.afterEach(() => {
     const found = missing.splice(0);
     expect(found).toEqual([]);
+  });
+
+  test('flags a texture request that never completes', async ({ page }) => {
+    await page.route('**/assets/portraits/hero.png', (route) => route.abort());
+    await page.goto('/');
+    await expect.poll(() => missing.length).toBeGreaterThan(0);
+    expect(
+      missing.splice(0).some((url) => url.endsWith('/portraits/hero.png')),
+    ).toBe(true);
   });
 
   journeyChapters('deep floors', [
@@ -78,8 +122,6 @@ test.describe('deep floors', () => {
       run: async (j: Journey) => {
         await expectDeepEntry(j);
         await j.travel('floor5-lift-to-village');
-        // Without the heartwood the deep lift refuses, and the refusal is
-        // noted.
         await j.expectBump('village-lift-to-floor10', 'accessLocked');
         await j.check((page) =>
           shows(page, 'note', 'village-heartwood-lift-seen'),
@@ -100,7 +142,6 @@ test.describe('deep floors', () => {
         await j.travel('floor6-inlet-east-pad');
         await j.fight('floor6-settling-guard');
         await j.travel('floor6-settling-south-pad');
-        // The ambusher strikes first; its chip says so in every language.
         await j.prompt('floor6-south-ambusher');
         await j.check(expectTraitsAcrossLocales);
         await j.confirm();
@@ -126,7 +167,6 @@ test.describe('deep floors', () => {
     {
       title: 'rings the linked bell levers on floor seven',
       run: async (j) => {
-        // One pull throws two of the four: the hatch reports the wiring.
         await j.expectBump('floor7-north-west-lever', 'leverPulled');
         await j.fight('floor7-wing-guard');
         await j.expectBump('floor7-reliquary-hatch', 'latchWired');
@@ -159,7 +199,6 @@ test.describe('deep floors', () => {
           ),
         );
         await j.confirm();
-        // The rift stair wants the key that only the east gallery holds.
         await j.expectBump('floor8-to-floor9', 'accessLocked');
         await j.check((page) => shows(page, 'note', 'floor8-depth-seal-seen'));
         await j.fight('floor8-stair-guard');
@@ -173,7 +212,6 @@ test.describe('deep floors', () => {
         await j.fight('floor8-rift-knight');
         await j.expectBump('floor8-rift-key', 'itemReward');
         await j.check((page) => shows(page, 'item', 'rift-key'));
-        // A reload mid-floor keeps the map, the key and every open way.
         await j.check(async (page) => {
           await page.reload();
           await expect(page.getByTestId('map-name')).toHaveAttribute(
@@ -220,7 +258,6 @@ test.describe('deep floors', () => {
         await j.fight('floor10-west-ambusher');
         await j.drink('floor10-west-waystone');
         await j.fight('floor10-west-warden');
-        // The heart hatch counts its wardens down.
         await j.expectBump('floor10-heart-hatch', 'latchGuarded');
         await j.check((page) =>
           expect(page.getByTestId('effect')).toHaveAttribute(
@@ -233,9 +270,6 @@ test.describe('deep floors', () => {
         await j.fight('floor10-east-warden');
         await j.expectBump('floor10-heart-hatch', 'latchOpened');
         await j.drink('floor10-heart-waystone');
-        // The taproot opens every exchange and pierces 4 DEF; with every
-        // blow landing the fight is twelve of its strikes for twelve of
-        // the hero's, and it falls leaving exactly 30 HP.
         await j.prompt('floor10-taproot');
         await j.check(async (page) => {
           await expect(page.locator('[data-trait="firstStrike"]')).toHaveText(
@@ -248,10 +282,39 @@ test.describe('deep floors', () => {
         });
         await j.confirm();
         await j.check(async (page) => {
-          expect(await blowsSeen(page)).toEqual(
+          const frames = await replayFrames(page);
+          const blows: { by: string; hit: boolean; damage: number | null }[] =
+            [];
+          const heroHp: (number | null)[] = [];
+          const enemyHp: (number | null)[] = [];
+          for (const frame of frames) {
+            const last = blows.at(-1);
+            if (
+              !last ||
+              last.by !== frame.by ||
+              last.hit !== frame.hit ||
+              last.damage !== frame.damage
+            )
+              blows.push({
+                by: frame.by,
+                hit: frame.hit,
+                damage: frame.damage,
+              });
+            if (heroHp.at(-1) !== frame.heroHp) heroHp.push(frame.heroHp);
+            if (enemyHp.at(-1) !== frame.enemyHp) enemyHp.push(frame.enemyHp);
+          }
+          expect(blows).toEqual(
             Array.from({ length: 24 }, (_, i) =>
-              i % 2 === 0 ? 'enemy:true' : 'hero:true',
+              i % 2 === 0
+                ? { by: 'enemy', hit: true, damage: 14 }
+                : { by: 'hero', hit: true, damage: 8 },
             ),
+          );
+          expect(heroHp).toEqual(
+            Array.from({ length: 13 }, (_, i) => 198 - 14 * i),
+          );
+          expect(enemyHp).toEqual(
+            Array.from({ length: 13 }, (_, i) => 96 - 8 * i),
           );
           await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30');
         });
@@ -260,8 +323,6 @@ test.describe('deep floors', () => {
           await shows(page, 'item', 'tower-heartwood');
           await shows(page, 'lead', 'return-heartwood');
         });
-        // The lift rides home and back now that the wood is carried; each
-        // arrival stands on the return stair, so step off it first.
         await j.travel('floor10-lift-to-village');
         await j.walkTo({ x: 10, y: 1 });
         await j.travel('village-lift-to-floor10');
@@ -271,8 +332,6 @@ test.describe('deep floors', () => {
         await j.check(async (page) => {
           await expectLine(page, 'warden-heartwood-ending');
           await shows(page, 'lead', 'taproot-quieted');
-          // The quieted lead, the heartwood and the open lift survive a
-          // reload, and the journey can keep walking from there.
           await page.reload();
           await expect(page.getByTestId('map-name')).toHaveAttribute(
             'data-map-id',
