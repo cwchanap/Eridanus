@@ -139,9 +139,9 @@ export const ja: Messages = {
     'enemy-taproot': '主根',
   },
   traits: {
-    firstStrike: 'こちらの初撃の前に攻撃してくる。',
-    doubleStrike: '1ターンに2回攻撃することがある。',
-    pierce: (pierce) => `こちらの防御を最大${pierce}無視する。`,
+    firstStrike: '先制攻撃してくる。',
+    doubleStrike: '2回攻撃することがある。',
+    pierce: (pierce) => `防御を最大${pierce}無視する。`,
   },
   leadTitles: {
     main: 'メインクエスト',
@@ -178,7 +178,6 @@ export const ja: Messages = {
       '村はよみがえった。だが主根は裂谷の下で流れを飲み続けている。9階を抜け、根の層へ降りよう。',
     'return-heartwood': '心木を村の守衛長のもとへ持ち帰る。',
     'taproot-quieted': '心木は村に戻った。主根は静まり、村は完全になった。',
-    'story-complete': '復元コアは村に戻った。塔を復旧できる。',
     'ledger-resolved':
       '管理人の最後の記録が、守護者の隔離不具合の理由を明らかにした。',
   },

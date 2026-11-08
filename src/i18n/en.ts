@@ -160,9 +160,9 @@ export const en = {
     'enemy-taproot': 'Taproot',
   },
   traits: {
-    firstStrike: 'Strikes first, before your opening blow.',
-    doubleStrike: 'May strike twice in a turn.',
-    pierce: (pierce: number) => `Ignores up to ${pierce} of your DEF.`,
+    firstStrike: 'Strikes first.',
+    doubleStrike: 'May strike twice.',
+    pierce: (pierce: number) => `Ignores up to ${pierce} DEF.`,
   },
   leadTitles: {
     main: 'Main quest',
@@ -206,8 +206,6 @@ export const en = {
     'return-heartwood': 'Carry the heartwood home to the village warden.',
     'taproot-quieted':
       'The heartwood is home. The taproot is quiet and the village is whole.',
-    'story-complete':
-      'The Restoration Core is back in the village. The tower can be restored.',
     'ledger-resolved':
       'The final keeper record explains the guardian isolation failure.',
   } satisfies Record<LeadId, string>,

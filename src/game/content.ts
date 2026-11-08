@@ -188,9 +188,15 @@ export function validateContent(
     const start = createInitialGameState().tile;
     const { minX, maxX, minY, maxY } = square.bounds;
     const inside =
-      start.x >= minX && start.x <= maxX && start.y >= minY && start.y <= maxY;
+      start.x >= minX &&
+      start.x <= maxX &&
+      start.y >= minY &&
+      start.y <= maxY &&
+      !(square.excludedTiles ?? []).some(
+        (tile) => tile.x === start.x && tile.y === start.y,
+      );
     if (!inside)
-      errors.push('village-square: section bounds exclude the initial tile');
+      errors.push('village-square: section excludes the initial tile');
   }
 
   const knownItemIds = new Set<string>();
@@ -223,13 +229,32 @@ export function validateContent(
         if (!hasFact(factId))
           errors.push(`${section.id}: unknown fact id: ${factId}`);
       }
-      const excluded = new Set(
-        (section.excludedTiles ?? []).map(({ x, y }) => `${x},${y}`),
-      );
-      for (let y = section.bounds.minY; y <= section.bounds.maxY; y++) {
-        for (let x = section.bounds.minX; x <= section.bounds.maxX; x++)
-          if (!excluded.has(`${x},${y}`)) covered.add(`${x},${y}`);
+      const excluded = new Set<string>();
+      for (const tile of section.excludedTiles ?? []) {
+        const key = `${tile.x},${tile.y}`;
+        if (excluded.has(key))
+          errors.push(`${section.id}: duplicate excluded tile ${key}`);
+        excluded.add(key);
+        if (tile.x < minX || tile.x > maxX || tile.y < minY || tile.y > maxY)
+          errors.push(`${section.id}: excluded tile ${key} leaves the bounds`);
+        else if (map.layout[tile.y]?.[tile.x] !== '.')
+          errors.push(`${section.id}: excluded tile ${key} is not floor`);
       }
+      let floorInBounds = 0;
+      let floorExcluded = 0;
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          const key = `${x},${y}`;
+          if (excluded.has(key)) {
+            if (map.layout[y]?.[x] === '.') floorExcluded += 1;
+            continue;
+          }
+          if (map.layout[y]?.[x] === '.') floorInBounds += 1;
+          covered.add(key);
+        }
+      }
+      if (floorExcluded > 0 && floorInBounds === 0)
+        errors.push(`${section.id}: exclusions remove every floor tile`);
     }
     const uncovered: string[] = [];
     for (let y = 0; y < height; y++) {
@@ -291,8 +316,12 @@ export function validateContent(
             );
         }
       }
-      if (entity.kind === 'enemy' && (entity.stats.pierce ?? 0) < 0)
-        errors.push(`${entity.id}: pierce must not be negative`);
+      if (
+        entity.kind === 'enemy' &&
+        entity.stats.pierce !== undefined &&
+        (!Number.isInteger(entity.stats.pierce) || entity.stats.pierce <= 0)
+      )
+        errors.push(`${entity.id}: pierce must be a positive integer`);
       if (entity.kind === 'clue' && entity.factId && !hasFact(entity.factId))
         errors.push(`${entity.id}: unknown fact id: ${entity.factId}`);
       if (entity.kind === 'reward' && entity.grant === 'item') {

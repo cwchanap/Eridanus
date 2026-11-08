@@ -33,7 +33,7 @@ const itemRewards = rewards.filter(
 export async function expectDeepEntry(journey: Journey): Promise<void> {
   const { game } = journey;
   expect(game.mapId).toBe('floor5');
-  expect(game.tile).toEqual({ x: 10, y: 9 });
+  expect(game.tile).toEqual(journey.entityTile('floor5-heart-waystone'));
   expect(game.player).toEqual({
     hp: 4,
     attack: 43,
@@ -420,7 +420,7 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.travel('floor2-front-to-floor1');
       await j.travel('floor1-to-village');
       await j.travel('village-lift-to-floor5');
-      await j.walkTo({ x: 10, y: 9 });
+      await j.walkTo(j.entityTile('floor5-heart-waystone'));
       await expectDeepEntry(j);
     },
   },

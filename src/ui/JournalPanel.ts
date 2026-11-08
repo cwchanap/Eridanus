@@ -6,7 +6,6 @@ const RESOLVED_LEADS: ReadonlySet<LeadId> = new Set([
   'route-resolved',
   'ledger-resolved',
   'taproot-quieted',
-  'story-complete',
 ]);
 
 function renderEntry(entry: JournalEntry, m: Messages): string {

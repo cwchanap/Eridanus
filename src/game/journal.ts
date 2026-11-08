@@ -25,7 +25,6 @@ export type LeadId =
   | 'descend-below-floor5'
   | 'return-heartwood'
   | 'taproot-quieted'
-  | 'story-complete'
   | 'ledger-resolved';
 
 export type JournalEntry = Readonly<{

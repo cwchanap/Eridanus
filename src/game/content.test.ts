@@ -12,6 +12,7 @@ import {
   validateContent,
 } from './content';
 import { equippedWares } from './equipment';
+import { isPortalLocked } from './movement';
 import { createInitialGameState } from './state';
 import { tileInDirection } from './geometry';
 import { village } from './content/village';
@@ -249,6 +250,26 @@ describe('authored content', () => {
       { x: tile.x, y: tile.y - 1 },
       { x: tile.x, y: tile.y + 1 },
     ].some((approach) => reachable.has(tileKey(approach)));
+
+  // The deep floors keep their tiles in exactly one section each, so a
+  // discovery never double-fires.
+  const expectSingleSectionPerTile = (mapId: MapId) => {
+    for (let y = 0; y < MAPS[mapId].layout.length; y++) {
+      const row = MAPS[mapId].layout[y]!;
+      for (let x = 0; x < row.length; x++)
+        if (row[x] === '.')
+          expect(findSectionsAt(mapId, { x, y }).length, `${x},${y}`).toBe(1);
+    }
+  };
+
+  // Each entity sits in its own section and no other.
+  const expectHomes = (mapId: MapId, homeByEntity: Record<string, string>) => {
+    for (const [id, home] of Object.entries(homeByEntity))
+      expect(
+        findSectionsAt(mapId, entity(id).tile).map(({ id }) => id),
+        id,
+      ).toEqual([home]);
+  };
   const portal = (id: string) => {
     const found = entity(id);
     if (found.kind !== 'portal') throw new Error(`${id} is not a portal`);
@@ -516,8 +537,11 @@ describe('authored content', () => {
       ).toBe(true);
   });
 
-  it('places the deep stair and the moved waystone in the floor five sanctum', () => {
-    expect(entity('floor5-heart-waystone').tile).toEqual({ x: 10, y: 9 });
+  it('places the deep stair and the waystone in the floor five sanctum', () => {
+    // The waystone moved onto a carved wall tile and the stair onto the old
+    // waystone tile: no pre-update save can stand on either, and (10,9)
+    // stays plain floor for saves parked beside the old waystone.
+    expect(entity('floor5-heart-waystone').tile).toEqual({ x: 10, y: 8 });
     const stair = portal('floor5-depth-to-floor6');
     expect(stair.tile).toEqual({ x: 11, y: 9 });
     expect(stair.target).toEqual({
@@ -558,7 +582,7 @@ describe('authored content', () => {
   });
 
   it('labels each floor six pad and the stair with its own tank only', () => {
-    const homeByEntity: Record<string, string> = {
+    expectHomes('floor6', {
       'floor6-to-floor5': 'floor6-inlet',
       'floor6-inlet-pad': 'floor6-inlet',
       'floor6-north-tank-pad': 'floor6-north-tank',
@@ -576,23 +600,11 @@ describe('authored content', () => {
       'floor6-east-tank-pad': 'floor6-east-tank',
       'floor6-sluice-east-pad': 'floor6-sluice-house',
       'floor6-outflow-pad': 'floor6-outflow',
-    };
-    for (const [id, home] of Object.entries(homeByEntity))
-      expect(
-        findSectionsAt('floor6', entity(id).tile).map(({ id }) => id),
-        id,
-      ).toEqual([home]);
+    });
   });
 
   it('places every floor six floor tile in exactly one section', () => {
-    for (let y = 0; y < MAPS.floor6.layout.length; y++) {
-      const row = MAPS.floor6.layout[y]!;
-      for (let x = 0; x < row.length; x++)
-        if (row[x] === '.')
-          expect(findSectionsAt('floor6', { x, y }).length, `${x},${y}`).toBe(
-            1,
-          );
-    }
+    expectSingleSectionPerTile('floor6');
   });
 
   it('confines the floor six flood to the inlet without the sluice pads', () => {
@@ -647,11 +659,7 @@ describe('authored content', () => {
       (tile) =>
         MAPS.floor6.layout[tile.y]?.[tile.x] === '.' &&
         !isTileBlockedByEntity(state, tile),
-      (portal) =>
-        !portal.lock ||
-        (portal.lock.kind === 'fact'
-          ? state.factIds.includes(portal.lock.requiresFactId)
-          : state.itemIds.includes(portal.lock.requiresItemId)),
+      (portal) => !portal.lock || !isPortalLocked(portal.lock, state),
     );
     for (const entity of MAPS.floor6.entities) {
       const found =
@@ -692,10 +700,7 @@ describe('authored content', () => {
       sealed.layout[tile.y]?.[tile.x] === '.' &&
       !isTileBlockedByEntity(state, tile);
     const padCrossable = (portal: PortalEntity) =>
-      !portal.lock ||
-      (portal.lock.kind === 'fact'
-        ? state.factIds.includes(portal.lock.requiresFactId)
-        : state.itemIds.includes(portal.lock.requiresItemId));
+      !portal.lock || !isPortalLocked(portal.lock, state);
     const reachable = floodFloor(
       sealed,
       [portal('floor6-to-floor5').tile],
@@ -802,30 +807,18 @@ describe('authored content', () => {
   });
 
   it('labels each floor seven threshold with its own area only', () => {
-    const homeByEntity: Record<string, string> = {
+    expectHomes('floor7', {
       'floor7-to-floor6': 'floor7-north-west-wing',
       'floor7-wing-guard': 'floor7-north-west-wing',
       'floor7-north-east-bulwark': 'floor7-north-east-wing',
       'floor7-south-west-bulwark': 'floor7-south-west-wing',
       'floor7-south-east-door-guard': 'floor7-south-east-wing',
       'floor7-reliquary-hatch': 'floor7-reliquary',
-    };
-    for (const [id, home] of Object.entries(homeByEntity))
-      expect(
-        findSectionsAt('floor7', entity(id).tile).map(({ id }) => id),
-        id,
-      ).toEqual([home]);
+    });
   });
 
   it('places every floor seven floor tile in exactly one section', () => {
-    for (let y = 0; y < MAPS.floor7.layout.length; y++) {
-      const row = MAPS.floor7.layout[y]!;
-      for (let x = 0; x < row.length; x++)
-        if (row[x] === '.')
-          expect(findSectionsAt('floor7', { x, y }).length, `${x},${y}`).toBe(
-            1,
-          );
-    }
+    expectSingleSectionPerTile('floor7');
   });
 
   it('gates the floor seven reliquary behind its required fights', () => {
@@ -947,7 +940,7 @@ describe('authored content', () => {
   });
 
   it('labels each floor eight threshold with its own area only', () => {
-    const homeByEntity: Record<string, string> = {
+    expectHomes('floor8', {
       'floor8-to-floor7': 'floor8-west-tangle',
       'floor8-west-waystone': 'floor8-west-tangle',
       'floor8-west-lancer': 'floor8-west-tangle',
@@ -956,16 +949,11 @@ describe('authored content', () => {
       'floor8-bridge-gate': 'floor8-rift-bridge',
       'floor8-from-landing': 'floor8-east-gallery',
       'floor8-rift-key': 'floor8-east-gallery',
-    };
-    for (const [id, home] of Object.entries(homeByEntity))
-      expect(
-        findSectionsAt('floor8', entity(id).tile).map(({ id }) => id),
-        id,
-      ).toEqual([home]);
+    });
   });
 
   it('labels each floor nine threshold with its own area only', () => {
-    const homeByEntity: Record<string, string> = {
+    expectHomes('floor9', {
       'floor9-underpass-west': 'floor9-underpass',
       'floor9-underpass-east': 'floor9-underpass',
       'floor9-to-floor8': 'floor9-top-band',
@@ -975,34 +963,15 @@ describe('authored content', () => {
       'floor9-middle-ambusher': 'floor9-middle-band',
       'floor9-bottom-waystone': 'floor9-bottom-band',
       'floor9-crossways-warden': 'floor9-bottom-band',
-    };
-    for (const [id, home] of Object.entries(homeByEntity))
-      expect(
-        findSectionsAt('floor9', entity(id).tile).map(({ id }) => id),
-        id,
-      ).toEqual([home]);
+    });
   });
 
   it('places every floor eight floor tile in exactly one section', () => {
-    for (let y = 0; y < MAPS.floor8.layout.length; y++) {
-      const row = MAPS.floor8.layout[y]!;
-      for (let x = 0; x < row.length; x++)
-        if (row[x] === '.')
-          expect(findSectionsAt('floor8', { x, y }).length, `${x},${y}`).toBe(
-            1,
-          );
-    }
+    expectSingleSectionPerTile('floor8');
   });
 
   it('places every floor nine floor tile in exactly one section', () => {
-    for (let y = 0; y < MAPS.floor9.layout.length; y++) {
-      const row = MAPS.floor9.layout[y]!;
-      for (let x = 0; x < row.length; x++)
-        if (row[x] === '.')
-          expect(findSectionsAt('floor9', { x, y }).length, `${x},${y}`).toBe(
-            1,
-          );
-    }
+    expectSingleSectionPerTile('floor9');
   });
 
   it('gates the floor eight underpass stair behind its required fights', () => {
@@ -1256,7 +1225,7 @@ describe('authored content', () => {
   });
 
   it('labels each floor ten threshold with its own area only', () => {
-    const homeByEntity: Record<string, string> = {
+    expectHomes('floor10', {
       'floor10-to-floor9': 'floor10-trunk',
       'floor10-taproot-notice': 'floor10-upper-roots',
       'floor10-heart-hatch': 'floor10-trunk',
@@ -1267,23 +1236,11 @@ describe('authored content', () => {
       'floor10-taproot': 'floor10-heart',
       'floor10-heartwood': 'floor10-heart',
       'floor10-lift-to-village': 'floor10-heart',
-    };
-    for (const [id, home] of Object.entries(homeByEntity))
-      expect(
-        findSectionsAt('floor10', entity(id).tile).map(({ id }) => id),
-        id,
-      ).toEqual([home]);
+    });
   });
 
   it('places every floor ten floor tile in exactly one section', () => {
-    for (let y = 0; y < MAPS.floor10.layout.length; y++) {
-      const row = MAPS.floor10.layout[y]!;
-      for (let x = 0; x < row.length; x++)
-        if (row[x] === '.')
-          expect(findSectionsAt('floor10', { x, y }).length, `${x},${y}`).toBe(
-            1,
-          );
-    }
+    expectSingleSectionPerTile('floor10');
   });
 
   it('hangs the floor ten heart hatch on both root wardens', () => {
@@ -1658,18 +1615,34 @@ describe('validateContent failure branches', () => {
     ]);
   });
 
-  it('flags an enemy with negative pierce', () => {
+  it('flags an enemy with a non-positive or fractional pierce', () => {
     const maps = villageWith([
       {
         kind: 'enemy',
-        id: 'bad-pierce',
+        id: 'zero-pierce',
         tile: { x: 9, y: 3 },
+        stats: { hp: 10, attack: 5, defense: 0, agility: 3, pierce: 0 },
+        gold: 1,
+      },
+      {
+        kind: 'enemy',
+        id: 'bad-pierce',
+        tile: { x: 10, y: 3 },
         stats: { hp: 10, attack: 5, defense: 0, agility: 3, pierce: -1 },
+        gold: 1,
+      },
+      {
+        kind: 'enemy',
+        id: 'half-pierce',
+        tile: { x: 11, y: 3 },
+        stats: { hp: 10, attack: 5, defense: 0, agility: 3, pierce: 1.5 },
         gold: 1,
       },
     ]);
     expect(validateContent(maps)).toEqual([
-      'bad-pierce: pierce must not be negative',
+      'zero-pierce: pierce must be a positive integer',
+      'bad-pierce: pierce must be a positive integer',
+      'half-pierce: pierce must be a positive integer',
     ]);
   });
 
@@ -1832,7 +1805,79 @@ describe('validateContent failure branches', () => {
       },
     };
     expect(validateContent(maps)).toEqual([
-      'village-square: section bounds exclude the initial tile',
+      'village-square: section excludes the initial tile',
+    ]);
+  });
+
+  it('flags village-square exclusions removing the initial tile', () => {
+    const maps = {
+      ...MAPS,
+      village: {
+        ...village,
+        sections: village.sections.map((section) =>
+          section.id === 'village-square'
+            ? {
+                ...section,
+                excludedTiles: [createInitialGameState().tile],
+              }
+            : section,
+        ),
+      },
+    };
+    expect(validateContent(maps)).toEqual([
+      'village-square: section excludes the initial tile',
+      `village: floor tiles not covered by a section: ${createInitialGameState().tile.x},${createInitialGameState().tile.y}`,
+    ]);
+  });
+
+  it('flags excluded tiles outside a section or not on floor', () => {
+    const maps = {
+      ...MAPS,
+      floor10: {
+        ...MAPS.floor10,
+        sections: MAPS.floor10.sections.map((section) =>
+          section.id === 'floor10-upper-roots'
+            ? {
+                ...section,
+                excludedTiles: [
+                  ...(section.excludedTiles ?? []),
+                  { x: 15, y: 5 },
+                  { x: 12, y: 6 },
+                  { x: 2, y: 5 },
+                ],
+              }
+            : section,
+        ),
+      },
+    };
+    expect(validateContent(maps)).toEqual([
+      'floor10-upper-roots: duplicate excluded tile 15,5',
+      'floor10-upper-roots: excluded tile 12,6 is not floor',
+      'floor10-upper-roots: excluded tile 2,5 leaves the bounds',
+    ]);
+  });
+
+  it('flags exclusions that remove every floor tile of a section', () => {
+    const maps = {
+      ...MAPS,
+      floor10: {
+        ...MAPS.floor10,
+        sections: MAPS.floor10.sections.map((section) =>
+          section.id === 'floor10-trunk'
+            ? {
+                ...section,
+                excludedTiles: Array.from({ length: 18 }, (_, y) => ({
+                  x: 15,
+                  y: y + 1,
+                })),
+              }
+            : section,
+        ),
+      },
+    };
+    expect(validateContent(maps)).toEqual([
+      'floor10-trunk: exclusions remove every floor tile',
+      expect.stringContaining('floor tiles not covered by a section'),
     ]);
   });
 

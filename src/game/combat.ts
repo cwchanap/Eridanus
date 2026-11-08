@@ -28,23 +28,32 @@ export function hitChance(
   return Math.max(MIN_HIT_PERCENT, 100 - MISS_PERCENT_PER_AGI * lacking) / 100;
 }
 
-// The fight's cost on average. Misses make the real one vary around it: the
-// hero swings first, the enemy answers every swing but the last, and the hero
-// needs hitsNeeded / heroHit swings on average to land hitsNeeded hits.
+// What one landed blow deals: pierce ignores that much of the defender's
+// DEF, and a blow can never heal its target.
+function blowDamage(
+  strikerAttack: number,
+  defenderDefense: number,
+  pierce = 0,
+): number {
+  return Math.max(0, strikerAttack - Math.max(0, defenderDefense - pierce));
+}
+
+// The fight's cost on average. Misses make the real one vary around it: a
+// first-strike enemy opens the fight, the hero then swings first each turn,
+// a double-strike enemy adds a blow on DOUBLE_STRIKE_CHANCE of its turns,
+// and the hero needs hitsNeeded / heroHit swings on average to land
+// hitsNeeded hits.
 export function previewCombat(
   player: PlayerStats,
   enemy: EnemyEntity['stats'],
 ): CombatPreview {
-  const playerDamage = player.attack - enemy.defense;
+  const playerDamage = blowDamage(player.attack, enemy.defense);
   if (playerDamage <= 0)
     return { winnable: false, reason: 'combat-unwinnable' };
   const hitsNeeded = Math.ceil(enemy.hp / playerDamage);
   const heroHit = hitChance(player.agility, enemy.agility);
   const enemyHit = hitChance(enemy.agility, player.agility);
-  const enemyDamage = Math.max(
-    0,
-    enemy.attack - Math.max(0, player.defense - (enemy.pierce ?? 0)),
-  );
+  const enemyDamage = blowDamage(enemy.attack, player.defense, enemy.pierce);
   const enemyTurns = hitsNeeded / heroHit - 1 + (enemy.firstStrike ? 1 : 0);
   const swingsPerTurn = 1 + (enemy.doubleStrike ? DOUBLE_STRIKE_CHANCE : 0);
   const hpLoss = Math.round(
@@ -54,8 +63,10 @@ export function previewCombat(
   return { winnable: true, hitsNeeded, hpLoss, heroHit, enemyHit };
 }
 
-// Plays a fight out blow by blow, hero first, the two trading until one side
-// is down. A blow lands when its roll falls under the striker's hit chance.
+// Plays a fight out blow by blow: a first-strike enemy takes one turn before
+// the trading starts, then the two trade until one side is down, a
+// double-strike enemy rolling for a follow-up each of its turns. A blow
+// lands when its roll falls under the striker's hit chance.
 export function simulateFight(
   player: PlayerStats,
   enemy: EnemyEntity['stats'],
@@ -63,11 +74,8 @@ export function simulateFight(
 ): Readonly<{ blows: readonly Blow[]; won: boolean }> {
   const heroHit = hitChance(player.agility, enemy.agility);
   const enemyHit = hitChance(enemy.agility, player.agility);
-  const heroDamage = Math.max(0, player.attack - enemy.defense);
-  const enemyDamage = Math.max(
-    0,
-    enemy.attack - Math.max(0, player.defense - (enemy.pierce ?? 0)),
-  );
+  const heroDamage = blowDamage(player.attack, enemy.defense);
+  const enemyDamage = blowDamage(enemy.attack, player.defense, enemy.pierce);
   let heroHp = player.hp;
   let enemyHp = enemy.hp;
   const blows: Blow[] = [];
