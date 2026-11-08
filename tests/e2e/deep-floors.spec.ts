@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { MESSAGES } from '../../src/i18n/messages';
 import { FULL_CLEAR, expectDeepEntry } from './full-clear';
-import { journeyChapters, type Journey } from './journey';
+import { fixRolls, Journey, journeyChapters } from './journey';
 
 function shows(page: Page, attribute: string, id: string) {
   return expect(page.locator(`[data-${attribute}="${id}"]`)).toHaveCount(1);
@@ -345,4 +345,85 @@ test.describe('deep floors', () => {
       },
     },
   ]);
+
+  test('a settling twinblade answers back twice in one turn', async ({
+    page,
+  }) => {
+    test.setTimeout(240_000);
+    await fixRolls(page, 0);
+    const journey = new Journey();
+    for (const chapter of FULL_CLEAR) await chapter.run(journey);
+    await page.goto('/');
+    await page.evaluate((save) => {
+      localStorage.clear();
+      if (save) localStorage.setItem('eridanus.save', JSON.stringify(save));
+    }, journey.game);
+    await page.reload();
+    await expect(page.getByTestId('map-name')).toHaveAttribute(
+      'data-map-id',
+      journey.game.mapId,
+    );
+    journey.page = page;
+    await journey.travel('floor5-depth-to-floor6');
+    await journey.drink('floor6-inlet-waystone');
+    await journey.fight('floor6-inlet-guard');
+    await journey.travel('floor6-inlet-east-pad');
+    await journey.prompt('floor6-settling-twinblade');
+    await journey.check(async (page) => {
+      await expect(page.locator('[data-trait="doubleStrike"]')).toHaveText(
+        MESSAGES.en.traits.doubleStrike,
+      );
+      await recordBlows(page);
+    });
+    await journey.confirm();
+    await journey.check(async (page) => {
+      const frames = await replayFrames(page);
+      const expected: ReplayFrame[] = [];
+      let hero = 74;
+      let enemy = 34;
+      for (let turn = 0; turn < 4; turn++) {
+        expected.push(
+          { by: 'hero', hit: true, damage: 7, heroHp: hero, enemyHp: enemy },
+          {
+            by: 'hero',
+            hit: true,
+            damage: 7,
+            heroHp: hero,
+            enemyHp: enemy - 7,
+          },
+          {
+            by: 'enemy',
+            hit: true,
+            damage: 4,
+            heroHp: hero,
+            enemyHp: enemy - 7,
+          },
+          {
+            by: 'enemy',
+            hit: true,
+            damage: 4,
+            heroHp: hero - 4,
+            enemyHp: enemy - 7,
+          },
+          {
+            by: 'enemy',
+            hit: true,
+            damage: 4,
+            heroHp: hero - 8,
+            enemyHp: enemy - 7,
+          },
+        );
+        hero -= 8;
+        enemy -= 7;
+      }
+      expected.push(
+        { by: 'hero', hit: true, damage: 7, heroHp: hero, enemyHp: enemy },
+        { by: 'hero', hit: true, damage: 7, heroHp: hero, enemyHp: 0 },
+      );
+      expect(frames).toEqual(expected);
+      await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 42');
+    });
+    await journey.expectInSync();
+    await journey.expectStats();
+  });
 });
