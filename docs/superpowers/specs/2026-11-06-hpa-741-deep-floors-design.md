@@ -48,7 +48,7 @@ Extend closed unions and registries where needed; **do not** introduce a new wor
 
 ### Floor 5 and village connections
 
-- On Floor 5, move `floor5-heart-waystone` from `(11,9)` to `(10,9)` and place the new stair to Floor 6 at `(11,9)`.
+- On Floor 5, move `floor5-heart-waystone` from `(11,9)` to `(12,10)` — a nook carved into the sanctum's inner wall that opens only into the sanctum, so carved wall strands no parked save and the seal stays the only way in — and place the new stair to Floor 6 at `(11,9)`.
 - Gate the new stair on existing fact `main-village-restored` with a distinct observation `lockedFactId: 'floor5-deep-stair-seen'` (register that fact). Unlocking must occur only after the first Warden ending. The reciprocal Floor 6 arrival is `(5,15)`.
 - Add the Floor 10 return lift at an unoccupied village tile with a reciprocal portal, **but lock the village → Floor 10 side** on the new heartwood item (`requiresItemId: 'tower-heartwood'`, `lockedFactId: 'village-heartwood-lift-seen'`). Otherwise a fresh player can step straight onto Floor 10 and bypass the second act. The Floor 10 → village return side should remain usable after the boss/heartwood. Keep the existing Floor 5 ↔ village lift. Add separate localized `access` and observation-note strings for both locked portals in all three languages. Prove a fresh `createInitialGameState()` yields `accessLocked` at the village endpoint.
 - Every portal must satisfy `validateContent()`'s reciprocal-target rule; every entity must occupy a legal, unique floor tile and every floor tile must be section-covered.

@@ -537,11 +537,51 @@ describe('authored content', () => {
       ).toBe(true);
   });
 
+  it('keeps the floor five sanctum sealed while its seal stands', () => {
+    // Even with every enemy down and every reward drunk — the waystone
+    // included — the shut seal is the only way in: the waystone's nook
+    // opens inside the sanctum and connects nothing outside it.
+    const everything = MAPS.floor5.entities.map(({ id }) => id);
+    const flood = (shortcuts: readonly string[]) => {
+      const state = {
+        ...createInitialGameState(),
+        mapId: 'floor5' as const,
+        defeatedEnemyIds: everything,
+        openedRewardIds: everything,
+        openedShortcutIds: shortcuts,
+      };
+      return floodFloor(
+        MAPS.floor5,
+        [portal('floor5-to-floor4').tile],
+        (tile) =>
+          MAPS.floor5.layout[tile.y]?.[tile.x] === '.' &&
+          !isTileBlockedByEntity(state, tile),
+      );
+    };
+    const sanctum = findSectionById('floor5-sanctum');
+    expect(sanctum).toBeDefined();
+    if (!sanctum) return;
+    const sealed = flood([]);
+    for (let y = sanctum.bounds.minY; y <= sanctum.bounds.maxY; y++)
+      for (let x = sanctum.bounds.minX; x <= sanctum.bounds.maxX; x++)
+        expect(sealed.has(`${x},${y}`), `${x},${y}`).toBe(false);
+    expect(sealed.has(tileKey(entity('floor5-heart-waystone').tile))).toBe(
+      false,
+    );
+    const opened = flood(['floor5-sanctum-seal']);
+    expect(opened.has(tileKey(portal('floor5-depth-to-floor6').tile))).toBe(
+      true,
+    );
+    expect(opened.has(tileKey(entity('floor5-heart-waystone').tile))).toBe(
+      true,
+    );
+  });
+
   it('places the deep stair and the waystone in the floor five sanctum', () => {
     // The waystone moved onto a carved wall tile and the stair onto the old
     // waystone tile: no pre-update save can stand on either, and (10,9)
     // stays plain floor for saves parked beside the old waystone.
-    expect(entity('floor5-heart-waystone').tile).toEqual({ x: 10, y: 8 });
+    expect(entity('floor5-heart-waystone').tile).toEqual({ x: 12, y: 10 });
     const stair = portal('floor5-depth-to-floor6');
     expect(stair.tile).toEqual({ x: 11, y: 9 });
     expect(stair.target).toEqual({
