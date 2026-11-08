@@ -625,12 +625,7 @@ describe('authored content', () => {
     for (const entity of MAPS.floor6.entities) {
       const found =
         entity.kind === 'clue'
-          ? [
-              { x: entity.tile.x - 1, y: entity.tile.y },
-              { x: entity.tile.x + 1, y: entity.tile.y },
-              { x: entity.tile.x, y: entity.tile.y - 1 },
-              { x: entity.tile.x, y: entity.tile.y + 1 },
-            ].some((tile) => reachable.has(tileKey(tile)))
+          ? hasAdjacentApproach(reachable, entity.tile)
           : reachable.has(tileKey(entity.tile));
       expect(found, entity.id).toBe(inletIds.includes(entity.id));
     }
@@ -661,12 +656,7 @@ describe('authored content', () => {
     for (const entity of MAPS.floor6.entities) {
       const found =
         entity.kind === 'clue'
-          ? [
-              { x: entity.tile.x - 1, y: entity.tile.y },
-              { x: entity.tile.x + 1, y: entity.tile.y },
-              { x: entity.tile.x, y: entity.tile.y - 1 },
-              { x: entity.tile.x, y: entity.tile.y + 1 },
-            ].some((tile) => reachable.has(tileKey(tile)))
+          ? hasAdjacentApproach(reachable, entity.tile)
           : reachable.has(tileKey(entity.tile));
       expect(found, entity.id).toBe(true);
     }
@@ -1530,6 +1520,8 @@ describe('the floors one-to-five spending budget', () => {
   if (!trader) throw new Error('no trader authored');
   const worn = equippedWares(wares.map((ware) => ware.itemId));
   const priceAt = (made: number) => trader.basePrice + trader.priceStep * made;
+  const offer = (stat: Stat): number =>
+    trader.offers.find((candidate) => candidate.stat === stat)!.amount;
   const purse =
     enemies.reduce((total, enemy) => total + enemy.gold, 0) -
     wares.reduce((total, ware) => total + ware.price, 0) -
@@ -1564,8 +1556,18 @@ describe('the floors one-to-five spending budget', () => {
 
   it('lands the four-and-four split on 43 attack and 43 defense', () => {
     const base = createInitialGameState().player;
-    expect(base.attack + grants('attack') + worn.weapon!.amount + 4).toBe(43);
-    expect(base.defense + grants('defense') + worn.armor!.amount + 4).toBe(43);
+    expect(
+      base.attack +
+        grants('attack') +
+        worn.weapon!.amount +
+        4 * offer('attack'),
+    ).toBe(43);
+    expect(
+      base.defense +
+        grants('defense') +
+        worn.armor!.amount +
+        4 * offer('defense'),
+    ).toBe(43);
   });
 
   it('leaves a ninth trade affordable to correct a short stat', () => {
@@ -1574,31 +1576,42 @@ describe('the floors one-to-five spending budget', () => {
     const base = createInitialGameState().player;
     const attack = base.attack + grants('attack') + worn.weapon!.amount;
     const defense = base.defense + grants('defense') + worn.armor!.amount;
-    expect({ attack: attack + 5, defense: defense + 3 }).toEqual({
+    expect({
+      attack: attack + 5 * offer('attack'),
+      defense: defense + 3 * offer('defense'),
+    }).toEqual({
       attack: 44,
       defense: 42,
     });
-    expect({ attack: attack + 5, defense: defense + 4 }).toEqual({
+    expect({
+      attack: attack + 5 * offer('attack'),
+      defense: defense + 4 * offer('defense'),
+    }).toEqual({
       attack: 44,
       defense: 43,
     });
-    expect({ attack: attack + 3, defense: defense + 5 }).toEqual({
+    expect({
+      attack: attack + 3 * offer('attack'),
+      defense: defense + 5 * offer('defense'),
+    }).toEqual({
       attack: 42,
       defense: 44,
     });
-    expect({ attack: attack + 4, defense: defense + 5 }).toEqual({
+    expect({
+      attack: attack + 4 * offer('attack'),
+      defense: defense + 5 * offer('defense'),
+    }).toEqual({
       attack: 43,
       defense: 44,
     });
   });
 
-  it('banks 656 hp against the 652 the full clear spends', () => {
+  it('banks a 656 hp pool', () => {
     const pool =
       createInitialGameState().player.hp +
       grants('hp') +
       (worn.accessory?.stat === 'hp' ? worn.accessory.amount : 0);
     expect(pool).toBe(656);
-    expect(pool - 652).toBe(4);
   });
 });
 
