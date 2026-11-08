@@ -4,7 +4,7 @@
 >
 > **Design:** `docs/superpowers/specs/2026-11-06-hpa-741-deep-floors-design.md`
 >
-> **Workflow:** **One HPA-741 ticket = one PR.** Add code commits to this existing draft PR after reviewing the design. Each stage below is a **commit/checkpoint**, not a separate ticket or PR. New Taproot/sluice art belongs exclusively to HPA-742.
+> **Workflow:** **One HPA-741 ticket = one PR.** Code commits were added to this PR after the design review; each stage below landed as a **commit/checkpoint**, not a separate ticket or PR. New Taproot/sluice art belongs exclusively to HPA-742.
 
 ## Verified base and blockers
 
