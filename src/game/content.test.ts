@@ -763,10 +763,6 @@ describe('authored content', () => {
     ];
     expect(flood([]).has(stair)).toBe(false);
     expect(flood(required).has(stair)).toBe(true);
-    // Four of the seven hold the descent itself: the inlet door, the
-    // sluice-pad watch, the sluice door and the outflow sentinel. The
-    // other three hold the pump room — its waystone and +2 ATK cache are
-    // what the route needs to survive the rest.
     for (const gate of [
       'floor6-inlet-guard',
       'floor6-settling-bulwark',

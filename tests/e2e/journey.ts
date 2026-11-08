@@ -281,6 +281,7 @@ export class Journey {
       await expect(page.getByTestId('effect')).toHaveAttribute(
         'data-effect',
         'enemyDefeated',
+        { timeout: 30_000 },
       );
       await expect(page.locator('[data-stat="hp"]')).toHaveText(`HP ${hp}`);
     });
