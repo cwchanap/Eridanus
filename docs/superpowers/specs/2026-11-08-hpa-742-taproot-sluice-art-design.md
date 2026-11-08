@@ -12,11 +12,9 @@ Replace the three borrowed images used by the Floor 10 Taproot boss and the Floo
 
 ### Deliverables
 
-| Final file | Output | Visual job |
-| --- | --- | --- |
-| public/assets/enemies/taproot.png | 96×96 transparent PNG | Distinct Floor 10 final boss, darker and more dangerous than ordinary enemies |
-| public/assets/portraits/enemy-taproot.png | 64×64 transparent PNG | Head-and-shoulders bust for the existing fight card |
-| public/assets/interactables/sluice-pad.png | 96×96 transparent PNG | Floor-mounted step-on travel pad, visibly different from stairs |
+- **public/assets/enemies/taproot.png:** 96×96 transparent PNG; Floor 10 boss map sprite, visibly more dangerous than ordinary enemies.
+- **public/assets/portraits/enemy-taproot.png:** 64×64 transparent PNG; head-and-shoulders bust for the existing fight card.
+- **public/assets/interactables/sluice-pad.png:** 96×96 transparent PNG; floor-mounted step-on travel pad, distinct from stairs.
 
 Only ship the three final runtime PNGs. Keep raw generations outside the repository unless a reproducibility problem makes a source necessary. Do not add animation frames.
 
@@ -30,11 +28,9 @@ HPA-741 already authored the entities and stable asset IDs:
 
 Change **only** the corresponding values in src/phaser/assets.ts:
 
-| Catalog | Key | New path |
-| --- | --- | --- |
-| ASSET_PATHS | enemy-taproot | assets/enemies/taproot.png |
-| PORTRAIT_PATHS | enemy-taproot | assets/portraits/enemy-taproot.png |
-| ASSET_PATHS | sluice-pad | assets/interactables/sluice-pad.png |
+- **ASSET_PATHS['enemy-taproot']** → assets/enemies/taproot.png
+- **PORTRAIT_PATHS['enemy-taproot']** → assets/portraits/enemy-taproot.png
+- **ASSET_PATHS['sluice-pad']** → assets/interactables/sluice-pad.png
 
 The existing WorldScene preload, rendering, character idle motion, portal logic, portrait resolver, map definitions, and saves continue to work unchanged. The boss remains bottom-center anchored in a single 32-world-unit cell; the pad is static and fits inside one cell.
 
