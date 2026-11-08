@@ -34,6 +34,7 @@ This is the **separate artwork task** created after HPA-741's completed gameplay
 bun run sprite enemy-taproot path/to/raw-taproot.png public/assets/enemies/taproot.png
 bun run sprite sluice-pad path/to/raw-sluice.png public/assets/interactables/sluice-pad.png
 ```
+
 - [ ] Check the map exports for transparent corners, centered composition, bottom-centered boss feet, and absence of magenta fringes. If outlines carry blended magenta, clean the source edge pixels to solid key color and re-export as described in HPA-742.
 - [ ] Process the bust to **64×64** with the established portrait method in docs/art/style-guide.md (key background, square crop, limited palette, downscale without dithering, hard alpha). The sprite command is **not** a portrait exporter; do not modify it for one image.
 - [ ] Inspect all three at native size. Do not commit raw experiments, extra candidates, generators, or new dependencies.
@@ -56,9 +57,7 @@ it('uses dedicated Taproot and sluice-pad art', () => {
   expect(PORTRAIT_PATHS['enemy-taproot']).toBe(
     'assets/portraits/enemy-taproot.png',
   );
-  expect(ASSET_PATHS['sluice-pad']).toBe(
-    'assets/interactables/sluice-pad.png',
-  );
+  expect(ASSET_PATHS['sluice-pad']).toBe('assets/interactables/sluice-pad.png');
   expect(ASSET_PATHS['enemy-taproot']).not.toBe(
     ASSET_PATHS['enemy-ruin-sentinel'],
   );

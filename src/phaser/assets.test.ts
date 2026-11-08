@@ -276,6 +276,23 @@ describe('asset seam', () => {
     }
   });
 
+  it('uses dedicated Taproot and sluice-pad art', () => {
+    expect(ASSET_PATHS['enemy-taproot']).toBe('assets/enemies/taproot.png');
+    expect(PORTRAIT_PATHS['enemy-taproot']).toBe(
+      'assets/portraits/enemy-taproot.png',
+    );
+    expect(ASSET_PATHS['sluice-pad']).toBe(
+      'assets/interactables/sluice-pad.png',
+    );
+    expect(ASSET_PATHS['enemy-taproot']).not.toBe(
+      ASSET_PATHS['enemy-ruin-sentinel'],
+    );
+    expect(PORTRAIT_PATHS['enemy-taproot']).not.toBe(
+      PORTRAIT_PATHS['enemy-ruin-sentinel'],
+    );
+    expect(ASSET_PATHS['sluice-pad']).not.toBe(ASSET_PATHS['stairs-down']);
+  });
+
   it('ships every catalog file at exactly one tile', () => {
     const keys = Object.keys(ASSET_PATHS) as (keyof typeof ASSET_PATHS)[];
 
