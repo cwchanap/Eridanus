@@ -729,8 +729,11 @@ kbd {
   color: var(--text-dim);
 }
 
+/* Fight and Cancel stack: side by side they take almost half the capped
+   log's width and the prompt's text wraps past the fixed-height box. */
 .encounter-actions {
   display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
@@ -1241,10 +1244,6 @@ kbd {
   /* The fight buttons already show the keys. */
   .how-to-play {
     display: none;
-  }
-
-  .encounter-actions {
-    flex-direction: column;
   }
 
   /* The log is a fixed height, so the trader's row must fit on one or two
