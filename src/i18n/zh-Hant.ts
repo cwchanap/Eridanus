@@ -135,9 +135,9 @@ export const zhHant: Messages = {
     'enemy-taproot': '主根',
   },
   traits: {
-    firstStrike: '會在你的第一擊之前出手。',
-    doubleStrike: '每回合可能攻擊兩次。',
-    pierce: (pierce) => `最多無視你 ${pierce} 點防禦。`,
+    firstStrike: '先制攻擊。',
+    doubleStrike: '可能連擊兩次。',
+    pierce: (pierce) => `最多無視 ${pierce} 點防禦。`,
   },
   leadTitles: {
     main: '主線任務',
@@ -173,7 +173,6 @@ export const zhHant: Messages = {
       '村莊已重獲新生，但主根仍在裂谷之下吸食能流。下到第 9 層更深處，前往根層。',
     'return-heartwood': '把心木帶回給村莊的守望長。',
     'taproot-quieted': '心木已回到家鄉。主根沉寂了，村莊也完整了。',
-    'story-complete': '修復核心已回到村莊。這座塔可以修復了。',
     'ledger-resolved': '守塔人的最終記錄解釋了守護者隔離故障的來龍去脈。',
   },
   maps: {

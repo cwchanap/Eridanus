@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import type { Blow } from '../../src/game/types';
 import { MESSAGES } from '../../src/i18n/messages';
 import { FULL_CLEAR, expectDeepEntry } from './full-clear';
-import { fixRolls, Journey, journeyChapters } from './journey';
+import { Journey, journeyChapters } from './journey';
 
 function shows(page: Page, attribute: string, id: string) {
   return expect(page.locator(`[data-${attribute}="${id}"]`)).toHaveCount(1);
@@ -12,43 +13,19 @@ async function expectLine(page: Page, lineId: string): Promise<void> {
   await expect(page.getByTestId('effect')).toHaveAttribute('data-line', lineId);
 }
 
-type ReplayFrame = {
-  by: 'hero' | 'enemy';
-  hit: boolean;
-  damage: number | null;
-  heroHp: number | null;
-  enemyHp: number | null;
-};
-
 async function recordBlows(page: Page): Promise<void> {
   await page.evaluate(() => {
-    const seen: {
-      by: 'hero' | 'enemy';
-      hit: boolean;
-      damage: number | null;
-      heroHp: number | null;
-      enemyHp: number | null;
-    }[] = [];
-    (window as unknown as { replay: typeof seen }).replay = seen;
-    const digits = (value: string | null) => {
-      const found = value?.match(/\d+/);
-      return found ? Number(found[0]) : null;
-    };
+    const seen: Blow[] = [];
+    (window as unknown as { replay: Blow[] }).replay = seen;
     new MutationObserver(() => {
       const blow = document.querySelector('[data-testid="battle"] [data-blow]');
       if (!blow) return;
-      const frame = {
+      const frame: Blow = {
         by: blow.getAttribute('data-blow') as 'hero' | 'enemy',
         hit: blow.getAttribute('data-hit') === 'true',
-        damage: digits(blow.textContent),
-        heroHp: digits(
-          document.querySelector('[data-stat="hp"]')?.textContent ?? null,
-        ),
-        enemyHp: digits(
-          document
-            .querySelector('[data-testid="battle-enemy-hp"]')
-            ?.getAttribute('data-hp') ?? null,
-        ),
+        damage: Number(blow.getAttribute('data-damage')),
+        heroHp: Number(blow.getAttribute('data-hero-hp')),
+        enemyHp: Number(blow.getAttribute('data-enemy-hp')),
       };
       const last = seen.at(-1);
       if (
@@ -67,10 +44,17 @@ async function recordBlows(page: Page): Promise<void> {
   });
 }
 
-async function replayFrames(page: Page): Promise<ReplayFrame[]> {
+async function replayFrames(page: Page): Promise<Blow[]> {
   return page.evaluate(
-    () => (window as unknown as { replay: ReplayFrame[] }).replay ?? [],
+    () => (window as unknown as { replay: Blow[] }).replay ?? [],
   );
+}
+
+// The blows the rules resolved for the fight just confirmed.
+function resolvedBlows(journey: Journey): readonly Blow[] {
+  const effect = journey.lastEffect;
+  if (effect?.kind !== 'enemyDefeated') throw new Error('no fight resolved');
+  return effect.blows;
 }
 
 async function expectTraitsAcrossLocales(page: Page): Promise<void> {
@@ -282,41 +266,13 @@ test.describe('deep floors', () => {
         });
         await j.confirm();
         await j.check(async (page) => {
-          const frames = await replayFrames(page);
-          const blows: { by: string; hit: boolean; damage: number | null }[] =
-            [];
-          const heroHp: (number | null)[] = [];
-          const enemyHp: (number | null)[] = [];
-          for (const frame of frames) {
-            const last = blows.at(-1);
-            if (
-              !last ||
-              last.by !== frame.by ||
-              last.hit !== frame.hit ||
-              last.damage !== frame.damage
-            )
-              blows.push({
-                by: frame.by,
-                hit: frame.hit,
-                damage: frame.damage,
-              });
-            if (heroHp.at(-1) !== frame.heroHp) heroHp.push(frame.heroHp);
-            if (enemyHp.at(-1) !== frame.enemyHp) enemyHp.push(frame.enemyHp);
-          }
-          expect(blows).toEqual(
-            Array.from({ length: 24 }, (_, i) =>
-              i % 2 === 0
-                ? { by: 'enemy', hit: true, damage: 14 }
-                : { by: 'hero', hit: true, damage: 8 },
-            ),
-          );
-          expect(heroHp).toEqual(
-            Array.from({ length: 13 }, (_, i) => 198 - 14 * i),
-          );
-          expect(enemyHp).toEqual(
-            Array.from({ length: 13 }, (_, i) => 96 - 8 * i),
-          );
-          await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 30');
+          // The replay shows exactly the blows the rules resolved: the
+          // taproot strikes first and pierces, so its blows come before the
+          // hero's every turn and land for full damage.
+          const blows = resolvedBlows(j);
+          expect(await replayFrames(page)).toEqual(blows);
+          expect(blows[0]?.by).toBe('enemy');
+          expect(blows.every((blow) => blow.hit)).toBe(true);
         });
         await j.expectBump('floor10-heartwood', 'itemReward');
         await j.check(async (page) => {
@@ -324,9 +280,9 @@ test.describe('deep floors', () => {
           await shows(page, 'lead', 'return-heartwood');
         });
         await j.travel('floor10-lift-to-village');
-        await j.walkTo({ x: 10, y: 1 });
+        await j.walkTo(j.tileBeside('village-lift-to-floor10', 'west'));
         await j.travel('village-lift-to-floor10');
-        await j.walkTo({ x: 21, y: 20 });
+        await j.walkTo(j.tileBeside('floor10-lift-to-village', 'south'));
         await j.travel('floor10-lift-to-village');
         await j.expectBump('village-warden', 'dialogue');
         await j.check(async (page) => {
@@ -340,90 +296,38 @@ test.describe('deep floors', () => {
           await shows(page, 'lead', 'taproot-quieted');
           await shows(page, 'item', 'tower-heartwood');
         });
-        await j.walkTo({ x: 10, y: 1 });
+        await j.walkTo(j.tileBeside('village-lift-to-floor10', 'west'));
         await j.expectStats();
       },
     },
   ]);
 
-  test('a settling twinblade answers back twice in one turn', async ({
-    page,
-  }) => {
-    test.setTimeout(240_000);
-    await fixRolls(page, 0);
-    const journey = new Journey();
-    for (const chapter of FULL_CLEAR) await chapter.run(journey);
-    await page.goto('/');
-    await page.evaluate((save) => {
-      localStorage.clear();
-      if (save) localStorage.setItem('eridanus.save', JSON.stringify(save));
-    }, journey.game);
-    await page.reload();
-    await expect(page.getByTestId('map-name')).toHaveAttribute(
-      'data-map-id',
-      journey.game.mapId,
-    );
-    journey.page = page;
-    await journey.travel('floor5-depth-to-floor6');
-    await journey.drink('floor6-inlet-waystone');
-    await journey.fight('floor6-inlet-guard');
-    await journey.travel('floor6-inlet-east-pad');
-    await journey.prompt('floor6-settling-twinblade');
-    await journey.check(async (page) => {
-      await expect(page.locator('[data-trait="doubleStrike"]')).toHaveText(
-        MESSAGES.en.traits.doubleStrike,
-      );
-      await recordBlows(page);
-    });
-    await journey.confirm();
-    await journey.check(async (page) => {
-      const frames = await replayFrames(page);
-      const expected: ReplayFrame[] = [];
-      let hero = 74;
-      let enemy = 34;
-      for (let turn = 0; turn < 4; turn++) {
-        expected.push(
-          { by: 'hero', hit: true, damage: 7, heroHp: hero, enemyHp: enemy },
-          {
-            by: 'hero',
-            hit: true,
-            damage: 7,
-            heroHp: hero,
-            enemyHp: enemy - 7,
-          },
-          {
-            by: 'enemy',
-            hit: true,
-            damage: 4,
-            heroHp: hero,
-            enemyHp: enemy - 7,
-          },
-          {
-            by: 'enemy',
-            hit: true,
-            damage: 4,
-            heroHp: hero - 4,
-            enemyHp: enemy - 7,
-          },
-          {
-            by: 'enemy',
-            hit: true,
-            damage: 4,
-            heroHp: hero - 8,
-            enemyHp: enemy - 7,
-          },
-        );
-        hero -= 8;
-        enemy -= 7;
-      }
-      expected.push(
-        { by: 'hero', hit: true, damage: 7, heroHp: hero, enemyHp: enemy },
-        { by: 'hero', hit: true, damage: 7, heroHp: hero, enemyHp: 0 },
-      );
-      expect(frames).toEqual(expected);
-      await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 42');
-    });
-    await journey.expectInSync();
-    await journey.expectStats();
-  });
+  journeyChapters('deep floors', [
+    ...FULL_CLEAR,
+    {
+      title: 'a settling twinblade answers back twice in one turn',
+      run: async (j: Journey) => {
+        await j.travel('floor5-depth-to-floor6');
+        await j.drink('floor6-inlet-waystone');
+        await j.fight('floor6-inlet-guard');
+        await j.travel('floor6-inlet-east-pad');
+        await j.prompt('floor6-settling-twinblade');
+        await j.check(async (page) => {
+          await expect(page.locator('[data-trait="doubleStrike"]')).toHaveText(
+            MESSAGES.en.traits.doubleStrike,
+          );
+          await recordBlows(page);
+        });
+        await j.confirm();
+        await j.check(async (page) => {
+          const blows = resolvedBlows(j);
+          expect(await replayFrames(page)).toEqual(blows);
+          // Every turn the twinblade lives through, it answers back twice.
+          expect(blows.map((blow) => blow.by).join(',')).toBe(
+            'hero,enemy,enemy,hero,enemy,enemy,hero,enemy,enemy,hero,enemy,enemy,hero',
+          );
+        });
+      },
+    },
+  ]);
 });

@@ -20,7 +20,7 @@ export const floor5: MapDefinition = {
     '#.#.#.........#.........#.#.#',
     '#.#.#.###.#####.#######.#.#.#',
     '#.#.#.#.........#.....#.#.#.#',
-    '#.#.#.#.#############.#.#.#.#',
+    '#.#.#.#.##.##########.#.#.#.#',
     '#...#.#.#...#.......#.#...#.#',
     '#.#.#.#.#.#########.#.#.###.#',
     '#.#.#.#.#...........#...#.#.#',
@@ -388,10 +388,12 @@ export const floor5: MapDefinition = {
       ],
     },
     // The sanctum: a waystone, the guardian, the core and the lift home.
+    // The waystone drinks from a nook carved above the old tile so the deep
+    // stair can keep it without stranding saves parked on (10,9).
     {
       kind: 'reward',
       id: 'floor5-heart-waystone',
-      tile: { x: 10, y: 9 },
+      tile: { x: 10, y: 8 },
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',

@@ -519,6 +519,24 @@ describe('floor five completion occupancy', () => {
     storage.setItem('eridanus.save', JSON.stringify(state));
     expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
   });
+
+  // The deep stair kept the old waystone tile (11,9) and the waystone moved
+  // onto carved wall: every tile a pre-update save could stand on is still
+  // unblocked floor.
+  it('accepts a save parked beside the old waystone', () => {
+    const state = onFloor5({ x: 10, y: 9 });
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
+
+  it('accepts a save parked where the waystone stood', () => {
+    const state = {
+      ...onFloor5({ x: 11, y: 9 }),
+      openedRewardIds: ['floor5-heart-waystone'],
+    };
+    storage.setItem('eridanus.save', JSON.stringify(state));
+    expect(loadGame(storage)).toEqual({ kind: 'loaded', state });
+  });
 });
 
 describe('deep-floor occupancy', () => {

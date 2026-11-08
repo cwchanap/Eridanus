@@ -9,6 +9,7 @@ import {
 import { tileInDirection } from '../../src/game/geometry';
 import { dispatchInput } from '../../src/game/session';
 import { createInitialGameState } from '../../src/game/state';
+import { routeMoves } from '../helpers/route';
 import type {
   ActionEffect,
   Direction,
@@ -105,6 +106,17 @@ export class Journey {
     return entity.tile;
   }
 
+  // The tile one step from an entity in `direction`.
+  tileBeside(id: string, direction: Direction): Tile {
+    return tileInDirection(this.entityTile(id), direction);
+  }
+
+  // The effect the last input produced, for page-side assertions.
+  get lastEffect(): ActionEffect | null {
+    return this.effect;
+  }
+  private effect: ActionEffect | null = null;
+
   // Runs page-only checks; a journey replayed on the rules alone skips them.
   async check(run: (page: Page) => Promise<void>): Promise<void> {
     if (this.page) await run(this.page);
@@ -128,6 +140,7 @@ export class Journey {
         `${this.game.mapId} ${tileKey(this.game.tile)}: ${key} refused (${result.reason})`,
       );
     this.session = result.session;
+    this.effect = result.effect;
     await this.page?.keyboard.press(key);
     return result.effect;
   }
@@ -153,29 +166,7 @@ export class Journey {
   // The shortest walk from here to `goal` over open floor, stepping on a
   // stair only when it is the goal.
   private path(goal: Tile): Direction[] | null {
-    const from = new Map<string, readonly [Tile, Direction] | null>([
-      [tileKey(this.game.tile), null],
-    ]);
-    const queue: Tile[] = [this.game.tile];
-    while (queue.length > 0) {
-      const tile = queue.shift()!;
-      if (tileKey(tile) === tileKey(goal)) break;
-      for (const direction of DIRECTIONS) {
-        const next = tileInDirection(tile, direction);
-        const key = tileKey(next);
-        if (from.has(key) || !this.canStand(next)) continue;
-        if (this.isStair(next) && key !== tileKey(goal)) continue;
-        from.set(key, [tile, direction]);
-        queue.push(next);
-      }
-    }
-    if (!from.has(tileKey(goal))) return null;
-    const directions: Direction[] = [];
-    for (let step = from.get(tileKey(goal)); step;) {
-      directions.unshift(step[1]);
-      step = from.get(tileKey(step[0]));
-    }
-    return directions;
+    return routeMoves(this.game, goal);
   }
 
   private async walk(directions: readonly Direction[]): Promise<void> {
@@ -207,6 +198,18 @@ export class Journey {
         'data-effect',
         effect.kind,
       );
+    // A prompt card must fit the fixed-height log box; a taller card clips
+    // its bottom line (message text is allowed to scroll instead).
+    if (
+      effect.kind === 'combatPrompt' ||
+      effect.kind === 'purchasePrompt' ||
+      effect.kind === 'tradePrompt'
+    ) {
+      const body = page.locator('.log-body');
+      await expect
+        .poll(() => body.evaluate((el) => el.scrollHeight))
+        .toBeLessThanOrEqual(await body.evaluate((el) => el.clientHeight));
+    }
     if (
       effect.kind !== 'combatPrompt' &&
       effect.kind !== 'purchasePrompt' &&
@@ -288,11 +291,15 @@ export class Journey {
     await this.expectInSync();
   }
 
-  // Backs out of the open prompt, with Escape or its Cancel button.
+  // Backs out of the open prompt, with Escape or its cancel button. Shops
+  // and traders label theirs Leave; only the fight card says Cancel.
   async cancel(via: 'Escape' | 'click' = 'Escape'): Promise<void> {
-    await this.answer({ kind: 'cancel' }, via, 'Escape', 'Cancel');
+    const button = this.session.pending?.kind === 'combat' ? 'Cancel' : 'Leave';
+    await this.answer({ kind: 'cancel' }, via, 'Escape', button);
     await this.check(async (page) => {
       await expect(page.getByTestId('combat-prompt')).toHaveCount(0);
+      await expect(page.getByTestId('purchase-prompt')).toHaveCount(0);
+      await expect(page.getByTestId('trade-prompt')).toHaveCount(0);
     });
   }
 
@@ -308,6 +315,7 @@ export class Journey {
     const result = dispatchInput(this.session, command, hits);
     if (!result.ok) throw new Error(`${button}: ${result.reason}`);
     this.session = result.session;
+    this.effect = result.effect;
     await this.page?.getByRole('button', { name: button }).click();
     return result.effect;
   }

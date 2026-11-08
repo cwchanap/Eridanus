@@ -203,7 +203,7 @@ function enemyTraits(
     traits.push({ id: 'firstStrike', text: m.traits.firstStrike });
   if (stats.doubleStrike)
     traits.push({ id: 'doubleStrike', text: m.traits.doubleStrike });
-  if (stats.pierce !== undefined)
+  if (stats.pierce !== undefined && stats.pierce > 0)
     traits.push({ id: 'pierce', text: m.traits.pierce(stats.pierce) });
   return traits;
 }
@@ -274,7 +274,7 @@ function renderBattle(
     <div class="encounter-info">
       <div class="encounter-head"><span class="message-tag">${name}</span><p class="encounter-stats"><span data-testid="battle-enemy-hp" data-hp="${enemyHp}">${m.statLabels.hp} ${enemyHp}/${maxHp}</span></p></div>
       <div class="battle-bar" aria-hidden="true"><span style="width: ${left}%"></span></div>
-      <p class="encounter-cost" data-blow="${blow.by}" data-hit="${blow.hit}">${blowText(blow, m)}</p>
+      <p class="encounter-cost" data-blow="${blow.by}" data-hit="${blow.hit}" data-damage="${blow.damage}" data-hero-hp="${blow.heroHp}" data-enemy-hp="${blow.enemyHp}">${blowText(blow, m)}</p>
     </div>
     <div class="encounter-actions">
       <button type="button" class="button" data-action="skip" aria-keyshortcuts="Enter Escape">${m.ui.skip} <kbd aria-hidden="true">Enter</kbd></button>

@@ -9,7 +9,7 @@ import { tileInDirection } from './geometry';
 import { discoverCurrentSection, recordFact } from './progress';
 import type { ActionResult, Direction, GameState, PortalLock } from './types';
 
-function isPortalLocked(lock: PortalLock, state: GameState): boolean {
+export function isPortalLocked(lock: PortalLock, state: GameState): boolean {
   switch (lock.kind) {
     case 'item':
       return !state.itemIds.includes(lock.requiresItemId);

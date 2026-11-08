@@ -8,8 +8,8 @@ journeyChapters('deep-floor entry', [
   {
     title: 'shows the entry hero beside the deep stair',
     run: async (j) => {
-      await j.walkTo({ x: 9, y: 9 });
-      await j.walkTo({ x: 10, y: 9 });
+      await j.walkTo(j.tileBeside('floor5-depth-to-floor6', 'west'));
+      await j.walkTo(j.entityTile('floor5-heart-waystone'));
       await expectDeepEntry(j);
       await j.expectStats();
       await j.check(async (page) => {
