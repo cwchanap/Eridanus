@@ -38,7 +38,7 @@ export const village: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 20,
+      amount: 70,
     },
     {
       kind: 'npc',

@@ -87,7 +87,7 @@ describe('actions', () => {
     };
     const result = interactWithEntity(state, waystone, { x: 3, y: 2 });
     expect(result.ok && result.state).toMatchObject({
-      player: { hp: 45, attack: 12, defense: 2, agility: 5, gold: 0 },
+      player: { hp: 95, attack: 12, defense: 2, agility: 5, gold: 0 },
       openedRewardIds: ['floor1-power-core', 'village-waystone'],
       defeatedEnemyIds: ['floor1-gatekeeper'],
       openedShortcutIds: ['floor1-rear-latch'],
@@ -177,19 +177,18 @@ describe('actions', () => {
   });
 
   it('offers the floor five boss through the ordinary combat prompt and resolves it plainly', () => {
-    // The required route reaches the guardian with the chests it must open
-    // (ATK +6, DEF +4).
+    // A hero geared up on the way down, as the guardian is priced for.
     const state = {
       ...createInitialGameState(),
       mapId: 'floor5' as const,
       tile: tileInDirection(boss.tile, 'west'),
-      player: { hp: 30, attack: 16, defense: 6, agility: 5, gold: 0 },
+      player: { hp: 300, attack: 38, defense: 37, agility: 5, gold: 0 },
     };
     const preview = previewCombat(state.player, boss.stats);
     expect(preview).toEqual({
       winnable: true,
-      hitsNeeded: 6,
-      hpLoss: 21,
+      hitsNeeded: 8,
+      hpLoss: 68,
       heroHit: 1,
       enemyHit: 0.85,
     });
@@ -203,7 +202,7 @@ describe('actions', () => {
     const fight = resolveCombat(state, boss, () => 0);
     expect(fight.ok).toBe(true);
     if (!fight.ok) return;
-    expect(fight.state.player.hp).toBe(5);
+    expect(fight.state.player.hp).toBe(220);
     expect(
       fight.state.defeatedEnemyIds.filter((id) => id === boss.id),
     ).toHaveLength(1);

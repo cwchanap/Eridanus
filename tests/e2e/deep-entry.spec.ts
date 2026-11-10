@@ -13,7 +13,7 @@ journeyChapters('deep-floor entry', [
       await expectDeepEntry(j);
       await j.expectStats();
       await j.check(async (page) => {
-        await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 4');
+        await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 209');
         await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 43');
         await expect(page.locator('[data-stat="defense"]')).toHaveText(
           'DEF 43',

@@ -69,7 +69,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-west-sentry',
       tile: { x: 10, y: 15 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 16, attack: 6, defense: 3, agility: 3 },
+      stats: { hp: 22, attack: 6, defense: 2, agility: 3 },
       gold: 6,
     },
     // The West Passages.
@@ -85,7 +85,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-west-lurker',
       tile: { x: 4, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 16, attack: 6, defense: 3, agility: 4 },
+      stats: { hp: 22, attack: 6, defense: 2, agility: 3 },
       gold: 6,
     },
     {
@@ -101,16 +101,16 @@ export const floor1: MapDefinition = {
       kind: 'enemy',
       id: 'floor1-den-mite-1',
       tile: { x: 2, y: 15 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 12, attack: 5, defense: 1, agility: 4 },
+      assetId: 'enemy-ravager',
+      stats: { hp: 12, attack: 10, defense: 0, agility: 4 },
       gold: 3,
     },
     {
       kind: 'enemy',
       id: 'floor1-den-mite-2',
       tile: { x: 1, y: 15 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 12, attack: 5, defense: 1, agility: 4 },
+      assetId: 'enemy-ravager',
+      stats: { hp: 12, attack: 10, defense: 0, agility: 4 },
       gold: 3,
     },
     {
@@ -120,15 +120,15 @@ export const floor1: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 4,
+      amount: 10,
     },
     // The Upper Gallery.
     {
       kind: 'enemy',
       id: 'floor1-gatekeeper',
       tile: { x: 2, y: 7 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4, agility: 3 },
+      assetId: 'enemy-ruin-sentinel',
+      stats: { hp: 22, attack: 7, defense: 4, agility: 2 },
       gold: 8,
     },
     {
@@ -144,7 +144,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-upper-lurker',
       tile: { x: 6, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 18, attack: 7, defense: 3, agility: 4 },
+      stats: { hp: 22, attack: 6, defense: 2, agility: 3 },
       gold: 7,
     },
     {
@@ -154,7 +154,7 @@ export const floor1: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 3,
+      amount: 8,
     },
     {
       kind: 'clue',
@@ -167,7 +167,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-gallery-mite-1',
       tile: { x: 9, y: 8 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 12, attack: 5, defense: 1, agility: 4 },
+      stats: { hp: 15, attack: 4, defense: 1, agility: 4 },
       gold: 3,
     },
     {
@@ -175,7 +175,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-gallery-mite-2',
       tile: { x: 9, y: 9 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 12, attack: 5, defense: 1, agility: 4 },
+      stats: { hp: 15, attack: 4, defense: 1, agility: 4 },
       gold: 3,
     },
     {
@@ -183,7 +183,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-gallery-prowler',
       tile: { x: 10, y: 9 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 18, attack: 7, defense: 3, agility: 6 },
+      stats: { hp: 22, attack: 6, defense: 2, agility: 7 },
       gold: 7,
     },
     {
@@ -193,15 +193,15 @@ export const floor1: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 6,
+      amount: 15,
     },
     // The Sigil Vault.
     {
       kind: 'enemy',
       id: 'floor1-sigil-warden',
       tile: { x: 8, y: 7 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 22, attack: 7, defense: 4, agility: 3 },
+      assetId: 'enemy-bulwark',
+      stats: { hp: 23, attack: 4, defense: 6, agility: 1 },
       gold: 8,
     },
     {
@@ -211,7 +211,7 @@ export const floor1: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 3,
+      amount: 8,
     },
     {
       kind: 'reward',
@@ -235,7 +235,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-gallery-sentry',
       tile: { x: 20, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 18, attack: 6, defense: 3, agility: 3 },
+      stats: { hp: 24, attack: 12, defense: 3, agility: 3 },
       gold: 8,
     },
     {
@@ -243,7 +243,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-rear-lurker',
       tile: { x: 14, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 18, attack: 7, defense: 3, agility: 4 },
+      stats: { hp: 24, attack: 12, defense: 3, agility: 3 },
       gold: 7,
     },
     {
@@ -253,14 +253,14 @@ export const floor1: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 4,
+      amount: 10,
     },
     {
       kind: 'enemy',
       id: 'floor1-rear-sentry',
       tile: { x: 18, y: 5 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4, agility: 3 },
+      assetId: 'enemy-ruin-sentinel',
+      stats: { hp: 26, attack: 13, defense: 5, agility: 2 },
       gold: 8,
     },
     {
@@ -277,15 +277,15 @@ export const floor1: MapDefinition = {
       id: 'floor1-rear-prowler',
       tile: { x: 17, y: 2 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 18, attack: 7, defense: 3, agility: 6 },
+      stats: { hp: 24, attack: 12, defense: 3, agility: 7 },
       gold: 7,
     },
     {
       kind: 'enemy',
       id: 'floor1-rear-mite',
       tile: { x: 15, y: 6 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 12, attack: 5, defense: 1, agility: 4 },
+      assetId: 'enemy-ravager',
+      stats: { hp: 14, attack: 18, defense: 0, agility: 4 },
       gold: 3,
     },
     {
@@ -295,7 +295,7 @@ export const floor1: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 2,
+      amount: 5,
     },
     {
       kind: 'reward',
