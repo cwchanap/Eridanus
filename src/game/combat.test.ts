@@ -25,8 +25,8 @@ const rolls =
   () =>
     values.shift() ?? 0;
 
-// The gatekeeper has AGI 3, so a hero at 3 trades blows with it on even terms.
-const even = { hp: 30, attack: 10, defense: 2, agility: 3, gold: 0 };
+// The gatekeeper has AGI 2, so a hero at 2 trades blows with it on even terms.
+const even = { hp: 30, attack: 10, defense: 2, agility: 2, gold: 0 };
 
 const walkRoute = (route: readonly string[], start: PlayerStats) => {
   let player = start;
@@ -91,10 +91,10 @@ describe('combat', () => {
   });
 
   it('forecasts the average cost when the hero is quicker', () => {
-    // At AGI 5 against 3 the enemy lands nine blows in ten: two answers to
+    // At AGI 4 against 2 the enemy lands nine blows in ten: two answers to
     // the hero's first three hits, at 5 damage each.
     expect(
-      previewCombat({ ...even, attack: 12, agility: 5 }, enemy.stats),
+      previewCombat({ ...even, attack: 12, agility: 4 }, enemy.stats),
     ).toEqual({
       winnable: true,
       hitsNeeded: 3,
@@ -127,89 +127,82 @@ describe('combat', () => {
     });
   });
 
-  it('previews the floor five boss on the required route', () => {
-    // Base stats plus the chests the required route must open (ATK +6,
-    // DEF +4); at bare base stats the guardian is lethal. The guardian is
-    // slow, so it lands 85 blows in 100: five answers of 5 damage average 21.
+  it('previews the floor five boss for a geared-up hero', () => {
+    // The guardian is priced for a hero who has cleared most of the tower
+    // (about ATK 38, DEF 37). It opens the fight and is slow, landing 85
+    // blows in 100: an opening blow and seven answers of 10 average 68.
     expect(
       previewCombat(
-        { hp: 30, attack: 16, defense: 6, agility: 5, gold: 0 },
+        { hp: 300, attack: 38, defense: 37, agility: 5, gold: 0 },
         boss.stats,
       ),
     ).toEqual({
       winnable: true,
-      hitsNeeded: 6,
-      hpLoss: 21,
+      hitsNeeded: 8,
+      hpLoss: 68,
       heroHit: 1,
       enemyHit: 0.85,
     });
+    // The whole tower's loot (ATK 43, DEF 43) still pays for it.
+    expect(
+      previewCombat(
+        { hp: 300, attack: 43, defense: 43, agility: 5, gold: 0 },
+        boss.stats,
+      ),
+    ).toMatchObject({ hitsNeeded: 5, hpLoss: 17 });
+    // At base stats the hero cannot scratch it.
     expect(previewCombat(createInitialGameState().player, boss.stats)).toEqual({
       winnable: false,
-      reason: 'combat-lethal',
+      reason: 'combat-unwinnable',
     });
   });
 
-  it('keeps the required route winnable from floor 1 to the guardian', () => {
-    // The required route takes no optional reward and buys nothing; it
-    // only opens the chests it must (the power core, the gallery cache, both
-    // foremen's chests and the west warden's) and drinks each waystone it
-    // passes, once. HP never refills, so each fight must leave the hero
-    // standing on what the run has gathered so far. The hero is at least as
-    // agile as every enemy on it, so none of their blows miss: the fights
-    // below, with every enemy blow landing, are the worst the route can be.
-    const route = [
+  it('keeps every story enemy no quicker than the hero', () => {
+    // The fights the story cannot skip never hinge on a missed swing: the
+    // hero lands every blow on them, so the worst they can cost is every
+    // enemy blow landing. Whether a hero can afford that is the journeys'
+    // business: tests/e2e/cross-floor.spec.ts replays the story on the rules
+    // with every enemy blow landing, gearing up between stretches.
+    const { agility } = createInitialGameState().player;
+    for (const id of [
       'floor1-west-sentry',
       'floor1-sigil-warden',
-      'village-waystone',
       'floor2-service-guard',
-      'floor2-service-waystone',
       'floor2-stack-mite-1',
       'floor2-stack-mite-2',
       'floor2-stack-mite-3',
       'floor1-gallery-sentry',
       'floor1-rear-sentry',
-      'floor1-power-core',
       'floor2-east-sentry',
       'floor2-stair-warden',
       'floor3-east-prowler',
       'floor3-spine-crawler-1',
       'floor3-spine-crawler-2',
-      'floor3-gallery-cache',
-      'floor3-gallery-waystone',
       'floor3-archive-guard',
       'floor3-archive-crawler-1',
       'floor3-archive-crawler-2',
       'floor3-archive-sentry',
-      'floor3-heart-waystone',
       'floor3-heart-sentinel',
-      'floor4-landing-waystone',
       'floor4-west-gate-guard',
-      'floor4-west-waystone',
       'floor4-west-hand-1',
       'floor4-west-hand-2',
       'floor4-west-foreman',
-      'floor4-west-works-cache',
       'floor4-east-gate-guard',
-      'floor4-east-waystone',
       'floor4-east-hand-1',
       'floor4-east-hand-2',
       'floor4-east-foreman',
-      'floor4-east-works-cache',
       'floor4-forge-warden',
-      'floor4-stair-waystone',
       'floor4-stair-warden',
-      'floor5-landing-waystone',
       'floor5-west-warden',
-      'floor5-west-warden-cache',
       'floor5-south-gate-guard',
-      'floor5-ring-waystone',
       'floor5-south-warden',
       'floor5-east-warden',
-      'floor5-heart-waystone',
       'floor5-core-guardian',
-    ];
-    const { player } = walkRoute(route, createInitialGameState().player);
-    expect(player).toMatchObject({ hp: 4, attack: 16, defense: 6 });
+    ]) {
+      const foe = findEntityById(id);
+      if (foe?.kind !== 'enemy') throw new Error(`${id} missing`);
+      expect(foe.stats.agility, id).toBeLessThanOrEqual(agility);
+    }
   });
 
   it('keeps the required deep route winnable to the taproot at 4 HP', () => {

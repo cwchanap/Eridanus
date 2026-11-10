@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { ASSET_PATHS, PORTRAIT_PATHS } from '../../src/phaser/assets';
+import { EXPLORER_GEAR, REQUIRED_GEAR, type Gear } from './gear-up';
 import { journeyChapters, type Chapter, type Journey } from './journey';
 
 // The message box floats over the map at a fixed size, so no message may
@@ -95,9 +96,16 @@ async function expectPromptHoldsStill(page: Page): Promise<void> {
   expect(await cancel.boundingBox()).toEqual(cancelBox);
 }
 
-// The required route, floor by floor, as the bumps it makes. HP never
-// refills: each waystone gives its HP once, sized for the fights after it
-// at base stats; the explorer's extra stats only make them cheaper.
+// The story, floor by floor, as the bumps it makes. HP never refills and
+// the story's enemies are priced for a hero who has geared up on the way:
+// between these stretches each journey takes the side fights, chests and
+// shop stops listed in gear-up.ts, replayed on the rules alone.
+function gearUp(gear: Gear, what: string): Chapter {
+  const run = gear[what];
+  if (!run) throw new Error(`no gear-up stretch for ${what}`);
+  return { title: `gears up for ${what}`, replayOnly: true, run };
+}
+
 async function claimDepthSigil(j: Journey): Promise<void> {
   await j.fight('floor1-sigil-warden');
   await j.expectBump('floor1-depth-sigil', 'itemReward');
@@ -300,33 +308,42 @@ const REQUIRED: readonly Chapter[] = [
       await drinkAndClimbToFloor2(j);
     },
   },
+  gearUp(REQUIRED_GEAR, 'the service wing'),
   {
-    title: 'sends the missing subject home',
+    title: 'clears the service wing and claims the power core',
     run: async (j) => {
       await clearServiceWing(j);
       await claimPowerCore(j);
+    },
+  },
+  gearUp(REQUIRED_GEAR, 'the stair warden'),
+  {
+    title: 'sends the missing subject home',
+    run: async (j) => {
       await sendSubjectHome(j);
       await descendToFloor3(j);
     },
   },
-  {
-    title: 'throws the heart hatch’s three levers',
-    run: async (j) => {
-      await throwHeartLevers(j);
-      await descendPastHeartSentinel(j);
-    },
-  },
+  gearUp(REQUIRED_GEAR, 'the archive gang'),
+  { title: 'throws the heart hatch’s three levers', run: throwHeartLevers },
+  gearUp(REQUIRED_GEAR, 'the heart sentinel'),
+  { title: 'descends past the heart sentinel', run: descendPastHeartSentinel },
+  gearUp(REQUIRED_GEAR, 'the works wings'),
   { title: 'clears the works wings', run: clearWorksWings },
+  gearUp(REQUIRED_GEAR, 'the foundry gate'),
   { title: 'opens the foundry gate', run: openFoundryGate },
+  gearUp(REQUIRED_GEAR, 'the sanctum wardens'),
+  { title: 'opens the sanctum', run: reachGuardian },
+  gearUp(REQUIRED_GEAR, 'the guardian'),
   {
     title: 'beats the guardian and ends the story',
     run: async (j) => {
-      await reachGuardian(j);
       const box = await claimRestorationCore(j);
       // No keeper record was read, so the plain ending renders.
       await endStory(j, 'warden-restoration-ending', box);
       // The required route never takes an optional lead nor reads the
-      // optional evidence: no optional thread or note ever appears.
+      // optional evidence, even while gearing up: no optional thread or
+      // note ever appears.
       await j.check(async (page) => {
         await expect(
           page.locator(
@@ -383,8 +400,9 @@ const EXPLORER: readonly Chapter[] = [
       await drinkAndClimbToFloor2(j);
     },
   },
+  gearUp(EXPLORER_GEAR, 'the service wing'),
   {
-    title: 'reads the paired ledger and raids the workshop treasury',
+    title: 'reads the paired ledger and sends the subject home',
     run: async (j) => {
       await j.expectBump('floor2-paired-release-ledger', 'clue');
       await j.check((page) =>
@@ -401,6 +419,12 @@ const EXPLORER: readonly Chapter[] = [
       await clearServiceWing(j);
       await claimPowerCore(j);
       await sendSubjectHome(j);
+    },
+  },
+  gearUp(EXPLORER_GEAR, 'the archive brute'),
+  {
+    title: 'raids the workshop treasury',
+    run: async (j) => {
       // With its guard down the west release opens onto the archive,
       // where the brute holds the treasury stair.
       await j.expectBump('floor2-west-release', 'latchOpened');
@@ -428,19 +452,30 @@ const EXPLORER: readonly Chapter[] = [
       await j.travel('floor1-treasury-to-floor2');
     },
   },
+  gearUp(EXPLORER_GEAR, 'the stair warden'),
+  { title: 'descends to floor three', replayOnly: true, run: descendToFloor3 },
+  gearUp(EXPLORER_GEAR, 'the archive gang'),
   {
-    title: 'reads the keeper’s final record on the way down',
+    title: 'reads the keeper’s final record',
     replayOnly: true,
     run: async (j) => {
-      await descendToFloor3(j);
       await throwHeartLevers(j);
       await j.expectBump('floor3-keeper-final-record', 'clue');
-      await descendPastHeartSentinel(j);
-      await clearWorksWings(j);
-      await openFoundryGate(j);
-      await reachGuardian(j);
     },
   },
+  gearUp(EXPLORER_GEAR, 'the heart sentinel'),
+  {
+    title: 'descends past the heart sentinel',
+    replayOnly: true,
+    run: descendPastHeartSentinel,
+  },
+  gearUp(EXPLORER_GEAR, 'the works wings'),
+  { title: 'clears the works wings', replayOnly: true, run: clearWorksWings },
+  gearUp(EXPLORER_GEAR, 'the foundry gate'),
+  { title: 'opens the foundry gate', replayOnly: true, run: openFoundryGate },
+  gearUp(EXPLORER_GEAR, 'the sanctum wardens'),
+  { title: 'opens the sanctum', replayOnly: true, run: reachGuardian },
+  gearUp(EXPLORER_GEAR, 'the guardian'),
   {
     title: 'beats the guardian and hears the ledger ending',
     run: async (j) => {

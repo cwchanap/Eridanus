@@ -70,8 +70,8 @@ export const floor3: MapDefinition = {
       kind: 'enemy',
       id: 'floor3-east-prowler',
       tile: { x: 16, y: 9 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 8, defense: 4, agility: 5 },
+      assetId: 'enemy-ambusher',
+      stats: { hp: 15, attack: 18, defense: 8, agility: 3, firstStrike: true },
       gold: 8,
     },
     {
@@ -79,7 +79,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-spine-crawler-1',
       tile: { x: 17, y: 9 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 18, attack: 6, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 16, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -87,7 +87,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-spine-crawler-2',
       tile: { x: 18, y: 9 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 18, attack: 6, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 16, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -95,7 +95,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-archive-guard',
       tile: { x: 23, y: 8 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5, agility: 3 },
+      stats: { hp: 24, attack: 21, defense: 8, agility: 3 },
       gold: 9,
     },
     {
@@ -110,8 +110,8 @@ export const floor3: MapDefinition = {
       kind: 'enemy',
       id: 'floor3-west-lurker',
       tile: { x: 7, y: 11 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 8, defense: 4, agility: 4 },
+      assetId: 'enemy-ambusher',
+      stats: { hp: 15, attack: 18, defense: 8, agility: 3, firstStrike: true },
       gold: 8,
     },
     {
@@ -119,7 +119,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gallery-crawler-1',
       tile: { x: 1, y: 15 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 16, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -127,7 +127,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gallery-crawler-2',
       tile: { x: 1, y: 16 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 16, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -143,16 +143,16 @@ export const floor3: MapDefinition = {
       kind: 'enemy',
       id: 'floor3-west-prowler',
       tile: { x: 11, y: 11 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 26, attack: 8, defense: 4, agility: 6 },
+      assetId: 'enemy-darter',
+      stats: { hp: 15, attack: 18, defense: 8, agility: 10 },
       gold: 8,
     },
     {
       kind: 'enemy',
       id: 'floor3-east-lurker',
       tile: { x: 15, y: 11 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5, agility: 4 },
+      assetId: 'enemy-ambusher',
+      stats: { hp: 15, attack: 18, defense: 8, agility: 3, firstStrike: true },
       gold: 9,
     },
     {
@@ -160,7 +160,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gallery-crawler-3',
       tile: { x: 14, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 16, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -168,7 +168,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gallery-crawler-4',
       tile: { x: 13, y: 11 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 16, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -178,7 +178,7 @@ export const floor3: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 5,
+      amount: 18,
     },
     // The West Crypt Walk, off the foot of the west prowler's gallery.
     {
@@ -188,7 +188,7 @@ export const floor3: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 5,
+      amount: 18,
     },
     {
       kind: 'clue',
@@ -201,7 +201,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-walk-crawler-1',
       tile: { x: 9, y: 23 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 16, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -209,7 +209,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-walk-crawler-2',
       tile: { x: 10, y: 23 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 16, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -219,7 +219,7 @@ export const floor3: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 3,
+      amount: 10,
     },
     // The South Galleries, past the east prowler.
     {
@@ -227,7 +227,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-east-warden',
       tile: { x: 19, y: 11 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 32, attack: 9, defense: 6, agility: 2 },
+      stats: { hp: 26, attack: 22, defense: 10, agility: 2 },
       gold: 10,
     },
     {
@@ -255,7 +255,7 @@ export const floor3: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 45,
+      amount: 100,
     },
     { kind: 'lever', id: 'floor3-gallery-lever', tile: { x: 15, y: 17 } },
     // The East Crypt Walk, off the lever corridor.
@@ -263,8 +263,8 @@ export const floor3: MapDefinition = {
       kind: 'enemy',
       id: 'floor3-walk-lurker',
       tile: { x: 19, y: 17 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5, agility: 4 },
+      assetId: 'enemy-ambusher',
+      stats: { hp: 15, attack: 21, defense: 8, agility: 3, firstStrike: true },
       gold: 9,
     },
     {
@@ -274,14 +274,14 @@ export const floor3: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 3,
+      amount: 10,
     },
     {
       kind: 'enemy',
       id: 'floor3-gutter-crawler-1',
       tile: { x: 15, y: 23 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 19, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -289,7 +289,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-gutter-crawler-2',
       tile: { x: 14, y: 23 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 3, agility: 3 },
+      stats: { hp: 17, attack: 19, defense: 7, agility: 4 },
       gold: 5,
     },
     {
@@ -313,8 +313,8 @@ export const floor3: MapDefinition = {
       kind: 'enemy',
       id: 'floor3-archive-lurker',
       tile: { x: 21, y: 6 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 28, attack: 9, defense: 5, agility: 4 },
+      assetId: 'enemy-ambusher',
+      stats: { hp: 15, attack: 21, defense: 8, agility: 3, firstStrike: true },
       gold: 9,
     },
     {
@@ -324,7 +324,7 @@ export const floor3: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 5,
+      amount: 18,
     },
     {
       kind: 'clue',
@@ -337,7 +337,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-archive-crawler-1',
       tile: { x: 19, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4, agility: 3 },
+      stats: { hp: 17, attack: 19, defense: 7, agility: 4 },
       gold: 6,
     },
     {
@@ -345,7 +345,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-archive-crawler-2',
       tile: { x: 20, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 20, attack: 7, defense: 4, agility: 3 },
+      stats: { hp: 17, attack: 19, defense: 7, agility: 4 },
       gold: 6,
     },
     {
@@ -353,7 +353,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-archive-sentry',
       tile: { x: 23, y: 2 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 10, defense: 6, agility: 2 },
+      stats: { hp: 26, attack: 27, defense: 11, agility: 2 },
       gold: 14,
     },
     { kind: 'lever', id: 'floor3-crown-lever', tile: { x: 23, y: 1 } },
@@ -365,7 +365,7 @@ export const floor3: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 20,
+      amount: 70,
     },
     {
       kind: 'clue',
@@ -378,7 +378,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-approach-sentry',
       tile: { x: 10, y: 5 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 9, defense: 6, agility: 2 },
+      stats: { hp: 26, attack: 27, defense: 11, agility: 2 },
       gold: 10,
     },
     {
@@ -395,7 +395,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-heart-sentinel',
       tile: { x: 9, y: 6 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 28, attack: 9, defense: 6, agility: 2 },
+      stats: { hp: 26, attack: 27, defense: 11, agility: 2 },
       gold: 14,
     },
     {
@@ -419,7 +419,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-vault-sentry',
       tile: { x: 1, y: 2 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 36, attack: 12, defense: 8, agility: 2 },
+      stats: { hp: 30, attack: 34, defense: 21, agility: 2 },
       gold: 12,
     },
     {
@@ -438,7 +438,7 @@ export const floor3: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 3,
+      amount: 10,
     },
     // The Undercroft, on the old shaft between Floors 4 and 2.
     {
@@ -452,24 +452,24 @@ export const floor3: MapDefinition = {
       kind: 'enemy',
       id: 'floor3-crypt-shade-1',
       tile: { x: 10, y: 21 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 40, attack: 30, defense: 16, agility: 9 },
+      assetId: 'enemy-ambusher',
+      stats: { hp: 15, attack: 48, defense: 29, agility: 3, firstStrike: true },
       gold: 10,
     },
     {
       kind: 'enemy',
       id: 'floor3-crypt-shade-2',
       tile: { x: 11, y: 21 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 40, attack: 30, defense: 16, agility: 9 },
+      assetId: 'enemy-darter',
+      stats: { hp: 15, attack: 48, defense: 29, agility: 10 },
       gold: 10,
     },
     {
       kind: 'enemy',
       id: 'floor3-crypt-shade-3',
       tile: { x: 12, y: 21 },
-      assetId: 'enemy-ruin-guard',
-      stats: { hp: 40, attack: 30, defense: 16, agility: 9 },
+      assetId: 'enemy-ambusher',
+      stats: { hp: 15, attack: 48, defense: 29, agility: 3, firstStrike: true },
       gold: 10,
     },
     {
@@ -488,7 +488,7 @@ export const floor3: MapDefinition = {
       assetId: 'chest-relic-closed',
       grant: 'stat',
       stat: 'hp',
-      amount: 10,
+      amount: 60,
     },
     {
       kind: 'clue',
@@ -501,7 +501,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-crypt-warden',
       tile: { x: 19, y: 20 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 56, attack: 34, defense: 18, agility: 1 },
+      stats: { hp: 33, attack: 50, defense: 31, agility: 1 },
       gold: 16,
     },
     {
