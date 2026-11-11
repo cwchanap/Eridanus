@@ -13,7 +13,7 @@ journeyChapters('deep-floor entry', [
       await expectDeepEntry(j);
       await j.expectStats();
       await j.check(async (page) => {
-        await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 209');
+        await expect(page.locator('[data-stat="hp"]')).toHaveText('HP 309');
         await expect(page.locator('[data-stat="attack"]')).toHaveText('ATK 43');
         await expect(page.locator('[data-stat="defense"]')).toHaveText(
           'DEF 43',
@@ -27,7 +27,7 @@ journeyChapters('deep-floor entry', [
 journeyChapters('deep-floor entry corrective', [
   ...FULL_CLEAR,
   {
-    title: 'affords a ninth trade on the gold it left',
+    title: 'affords a fifth trade on the gold it left',
     run: async (j) => {
       await j.travel('floor5-lift-to-village');
       await j.trade('village-status-trader', 0);
@@ -41,7 +41,7 @@ journeyChapters('deep-floor entry corrective', [
 
 journeyChapters('the village market', [
   {
-    title: 'earns a purse on floor one',
+    title: 'earns a purse on floors one and two',
     replayOnly: true,
     run: async (j) => {
       await j.drink('village-waystone');
@@ -58,6 +58,15 @@ journeyChapters('the village market', [
       await j.fight('floor1-gallery-mite-1');
       await j.fight('floor1-gallery-mite-2');
       await j.fight('floor1-gallery-prowler');
+      await j.expectBump('floor1-gallery-cache', 'reward');
+      await j.fight('floor1-sigil-warden');
+      await j.expectBump('floor1-depth-sigil', 'itemReward');
+      await j.travel('floor1-front-to-floor2');
+      await j.fight('floor2-service-guard');
+      await j.drink('floor2-service-waystone');
+      await j.fight('floor2-service-lurker');
+      await j.fight('floor2-stack-mite-1');
+      await j.travel('floor2-front-to-floor1');
       await j.travel('floor1-to-village');
     },
   },
@@ -65,9 +74,10 @@ journeyChapters('the village market', [
     title: 'buys a ware and a status point',
     run: async (j) => {
       let before = j.game.player;
+      const carried = j.game.itemIds.length;
       await j.buy('village-item-shop');
-      expect(j.game.player.gold).toBe(before.gold - 10);
-      expect(j.game.player.hp).toBe(before.hp + 5);
+      expect(j.game.player.gold).toBe(before.gold - 20);
+      expect(j.game.player.hp).toBe(before.hp + 20);
       await j.check(async (page) => {
         await expect(page.getByTestId('purchase-prompt')).toHaveCount(0);
       });
@@ -76,10 +86,10 @@ journeyChapters('the village market', [
       await j.check(async (page) => {
         await expect(page.getByTestId('purchase-prompt')).toHaveCount(0);
       });
-      expect(j.game.itemIds).toHaveLength(1);
+      expect(j.game.itemIds).toHaveLength(carried + 1);
       before = j.game.player;
       await j.trade('village-status-trader', 0);
-      expect(j.game.player.gold).toBe(before.gold - 30);
+      expect(j.game.player.gold).toBe(before.gold - 50);
       expect(j.game.player.attack).toBe(before.attack + 1);
       await j.check(async (page) => {
         await expect(page.getByTestId('trade-prompt')).toHaveCount(0);

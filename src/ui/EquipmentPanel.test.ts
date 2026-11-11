@@ -28,11 +28,11 @@ describe('renderEquipment', () => {
       m,
     );
     expect(row(html, 'weapon')).toContain('Iron Sword');
-    expect(row(html, 'weapon')).toContain('ATK +1');
+    expect(row(html, 'weapon')).toContain('ATK +2');
     expect(row(html, 'armor')).toContain('Leather Vest');
-    expect(row(html, 'armor')).toContain('DEF +1');
+    expect(row(html, 'armor')).toContain('DEF +2');
     expect(row(html, 'accessory')).toContain('Vitality Charm');
-    expect(row(html, 'accessory')).toContain('HP +5');
+    expect(row(html, 'accessory')).toContain('HP +20');
   });
 
   it('shows only the ware that replaced an older one', () => {
@@ -44,7 +44,7 @@ describe('renderEquipment', () => {
       m,
     );
     expect(row(html, 'weapon')).toContain('Steel Sword');
-    expect(row(html, 'weapon')).toContain('ATK +3');
+    expect(row(html, 'weapon')).toContain('ATK +5');
     expect(html).not.toContain('iron-sword');
   });
 

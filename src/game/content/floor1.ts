@@ -235,7 +235,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-gallery-sentry',
       tile: { x: 20, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 12, defense: 3, agility: 3 },
+      stats: { hp: 24, attack: 12, defense: 4, agility: 3 },
       gold: 8,
     },
     {
@@ -243,7 +243,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-rear-lurker',
       tile: { x: 14, y: 1 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 12, defense: 3, agility: 3 },
+      stats: { hp: 24, attack: 12, defense: 4, agility: 3 },
       gold: 7,
     },
     {
@@ -260,7 +260,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-rear-sentry',
       tile: { x: 18, y: 5 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 26, attack: 13, defense: 5, agility: 2 },
+      stats: { hp: 26, attack: 13, defense: 6, agility: 2 },
       gold: 8,
     },
     {
@@ -277,7 +277,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-rear-prowler',
       tile: { x: 17, y: 2 },
       assetId: 'enemy-ruin-guard',
-      stats: { hp: 24, attack: 12, defense: 3, agility: 7 },
+      stats: { hp: 24, attack: 12, defense: 4, agility: 7 },
       gold: 7,
     },
     {
@@ -285,7 +285,7 @@ export const floor1: MapDefinition = {
       id: 'floor1-rear-mite',
       tile: { x: 15, y: 6 },
       assetId: 'enemy-ravager',
-      stats: { hp: 14, attack: 18, defense: 0, agility: 4 },
+      stats: { hp: 15, attack: 18, defense: 0, agility: 4 },
       gold: 3,
     },
     {

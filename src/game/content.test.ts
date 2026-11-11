@@ -1522,7 +1522,7 @@ describe('the floors one-to-five spending budget', () => {
   const purse =
     enemies.reduce((total, enemy) => total + enemy.gold, 0) -
     wares.reduce((total, ware) => total + ware.price, 0) -
-    Array.from({ length: 8 }, (_, made) => priceAt(made)).reduce(
+    Array.from({ length: 4 }, (_, made) => priceAt(made)).reduce(
       (total, price) => total + price,
       0,
     );
@@ -1537,78 +1537,98 @@ describe('the floors one-to-five spending budget', () => {
     expect(grants('defense')).toBe(30);
   });
 
-  it('sells nine wares for 400 gold, the last pair worn worth +7/+7', () => {
+  it('sells nine wares for 660 gold, the last pair worn worth +9/+9', () => {
     expect(wares).toHaveLength(9);
-    expect(wares.reduce((total, ware) => total + ware.price, 0)).toBe(400);
-    expect(worn.weapon).toMatchObject({ stat: 'attack', amount: 7 });
-    expect(worn.armor).toMatchObject({ stat: 'defense', amount: 7 });
+    expect(wares.reduce((total, ware) => total + ware.price, 0)).toBe(660);
+    expect(worn.weapon).toMatchObject({ stat: 'attack', amount: 9 });
+    expect(worn.armor).toMatchObject({ stat: 'defense', amount: 9 });
   });
 
-  it('prices eight trades at 30 through 100, leaving 134 gold', () => {
-    expect(Array.from({ length: 8 }, (_, made) => priceAt(made))).toEqual([
-      30, 40, 50, 60, 70, 80, 90, 100,
+  it('prices four trades at 50 through 80, leaving 134 gold', () => {
+    expect(Array.from({ length: 4 }, (_, made) => priceAt(made))).toEqual([
+      50, 60, 70, 80,
     ]);
     expect(purse).toBe(134);
   });
 
-  it('lands the four-and-four split on 43 attack and 43 defense', () => {
+  it('lands the two-and-two split on 43 attack and 43 defense', () => {
     const base = createInitialGameState().player;
     expect(
       base.attack +
         grants('attack') +
         worn.weapon!.amount +
-        4 * offer('attack'),
+        2 * offer('attack'),
     ).toBe(43);
     expect(
       base.defense +
         grants('defense') +
         worn.armor!.amount +
-        4 * offer('defense'),
+        2 * offer('defense'),
     ).toBe(43);
   });
 
-  it('leaves a ninth trade affordable to correct a short stat', () => {
-    expect(priceAt(8)).toBe(110);
-    expect(purse).toBeGreaterThanOrEqual(priceAt(8));
+  it('leaves a fifth trade affordable to correct a short stat', () => {
+    expect(priceAt(4)).toBe(90);
+    expect(purse).toBeGreaterThanOrEqual(priceAt(4));
     const base = createInitialGameState().player;
     const attack = base.attack + grants('attack') + worn.weapon!.amount;
     const defense = base.defense + grants('defense') + worn.armor!.amount;
     expect({
-      attack: attack + 5 * offer('attack'),
-      defense: defense + 3 * offer('defense'),
+      attack: attack + 3 * offer('attack'),
+      defense: defense + 1 * offer('defense'),
     }).toEqual({
       attack: 44,
       defense: 42,
     });
     expect({
-      attack: attack + 5 * offer('attack'),
-      defense: defense + 4 * offer('defense'),
+      attack: attack + 3 * offer('attack'),
+      defense: defense + 2 * offer('defense'),
     }).toEqual({
       attack: 44,
       defense: 43,
     });
     expect({
-      attack: attack + 3 * offer('attack'),
-      defense: defense + 5 * offer('defense'),
+      attack: attack + 1 * offer('attack'),
+      defense: defense + 3 * offer('defense'),
     }).toEqual({
       attack: 42,
       defense: 44,
     });
     expect({
-      attack: attack + 4 * offer('attack'),
-      defense: defense + 5 * offer('defense'),
+      attack: attack + 2 * offer('attack'),
+      defense: defense + 3 * offer('defense'),
     }).toEqual({
       attack: 43,
       defense: 44,
     });
   });
 
-  it('banks a 1592 hp pool', () => {
+  it('makes every ware a better buy than the trader', () => {
+    // A ware's amount is its slot's whole bonus, so a tier's gain is the
+    // step up from the tier below it. Each step must cost less per point
+    // than the trader's opening price, and give more than one trade does.
+    const shops = cleared.filter(
+      (candidate): candidate is ShopEntity => candidate.kind === 'shop',
+    );
+    for (const shop of shops) {
+      let worth = 0;
+      for (const ware of shop.wares) {
+        const gain = ware.amount - worth;
+        worth = ware.amount;
+        expect(gain, ware.itemId).toBeGreaterThan(offer(ware.stat));
+        expect(ware.price / gain, ware.itemId).toBeLessThan(
+          priceAt(0) / offer(ware.stat),
+        );
+      }
+    }
+  });
+
+  it('banks a 1657 hp pool', () => {
     const pool =
       createInitialGameState().player.hp +
       grants('hp') +
       (worn.accessory?.stat === 'hp' ? worn.accessory.amount : 0);
-    expect(pool).toBe(1592);
+    expect(pool).toBe(1657);
   });
 });
 
