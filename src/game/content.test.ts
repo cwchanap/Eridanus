@@ -1623,12 +1623,12 @@ describe('the floors one-to-five spending budget', () => {
     }
   });
 
-  it('banks a 1657 hp pool', () => {
+  it('banks a 1577 hp pool', () => {
     const pool =
       createInitialGameState().player.hp +
       grants('hp') +
       (worn.accessory?.stat === 'hp' ? worn.accessory.amount : 0);
-    expect(pool).toBe(1657);
+    expect(pool).toBe(1577);
   });
 });
 

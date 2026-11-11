@@ -22,6 +22,10 @@ Two things follow:
   open chests, which is the game.
 - **Backtracking is free.** An enemy two zones behind the hero costs nothing.
   That is deliberate: it is the reward for growing.
+- **Gates bite.** The wardens that open each stretch, the vault keepers and
+  the guardian hit hard enough to cost a real share of what a careful player
+  carries: about 40-55 HP at their zone's stats, the guardian about 110. By
+  the guardian the HP pool is nearly spent.
 
 ## Zones
 
@@ -67,20 +71,20 @@ flattening the floor.
 A type says how the fight plays, as hits (h), hero damage per hit (m) and
 enemy damage per blow (d) against the zone's hero, plus AGI and a trait.
 
-| Type      | h     | m     | d     | AGI | Trait         | Sprite                | Plays as                                |
-| --------- | ----- | ----- | ----- | --- | ------------- | --------------------- | --------------------------------------- |
-| fodder    | 2     | m + 1 | d − 2 | 4   |               | `enemy-ruin-guard`    | cheap, guards small chests              |
-| guard     | h     | m     | d     | 3   |               | `enemy-ruin-guard`    | the baseline                            |
-| prowler   | h     | m     | d     | 7   |               | `enemy-ruin-guard`    | a guard the hero can miss               |
-| elite     | h + 1 | m − 2 | d + 1 | 2   |               | `enemy-ruin-sentinel` | a gate: long and dear                   |
-| keeper    | h + 2 | m − 2 | d + 2 | 1   |               | `enemy-ruin-sentinel` | sits on a vault                         |
-| boss      | 8     | m − 2 | d + 2 | 2   | first strike  | `enemy-core-guardian` | the core guardian                       |
-| ravager   | 2     | 2m    | 2d    | 4   |               | `enemy-ravager`       | glass cannon: DEF chests tame it        |
-| bulwark   | 6     | 4     | d − 2 | 1   |               | `enemy-bulwark`       | a wall: ATK chests break it             |
-| darter    | 2     | m     | d     | 10  |               | `enemy-darter`        | frail, but the hero misses 1 swing in 4 |
-| twinblade | h     | m     | d − 2 | 4   | double strike | `enemy-twinblade`     | swingy: a 40% second blow each turn     |
-| ambusher  | h − 1 | m     | d     | 3   | first strike  | `enemy-ambusher`      | always lands one blow before the hero   |
-| lancer    | h     | m     | d     | 3   | pierce 4      | `enemy-lancer`        | ignores 4 DEF, so armor counts for less |
+| Type      | h     | m      | d      | AGI | Trait         | Sprite                | Plays as                                |
+| --------- | ----- | ------ | ------ | --- | ------------- | --------------------- | --------------------------------------- |
+| fodder    | 2     | m + 1  | d − 2  | 4   |               | `enemy-ruin-guard`    | cheap, guards small chests              |
+| guard     | h     | m      | d      | 3   |               | `enemy-ruin-guard`    | the baseline                            |
+| prowler   | h     | m      | d      | 7   |               | `enemy-ruin-guard`    | a guard the hero can miss               |
+| elite     | h + 1 | m − 2  | d + 1  | 2   |               | `enemy-ruin-sentinel` | a named guard: long and dear            |
+| keeper    | 4     | 2m − 2 | 2d + 2 | 1   |               | `enemy-ruin-sentinel` | a gate or vault guard: armor pays       |
+| boss      | 6     | 20     | 22     | 2   | first strike  | `enemy-core-guardian` | the core guardian                       |
+| ravager   | 2     | 2m     | 2d     | 4   |               | `enemy-ravager`       | glass cannon: DEF chests tame it        |
+| bulwark   | 6     | 4      | d − 2  | 1   |               | `enemy-bulwark`       | a wall: ATK chests break it             |
+| darter    | 2     | m      | d      | 10  |               | `enemy-darter`        | frail, but the hero misses 1 swing in 4 |
+| twinblade | h     | m      | d − 2  | 4   | double strike | `enemy-twinblade`     | swingy: a 40% second blow each turn     |
+| ambusher  | h − 1 | m      | d      | 3   | first strike  | `enemy-ambusher`      | always lands one blow before the hero   |
+| lancer    | h     | m      | d      | 3   | pierce 4      | `enemy-lancer`        | ignores 4 DEF, so armor counts for less |
 
 From a zone's hero (ATK a, DEF dz) and a type's row:
 
@@ -124,7 +128,8 @@ Values in parentheses are overrides on the type's row.
 
 **2c** (hero 15/7, tier 2)
 
-- elite, HP 26 / ATK 14 / DEF 8 / AGI 2: `floor2-hall-sentry`, `floor2-stair-warden`
+- elite, HP 26 / ATK 14 / DEF 8 / AGI 2: `floor2-hall-sentry`
+- keeper, HP 55 / ATK 21 / DEF 0 / AGI 1: `floor2-stair-warden`
 - bulwark, HP 23 / ATK 11 / DEF 11 / AGI 1: `floor2-archive-brute`
 
 **2b** (hero 12/5, tier 2)
@@ -148,7 +153,8 @@ Values in parentheses are overrides on the type's row.
 
 **3c** (hero 20/17, tier 3)
 
-- elite, HP 26 / ATK 25 / DEF 13 / AGI 2: `floor3-archive-sentry`, `floor3-approach-sentry`, `floor3-heart-sentinel`
+- elite, HP 26 / ATK 25 / DEF 13 / AGI 2: `floor3-archive-sentry`, `floor3-approach-sentry`
+- keeper, HP 59 / ATK 33 / DEF 4 / AGI 1: `floor3-heart-sentinel`
 
 **3v** (hero 26/25, tier 4)
 
@@ -162,11 +168,12 @@ Values in parentheses are overrides on the type's row.
 - fodder, HP 19 / ATK 23 / DEF 10 / AGI 4: `floor4-east-tooth-hand`, `floor4-west-hand-1`, `floor4-east-hand-1`
 - bulwark, HP 23 / ATK 23 / DEF 17 / AGI 1: `floor4-west-store-guard`, `floor4-east-store-guard`
 - lancer, HP 27 / ATK 21 / DEF 11 / AGI 3, pierce 4: `floor4-west-hand-2`, `floor4-east-hand-2`
-- keeper, HP 38 / ATK 27 / DEF 13 / AGI 1: `floor4-forge-keeper`
+- keeper, HP 66 / ATK 35 / DEF 3 / AGI 1: `floor4-forge-keeper`
 
 **4c** (hero 24/23, tier 4)
 
-- elite, HP 30 / ATK 32 / DEF 16 / AGI 2: `floor4-west-foreman`, `floor4-east-foreman`, `floor4-forge-warden`, `floor4-stair-warden`
+- elite, HP 30 / ATK 32 / DEF 16 / AGI 2: `floor4-west-foreman`, `floor4-east-foreman`
+- keeper, HP 66 / ATK 41 / DEF 6 / AGI 1: `floor4-forge-warden`, `floor4-stair-warden`
 - lancer, HP 27 / ATK 27 / DEF 14 / AGI 3, pierce 4: `floor4-casting-hand-1`, `floor4-casting-hand-2`
 - fodder, HP 19 / ATK 29 / DEF 13 / AGI 4: `floor4-casting-hand-3`, `floor4-west-flue-hand-1`, `floor4-east-flue-hand-1`
 - ravager, HP 22 / ATK 39 / DEF 4 / AGI 4: `floor4-west-flue-hand-2`, `floor4-east-flue-hand-2`
@@ -181,16 +188,15 @@ Values in parentheses are overrides on the type's row.
 
 **5b** (hero 31/30, tier 5)
 
-- elite, HP 30 / ATK 39 / DEF 23 / AGI 2: `floor5-south-warden`, `floor5-east-warden`
+- keeper, HP 66 / ATK 48 / DEF 13 / AGI 1: `floor5-south-warden`, `floor5-east-warden`, `floor5-west-vault-keeper`, `floor5-east-vault-keeper`
 - guard, HP 27 / ATK 38 / DEF 21 / AGI 3: `floor5-east-sentry`, `floor5-east-lurker`, `floor5-inner-lurker`, `floor5-southeast-lurker`
 - darter, HP 17 / ATK 38 / DEF 21 / AGI 10: `floor5-ring-wisp-3`, `floor5-ring-wisp-5`, `floor5-ring-wisp-8`
 - twinblade, HP 27 / ATK 36 / DEF 21 / AGI 4, double strike: `floor5-ring-wisp-4`, `floor5-ring-wisp-6`, `floor5-ring-wisp-9`
 - ravager, HP 22 / ATK 46 / DEF 11 / AGI 4: `floor5-ring-wisp-7`
-- keeper, HP 38 / ATK 40 / DEF 23 / AGI 1: `floor5-west-vault-keeper`, `floor5-east-vault-keeper`
 
 **5g** (hero 38/37, tier 5)
 
-- boss, HP 62 / ATK 47 / DEF 30 / AGI 2, first strike: `floor5-core-guardian`
+- boss, HP 114 / ATK 59 / DEF 18 / AGI 2, first strike: `floor5-core-guardian`
 
 **s4** (hero 38/38, tier 6)
 
@@ -202,13 +208,13 @@ Values in parentheses are overrides on the type's row.
 
 - ambusher, HP 15 / ATK 48 / DEF 29 / AGI 3, first strike: `floor3-crypt-shade-1`, `floor3-crypt-shade-3`
 - darter, HP 15 / ATK 48 / DEF 29 / AGI 10: `floor3-crypt-shade-2`
-- keeper, HP 33 / ATK 50 / DEF 31 / AGI 1: `floor3-crypt-warden`
+- keeper, HP 59 / ATK 58 / DEF 22 / AGI 1: `floor3-crypt-warden`
 
 **s2** (hero 40/40, tier 6)
 
 - twinblade, HP 24 / ATK 46 / DEF 31 / AGI 4, double strike: `floor2-reading-wisp-1`
 - lancer, HP 24 / ATK 44 / DEF 31 / AGI 3, pierce 4: `floor2-reading-wisp-2`
-- keeper (h=8), HP 54 / ATK 50 / DEF 33 / AGI 1: `floor2-reading-room-warden`
+- keeper (h=6), HP 91 / ATK 58 / DEF 24 / AGI 1: `floor2-reading-room-warden`
 
 Gold drops, map layouts, ids and the stat chests did not change with this
 table; only stats, traits, sprites and HP rewards did.
@@ -216,15 +222,15 @@ table; only stats, traits, sprites and HP rewards did.
 ## HP rewards
 
 HP never refills, so the HP the tower hands out is the budget for every fight
-in it: 30 at the start, 900 from waystones, 627 from chests and 100 from the
-accessory wares, 1,657 in all. A planner who always takes the cheapest fight
-spends about 1,350 of it clearing everything.
+in it: 30 at the start, 820 from waystones, 627 from chests and 100 from the
+accessory wares, 1,577 in all. A planner who always takes the cheapest fight
+spends about 1,530 of it clearing everything with every enemy blow landing.
 
 - **Waystones** stand on the main route and carry most of the budget, weighted
   toward the early floors, where a careless player has the least room.
   Village 70; Floor 2 service 150; Floor 3 gallery 100, heart 70; Floor 4
-  landing 50, east 70, west 70, stair 50; Floor 5 landing 70, ring 90,
-  heart 110.
+  landing 40, east 60, west 60, stair 40; Floor 5 landing 60, ring 75,
+  heart 95.
 - **HP chests** pay back part of the side fight in front of them: 5-15 on
   Floor 1, 6-15 on Floor 2, 10-18 on Floor 3, 12-25 on Floor 4, 15-40 on
   Floor 5, and 60 for the crypt hoard.
@@ -257,18 +263,25 @@ HP +15 for 50 gold, 10 more after every trade.
 ## How it was checked
 
 A simulator played the authored maps on the real rules (`dispatchInput`)
-with four kinds of player, with every enemy blow landing and with random
+with five kinds of player, with every enemy blow landing and with random
 rolls:
 
-- **Planner** (cheapest fight first): clears all 118 fights, one of them
-  free, never below 80 HP, and ends on 309. This is the order
-  `tests/e2e/full-clear.ts` replays.
+- **Planner** (cheapest fight first): clears all 118 fights and ends on 42
+  HP with every blow landing. This is the order `tests/e2e/full-clear.ts`
+  replays (it ends on 46).
 - **Forecast reader** (nearest fight that is not much dearer than the
-  cheapest): clears everything, never below 72 HP.
-- **Careless** (nearest fight unless it costs a third of their HP): clears
-  everything even with every enemy blow landing, never below 61 HP.
-- **Story first** (main quest whenever it is affordable): restores the
-  village after about 55-75 side fights.
+  cheapest): clears everything. It carries a median of about 290 HP through
+  Floor 4 and 300 through Floor 5, and ends on 140-265 with random rolls (50
+  with every blow landing). The guardian takes 50-80 of the last 130-300.
+- **Casual** (nearest fight unless it costs a fifth of their HP, the old
+  shaft left for after the guardian): beats the guardian every time, even
+  with every blow landing.
+- **Careless** (nearest fight unless it costs a third of their HP): beats
+  the guardian in 15 runs of 16 with random rolls, but runs dry on Floor 5
+  with every blow landing. That is the price of never reading the forecast.
+- **Story first** (main quest whenever it is affordable, the old shaft left
+  alone): restores the village every time, after every side fight outside
+  the shaft, and pays 85-125 of 180-240 HP for the guardian.
 
 Before the rebalance the planner cleared the tower for 109 HP with 92 free
 fights, and the other players were stuck on Floor 1.
@@ -283,6 +296,5 @@ Three things pin these numbers and need redoing when they move:
   `combat.test.ts` / `actions.test.ts`: the guardian's forecast.
 
 Floors 6-10 start from the full clear's hero (ATK 43, DEF 43, 134 gold, four
-trades made) and
-were sized for one arriving with 4 HP, so they only get easier when this
-table leaves more HP in hand.
+trades made, 46 HP) and were sized for one arriving with 4 HP, so they only
+get easier when this table leaves more HP in hand.

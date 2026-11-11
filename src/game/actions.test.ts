@@ -187,8 +187,8 @@ describe('actions', () => {
     const preview = previewCombat(state.player, boss.stats);
     expect(preview).toEqual({
       winnable: true,
-      hitsNeeded: 8,
-      hpLoss: 68,
+      hitsNeeded: 6,
+      hpLoss: 112,
       heroHit: 1,
       enemyHit: 0.85,
     });
@@ -202,7 +202,7 @@ describe('actions', () => {
     const fight = resolveCombat(state, boss, () => 0);
     expect(fight.ok).toBe(true);
     if (!fight.ok) return;
-    expect(fight.state.player.hp).toBe(220);
+    expect(fight.state.player.hp).toBe(168);
     expect(
       fight.state.defeatedEnemyIds.filter((id) => id === boss.id),
     ).toHaveLength(1);
