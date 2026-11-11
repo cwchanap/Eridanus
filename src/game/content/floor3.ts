@@ -395,7 +395,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-heart-sentinel',
       tile: { x: 9, y: 6 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 26, attack: 25, defense: 13, agility: 2 },
+      stats: { hp: 59, attack: 33, defense: 4, agility: 1 },
       gold: 14,
     },
     {
@@ -501,7 +501,7 @@ export const floor3: MapDefinition = {
       id: 'floor3-crypt-warden',
       tile: { x: 19, y: 20 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 33, attack: 50, defense: 31, agility: 1 },
+      stats: { hp: 59, attack: 58, defense: 22, agility: 1 },
       gold: 16,
     },
     {

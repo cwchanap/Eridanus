@@ -65,7 +65,7 @@ export const floor4: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 50,
+      amount: 40,
     },
     {
       kind: 'enemy',
@@ -125,7 +125,7 @@ export const floor4: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 70,
+      amount: 60,
     },
     {
       kind: 'reward',
@@ -291,7 +291,7 @@ export const floor4: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 70,
+      amount: 60,
     },
     {
       kind: 'reward',
@@ -431,7 +431,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-forge-keeper',
       tile: { x: 12, y: 5 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 38, attack: 27, defense: 13, agility: 1 },
+      stats: { hp: 66, attack: 35, defense: 3, agility: 1 },
       gold: 12,
     },
     {
@@ -465,7 +465,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-forge-warden',
       tile: { x: 13, y: 8 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 32, defense: 16, agility: 2 },
+      stats: { hp: 66, attack: 41, defense: 6, agility: 1 },
       gold: 14,
     },
     // The control run: four linked levers, each dragging its neighbours.
@@ -512,7 +512,7 @@ export const floor4: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 50,
+      amount: 40,
     },
     {
       kind: 'enemy',
@@ -552,7 +552,7 @@ export const floor4: MapDefinition = {
       id: 'floor4-stair-warden',
       tile: { x: 13, y: 15 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 32, defense: 16, agility: 2 },
+      stats: { hp: 66, attack: 41, defense: 6, agility: 1 },
       gold: 14,
     },
     {

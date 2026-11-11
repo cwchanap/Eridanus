@@ -272,7 +272,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-stair-warden',
       tile: { x: 13, y: 5 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 26, attack: 14, defense: 8, agility: 2 },
+      stats: { hp: 55, attack: 21, defense: 0, agility: 1 },
       gold: 12,
     },
     {
@@ -450,7 +450,7 @@ export const floor2: MapDefinition = {
       id: 'floor2-reading-room-warden',
       tile: { x: 15, y: 10 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 54, attack: 50, defense: 33, agility: 1 },
+      stats: { hp: 91, attack: 58, defense: 24, agility: 1 },
       gold: 25,
     },
     {

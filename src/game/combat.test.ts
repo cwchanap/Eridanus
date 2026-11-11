@@ -129,8 +129,9 @@ describe('combat', () => {
 
   it('previews the floor five boss for a geared-up hero', () => {
     // The guardian is priced for a hero who has cleared most of the tower
-    // (about ATK 38, DEF 37). It opens the fight and is slow, landing 85
-    // blows in 100: an opening blow and seven answers of 10 average 68.
+    // (about ATK 38, DEF 37) and is meant to cost a real share of what they
+    // carry. It opens the fight and is slow, landing 85 blows in 100: an
+    // opening blow and five answers of 22 average 112.
     expect(
       previewCombat(
         { hp: 300, attack: 38, defense: 37, agility: 5, gold: 0 },
@@ -138,18 +139,18 @@ describe('combat', () => {
       ),
     ).toEqual({
       winnable: true,
-      hitsNeeded: 8,
-      hpLoss: 68,
+      hitsNeeded: 6,
+      hpLoss: 112,
       heroHit: 1,
       enemyHit: 0.85,
     });
-    // The whole tower's loot (ATK 43, DEF 43) still pays for it.
+    // The whole tower's loot (ATK 43, DEF 43) makes it cheaper, not free.
     expect(
       previewCombat(
         { hp: 300, attack: 43, defense: 43, agility: 5, gold: 0 },
         boss.stats,
       ),
-    ).toMatchObject({ hitsNeeded: 5, hpLoss: 17 });
+    ).toMatchObject({ hitsNeeded: 5, hpLoss: 68 });
     // At base stats the hero cannot scratch it.
     expect(previewCombat(createInitialGameState().player, boss.stats)).toEqual({
       winnable: false,

@@ -51,7 +51,7 @@ export const floor5: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 70,
+      amount: 60,
     },
     {
       kind: 'clue',
@@ -121,7 +121,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-west-vault-keeper',
       tile: { x: 7, y: 18 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 38, attack: 40, defense: 23, agility: 1 },
+      stats: { hp: 66, attack: 48, defense: 13, agility: 1 },
       gold: 20,
     },
     {
@@ -158,14 +158,14 @@ export const floor5: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 90,
+      amount: 75,
     },
     {
       kind: 'enemy',
       id: 'floor5-south-warden',
       tile: { x: 19, y: 17 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 39, defense: 23, agility: 2 },
+      stats: { hp: 66, attack: 48, defense: 13, agility: 1 },
       gold: 16,
     },
     {
@@ -295,7 +295,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-east-warden',
       tile: { x: 27, y: 3 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 30, attack: 39, defense: 23, agility: 2 },
+      stats: { hp: 66, attack: 48, defense: 13, agility: 1 },
       gold: 16,
     },
     {
@@ -312,7 +312,7 @@ export const floor5: MapDefinition = {
       id: 'floor5-east-vault-keeper',
       tile: { x: 22, y: 11 },
       assetId: 'enemy-ruin-sentinel',
-      stats: { hp: 38, attack: 40, defense: 23, agility: 1 },
+      stats: { hp: 66, attack: 48, defense: 13, agility: 1 },
       gold: 20,
     },
     {
@@ -421,7 +421,7 @@ export const floor5: MapDefinition = {
       assetId: 'recovery-waystone',
       grant: 'stat',
       stat: 'hp',
-      amount: 110,
+      amount: 95,
     },
     {
       kind: 'portal',
@@ -441,7 +441,13 @@ export const floor5: MapDefinition = {
       id: 'floor5-core-guardian',
       tile: { x: 15, y: 11 },
       assetId: 'enemy-core-guardian',
-      stats: { hp: 62, attack: 47, defense: 30, agility: 2, firstStrike: true },
+      stats: {
+        hp: 114,
+        attack: 59,
+        defense: 18,
+        agility: 2,
+        firstStrike: true,
+      },
       gold: 40,
     },
     {

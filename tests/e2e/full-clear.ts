@@ -35,7 +35,7 @@ export async function expectDeepEntry(journey: Journey): Promise<void> {
   expect(game.mapId).toBe('floor5');
   expect(game.tile).toEqual(journey.entityTile('floor5-heart-waystone'));
   expect(game.player).toEqual({
-    hp: 309,
+    hp: 46,
     attack: 43,
     defense: 43,
     agility: 5,
@@ -57,10 +57,7 @@ export async function expectDeepEntry(journey: Journey): Promise<void> {
   expect(game.factIds).toContain('main-village-restored');
 }
 
-// Every enemy, chest, ware and eight trades on floors 1-5, in the order a
-// planner takes them: free loot first, then always the cheapest fight on
-// offer. Rebalancing floors 1-5 means choosing this order again.
-// Every enemy, chest, ware and eight trades on floors 1-5, in the order a
+// Every enemy, chest, ware and four trades on floors 1-5, in the order a
 // planner takes them: free loot first, then always the cheapest fight on
 // offer. Rebalancing floors 1-5 means choosing this order again.
 export const FULL_CLEAR: readonly Chapter[] = [
@@ -164,6 +161,8 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.buy('village-armor-shop');
       await j.travel('village-to-floor1');
       await j.travel('floor1-front-to-floor2');
+      await j.fight('floor2-hall-sentry');
+      await j.expectBump('floor2-hall-cache', 'reward');
       await j.fight('floor2-stair-warden');
     },
   },
@@ -173,10 +172,6 @@ export const FULL_CLEAR: readonly Chapter[] = [
     run: async (j) => {
       await j.travel('floor2-depth-to-floor3');
       await j.expectBump('floor3-west-lever', 'leverPulled');
-      await j.travel('floor3-to-floor2');
-      await j.fight('floor2-hall-sentry');
-      await j.expectBump('floor2-hall-cache', 'reward');
-      await j.travel('floor2-depth-to-floor3');
       await j.fight('floor3-west-prowler');
       await j.expectBump('floor3-west-store', 'reward');
       await j.fight('floor3-walk-crawler-1');
@@ -226,6 +221,8 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.travel('village-to-floor1');
       await j.travel('floor1-front-to-floor2');
       await j.travel('floor2-depth-to-floor3');
+      await j.fight('floor3-approach-sentry');
+      await j.expectBump('floor3-heart-cache', 'reward');
       await j.fight('floor3-heart-sentinel');
     },
   },
@@ -257,10 +254,6 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.expectBump('floor4-west-cache', 'reward');
       await j.fight('floor4-west-hand-2');
       await j.fight('floor4-east-hand-2');
-      await j.travel('floor4-to-floor3');
-      await j.fight('floor3-approach-sentry');
-      await j.expectBump('floor3-heart-cache', 'reward');
-      await j.travel('floor3-to-floor4');
       await j.fight('floor4-east-store-guard');
       await j.expectBump('floor4-east-store-cache', 'reward');
       await j.fight('floor4-west-store-guard');
@@ -278,25 +271,6 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.travel('floor3-to-floor4');
       await j.fight('floor4-forge-keeper');
       await j.expectBump('floor4-forge-cache', 'reward');
-      await j.fight('floor4-forge-warden');
-      await j.expectBump('floor4-gate-lever-4', 'leverPulled');
-      await j.expectBump('floor4-gate-lever-1', 'leverPulled');
-      await j.expectBump('floor4-foundry-gate', 'latchOpened');
-      await j.drink('floor4-stair-waystone');
-      await j.fight('floor4-casting-hand-1');
-      await j.fight('floor4-casting-hand-2');
-      await j.fight('floor4-casting-hand-3');
-      await j.expectBump('floor4-gallery-cache', 'reward');
-      await j.fight('floor4-stair-warden');
-    },
-  },
-  {
-    title: 'works down to floor five',
-    replayOnly: true,
-    run: async (j) => {
-      await j.travel('floor4-to-floor5');
-      await j.drink('floor5-landing-waystone');
-      await j.travel('floor5-to-floor4');
       await j.fight('floor4-east-foreman');
       await j.expectBump('floor4-east-works-cache', 'reward');
       await j.expectBump('floor4-east-flue-cache', 'reward');
@@ -315,7 +289,24 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.fight('floor3-vault-sentry');
       await j.expectBump('floor3-hidden-vault-cache', 'reward');
       await j.travel('floor3-to-floor4');
+      await j.fight('floor4-forge-warden');
+      await j.expectBump('floor4-gate-lever-4', 'leverPulled');
+      await j.expectBump('floor4-gate-lever-1', 'leverPulled');
+      await j.expectBump('floor4-foundry-gate', 'latchOpened');
+      await j.drink('floor4-stair-waystone');
+      await j.fight('floor4-casting-hand-1');
+      await j.fight('floor4-casting-hand-2');
+      await j.fight('floor4-casting-hand-3');
+      await j.expectBump('floor4-gallery-cache', 'reward');
+      await j.fight('floor4-stair-warden');
+    },
+  },
+  {
+    title: 'works down to floor five',
+    replayOnly: true,
+    run: async (j) => {
       await j.travel('floor4-to-floor5');
+      await j.drink('floor5-landing-waystone');
       await j.fight('floor5-west-lurker');
       await j.travel('floor5-to-floor4');
       await j.travel('floor4-to-floor3');
@@ -369,6 +360,9 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.travel('floor2-depth-to-floor3');
       await j.travel('floor3-to-floor4');
       await j.travel('floor4-to-floor5');
+      await j.fight('floor5-west-vault-keeper');
+      await j.expectBump('floor5-west-vault-cache', 'reward');
+      await j.expectBump('floor5-west-vault-store', 'reward');
       await j.fight('floor5-south-warden');
       await j.expectBump('floor5-south-cache', 'reward');
       await j.fight('floor5-southeast-lurker');
@@ -376,13 +370,10 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.fight('floor5-ring-wisp-3');
       await j.fight('floor5-ring-wisp-4');
       await j.expectBump('floor5-south-store', 'reward');
-      await j.fight('floor5-east-warden');
-      await j.expectBump('floor5-east-warden-cache', 'reward');
-      await j.expectBump('floor5-sanctum-seal', 'latchOpened');
-      await j.drink('floor5-heart-waystone');
       await j.fight('floor5-east-vault-keeper');
       await j.expectBump('floor5-east-vault-cache', 'reward');
       await j.expectBump('floor5-east-vault-store', 'reward');
+      await j.expectBump('floor5-shaft-hatch', 'latchOpened');
       await j.travel('floor5-to-floor4');
       await j.travel('floor4-to-floor3');
       await j.travel('floor3-to-floor2');
@@ -394,12 +385,14 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.travel('floor2-depth-to-floor3');
       await j.travel('floor3-to-floor4');
       await j.travel('floor4-to-floor5');
-      await j.fight('floor5-west-vault-keeper');
-      await j.expectBump('floor5-west-vault-cache', 'reward');
-      await j.expectBump('floor5-shaft-hatch', 'latchOpened');
-      await j.expectBump('floor5-west-vault-store', 'reward');
       await j.travel('floor5-shaft-to-floor4');
       await j.fight('floor4-slag-wisp-1');
+      await j.travel('floor4-shaft-to-floor5');
+      await j.fight('floor5-east-warden');
+      await j.expectBump('floor5-east-warden-cache', 'reward');
+      await j.expectBump('floor5-sanctum-seal', 'latchOpened');
+      await j.drink('floor5-heart-waystone');
+      await j.travel('floor5-shaft-to-floor4');
       await j.fight('floor4-slag-wisp-2');
       await j.fight('floor4-slag-wisp-3');
       await j.expectBump('floor4-cellar-hoard', 'reward');
@@ -430,6 +423,9 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.expectBump('floor2-reading-room-latch', 'latchOpened');
       await j.fight('floor2-reading-wisp-1');
       await j.fight('floor2-reading-wisp-2');
+      await j.fight('floor2-reading-room-warden');
+      await j.expectBump('floor2-keepers-ward', 'reward');
+      await j.expectBump('floor2-keepers-blade', 'reward');
       await j.travel('floor2-shaft-to-floor3');
       await j.travel('floor3-shaft-to-floor4');
       await j.travel('floor4-shaft-to-floor5');
@@ -443,13 +439,6 @@ export const FULL_CLEAR: readonly Chapter[] = [
       await j.expectBump('floor5-restoration-core', 'itemReward');
       await j.travel('floor5-lift-to-village');
       await j.expectBump('village-warden', 'dialogue');
-      await j.travel('village-to-floor1');
-      await j.travel('floor1-front-to-floor2');
-      await j.fight('floor2-reading-room-warden');
-      await j.expectBump('floor2-keepers-ward', 'reward');
-      await j.expectBump('floor2-keepers-blade', 'reward');
-      await j.travel('floor2-front-to-floor1');
-      await j.travel('floor1-to-village');
       await j.travel('village-lift-to-floor5');
       await j.walkTo(j.entityTile('floor5-heart-waystone'));
       await expectDeepEntry(j);
