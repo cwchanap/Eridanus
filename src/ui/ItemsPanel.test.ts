@@ -21,7 +21,7 @@ describe('renderItems', () => {
     expect(html).toContain('data-items="unequipped"');
     expect(html).toContain('data-item="iron-sword"');
     expect(html).toContain('Iron Sword');
-    expect(html).toContain('ATK +1');
+    expect(html).toContain('ATK +2');
     expect(html).not.toContain('steel-sword');
     expect(html).not.toContain('leather-vest');
     expect(html).not.toContain('panel-empty');

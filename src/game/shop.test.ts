@@ -22,7 +22,7 @@ const merchant = shop('village-item-shop');
 const atSmith: GameState = {
   ...createInitialGameState(),
   tile: { x: 11, y: 12 },
-  player: { ...createInitialGameState().player, gold: 20 },
+  player: { ...createInitialGameState().player, gold: 40 },
 };
 
 describe('shops', () => {
@@ -62,7 +62,7 @@ describe('shops', () => {
       ok: true,
       state: {
         ...atSmith,
-        player: { ...atSmith.player, gold: 5, attack: 11 },
+        player: { ...atSmith.player, gold: 10, attack: 12 },
         itemIds: ['iron-sword'],
       },
       effect: { kind: 'purchased', ware: smith.wares[0] },
@@ -72,13 +72,13 @@ describe('shops', () => {
   it('a better ware replaces the one worn in its slot', () => {
     const rich = {
       ...atSmith,
-      player: { ...atSmith.player, gold: 100 },
+      player: { ...atSmith.player, gold: 150 },
     };
     const iron = resolvePurchase(rich, smith.wares[0]!);
     const steel = iron.ok && resolvePurchase(iron.state, smith.wares[1]!);
-    // 10 base + the Steel Sword's +3, not on top of the Iron Sword's +1.
+    // 10 base + the Steel Sword's +5, not on top of the Iron Sword's +2.
     expect(steel && steel.ok && steel.state.player).toMatchObject({
-      attack: 13,
+      attack: 15,
       gold: 45,
     });
     expect(steel && steel.ok && steel.state.itemIds).toEqual([
@@ -98,17 +98,17 @@ describe('shops', () => {
     const charm =
       vest && vest.ok && resolvePurchase(vest.state, merchant.wares[0]!);
     expect(charm && charm.ok && charm.state.player).toMatchObject({
-      attack: 11,
-      defense: 3,
-      hp: 35,
+      attack: 12,
+      defense: 4,
+      hp: 50,
     });
   });
 
   it('an HP ware adds to HP with no cap', () => {
     const result = resolvePurchase(atSmith, merchant.wares[0]!);
     expect(result.ok && result.state.player).toMatchObject({
-      hp: 35,
-      gold: 10,
+      hp: 50,
+      gold: 20,
     });
   });
 
@@ -183,9 +183,9 @@ const [attack, defense, hp] = trader.offers;
 
 describe('status trader', () => {
   it('lifts the price by one step for every trade made', () => {
-    expect(tradePrice(trader, atTrader)).toBe(30);
-    expect(tradePrice(trader, { ...atTrader, trades: 1 })).toBe(40);
-    expect(tradePrice(trader, { ...atTrader, trades: 5 })).toBe(80);
+    expect(tradePrice(trader, atTrader)).toBe(50);
+    expect(tradePrice(trader, { ...atTrader, trades: 1 })).toBe(60);
+    expect(tradePrice(trader, { ...atTrader, trades: 5 })).toBe(100);
   });
 
   it('bumping the stall opens a trade prompt without spending', () => {
@@ -203,22 +203,22 @@ describe('status trader', () => {
       ok: true,
       state: {
         ...atTrader,
-        player: { ...atTrader.player, gold: 170, attack: 11 },
+        player: { ...atTrader.player, gold: 150, attack: 11 },
         trades: 1,
       },
-      effect: { kind: 'traded', offer: attack, price: 30 },
+      effect: { kind: 'traded', offer: attack, price: 50 },
     });
     const next = result.ok ? result.state : atTrader;
     const second = resolveTrade(next, trader, hp!);
     expect(second.ok && second.state.player).toMatchObject({
-      hp: 40,
-      gold: 130,
+      hp: 45,
+      gold: 90,
     });
-    expect(second.ok && second.effect).toMatchObject({ price: 40 });
+    expect(second.ok && second.effect).toMatchObject({ price: 60 });
   });
 
   it('refuses a trade the hero cannot afford', () => {
-    const poor = { ...atTrader, player: { ...atTrader.player, gold: 29 } };
+    const poor = { ...atTrader, player: { ...atTrader.player, gold: 49 } };
     expect(resolveTrade(poor, trader, defense!)).toEqual({
       ok: false,
       reason: 'not-enough-gold',
@@ -244,7 +244,7 @@ describe('status trader', () => {
     expect(bought.ok && bought.session.pending).toBeNull();
     expect(bought.session.game.player).toMatchObject({
       defense: 3,
-      gold: 170,
+      gold: 150,
     });
     expect(bought.session.game.trades).toBe(1);
   });
